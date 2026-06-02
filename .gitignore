@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Data (raw inputs / artifacts — keep out of git, use S3)
+data/raw/*
+data/samples/*
+!data/samples/.gitkeep
+*.xlsx
+*.xls
+*.csv
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Claude Code settings (credentials)
+.claude/settings.local.json
+.claude/

@@ -1,0 +1,25 @@
+source_id: incorta_depo_iade
+enabled: true
+type: mcp
+target_table: incorta_depo_iade
+description: "Incorta — adL Ecommerce Depo İade"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30002"
+  timeout_seconds: 120
+
+auth:
+  type: none
+
+tool:
+  name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_94f3f1b2
+  args:
+    Authorization: "__env:INCORTA_TOKEN"
+  response_format: incorta
+  pagination_start_field: "pagination.startRow"
+  pagination_size_field: "pagination.pageSize"
+  pagination_page_size: 5000
+  total_rows_path: "content.data.headers.totalRows"
+
+schedule:
+  cron: "15 3 * * *"

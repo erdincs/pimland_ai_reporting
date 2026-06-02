@@ -1,0 +1,46 @@
+# ─── Örnek REST API kaynağı ───────────────────────────────────────────────
+# Bu dosya bir şablon. Gerçek kaynağı eklemek için:
+#   1. Bu dosyayı kopyala ve yeniden adlandır  (ör: erp_urunler.yaml)
+#   2. source_id, base_url, auth, endpoints bölümlerini doldur
+#   3. Uygulama yeniden başlatıldığında (veya /connectors/reload çağrıldığında) otomatik yüklenir.
+#
+# Secret değerler (token, şifre) YAML'a yazılmaz.
+# _env: ENV_VAR_ADI  →  os.environ["ENV_VAR_ADI"] ile çözümlenir.
+
+source_id: example_rest_api
+enabled: false                     # true yapılana kadar yüklenmez
+type: rest_api
+target_table: example_products
+description: "Örnek REST API — ERP ürün kataloğu"
+
+connection:
+  base_url: "https://api.example.com/v1"
+  timeout_seconds: 30
+  requests_per_second: 5           # rate limiting (istek/saniye)
+
+auth:
+  type: bearer                     # none | api_key | bearer | oauth2_client_credentials
+  token_env: EXAMPLE_API_TOKEN     # export EXAMPLE_API_TOKEN=sk-xxx
+
+endpoints:
+  - path: /products
+    method: GET
+    params:
+      active: true
+      include_variants: true
+    response_data_path: "data.items"   # yanıt: {"data": {"items": [...]}}
+    pagination:
+      strategy: page_number            # none | page_number | cursor | link_header | offset_limit
+      page_param: page
+      page_size_param: per_page
+      page_size: 100
+      total_pages_field: "meta.total_pages"
+
+field_map:                         # kaynak_alan: hedef_kolon
+  productId: product_id
+  productName: product_name
+  stockQty: stock_quantity
+  unitPrice: unit_price
+
+schedule:
+  cron: "0 3 * * *"               # her gece 03:00 — veya interval_minutes: 60

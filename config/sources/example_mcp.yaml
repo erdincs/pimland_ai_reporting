@@ -1,0 +1,36 @@
+# ─── Örnek MCP sunucu kaynağı ─────────────────────────────────────────────
+# HTTP/SSE transport kullanır (Python 3.9 uyumlu, resmi mcp SDK gerekmez).
+# MCP sunucu: FastMCP, custom FastAPI MCP server, veya herhangi bir
+#             JSON-RPC 2.0 uyumlu endpoint.
+#
+# Bağlanmak için:
+#   1. MCP sunucunu başlat (ör: uvicorn mcp_server:app --port 8001)
+#   2. Bu dosyada source_id ve url'yi düzenle
+#   3. enabled: true yap
+
+source_id: example_mcp_source
+enabled: false
+type: mcp
+target_table: pim_assets
+description: "Örnek PLM MCP sunucusu — dijital varlıklar"
+
+connection:
+  url: "http://localhost:8001/mcp"    # MCP sunucusunun JSON-RPC endpoint'i
+  timeout_seconds: 60
+  retry_attempts: 3
+  retry_backoff_seconds: 2.0
+
+tool:
+  name: get_all_assets               # MCP sunucusundaki araç adı
+  args:
+    status: published
+    include_metadata: true
+  response_data_path: "assets"       # yanıt: {"assets": [...]}
+
+field_map:
+  assetId: asset_id
+  assetName: asset_name
+  assetType: asset_type
+
+schedule:
+  interval_minutes: 30

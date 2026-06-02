@@ -1,0 +1,35 @@
+[project]
+name = "pimland-reporting"
+version = "0.1.0"
+description = "AI Reporting module for the Pimland PLM system"
+requires-python = ">=3.11"
+
+# Dependencies are managed in requirements*.txt (pip-tools workflow).
+# This file holds tooling config only.
+
+[tool.ruff]
+line-length = 90
+target-version = "py311"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "C4", "SIM"]
+ignore = ["B008"]  # FastAPI uses callables in argument defaults (Depends/File)
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra --cov=app --cov-report=term-missing"
+
+[tool.coverage.run]
+omit = ["app/main.py", "tests/*"]

@@ -1,0 +1,48 @@
+source_id: pimland_products
+enabled: true
+type: mcp
+target_table: pim_products
+description: "Pimland PLM — Ürün kataloğu (4190 ürün, sezon/marka/grup/renk bilgisi)"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30001"
+  timeout_seconds: 120
+
+auth:
+  type: oauth2_password_grant
+  token_url_env: PIMLAND_TOKEN_URL
+  client_id_env: PIMLAND_CLIENT_ID
+  client_secret_env: PIMLAND_CLIENT_SECRET
+  scope_env: PIMLAND_SCOPE
+  username_env: PIMLAND_USERNAME
+  password_env: PIMLAND_PASSWORD
+
+tool:
+  name: post_api_Product_get_products_with_squ
+  args:
+    pageSize: 50
+    updatedDate: "2020-01-01T00:00:00"
+  response_format: pimland_products_squ   # custom parser with productImages
+  pagination_start_field: "pageNumber"
+  pagination_size_field: "pageSize"
+  pagination_page_size: 50
+  total_rows_path: "content.data.result.totalPageCount"
+
+field_map:
+  stockCode: urun_kodu
+  description: urun_adi
+  seasonCode: sezon_kodu
+  seasonName: sezon_adi
+  brandCode: marka_kodu
+  brandName: marka_adi
+  productGroupCode: urun_grubu_kodu
+  productGroupName: urun_grubu_adi
+  productMainGroupCode: ana_grup_kodu
+  productMainGroupName: ana_grup_adi
+  productThemeCode: tema_kodu
+  productThemeName: tema_adi
+  isBlocked: bloke
+  useInternet: internet_aktif
+
+schedule:
+  cron: "0 1 * * *"    # her gece 01:00 (MCP master data'dan önce)

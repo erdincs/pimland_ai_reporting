@@ -1,0 +1,45 @@
+# ─── Runtime dependencies (production) ──────────────────────────────────────
+# Pin to compatible-release (~=) so patch/minor security fixes flow in,
+# but major upgrades stay deliberate. Lock exact versions in CI via pip-tools.
+
+# --- Web / API ---
+fastapi~=0.115.0
+uvicorn[standard]~=0.32.0          # ASGI server + uvloop/httptools
+python-multipart~=0.0.12           # form / file upload (Excel ingest)
+
+# --- Configuration & validation ---
+pydantic~=2.9.0
+pydantic-settings~=2.6.0           # 12-factor env-based config
+
+# --- Database (PostgreSQL / AWS RDS) ---
+sqlalchemy~=2.0.36                 # async ORM + Core (for SQL execution)
+greenlet~=3.1.0                    # required by sqlalchemy async on Python 3.9
+asyncpg~=0.30.0                    # async PostgreSQL driver
+psycopg2-binary~=2.9.10            # sync driver for Alembic / ingestion
+alembic~=1.14.0                    # schema migrations
+
+# --- Cache & sessions (Redis / AWS ElastiCache) ---
+redis~=5.2.0                       # includes async client (redis.asyncio)
+
+# --- LLM (AWS Bedrock via boto3 — no Anthropic API key needed) ---
+# boto3 below handles Bedrock; anthropic SDK removed.
+
+# --- Connector infrastructure ---
+pyyaml~=6.0.2                      # YAML source config files
+apscheduler~=3.10.0                # scheduled sync jobs (AsyncIOScheduler)
+tenacity~=9.0.0                    # retry with exponential backoff
+httpx==0.27.2                      # async HTTP client for MCP connectors (pinned: 0.28+ breaks boto3)
+aiofiles~=23.2.1                   # async static file serving (FastAPI StaticFiles)
+
+# --- Data ingestion (Excel -> Postgres) ---
+pandas~=2.2.0
+openpyxl~=3.1.5                    # .xlsx engine for pandas
+
+# --- AWS (S3 for raw files / artifacts) ---
+boto3~=1.35.0
+
+# --- SQL safety / parsing (read-only guard for generated SQL) ---
+sqlglot~=25.30.0                   # dialect-aware parse + validate generated SQL
+
+# --- Observability ---
+structlog~=24.4.0                  # structured JSON logging

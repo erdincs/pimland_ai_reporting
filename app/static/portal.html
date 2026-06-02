@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pimland · Analitik Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--bg5:#2a2a3a;
+  --border:#2a2a3a;--border2:#383850;
+  --t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;
+  --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
+  --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;--pink:#ec4899;
+  --sidebar:220px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;font-size:13px;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;flex-shrink:0;z-index:100}
+.tb-brand{width:var(--sidebar);display:flex;align-items:center;gap:10px;padding:0 20px;border-right:1px solid var(--border);flex-shrink:0}
+.tb-brand .dot{width:8px;height:8px;background:var(--orange);border-radius:50%}
+.tb-brand .name{font-size:13px;font-weight:700}
+.tb-brand .sub{font-size:10px;color:var(--t3)}
+.tb-filters{flex:1;display:flex;align-items:center;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none}
+.tb-filters::-webkit-scrollbar{display:none}
+.filter-group{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.filter-label{font-size:10px;color:var(--t3);font-weight:500;white-space:nowrap}
+.filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;cursor:pointer;outline:none;font-family:inherit;min-width:80px;max-width:150px}
+.filter-select:focus{border-color:var(--orange)}
+.filter-input{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;outline:none;font-family:inherit;width:140px}
+.filter-input:focus{border-color:var(--orange)}
+.filter-input::placeholder{color:var(--t3)}
+.filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.btn-apply{background:var(--orange);color:#fff;border:none;font-size:11px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.btn-apply:hover{opacity:.85}
+.tb-right{display:flex;align-items:center;gap:8px;padding:0 16px;flex-shrink:0}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tb-right span{font-size:10px;color:var(--t3)}
+
+/* LAYOUT */
+.layout{flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
+.nav-section{padding:14px 14px 4px;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3)}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;transition:background .12s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg3)}
+.nav-item.active{background:var(--bg3);border-left-color:var(--orange)}
+.nav-icon{font-size:13px;flex-shrink:0}
+.nav-text{font-size:12px;color:var(--t2);font-weight:500}
+.nav-item.active .nav-text{color:var(--t1)}
+.nav-badge{margin-left:auto;font-size:9px;background:var(--bg4);border:1px solid var(--border);color:var(--t3);padding:1px 6px;border-radius:10px}
+.nav-item.active .nav-badge{background:rgba(255,107,43,.15);border-color:rgba(255,107,43,.3);color:var(--orange)}
+.nav-ai-top{background:rgba(255,107,43,.07);border-bottom:1px solid rgba(255,107,43,.12)}
+.nav-ai-top:hover{background:rgba(255,107,43,.13) !important}
+.nav-ai-top.active{background:rgba(255,107,43,.15) !important;border-left-color:var(--orange)}
+.nav-ai-top .nav-text{font-size:13px;font-weight:600;color:var(--t1)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:24px}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.section{display:none;flex-direction:column;gap:20px}
+.section.active{display:flex}
+.sec-hdr{display:flex;align-items:baseline;justify-content:space-between}
+.sec-title{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2)}
+.sec-sub{font-size:11px;color:var(--t3)}
+
+/* EXECUTIVE SUMMARY */
+.exec-top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.exec-kpi{padding:24px 24px 18px;background:var(--bg2);position:relative}
+.exec-tag{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;display:inline-block;margin-bottom:10px}
+.tag-orange{background:rgba(255,107,43,.12);color:var(--orange)}
+.tag-teal{background:rgba(0,194,168,.1);color:var(--teal)}
+.tag-red{background:rgba(239,68,68,.1);color:var(--red)}
+.big-num{font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1;margin-bottom:5px}
+.big-label{font-size:11px;color:var(--t3)}
+.sub-row{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.sub-item .s-val{font-size:13px;font-weight:600;color:var(--t1)}
+.sub-item .s-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.exec-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid var(--border)}
+.exec-col{padding:20px 24px;border-right:1px solid var(--border)}
+.exec-col:last-child{border-right:none}
+.exec-col-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:12px}
+.alert-list{display:flex;flex-direction:column;gap:8px}
+.alert-item{display:flex;gap:9px;padding:9px 11px;border-radius:6px;border:1px solid transparent}
+.alert-item.crit{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.2)}
+.alert-item.warn{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.15)}
+.alert-item.good{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.15)}
+.alert-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+.alert-title{font-size:11px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.alert-desc{font-size:10px;color:var(--t2);line-height:1.4}
+.action-list{display:flex;flex-direction:column;gap:7px}
+.action-item{display:flex;gap:9px;padding:9px 11px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)}
+.action-num{width:18px;height:18px;border-radius:4px;background:var(--orange);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.action-title{font-size:11px;font-weight:600;color:var(--t1);margin-bottom:1px}
+.action-desc{font-size:10px;color:var(--t3)}
+
+/* KPI STRIP 9 */
+.kpi-strip{display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.kpi-card{background:var(--bg2);padding:16px 14px 12px;cursor:pointer;transition:background .15s;position:relative;overflow:hidden}
+.kpi-card:hover{background:var(--bg3)}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent,var(--orange));opacity:0;transition:opacity .2s}
+.kpi-card:hover::after{opacity:.7}
+.kpi-label{font-size:9px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-val{font-size:18px;font-weight:700;letter-spacing:-.5px;line-height:1;margin-bottom:6px}
+.kpi-val.orange{color:var(--orange)}.kpi-val.teal{color:var(--teal)}
+.kpi-val.red{color:var(--red)}.kpi-val.green{color:var(--green)}.kpi-val.yellow{color:var(--yellow)}
+.kpi-sub{font-size:9px;color:var(--t3)}
+.kpi-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;margin-top:4px}
+.kpi-badge.red{background:rgba(239,68,68,.1);color:var(--red)}
+.kpi-badge.green{background:rgba(34,197,94,.08);color:var(--green)}
+.kpi-badge.yellow{background:rgba(245,158,11,.1);color:var(--yellow)}
+.sparkline{margin-top:5px}
+
+/* KPI GRID 5+5 */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi-tile{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:13px 14px;cursor:pointer;transition:all .12s}
+.kpi-tile:hover{border-color:var(--border2);background:var(--bg3)}
+.kpi-tile .lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:7px}
+.kpi-tile .val{font-size:15px;font-weight:700;letter-spacing:-.3px;color:var(--t1)}
+.kpi-tile .val.red{color:var(--red)}.kpi-tile .val.teal{color:var(--teal)}.kpi-tile .val.orange{color:var(--orange)}
+.kpi-tile .sub{font-size:9px;color:var(--t3);margin-top:3px}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px}
+.chart-title{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:3px}
+.chart-sub{font-size:10px;color:var(--t3);margin-bottom:12px}
+.chart-legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)}
+.leg-dot{width:8px;height:3px;border-radius:2px}
+
+/* DONUT */
+.donut-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.donut-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.donut-card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);margin-bottom:12px}
+.donut-wrap{display:flex;align-items:center;gap:10px}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:4px}
+.dl-row{display:flex;align-items:center;gap:5px}
+.dl-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.dl-name{font-size:9px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-pct{font-size:9px;font-weight:700;color:var(--t1)}
+
+/* INSIGHT PANEL */
+.insight-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.insight-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);margin-bottom:2px}
+.insight-item{padding:9px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)}
+.insight-tag{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.insight-tag.green{color:var(--green)}.insight-tag.red{color:var(--red)}
+.insight-tag.yellow{color:var(--yellow)}.insight-tag.teal{color:var(--teal)}
+.insight-text{font-size:10px;color:var(--t1);line-height:1.4}
+
+/* TABLES */
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t2)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl thead tr{border-bottom:1px solid var(--border)}
+.tbl th{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);padding:9px 14px;text-align:left;cursor:pointer;white-space:nowrap}
+.tbl th.num,.tbl td.num{text-align:right}
+.tbl tbody tr{border-bottom:1px solid rgba(42,42,58,.35);cursor:pointer;transition:background .1s}
+.tbl tbody tr:hover{background:var(--bg3)}
+.tbl tbody tr:last-child{border-bottom:none}
+.tbl td{padding:8px 14px;font-size:11px;color:var(--t2)}
+.tbl td.name{color:var(--t1);font-weight:500;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl td.mono{font-size:10px;font-family:monospace;color:var(--t3)}
+.tbl td.val{color:var(--t1);font-weight:600}
+.tbl td.red{color:var(--red)}.tbl td.green{color:var(--green)}.tbl td.teal{color:var(--teal)}.tbl td.yellow{color:var(--yellow)}
+.risk-badge{display:inline-flex;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.risk-kritik{background:rgba(239,68,68,.15);color:var(--red)}
+.risk-yuksek{background:rgba(245,158,11,.12);color:var(--yellow)}
+.risk-orta{background:rgba(59,130,246,.12);color:var(--blue)}
+.risk-dusuk{background:rgba(34,197,94,.08);color:var(--green)}
+.risk-saglikli{background:rgba(0,194,168,.08);color:var(--teal)}
+.mini-bar{flex:1;max-width:70px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:2px}
+.iade-wrap{display:flex;align-items:center;gap:6px}
+
+/* HBAR */
+.hbar-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.hbar-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);margin-bottom:12px}
+.hbar-list{display:flex;flex-direction:column;gap:8px}
+.hbar-row{display:flex;flex-direction:column;gap:3px}
+.hbar-meta{display:flex;justify-content:space-between;align-items:baseline}
+.hbar-name{font-size:11px;color:var(--t2)}
+.hbar-val{font-size:10px;font-weight:600;color:var(--t1)}
+.hbar-track{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+
+/* PRODUCT CARDS */
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.product-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s}
+.product-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.product-img{height:110px;background:var(--bg3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.product-img img{width:100%;height:100%;object-fit:cover;display:block}
+.product-img-placeholder{font-size:26px;opacity:.25}
+.thumb{width:36px;height:36px;border-radius:5px;object-fit:cover;vertical-align:middle;background:var(--bg3);flex-shrink:0}
+.thumb-wrap{width:36px;height:36px;border-radius:5px;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;vertical-align:middle;flex-shrink:0;color:var(--t3);text-align:center;line-height:1.2;position:relative;overflow:hidden}
+#pw-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.pw-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.pw-logo{font-size:36px;margin-bottom:12px}
+.pw-title{font-size:18px;font-weight:700;color:var(--t1);margin-bottom:4px;letter-spacing:-.3px}
+.pw-sub{font-size:11px;color:var(--t3);margin-bottom:28px;line-height:1.5}
+.pw-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:14px;padding:12px 14px;border-radius:8px;outline:none;font-family:inherit;margin-bottom:12px;text-align:center;letter-spacing:2px}
+.pw-input:focus{border-color:var(--orange)}
+.pw-input::placeholder{color:var(--t3);letter-spacing:0}
+.pw-btn{width:100%;background:var(--orange);color:#fff;border:none;font-size:13px;font-weight:600;padding:12px;border-radius:8px;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.pw-btn:hover{opacity:.85}
+.pw-error{color:var(--red);font-size:11px;margin-top:8px;min-height:16px}
+.product-rank-badge{position:absolute;top:7px;left:7px;background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px}
+.product-body{padding:10px}
+.product-name{font-size:11px;font-weight:600;color:var(--t1);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.product-cat{font-size:9px;color:var(--t3);margin-bottom:8px}
+.product-stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.ps-label{font-size:9px;color:var(--t3)}
+.ps-val{font-size:9px;font-weight:600;color:var(--t1)}
+.iade-bar-lbl{display:flex;justify-content:space-between;margin-bottom:2px;font-size:8px;color:var(--t3)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:5px;padding:10px 14px;border-top:1px solid var(--border)}
+.page-btn{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:10px;padding:4px 9px;border-radius:5px;cursor:pointer;font-family:inherit}
+.page-btn:hover{background:var(--bg4);color:var(--t1)}
+.page-btn.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.page-btn:disabled{opacity:.3;cursor:default}
+.page-info{font-size:10px;color:var(--t3);margin:0 6px}
+
+/* SKU MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-start;justify-content:flex-end}
+.modal-overlay.open{display:flex}
+.modal-panel{width:540px;height:100%;background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.modal-panel::-webkit-scrollbar{width:3px}
+.modal-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.modal-top{padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;gap:12px;flex-shrink:0}
+.modal-close{background:var(--bg3);border:1px solid var(--border);color:var(--t2);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-left:auto}
+.modal-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);flex-shrink:0}
+.modal-kpi{background:var(--bg2);padding:12px 14px}
+.mk-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:5px}
+.mk-val{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.modal-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-tab{flex:1;padding:9px;text-align:center;font-size:11px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent}
+.modal-tab:hover{color:var(--t2)}
+.modal-tab.active{color:var(--t1);border-bottom-color:var(--orange)}
+.modal-body{flex:1;padding:14px}
+.modal-section-title{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:8px}
+.modal-attributes{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--t3);font-size:12px;gap:8px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{display:flex;align-items:center;justify-content:center;padding:36px;color:var(--t3);font-size:11px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .35s ease both}
+.anim-d1{animation-delay:.05s}.anim-d2{animation-delay:.1s}.anim-d3{animation-delay:.15s}
+.anim-d4{animation-delay:.2s}.anim-d5{animation-delay:.25s}
+
+@media(max-width:1300px){
+  .kpi-strip{grid-template-columns:repeat(5,1fr)}
+  .product-grid{grid-template-columns:repeat(3,1fr)}
+  .donut-grid{grid-template-columns:1fr 1fr}
+}
+/* AI CHAT */
+#ai-chat::-webkit-scrollbar{width:4px}
+#ai-chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ai-user-msg{display:flex;justify-content:flex-end}
+.ai-user-bubble{background:var(--orange);color:#fff;border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:70%;font-size:13px;line-height:1.5}
+.ai-bot-msg{display:flex;align-items:flex-start;gap:12px}
+.ai-bot-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--orange),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ai-bot-bubble{background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:80%;flex:1}
+.ai-bot-bubble h1,.ai-bot-bubble h2{font-size:14px;font-weight:700;color:var(--t1);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.ai-bot-bubble h1:first-child,.ai-bot-bubble h2:first-child{margin-top:0}
+.ai-bot-bubble h3{font-size:12px;font-weight:700;color:var(--teal);margin:10px 0 4px}
+.ai-bot-bubble p{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.ai-bot-bubble p:last-child{margin-bottom:0}
+.ai-bot-bubble strong{color:var(--t1);font-weight:600}
+.ai-bot-bubble ul,.ai-bot-bubble ol{padding-left:18px;margin:6px 0}
+.ai-bot-bubble li{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:3px}
+.ai-bot-bubble table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11px}
+.ai-bot-bubble table thead tr{background:var(--bg3);border-bottom:1px solid var(--border)}
+.ai-bot-bubble table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--t3)}
+.ai-bot-bubble table td{padding:7px 10px;border-bottom:1px solid rgba(42,42,58,.3);color:var(--t2)}
+.ai-bot-bubble table tr:hover td{background:var(--bg3);color:var(--t1)}
+.ai-bot-bubble table td:first-child{color:var(--t1);font-weight:500}
+.ai-sql-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:monospace;font-size:10px;color:var(--t3);margin-top:10px;line-height:1.5;overflow-x:auto;white-space:pre;cursor:pointer}
+.ai-meta{display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.ai-meta span{font-size:10px;color:var(--t3)}
+.ai-chip{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:10px;padding:4px 10px;border-radius:16px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.ai-chip:hover{background:var(--bg4);color:var(--t1);border-color:var(--orange)}
+.ai-thinking{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t3)}
+.ai-thinking .dot{width:6px;height:6px;background:var(--orange);border-radius:50%;animation:ai-dot 1.4s ease infinite}
+.ai-thinking .dot:nth-child(2){animation-delay:.2s}
+.ai-thinking .dot:nth-child(3){animation-delay:.4s}
+@keyframes ai-dot{0%,80%,100%{transform:scale(0.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ŞİFRE EKRANI -->
+<div id="pw-overlay">
+  <div class="pw-box">
+    <div class="pw-logo">🔐</div>
+    <div class="pw-title">Pimland Analytics</div>
+    <div class="pw-sub">Bu portal yetkili kullanıcılara özeldir.<br>Erişim şifrenizi girin.</div>
+    <input id="pw-input" class="pw-input" type="password" placeholder="Şifre"
+      onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="pw-btn" onclick="checkPassword()">Giriş Yap</button>
+    <div class="pw-error" id="pw-error">Hatalı şifre. Tekrar deneyin.</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand">
+    <div class="dot"></div>
+    <div><div class="name">Pimland</div><div class="sub">Analitik Portal</div></div>
+  </div>
+  <div class="tb-filters">
+    <div class="filter-group">
+      <span class="filter-label">Yıl</span>
+      <select id="f-yil" class="filter-select"><option value="">Tümü</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Ay</span>
+      <select id="f-ay" class="filter-select"><option value="">Tüm Aylar</option></select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">Kanal</span>
+      <select id="f-kanal" class="filter-select"><option value="">Tüm Kanallar</option></select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group">
+      <span class="filter-label">SKU/Ürün</span>
+      <input id="f-sku" class="filter-input" type="text" placeholder="Ara...">
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Renk</span>
+      <select id="f-renk" class="filter-select"><option value="">Tümü</option></select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Beden</span>
+      <select id="f-beden" class="filter-select"><option value="">Tümü</option></select>
+    </div>
+    <div class="filter-sep"></div>
+    <div class="filter-group" id="fg-marka" style="display:none">
+      <span class="filter-label">Marka</span>
+      <select id="f-marka" class="filter-select"><option value="">Tümü</option></select>
+    </div>
+    <div class="filter-group" id="fg-sezon" style="display:none">
+      <span class="filter-label">Sezon</span>
+      <select id="f-sezon" class="filter-select"><option value="">Tümü</option></select>
+    </div>
+    <div class="filter-group" id="fg-grup" style="display:none">
+      <span class="filter-label">Ürün Grubu</span>
+      <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
+    </div>
+    <button class="btn-apply" onclick="applyFilters()">Uygula</button>
+  </div>
+  <div class="tb-right">
+    <div class="live-dot"></div>
+    <span id="data-source">Incorta · Live</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <!-- AI Analiz — pinned top -->
+    <div class="nav-item nav-ai-top active" onclick="showSection('ai')" id="nav-ai" style="padding:13px 16px">
+      <span class="nav-icon" style="font-size:16px">🤖</span>
+      <div style="flex:1;min-width:0">
+        <div class="nav-text">AI Analiz</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:1px">Doğal dil sorgu</div>
+      </div>
+      <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;flex-shrink:0">AI</span>
+    </div>
+    <div class="nav-section">E-Ticaret</div>
+    <div class="nav-item" onclick="showSection('exec')" id="nav-exec">
+      <span class="nav-icon">🎯</span><span class="nav-text">Executive Özet</span>
+    </div>
+    <div class="nav-item" onclick="showSection('kpi')" id="nav-kpi">
+      <span class="nav-icon">📊</span><span class="nav-text">KPI Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showSection('overview')" id="nav-overview">
+      <span class="nav-icon">📈</span><span class="nav-text">Trend & Kanal</span>
+    </div>
+    <div class="nav-item" onclick="showSection('kategori')" id="nav-kategori">
+      <span class="nav-icon">🗂️</span><span class="nav-text">Kategori</span>
+    </div>
+    <div class="nav-item" onclick="showSection('urunler')" id="nav-urunler">
+      <span class="nav-icon">⭐</span><span class="nav-text">Top Ürünler</span>
+    </div>
+    <div class="nav-item" onclick="showSection('iade')" id="nav-iade">
+      <span class="nav-icon">↩️</span><span class="nav-text">İade Analizi</span>
+    </div>
+    <div class="nav-item" onclick="showSection('risk')" id="nav-risk">
+      <span class="nav-icon">⚠️</span><span class="nav-text">Risk Analizi</span>
+    </div>
+    <div class="nav-item" onclick="showSection('karlilik')" id="nav-karlilik">
+      <span class="nav-icon">💰</span><span class="nav-text">Kârlılık</span>
+      <span class="nav-badge" id="badge-karlilik">—</span>
+    </div>
+    <div class="nav-item" onclick="showSection('colors')" id="nav-colors">
+      <span class="nav-icon">🎨</span><span class="nav-text">Renk Analizi</span>
+    </div>
+    <div class="nav-section">Ürün Yönetimi</div>
+    <div class="nav-item" onclick="showSection('products')" id="nav-products">
+      <span class="nav-icon">📦</span><span class="nav-text">Ürün Listesi</span>
+      <span class="nav-badge" id="badge-products">—</span>
+    </div>
+    <div class="nav-item" onclick="showSection('plm-katalog')" id="nav-plm-katalog">
+      <span class="nav-icon">🏷️</span><span class="nav-text">PLM Katalog</span>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main" id="main-content">
+
+    <!-- EXECUTIVE ÖZET -->
+    <div class="section active" id="section-exec">
+      <div class="sec-hdr">
+        <span class="sec-title">Executive Özet</span>
+        <span class="sec-sub" id="exec-period">Yükleniyor...</span>
+      </div>
+      <div id="exec-top" style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <!-- İkinci satır: Top/Risk ürünler + Kategoriler -->
+      <div id="exec-bottom2" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div class="table-card">
+          <div class="table-header"><span class="table-title" style="color:var(--teal)">⭐ Top Ürünler</span></div>
+          <div id="exec-top-urun"></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title" style="color:var(--red)">⚠️ Riskli Ürünler</span></div>
+          <div id="exec-risk-urun"></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">🗂️ Kategori Özeti</span></div>
+          <div id="exec-kategori"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI DASHBOARD -->
+    <div class="section" id="section-kpi">
+      <div class="sec-hdr">
+        <span class="sec-title">KPI Dashboard</span>
+        <span class="sec-sub" id="kpi-period">—</span>
+      </div>
+      <div class="kpi-strip" id="kpi-strip">
+        <div class="loading" style="grid-column:1/10"><div class="spinner"></div></div>
+      </div>
+      <div class="kpi-grid" id="kpi-grid1" style="margin-top:4px"></div>
+      <div class="kpi-grid" id="kpi-grid2" style="margin-top:10px"></div>
+    </div>
+
+    <!-- TREND & KANAL -->
+    <div class="section" id="section-overview">
+      <div class="sec-hdr">
+        <span class="sec-title">Trend & Kanal</span>
+        <span class="sec-sub">Aylık ciro trendi · Kanal kırılımı</span>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Aylık Ciro Trendi</div>
+          <div class="chart-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--orange)"></div>Brüt</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>Net</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--red);opacity:.7"></div>İade</div>
+          </div>
+          <div id="trend-svg" style="height:180px"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Kanal Ciro Dağılımı</div>
+          <div class="chart-sub">Satış vs iade karşılaştırması</div>
+          <div id="kanal-bars" style="height:180px;overflow-y:auto"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Kanal Detay</span></div>
+        <div id="kanal-table"></div>
+      </div>
+    </div>
+
+    <!-- KATEGORİ -->
+    <div class="section" id="section-kategori">
+      <div class="sec-hdr">
+        <span class="sec-title">Kategori Analizi</span>
+        <span class="sec-sub">Ürün grubu bazında ciro · İade · Performans</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">Kategori Performans Tablosu</span></div>
+            <div id="kategori-table"><div class="loading"><div class="spinner"></div></div></div>
+          </div>
+          <div class="hbar-card">
+            <div class="hbar-title">Brüt Ciro Dağılımı</div>
+            <div id="kategori-bars" class="hbar-list"></div>
+          </div>
+        </div>
+        <div class="insight-panel" id="kategori-insights">
+          <div class="insight-title">Kategori İçgörüleri</div>
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP ÜRÜNLER -->
+    <div class="section" id="section-urunler">
+      <div class="sec-hdr">
+        <span class="sec-title">Top Ürünler</span>
+        <span class="sec-sub">Net ciro sıralaması · Drilldown için satıra tıklayın</span>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title" id="top-urunler-count">—</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:10px;color:var(--t3)">Sırala:</span>
+            <select id="top-sort" class="filter-select" onchange="loadTopUrunler()">
+              <option value="net_ciro">Net Ciro</option>
+              <option value="brut_ciro">Brüt Ciro</option>
+              <option value="brut_adet">Adet</option>
+            </select>
+            <span style="font-size:10px;color:var(--t3)">Göster:</span>
+            <select id="top-limit" class="filter-select" onchange="loadTopUrunler()">
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+        <div id="top-urunler-table"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- İADE ANALİZİ -->
+    <div class="section" id="section-iade">
+      <div class="sec-hdr">
+        <span class="sec-title">İade Analizi</span>
+        <span class="sec-sub">Ürün bazında · Tıklayınca renk/beden/sezon detayı</span>
+      </div>
+      <!-- İade özet KPI'lar -->
+      <div class="kpi-grid" id="iade-kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="loading" style="grid-column:1/5"><div class="spinner"></div></div>
+      </div>
+      <!-- Ürün bazlı iade tablosu — ANA GÖRÜNÜM -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title" id="iade-urun-count">Yükleniyor...</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:10px;color:var(--t3)">Sırala:</span>
+            <select id="iade-sort" class="filter-select" onchange="loadIadeUrunler(1)">
+              <option value="iade_ciro">İade Ciro</option>
+              <option value="iade_pct">İade Oranı</option>
+              <option value="brut_ciro">Brüt Ciro</option>
+            </select>
+          </div>
+        </div>
+        <div id="iade-urun-table"><div class="loading"><div class="spinner"></div></div></div>
+        <div class="pagination" id="iade-pagination"></div>
+      </div>
+      <!-- Aggregate breakdown — ikincil bilgi -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="hbar-card">
+          <div class="hbar-title">Beden Bazında İade Oranı</div>
+          <div id="iade-beden-bars" class="hbar-list" style="max-height:280px;overflow-y:auto">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        <div class="hbar-card">
+          <div class="hbar-title">Renk Bazında İade Ciro (Top 15)</div>
+          <div id="iade-renk-bars" class="hbar-list" style="max-height:280px;overflow-y:auto">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RİSK ANALİZİ -->
+    <div class="section" id="section-risk">
+      <div class="sec-hdr">
+        <span class="sec-title">Risk Analizi</span>
+        <span class="sec-sub">Yüksek iade · Kritik · Sağlıklı segmentler</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px" id="risk-groups">
+        <div class="loading" style="grid-column:1/4"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- KÂRLILIK -->
+    <div class="section" id="section-karlilik">
+      <div class="sec-hdr">
+        <span class="sec-title">Kârlılık Dashboard</span>
+        <span class="sec-sub">Risk segmentasyonu · Net ciro etkisi</span>
+      </div>
+      <div id="karlilik-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:4px">
+        <div class="loading" style="grid-column:1/6"><div class="spinner"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="karlilik-tables"></div>
+    </div>
+
+    <!-- ÜRÜN LİSTESİ -->
+    <div class="section" id="section-products">
+      <div class="sec-hdr">
+        <span class="sec-title">Ürün Listesi</span>
+        <span class="sec-sub">Tüm SKU'lar · Risk skoru · Drilldown için tıklayın</span>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title" id="products-count">Yükleniyor...</span>
+          <select id="sort-by" class="filter-select" onchange="loadProducts(1)">
+            <option value="risk_skoru">Risk Skoru</option>
+            <option value="iade_pct">İade Oranı</option>
+            <option value="brut_ciro">Brüt Ciro</option>
+            <option value="net_ciro">Net Ciro</option>
+          </select>
+        </div>
+        <div id="products-table"><div class="loading"><div class="spinner"></div></div></div>
+        <div class="pagination" id="products-pagination"></div>
+      </div>
+    </div>
+
+    <!-- RENK ANALİZİ -->
+    <div class="section" id="section-colors">
+      <div class="sec-hdr">
+        <span class="sec-title">Renk Analizi</span>
+        <span class="sec-sub">Brüt ciro payı · İade oranı</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="hbar-card">
+          <div class="hbar-title">Renk Ciro Dağılımı (İlk 15)</div>
+          <div id="colors-bars" class="hbar-list"><div class="loading"><div class="spinner"></div></div></div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">Renk Detay</span></div>
+          <div id="colors-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI SORGU -->
+    <div class="section" id="section-ai" style="height:calc(100vh - 160px);display:none;flex-direction:column">
+      <div class="sec-hdr" style="flex-shrink:0">
+        <span class="sec-title">AI Analiz</span>
+        <div style="display:flex;gap:8px">
+          <span style="font-size:10px;color:var(--t3);align-self:center" id="ai-filter-info"></span>
+          <button onclick="clearChat()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">Temizle</button>
+        </div>
+      </div>
+      <!-- Öneri sorular -->
+      <div id="ai-suggestions" style="display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;margin-bottom:4px">
+        <span style="font-size:10px;color:var(--t3);align-self:center">Öneriler:</span>
+      </div>
+      <!-- Chat geçmişi -->
+      <div id="ai-chat" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:4px 0;min-height:0">
+        <div id="ai-welcome" style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--orange),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:75%">
+            <div style="font-size:13px;color:var(--t1);line-height:1.6">Merhaba! <strong>Pimland AI Analiz</strong> asistanıyım.<br>E-ticaret verileriniz hakkında Türkçe soru sorabilirsiniz.</div>
+            <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px" id="ai-hint-chips"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Input alanı -->
+      <div style="flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-top:8px">
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <textarea id="ai-question"
+            style="flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.5;max-height:120px;min-height:20px"
+            placeholder="Soru sorun... (Enter: gönder, Shift+Enter: yeni satır)"
+            rows="1"
+            onkeydown="aiKeydown(event)"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+          <button id="ai-send-btn" onclick="askAI()" style="background:var(--orange);color:#fff;border:none;width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;transition:opacity .15s">↑</button>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);cursor:pointer">
+            <input type="checkbox" id="ai-use-filters" checked style="accent-color:var(--orange)"> Aktif filtreleri kullan
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);cursor:pointer">
+            <input type="checkbox" id="ai-show-sql" style="accent-color:var(--orange)"> SQL'i göster
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLM KATALOG -->
+    <div class="section" id="section-plm-katalog">
+      <div class="sec-hdr">
+        <span class="sec-title">PLM Katalog</span>
+        <span class="sec-sub">Marka · Sezon · Tema · Ürün Grubu — Pimland PLM verisi</span>
+      </div>
+      <!-- PLM-specific filters -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <span style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:1px;text-transform:uppercase">Filtre</span>
+        <div style="width:1px;height:16px;background:var(--border)"></div>
+        <div class="filter-group"><span class="filter-label">Marka</span>
+          <select class="filter-select" id="plm-f-marka">
+            <option value="">Tüm Markalar</option>
+          </select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Sezon</span>
+          <select class="filter-select" id="plm-f-sezon" style="max-width:170px">
+            <option value="">Tüm Sezonlar</option>
+          </select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Tema</span>
+          <select class="filter-select" id="plm-f-tema" style="max-width:180px">
+            <option value="">Tüm Temalar</option>
+          </select>
+        </div>
+        <button class="btn-apply" onclick="applyPlmFilters()">Uygula</button>
+      </div>
+      <!-- KPI strip -->
+      <div class="kpi-strip" id="plm-kpis" style="grid-template-columns:repeat(9,1fr)">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <!-- Charts row: Marka + Tema -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">Marka Dağılımı</div>
+          <div class="chart-sub">Ürün sayısı ve aktiflik durumu</div>
+          <div id="plm-marka-bars" class="hbar-list" style="margin-top:12px"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Tema / Story Dağılımı</div>
+          <div class="chart-sub">En fazla ürün içeren koleksiyonlar (İlk 10)</div>
+          <div id="plm-tema-bars" class="hbar-list" style="margin-top:12px"></div>
+        </div>
+      </div>
+      <!-- Sezon chart -->
+      <div class="chart-card">
+        <div class="chart-title">Sezon Bazlı Ürün Dağılımı</div>
+        <div class="chart-sub" id="plm-sezon-sub">Son 8 sezon</div>
+        <div id="plm-sezon-chart" style="margin-top:16px"></div>
+      </div>
+      <!-- Ana grup table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Ürün Grubu Analizi</span>
+          <span style="font-size:10px;color:var(--t3)">Ana Grup · Kategori · Aktiflik</span>
+        </div>
+        <div id="plm-grup-table"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SKU DRILLDOWN MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-panel" id="modal-panel">
+    <div class="modal-top">
+      <div id="modal-product-img" style="width:72px;height:72px;background:var(--bg3);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border)">
+        <span style="font-size:22px;opacity:.2">🖼</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:10px;color:var(--t3);font-family:monospace" id="modal-sku-code">—</div>
+        <div style="font-size:15px;font-weight:700;color:var(--t1);line-height:1.3;margin-top:2px" id="modal-sku-name">Yükleniyor...</div>
+        <div id="modal-attributes" class="modal-attributes"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-kpis" id="modal-kpis"></div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="modalTab('trend',this)">Aylık Trend</div>
+      <div class="modal-tab" onclick="modalTab('dagilim',this)">Renk & Beden</div>
+      <div class="modal-tab" onclick="modalTab('kanal',this)">Kanal</div>
+      <div class="modal-tab" onclick="modalTab('canli',this)" style="color:var(--orange)">⚡ Canlı</div>
+    </div>
+    <div class="modal-body" id="modal-body"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<script>
+const API='/api/v1';
+let state={yil:null,ay:[],kanal:[],sku:null,renk:null,beden:null,marka:null,sezon:null,grup:null};
+const EMOJIS=['👗','👕','👖','🧥','🩺','👚','🧣','👒','👙','🩳','👜','🎀','🧤','🧦','👟'];
+let currentSection='exec';
+let drilldownData=null;
+let modalTabActive='trend';
+let plmState={marka:null,sezon:null,tema:null};
+let plmFiltersLoaded=false;
+const AY_ADI={1:'Ocak',2:'Şubat',3:'Mart',4:'Nisan',5:'Mayıs',6:'Haziran',7:'Temmuz',8:'Ağustos',9:'Eylül',10:'Ekim',11:'Kasım',12:'Aralık'};
+const KANAL_COLOR={'TRENDYOL':'#f97316','ADL':'#00c2a8','ADL IOS APP':'#3b82f6','ADL ANDROID APP':'#a855f7','HEPSIBURADA':'#ec4899','BOYNER':'#f59e0b','LOVEMYBODY':'#22c55e','LMB IOS APP':'#6b7280','LMB ANDROID APP':'#14b8a6','TY ADL AZ':'#ef4444','TY LMB AZ':'#8b5cf6'};
+const IADE_COLOR=p=>p<15?'var(--green)':p<30?'var(--yellow)':'var(--red)';
+const RISK_CLASS=s=>({'KRİTİK':'kritik','YÜKSEK':'yuksek','ORTA':'orta','DÜŞÜK':'dusuk','SAĞLIKLI':'saglikli'}[s]||'dusuk');
+const IMG_BASE='https://img-adl.sm.mncdn.com/cdnimages/products';
+
+// ── FORMAT ──────────────────────────────────────────────────────────────────
+function fmtM(v){v=parseFloat(v)||0;if(Math.abs(v)>=1e9)return(v/1e9).toFixed(1)+'B ₺';if(Math.abs(v)>=1e6)return(v/1e6).toFixed(1)+'M ₺';if(Math.abs(v)>=1e3)return(v/1e3).toFixed(0)+'K ₺';return v.toFixed(0)+' ₺';}
+function fmtTL(v){return parseFloat(v).toLocaleString('tr-TR',{maximumFractionDigits:0})+' ₺';}
+function fmtAdet(v){return parseInt(v).toLocaleString('tr-TR');}
+function fmtPct(v){return parseFloat(v).toFixed(1)+'%';}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+async function init(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('yil'))state.yil=parseInt(p.get('yil'));
+  if(p.get('ay'))state.ay=p.get('ay').split(',').map(Number).filter(Boolean);
+  if(p.get('kanal'))state.kanal=p.get('kanal').split(',').filter(Boolean);
+  if(p.get('sku'))state.sku=p.get('sku');
+  if(p.get('renk'))state.renk=p.get('renk');
+  if(p.get('marka'))state.marka=p.get('marka');
+  if(p.get('sezon'))state.sezon=p.get('sezon');
+  if(p.get('grup'))state.grup=p.get('grup');
+
+  // Filtre seçimi yoksa son tam ayı otomatik seç
+  if(!state.yil && !state.ay.length){
+    try{
+      const lp=await fetch(`${API}/portal/latest-period`).then(r=>r.json());
+      state.yil=lp.yil; state.ay=[lp.ay];
+      document.getElementById('data-source').textContent=`${AY_ADI[lp.ay]} ${lp.yil} · Incorta`;
+    }catch(e){}
+  }
+
+  await loadFilters();
+  syncFilterUI();
+  showSection(p.get('sec')||'ai',false);
+  if(p.get('drilldown'))openModal(p.get('drilldown'));
+}
+
+function syncFilterUI(){
+  if(state.yil){const s=document.getElementById('f-yil');if(s)s.value=state.yil;}
+  if(state.ay.length){const s=document.getElementById('f-ay');if(s)s.value=state.ay[0];}
+  if(state.kanal.length){const s=document.getElementById('f-kanal');if(s)s.value=state.kanal[0];}
+  if(state.sku){const i=document.getElementById('f-sku');if(i)i.value=state.sku;}
+}
+
+async function loadFilters(){
+  try{
+    const d=await fetch(`${API}/portal/filters`).then(r=>r.json());
+    const fill=(id,items,val,label)=>{
+      const sel=document.getElementById(id);
+      items.forEach(v=>sel.innerHTML+=`<option value="${v}" ${val==v?'selected':''}>${label?label(v):v}</option>`);
+    };
+    fill('f-yil',d.yillar,state.yil);
+    fill('f-ay',d.aylar,state.ay[0],a=>AY_ADI[a]);
+    fill('f-kanal',d.kanallar,state.kanal[0]);
+    fill('f-renk',d.renkler,state.renk);
+    fill('f-beden',d.bedenler,state.beden);
+    if(d.markalar?.length){document.getElementById('fg-marka').style.display='';fill('f-marka',d.markalar,state.marka);}
+    if(d.sezonlar?.length){document.getElementById('fg-sezon').style.display='';fill('f-sezon',d.sezonlar,state.sezon);}
+    if(d.urun_gruplari?.length){document.getElementById('fg-grup').style.display='';fill('f-grup',d.urun_gruplari,state.grup);}
+  }catch(e){console.error('Filtre hatası:',e);}
+}
+
+function applyFilters(){
+  state.yil=document.getElementById('f-yil').value?parseInt(document.getElementById('f-yil').value):null;
+  const ay=document.getElementById('f-ay').value;state.ay=ay?[parseInt(ay)]:[];
+  const k=document.getElementById('f-kanal').value;state.kanal=k?[k]:[];
+  state.sku=document.getElementById('f-sku').value.trim()||null;
+  state.renk=document.getElementById('f-renk').value||null;
+  state.beden=document.getElementById('f-beden').value||null;
+  state.marka=document.getElementById('f-marka')?.value||null;
+  state.sezon=document.getElementById('f-sezon')?.value||null;
+  state.grup=document.getElementById('f-grup')?.value||null;
+  pushURL();loadSection(currentSection);
+}
+
+function buildQ(extra={}){
+  const p=new URLSearchParams();
+  if(state.yil)p.set('yil',state.yil);
+  state.ay.forEach(a=>p.append('ay',a));
+  state.kanal.forEach(k=>p.append('kanal',k));
+  if(extra.sku&&state.sku)p.set('sku',state.sku);
+  if(extra.renk&&state.renk)p.set('renk',state.renk);
+  if(extra.beden&&state.beden)p.set('beden',state.beden);
+  if(state.marka)p.set('marka',state.marka);
+  if(state.sezon)p.set('sezon',state.sezon);
+  if(state.grup)p.set('urun_grubu',state.grup);
+  Object.entries(extra).forEach(([k,v])=>{if(!['sku','renk','beden'].includes(k))p.set(k,v);});
+  return p.toString();
+}
+
+function pushURL(){
+  const p=new URLSearchParams();
+  p.set('sec',currentSection);
+  if(state.yil)p.set('yil',state.yil);
+  if(state.ay.length)p.set('ay',state.ay.join(','));
+  if(state.kanal.length)p.set('kanal',state.kanal.join(','));
+  if(state.sku)p.set('sku',state.sku);
+  if(state.renk)p.set('renk',state.renk);
+  if(state.marka)p.set('marka',state.marka);
+  if(state.sezon)p.set('sezon',state.sezon);
+  if(state.grup)p.set('grup',state.grup);
+  history.pushState({},'','?'+p.toString());
+}
+
+// ── NAVIGATION ───────────────────────────────────────────────────────────────
+function showSection(id,push=true){
+  document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('section-'+id);
+  if(sec){sec.classList.add('active');sec.style.display='flex';}
+  document.getElementById('nav-'+id)?.classList.add('active');
+  currentSection=id;if(push)pushURL();
+  loadSection(id);
+}
+function loadSection(id){
+  if(id==='exec')loadExec();
+  else if(id==='kpi')loadKpi();
+  else if(id==='overview')loadOverview();
+  else if(id==='kategori')loadKategori();
+  else if(id==='urunler')loadTopUrunler();
+  else if(id==='iade')loadIade();
+  else if(id==='risk')loadRisk();
+  else if(id==='karlilik')loadKarlilik();
+  else if(id==='products')loadProducts(1);
+  else if(id==='colors')loadColors();
+  else if(id==='ai')initAISection();
+  else if(id==='plm-katalog')loadPlmKatalog();
+}
+
+// ── EXECUTIVE ÖZET ────────────────────────────────────────────────────────────
+async function loadExec(){
+  const el=document.getElementById('exec-top');
+  el.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const d=await fetch(`${API}/portal/exec-summary?${buildQ()}`).then(r=>r.json());
+    const k=d.kpis;
+    const mom=d.mom||{};
+    const period=state.yil?(state.ay.length?AY_ADI[state.ay[0]]+' '+state.yil:state.yil+' Tümü'):'Tüm Dönem';
+    document.getElementById('exec-period').textContent=period;
+
+    // MoM badge helper
+    const momBadge=(chg,invert=false)=>{
+      if(chg==null)return '';
+      const pos=invert?chg<0:chg>0;
+      const col=pos?'var(--green)':'var(--red)';
+      const arr=pos?'▲':'▼';
+      return `<span style="font-size:10px;color:${col};margin-left:6px">${arr} %${Math.abs(chg)}</span>`;
+    };
+
+    const mkSub=(items)=>items.map(i=>`<div class="sub-item"><div class="s-val">${i.val}</div><div class="s-lbl">${i.lbl}</div></div>`).join('');
+
+    el.innerHTML=`
+      <div class="exec-top">
+        <div class="exec-kpi anim">
+          <span class="exec-tag tag-orange">Brüt Ciro</span>
+          <div class="big-num" style="color:var(--orange)">${fmtM(k.brut_ciro)}${momBadge(mom.brut_ciro_chg)}</div>
+          <div class="big-label">${period} toplam brüt satış</div>
+          <div class="sub-row">${mkSub([
+            {val:fmtAdet(k.brut_adet),lbl:'Brüt Adet'},
+            {val:fmtTL(k.brut_ciro/Math.max(k.brut_adet,1)),lbl:'Brüt OBF'},
+            {val:mom.prev_brut?fmtM(mom.prev_brut):'—',lbl:`${AY_ADI[mom.prev_ay]||'Önceki'} Brüt`}
+          ])}</div>
+        </div>
+        <div class="exec-kpi anim anim-d1">
+          <span class="exec-tag tag-teal">Net Ciro</span>
+          <div class="big-num" style="color:var(--teal)">${fmtM(k.net_ciro)}${momBadge(mom.net_ciro_chg)}</div>
+          <div class="big-label">İade & iptal düşülmüş</div>
+          <div class="sub-row">${mkSub([
+            {val:fmtAdet(k.net_adet),lbl:'Net Adet'},
+            {val:fmtTL(k.net_obf),lbl:'Net OBF'},
+            {val:mom.prev_net?fmtM(mom.prev_net):'—',lbl:`${AY_ADI[mom.prev_ay]||'Önceki'} Net`}
+          ])}</div>
+        </div>
+        <div class="exec-kpi anim anim-d2">
+          <span class="exec-tag tag-red">İade Ciro</span>
+          <div class="big-num" style="color:var(--red)">${fmtM(k.iade_ciro)}${momBadge(mom.iade_oran_chg,true)}</div>
+          <div class="big-label">Toplam iade + iptal kaybı</div>
+          <div class="sub-row">${mkSub([
+            {val:'%'+k.iade_oran+(mom.iade_oran_chg!=null?' ('+( mom.iade_oran_chg>0?'+':'')+mom.iade_oran_chg+'pp)':''),lbl:'İade Oranı'},
+            {val:'%'+k.iptal_oran,lbl:'İptal Oranı'},
+            {val:fmtM(k.iade_ciro+k.iptal_ciro),lbl:'Toplam Kayıp'}
+          ])}</div>
+        </div>
+      </div>
+      <div class="exec-bottom">
+        <div class="exec-col">
+          <div class="exec-col-title">⚠ Uyarılar (${d.alerts.length})</div>
+          <div class="alert-list">${d.alerts.length?d.alerts.map(a=>`
+            <div class="alert-item ${a.level}">
+              <div class="alert-icon">${a.icon||( a.level==='crit'?'🔴':'🟡')}</div>
+              <div><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div>
+            </div>`).join(''):'<div class="empty" style="padding:12px">✅ Bu dönem kritik uyarı yok</div>'}</div>
+        </div>
+        <div class="exec-col">
+          <div class="exec-col-title">✦ Fırsatlar (${d.opportunities.length})</div>
+          <div class="alert-list">${d.opportunities.length?d.opportunities.map(o=>`
+            <div class="alert-item good">
+              <div class="alert-icon">${o.icon||'🟢'}</div>
+              <div><div class="alert-title">${o.title}</div><div class="alert-desc">${o.desc}</div></div>
+            </div>`).join(''):'<div class="empty" style="padding:12px">Filtre seçerek analiz yapın</div>'}</div>
+        </div>
+        <div class="exec-col">
+          <div class="exec-col-title">◈ Aksiyon Listesi</div>
+          <div class="action-list">${d.actions.map(a=>`
+            <div class="action-item">
+              <div class="action-num">${a.num}</div>
+              <div><div class="action-title">${a.title}</div><div class="action-desc">${a.desc}</div></div>
+            </div>`).join('')}
+          </div>
+          ${d.kanal&&d.kanal.length?`
+          <div style="margin-top:12px">
+            <div style="font-size:9px;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px">Kanal Dağılımı</div>
+            ${d.kanal.slice(0,4).map(c=>`
+              <div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(42,42,58,.3)">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${KANAL_COLOR[c.kanal]||'#6b7280'};flex-shrink:0"></span>
+                <span style="font-size:11px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.kanal}</span>
+                <span style="font-size:11px;font-weight:600;color:var(--t1)">${fmtM(c.ciro)}</span>
+                <span style="font-size:10px;color:${IADE_COLOR(c.iade_oran)}">%${c.iade_oran}↩</span>
+              </div>`).join('')}
+          </div>`:''}
+        </div>
+      </div>`;
+
+    // İkinci satır — top/risk ürünler + kategoriler
+    const b2=document.getElementById('exec-bottom2');
+    b2.style.display='grid';
+    document.getElementById('exec-top-urun').innerHTML=d.top_urunler?.length?
+      '<table class="tbl"><thead><tr><th>Ürün</th><th class="num">Net Ciro</th><th class="num">İade%</th></tr></thead><tbody>'+
+      d.top_urunler.map(p=>`<tr onclick="openModal('${p.urun_kodu}')"><td class="name">${p.urun_adi}</td><td class="num teal">${fmtM(p.net_ciro)}</td><td class="num ${p.iade_pct>30?'yellow':'green'}">${p.iade_pct}%</td></tr>`).join('')+
+      '</tbody></table>':'<div class="empty">Veri yok</div>';
+
+    document.getElementById('exec-risk-urun').innerHTML=d.risk_urunler?.length?
+      '<table class="tbl"><thead><tr><th>Ürün</th><th class="num">Brüt</th><th class="num">İade%</th></tr></thead><tbody>'+
+      d.risk_urunler.map(p=>`<tr onclick="openModal('${p.urun_kodu}')"><td class="name">${p.urun_adi}</td><td class="num">${fmtM(p.brut_ciro)}</td><td class="num red">${p.iade_pct}%</td></tr>`).join('')+
+      '</tbody></table>':'<div class="empty">Risk ürün yok 🟢</div>';
+
+    document.getElementById('exec-kategori').innerHTML=d.kategoriler?.length?
+      '<table class="tbl"><thead><tr><th>Kategori</th><th class="num">Ciro</th><th class="num">İade%</th></tr></thead><tbody>'+
+      d.kategoriler.map(k=>`<tr><td class="name">${k.kat}</td><td class="num">${fmtM(k.brut)}</td><td class="num ${k.iade_pct>30?'red':k.iade_pct>20?'yellow':'green'}">${k.iade_pct}%</td></tr>`).join('')+
+      '</tbody></table>':'<div class="empty">Veri yok</div>';
+
+  }catch(e){el.innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── KPI DASHBOARD ─────────────────────────────────────────────────────────────
+async function loadKpi(){
+  document.getElementById('kpi-strip').innerHTML='<div class="loading" style="grid-column:1/10"><div class="spinner"></div></div>';
+  try{
+    const k=await fetch(`${API}/portal/kpis?${buildQ()}`).then(r=>r.json());
+    const period=state.yil?(state.ay.length?AY_ADI[state.ay[0]]+' '+state.yil:state.yil):'-';
+    document.getElementById('kpi-period').textContent=period;
+    const mkSpark=(color)=>`<svg width="100%" height="22" viewBox="0 0 80 22"><polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" points="0,18 13,14 26,16 39,10 52,7 65,5 80,3"/></svg>`;
+    document.getElementById('kpi-strip').innerHTML=`
+      <div class="kpi-card" style="--accent:var(--orange)"><div class="kpi-label">Brüt Ciro</div><div class="kpi-val orange">${fmtM(k.brut_ciro)}</div><div class="kpi-sub">${period}</div><div class="sparkline">${mkSpark('var(--orange)')}</div></div>
+      <div class="kpi-card" style="--accent:var(--teal)"><div class="kpi-label">Net Ciro</div><div class="kpi-val teal">${fmtM(k.net_ciro)}</div><div class="kpi-sub">İade & iptal sonrası</div><div class="sparkline">${mkSpark('var(--teal)')}</div></div>
+      <div class="kpi-card" style="--accent:var(--red)"><div class="kpi-label">İade Ciro</div><div class="kpi-val red">${fmtM(k.iade_ciro)}</div><div class="kpi-badge ${k.iade_oran>30?'red':k.iade_oran>20?'yellow':'green'}">%${k.iade_oran}</div><div class="sparkline">${mkSpark('var(--red)')}</div></div>
+      <div class="kpi-card"><div class="kpi-label">İptal Ciro</div><div class="kpi-val yellow">${fmtM(k.iptal_ciro)}</div><div class="kpi-badge yellow">%${k.iptal_oran}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Brüt Adet</div><div class="kpi-val">${fmtAdet(k.brut_adet)}</div><div class="kpi-sub">Toplam satış</div></div>
+      <div class="kpi-card"><div class="kpi-label">Net Adet</div><div class="kpi-val teal">${fmtAdet(k.net_adet)}</div><div class="kpi-sub">İade düşülmüş</div></div>
+      <div class="kpi-card"><div class="kpi-label">Net OBF</div><div class="kpi-val">${fmtTL(k.net_obf)}</div><div class="kpi-sub">Net sipariş büyüklüğü</div></div>
+      <div class="kpi-card"><div class="kpi-label">İade Oranı</div><div class="kpi-val ${k.iade_oran>30?'red':k.iade_oran>20?'yellow':'green'}">%${k.iade_oran}</div><div class="kpi-sub">Ciro bazında</div></div>
+      <div class="kpi-card"><div class="kpi-label">Toplam Kayıp</div><div class="kpi-val red">${fmtM(k.iade_ciro+k.iptal_ciro)}</div><div class="kpi-sub">İade + iptal</div></div>`;
+    // KPI Grid 1
+    document.getElementById('kpi-grid1').innerHTML=`
+      <div class="kpi-tile"><div class="lbl">Brüt Ciro</div><div class="val orange">${fmtM(k.brut_ciro)}</div><div class="sub">Toplam satış</div></div>
+      <div class="kpi-tile"><div class="lbl">Net Ciro</div><div class="val teal">${fmtM(k.net_ciro)}</div><div class="sub">İade & iptal sonrası</div></div>
+      <div class="kpi-tile"><div class="lbl">İade Ciro</div><div class="val red">${fmtM(k.iade_ciro)}</div><div class="sub">Depo iade</div></div>
+      <div class="kpi-tile"><div class="lbl">İptal Ciro</div><div class="val" style="color:var(--yellow)">${fmtM(k.iptal_ciro)}</div><div class="sub">İptal edilen</div></div>
+      <div class="kpi-tile"><div class="lbl">Toplam Kayıp</div><div class="val red">${fmtM(k.iade_ciro+k.iptal_ciro)}</div><div class="sub">İade + iptal</div></div>`;
+    document.getElementById('kpi-grid2').innerHTML=`
+      <div class="kpi-tile"><div class="lbl">Brüt Adet</div><div class="val">${fmtAdet(k.brut_adet)}</div><div class="sub">Toplam</div></div>
+      <div class="kpi-tile"><div class="lbl">Net Adet</div><div class="val teal">${fmtAdet(k.net_adet)}</div><div class="sub">İade düşülmüş</div></div>
+      <div class="kpi-tile"><div class="lbl">Net OBF</div><div class="val">${fmtTL(k.net_obf)}</div><div class="sub">Ortalama sipariş</div></div>
+      <div class="kpi-tile"><div class="lbl">İade Oranı</div><div class="val ${k.iade_oran>30?'red':k.iade_oran>20?'yellow':'green'}">%${k.iade_oran}</div><div class="sub">Ciro bazında</div></div>
+      <div class="kpi-tile"><div class="lbl">İptal Oranı</div><div class="val" style="color:var(--yellow)">%${k.iptal_oran}</div><div class="sub">Ciro bazında</div></div>`;
+  }catch(e){document.getElementById('kpi-strip').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+async function loadOverview(){
+  document.getElementById('trend-svg').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const d=await fetch(`${API}/portal/overview?${buildQ()}`).then(r=>r.json());
+    renderTrend(d.trend);renderKanalBars(d.kanal);renderKanalTable(d.kanal);
+  }catch(e){document.getElementById('trend-svg').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+function renderTrend(t){
+  if(!t.length){document.getElementById('trend-svg').innerHTML='<div class="empty">Veri yok</div>';return;}
+  const W=600,H=180,mx=Math.max(...t.map(r=>r.brut_m))||1;
+  const pts=(k)=>t.map((r,i)=>{const x=(i/(t.length-1||1))*W;const y=H-10-(r[k]/mx)*(H-20);return`${x.toFixed(1)},${y.toFixed(1)}`;}).join(' ');
+  const lbls=t.map((r,i)=>{const x=(i/(t.length-1||1))*W;return`<text x="${x.toFixed(0)}" y="${H}" fill="var(--t3)" font-size="9" text-anchor="middle">${AY_ADI[r.ay]?.slice(0,3)}</text>`;}).join('');
+  document.getElementById('trend-svg').innerHTML=`<svg width="100%" height="180" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line x1="0" y1="${H*.33}" x2="${W}" y2="${H*.33}" stroke="var(--border)" stroke-width="1"/>
+    <line x1="0" y1="${H*.66}" x2="${W}" y2="${H*.66}" stroke="var(--border)" stroke-width="1"/>
+    <polyline fill="none" stroke="var(--orange)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pts('brut_m')}"/>
+    <polyline fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${pts('net_m')}"/>
+    <polyline fill="none" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linecap="round" points="${pts('iade_m')}"/>
+    ${lbls}
+  </svg>`;
+}
+function renderKanalBars(kanal){
+  if(!kanal.length){document.getElementById('kanal-bars').innerHTML='<div class="empty">Veri yok</div>';return;}
+  const mx=Math.max(...kanal.map(k=>k.ciro))||1;
+  document.getElementById('kanal-bars').innerHTML='<div class="hbar-list" style="padding:6px 4px">'+kanal.map(k=>{
+    const c=KANAL_COLOR[k.kanal]||'#6b7280',pct=(k.ciro/mx*100).toFixed(1);
+    return`<div class="hbar-row" style="padding:0 6px"><div class="hbar-meta"><span class="hbar-name">${k.kanal}</span><span class="hbar-val">${fmtM(k.ciro)} · %${k.iade_oran} iade</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${pct}%;background:${c}"></div></div></div>`;
+  }).join('')+'</div>';
+  setTimeout(()=>animBars('kanal-bars'),50);
+}
+function renderKanalTable(kanal){
+  if(!kanal.length){document.getElementById('kanal-table').innerHTML='<div class="empty">Veri yok</div>';return;}
+  document.getElementById('kanal-table').innerHTML=`<table class="tbl"><thead><tr><th>Kanal</th><th class="num">Satış Ciro</th><th class="num">Adet</th><th class="num">Pay%</th><th class="num">İade Ciro</th><th class="num">İade%</th></tr></thead><tbody>`+
+  kanal.map(k=>`<tr><td class="name"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${KANAL_COLOR[k.kanal]||'#6b7280'};margin-right:7px"></span>${k.kanal}</td><td class="num teal">${fmtM(k.ciro)}</td><td class="num">${fmtAdet(k.adet)}</td><td class="num">${k.pay}%</td><td class="num red">${fmtM(k.iade_ciro)}</td><td class="num ${k.iade_oran>30?'red':k.iade_oran>20?'yellow':'green'}">${k.iade_oran}%</td></tr>`).join('')+
+  '</tbody></table>';
+}
+
+// ── KATEGORİ ─────────────────────────────────────────────────────────────────
+async function loadKategori(){
+  document.getElementById('kategori-table').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  document.getElementById('kategori-insights').innerHTML='<div class="insight-title">Kategori İçgörüleri</div><div class="loading"><div class="spinner"></div></div>';
+  try{
+    const data=await fetch(`${API}/portal/kategori?${buildQ()}`).then(r=>r.json());
+    if(!data.length){document.getElementById('kategori-table').innerHTML='<div class="empty">Veri yok</div>';return;}
+    // Table
+    document.getElementById('kategori-table').innerHTML=`<table class="tbl"><thead><tr><th>Kategori</th><th class="num">Brüt Ciro</th><th class="num">Brüt Adet</th><th class="num">İade Ciro</th><th class="num">Net Ciro</th><th class="num">Pay%</th><th class="num">İade%</th></tr></thead><tbody>`+
+    data.map((r,i)=>`<tr><td class="name"><span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;font-size:10px;font-weight:700;margin-right:7px;background:${i<3?'rgba(255,107,43,.15)':'var(--bg4)'};color:${i<3?'var(--orange)':'var(--t3)'}">${i+1}</span>${r.kategori}</td><td class="num">${fmtM(r.brut_ciro)}</td><td class="num">${fmtAdet(r.brut_adet)}</td><td class="num red">${fmtM(r.iade_ciro)}</td><td class="num teal">${fmtM(r.net_ciro)}</td><td class="num">${r.pay}%</td><td class="num ${r.iade_pct>30?'red':r.iade_pct>20?'yellow':'green'}">${r.iade_pct}%</td></tr>`).join('')+
+    '</tbody></table>';
+    // HBars
+    const mx=Math.max(...data.map(r=>r.brut_ciro))||1;
+    const KCAT_COLORS=['#ec4899','#f59e0b','#3b82f6','#00c2a8','#a855f7','#22c55e','#6b7280','#ff6b2b','#14b8a6','#ef4444'];
+    document.getElementById('kategori-bars').innerHTML=data.map((r,i)=>`<div class="hbar-row"><div class="hbar-meta"><span class="hbar-name">${r.kategori}</span><span class="hbar-val">${fmtM(r.brut_ciro)} · %${r.pay}</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${(r.brut_ciro/mx*100).toFixed(1)}%;background:${KCAT_COLORS[i%KCAT_COLORS.length]}"></div></div></div>`).join('');
+    setTimeout(()=>animBars('kategori-bars'),50);
+    // Insights
+    const top=data[0],worst=data.reduce((a,b)=>b.iade_pct>a.iade_pct?b:a),best=data.reduce((a,b)=>b.iade_pct<a.iade_pct?b:a);
+    document.getElementById('kategori-insights').innerHTML=`
+      <div class="insight-title">Kategori İçgörüleri</div>
+      <div class="insight-item"><div class="insight-tag green">En Yüksek Ciro</div><div class="insight-text">${top.kategori} · %${top.pay} pay · ${fmtM(top.brut_ciro)} brüt</div></div>
+      <div class="insight-item"><div class="insight-tag red">En Yüksek İade</div><div class="insight-text">${worst.kategori} · %${worst.iade_pct} iade oranı · ${fmtM(worst.iade_ciro)} kayıp</div></div>
+      <div class="insight-item"><div class="insight-tag teal">En Sağlıklı</div><div class="insight-text">${best.kategori} · %${best.iade_pct} iade · Net ${fmtM(best.net_ciro)}</div></div>
+      ${data.filter(r=>r.iade_pct>35).slice(0,2).map(r=>`<div class="insight-item"><div class="insight-tag yellow">Yüksek Risk</div><div class="insight-text">${r.kategori} · %${r.iade_pct} iade · ${fmtM(r.iade_ciro)} kayıp</div></div>`).join('')}`;
+  }catch(e){document.getElementById('kategori-table').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── TOP ÜRÜNLER ──────────────────────────────────────────────────────────────
+async function loadTopUrunler(){
+  document.getElementById('top-urunler-table').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  const sortBy=document.getElementById('top-sort')?.value||'net_ciro';
+  const limit=document.getElementById('top-limit')?.value||20;
+  try{
+    const data=await fetch(`${API}/portal/top-urunler?${buildQ()}&limit=${limit}&sort_by=${sortBy}`).then(r=>r.json());
+    document.getElementById('top-urunler-count').textContent=`İlk ${data.length} ürün`;
+    const RANK_STYLE=(i)=>i===0?['rgba(255,107,43,.2)','var(--orange)']:i===1?['rgba(0,194,168,.15)','var(--teal)']:i===2?['rgba(59,130,246,.15)','var(--blue)']:['var(--bg4)','var(--t3)'];
+    document.getElementById('top-urunler-table').innerHTML=`
+      <table class="tbl">
+        <thead><tr>
+          <th style="width:38px;text-align:center">#</th>
+          <th style="width:46px">Görsel</th>
+          <th style="min-width:180px">Ürün</th>
+          <th>Marka · Grup</th>
+          <th class="num">Net Ciro</th>
+          <th class="num">Brüt Ciro</th>
+          <th class="num">Adet</th>
+          <th class="num">İade %</th>
+        </tr></thead>
+        <tbody>${data.map((p,i)=>{
+          const ic=IADE_COLOR(p.iade_pct);
+          const [rBg,rCol]=RANK_STYLE(i);
+          return`<tr onclick="openModal('${p.urun_kodu}')">
+            <td style="text-align:center;padding:8px 6px">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;font-size:10px;font-weight:700;background:${rBg};color:${rCol}">#${p.rank}</span>
+            </td>
+            <td style="padding:6px 8px 6px 14px">
+              <div class="thumb-wrap" style="position:relative">
+                ${p.image_url?`<img src="${p.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.remove()" loading="lazy">`:
+                `<span style="font-size:13px">${EMOJIS[i%EMOJIS.length]}</span>`}
+              </div>
+            </td>
+            <td>
+              <div style="font-size:11px;font-weight:500;color:var(--t1);line-height:1.4;white-space:normal">${p.urun_adi}</div>
+              <div style="font-size:9px;color:var(--t3);font-family:monospace;margin-top:2px">${p.urun_kodu}</div>
+            </td>
+            <td>
+              ${p.marka_adi?`<span style="font-size:10px;color:var(--orange);font-weight:500">${p.marka_adi}</span>`:''}
+              ${p.urun_grubu_adi?`<div style="font-size:9px;color:var(--t3);margin-top:1px">${p.urun_grubu_adi}</div>`:''}
+            </td>
+            <td class="num teal" style="font-weight:600">${fmtM(p.net_ciro)}</td>
+            <td class="num">${fmtM(p.brut_ciro)}</td>
+            <td class="num">${fmtAdet(p.brut_adet)}</td>
+            <td class="num">
+              <span style="font-weight:700;color:${ic}">${parseFloat(p.iade_pct).toFixed(1)}%</span>
+              <div style="margin-top:3px;height:3px;background:var(--bg4);border-radius:2px;width:44px;margin-left:auto">
+                <div style="height:3px;border-radius:2px;background:${ic};width:${Math.min(parseFloat(p.iade_pct),100)}%"></div>
+              </div>
+            </td>
+          </tr>`;}).join('')}
+        </tbody>
+      </table>`;
+  }catch(e){document.getElementById('top-urunler-table').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── İADE ANALİZİ ─────────────────────────────────────────────────────────────
+async function loadIade(){
+  loadIadeUrunler(1);
+  loadIadeAggregate();
+}
+
+async function loadIadeUrunler(page){
+  document.getElementById('iade-urun-table').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  const sortBy=document.getElementById('iade-sort')?.value||'iade_ciro';
+  // Reuse products endpoint, sorted by iade
+  const q=buildQ({sku:true,renk:true,beden:true})+`&sort_by=iade_pct&page=${page}&page_size=50`;
+  try{
+    const d=await fetch(`${API}/portal/products?${q}`).then(r=>r.json());
+    document.getElementById('iade-urun-count').textContent=`${fmtAdet(d.total)} ürün`;
+    // İade KPI özet (sadece ilk yüklemede)
+    if(page===1 && d.items.length){
+      const kritik=d.items.filter(p=>p.iade_pct>=50).length;
+      const yuksek=d.items.filter(p=>p.iade_pct>=30&&p.iade_pct<50).length;
+      document.getElementById('iade-kpis').innerHTML=`
+        <div class="kpi-tile"><div class="lbl">Toplam Ürün</div><div class="val">${fmtAdet(d.total)}</div><div class="sub">İade kaydı olan</div></div>
+        <div class="kpi-tile"><div class="lbl">Bu Sayfada Kritik</div><div class="val red">${kritik}</div><div class="sub">%50+ iade oranı</div></div>
+        <div class="kpi-tile"><div class="lbl">Bu Sayfada Yüksek</div><div class="val yellow">${yuksek}</div><div class="sub">%30–50 iade oranı</div></div>
+        <div class="kpi-tile"><div class="lbl">Ortalama İade</div><div class="val" style="color:${IADE_COLOR(d.items.reduce((a,p)=>a+p.iade_pct,0)/d.items.length)}">${(d.items.reduce((a,p)=>a+p.iade_pct,0)/d.items.length).toFixed(1)}%</div><div class="sub">Bu filtre için</div></div>`;
+    }
+    if(!d.items.length){document.getElementById('iade-urun-table').innerHTML='<div class="empty">Sonuç bulunamadı</div>';return;}
+    const rows=d.items.map(p=>{
+      const ip=parseFloat(p.iade_pct)||0,bc=IADE_COLOR(ip);
+      const img=`<div class="thumb-wrap" style="margin-right:7px">${
+        p.image_url?`<img src="${p.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.remove()" loading="lazy">`:''
+      }No<br>img</div>`;
+      return`<tr onclick="openModal('${p.urun_kodu}')">
+        <td style="vertical-align:middle">${img}<span style="font-size:10px;font-family:monospace;color:var(--t3)">${p.urun_kodu}</span></td>
+        <td class="name">${p.urun_adi}
+          <div style="display:flex;gap:4px;margin-top:2px">
+            ${p.marka_adi?`<span style="font-size:9px;color:var(--orange)">${p.marka_adi}</span>`:''}
+            ${p.urun_grubu_adi?`<span style="font-size:9px;color:var(--t3)">${p.urun_grubu_adi}</span>`:''}
+          </div>
+        </td>
+        <td class="num">${fmtM(p.brut_ciro)}</td>
+        <td class="num red">${fmtM(p.iade_ciro)}</td>
+        <td class="num">${fmtAdet(p.iade_adet)}</td>
+        <td class="num"><span style="font-size:12px;font-weight:700;color:${bc}">${ip.toFixed(1)}%</span></td>
+        <td><span class="risk-badge risk-${RISK_CLASS(p.risk_seviye)}">${p.risk_seviye}</span></td>
+        <td style="font-size:10px;color:var(--t3)">→ Detay</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('iade-urun-table').innerHTML=`
+      <table class="tbl">
+        <thead><tr>
+          <th style="min-width:140px">SKU / Görsel</th>
+          <th style="min-width:160px">Ürün · Marka · Grup</th>
+          <th class="num">Brüt Ciro</th>
+          <th class="num">İade Ciro</th>
+          <th class="num">İade Adet</th>
+          <th class="num">İade%</th>
+          <th>Risk</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    // Pagination
+    const el=document.getElementById('iade-pagination');
+    if(d.total_pages<=1){el.innerHTML='';return;}
+    let html=`<button class="page-btn" onclick="loadIadeUrunler(${Math.max(1,page-1)})" ${page===1?'disabled':''}>‹</button>`;
+    for(let i=1;i<=d.total_pages;i++){
+      if(i===1||i===d.total_pages||(i>=page-2&&i<=page+2))html+=`<button class="page-btn ${i===page?'active':''}" onclick="loadIadeUrunler(${i})">${i}</button>`;
+      else if(i===page-3||i===page+3)html+='<span class="page-info">…</span>';
+    }
+    html+=`<button class="page-btn" onclick="loadIadeUrunler(${Math.min(d.total_pages,page+1)})" ${page===d.total_pages?'disabled':''}>›</button><span class="page-info">${page}/${d.total_pages}</span>`;
+    el.innerHTML=html;
+  }catch(e){document.getElementById('iade-urun-table').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+async function loadIadeAggregate(){
+  ['iade-beden-bars','iade-renk-bars'].forEach(id=>document.getElementById(id).innerHTML='<div class="loading"><div class="spinner"></div></div>');
+  try{
+    const d=await fetch(`${API}/portal/iade-analiz?${buildQ()}`).then(r=>r.json());
+    const mxB=Math.max(...d.beden.map(b=>b.iade_pct),1);
+    document.getElementById('iade-beden-bars').innerHTML=d.beden.map(b=>`<div class="hbar-row"><div class="hbar-meta"><span class="hbar-name">${b.deger}</span><span class="hbar-val" style="color:${IADE_COLOR(b.iade_pct)}">%${b.iade_pct} · ${fmtAdet(b.iade_adet)} adet</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${(b.iade_pct/mxB*100).toFixed(0)}%;background:${IADE_COLOR(b.iade_pct)}"></div></div></div>`).join('');
+    const mxR=Math.max(...d.renk.map(r=>r.iade_ciro),1);
+    document.getElementById('iade-renk-bars').innerHTML=d.renk.slice(0,15).map(r=>`<div class="hbar-row"><div class="hbar-meta"><span class="hbar-name">${r.deger}</span><span class="hbar-val">${fmtM(r.iade_ciro)} · %${r.iade_pct}</span></div><div class="hbar-track"><div class="hbar-fill" style="width:${(r.iade_ciro/mxR*100).toFixed(0)}%;background:${IADE_COLOR(r.iade_pct)}"></div></div></div>`).join('');
+    setTimeout(()=>['iade-beden-bars','iade-renk-bars'].forEach(id=>animBars(id)),50);
+  }catch(e){['iade-beden-bars','iade-renk-bars'].forEach(id=>document.getElementById(id).innerHTML=`<div class="empty">Veri yüklenemedi</div>`);}
+}
+
+// ── RİSK ANALİZİ ─────────────────────────────────────────────────────────────
+async function loadRisk(){
+  document.getElementById('risk-groups').innerHTML='<div class="loading" style="grid-column:1/4"><div class="spinner"></div></div>';
+  try{
+    const d=await fetch(`${API}/portal/karlilik?${buildQ()}`).then(r=>r.json());
+    document.getElementById('badge-karlilik').textContent=d.stats.kritik_sayi+d.stats.yuksek_sayi;
+    const mkRows=(items,color)=>items.length?items.map((p,i)=>`<div class="ranking-row" onclick="openModal('${p.urun_kodu}')" style="display:flex;align-items:center;gap:9px;padding:8px 14px;border-bottom:1px solid rgba(42,42,58,.3);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      <div style="width:20px;height:20px;border-radius:4px;background:${i<3?'rgba(255,107,43,.15)':'var(--bg4)'};color:${i<3?'var(--orange)':'var(--t3)'};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.urun_adi}</div><div style="font-size:9px;color:var(--t3)">${p.urun_grubu_adi||''}</div></div>
+      <div style="text-align:right"><div style="font-size:11px;font-weight:600;color:${color}">%${p.iade_pct}</div><div style="font-size:9px;color:var(--t3)">${fmtM(p.net_ciro)}</div></div>
+    </div>`):'<div class="empty">Bu kategoride ürün yok</div>';
+    document.getElementById('risk-groups').innerHTML=`
+      <div class="table-card anim"><div class="table-header"><span class="table-title" style="color:var(--red)">🔴 KRİTİK — %50+ İade</span><span style="font-size:10px;color:var(--t3)">${d.stats.kritik_sayi} ürün</span></div><div style="max-height:350px;overflow-y:auto">${mkRows(d.kritik,'var(--red)')}</div></div>
+      <div class="table-card anim anim-d1"><div class="table-header"><span class="table-title" style="color:var(--yellow)">🟡 YÜKSEK — %30–50 İade</span><span style="font-size:10px;color:var(--t3)">${d.stats.yuksek_sayi} ürün</span></div><div style="max-height:350px;overflow-y:auto">${mkRows(d.yuksek,'var(--yellow)')}</div></div>
+      <div class="table-card anim anim-d2"><div class="table-header"><span class="table-title" style="color:var(--teal)">🟢 SAĞLIKLI — <%15 İade</span><span style="font-size:10px;color:var(--t3)">${d.stats.saglikli_sayi} ürün</span></div><div style="max-height:350px;overflow-y:auto">${mkRows(d.saglikli,'var(--teal)')}</div></div>`;
+  }catch(e){document.getElementById('risk-groups').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── KÂRLILIK ──────────────────────────────────────────────────────────────────
+async function loadKarlilik(){
+  document.getElementById('karlilik-stats').innerHTML='<div class="loading" style="grid-column:1/6"><div class="spinner"></div></div>';
+  try{
+    const d=await fetch(`${API}/portal/karlilik?${buildQ()}`).then(r=>r.json());
+    const s=d.stats;
+    document.getElementById('karlilik-stats').innerHTML=`
+      <div class="kpi-tile anim"><div class="lbl">Kritik Ürün</div><div class="val red">${s.kritik_sayi}</div><div class="sub">%50+ iade</div></div>
+      <div class="kpi-tile anim anim-d1"><div class="lbl">Kritik Iade Ciro</div><div class="val red">${fmtM(s.kritik_iade_ciro)}</div><div class="sub">Erime potansiyeli</div></div>
+      <div class="kpi-tile anim anim-d2"><div class="lbl">Yüksek Risk</div><div class="val yellow">${s.yuksek_sayi}</div><div class="sub">%30–50 iade</div></div>
+      <div class="kpi-tile anim anim-d3"><div class="lbl">Yüksek Risk Ciro</div><div class="val yellow">${fmtM(s.yuksek_iade_ciro)}</div><div class="sub">Toplam iade kaybı</div></div>
+      <div class="kpi-tile anim anim-d4"><div class="lbl">Sağlıklı Ürün</div><div class="val teal">${s.saglikli_sayi}</div><div class="sub"><%15 iade, 20+ satış</div></div>`;
+    const mkTable=(items,title,color)=>`<div class="table-card"><div class="table-header"><span class="table-title" style="color:${color}">${title}</span></div><table class="tbl"><thead><tr><th>Ürün</th><th class="num">Brüt</th><th class="num">Net</th><th class="num">İade%</th></tr></thead><tbody>`+
+    items.slice(0,10).map(p=>`<tr onclick="openModal('${p.urun_kodu}')" style="cursor:pointer"><td class="name">${p.urun_adi}</td><td class="num">${fmtM(p.brut_ciro)}</td><td class="num teal">${fmtM(p.net_ciro)}</td><td class="num ${p.iade_pct>50?'red':p.iade_pct>30?'yellow':'green'}">${p.iade_pct}%</td></tr>`).join('')+
+    '</tbody></table></div>';
+    document.getElementById('karlilik-tables').innerHTML=
+      mkTable(d.kritik,'🔴 Kritik İade Ürünleri','var(--red)')+
+      mkTable(d.saglikli,'🟢 Sağlıklı Ürünler','var(--teal)');
+  }catch(e){document.getElementById('karlilik-stats').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── PRODUCTS ──────────────────────────────────────────────────────────────────
+async function loadProducts(page){
+  document.getElementById('products-table').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  const sortBy=document.getElementById('sort-by').value;
+  const q=buildQ({sku:true,renk:true,beden:true})+`&sort_by=${sortBy}&page=${page}&page_size=50`;
+  try{
+    const d=await fetch(`${API}/portal/products?${q}`).then(r=>r.json());
+    document.getElementById('products-count').textContent=`${fmtAdet(d.total)} ürün`;
+    document.getElementById('badge-products').textContent=fmtAdet(d.total);
+    if(!d.items.length){document.getElementById('products-table').innerHTML='<div class="empty">Sonuç bulunamadı</div>';document.getElementById('products-pagination').innerHTML='';return;}
+    const rows=d.items.map(p=>{
+      const ip=parseFloat(p.iade_pct)||0,bw=Math.min(ip,100),bc=IADE_COLOR(ip);
+      const img=`<div class="thumb-wrap" style="margin-right:7px">${
+        p.image_url?`<img src="${p.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:5px" onerror="this.remove()" loading="lazy">`:''
+      }No<br>img</div>`;
+      return`<tr onclick="openModal('${p.urun_kodu}')"><td style="vertical-align:middle">${img}<span style="font-size:10px;font-family:monospace;color:var(--t3)">${p.urun_kodu}</span></td><td class="name">${p.urun_adi}<div style="display:flex;gap:5px;margin-top:2px">${p.marka_adi?`<span style="font-size:9px;color:var(--orange)">${p.marka_adi}</span>`:''}${p.urun_grubu_adi?`<span style="font-size:9px;color:var(--t3)">${p.urun_grubu_adi}</span>`:''}</div></td><td class="num teal">${fmtM(p.brut_ciro)}</td><td class="num">${fmtM(p.net_ciro)}</td><td class="num red">${fmtM(p.iade_ciro)}</td><td class="num">${fmtAdet(p.brut_adet)}</td><td class="num"><div class="iade-wrap"><span style="color:${bc};min-width:35px">${ip.toFixed(1)}%</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${bw}%;background:${bc}"></div></div></div></td><td><span class="risk-badge risk-${RISK_CLASS(p.risk_seviye)}">${p.risk_seviye}</span></td></tr>`;
+    }).join('');
+    document.getElementById('products-table').innerHTML=`<table class="tbl"><thead><tr><th style="min-width:150px">SKU / Görsel</th><th style="min-width:180px">Ürün · Marka · Grup</th><th class="num">Brüt</th><th class="num">Net</th><th class="num">İade</th><th class="num">Adet</th><th class="num" style="min-width:120px">İade%</th><th>Risk</th></tr></thead><tbody>${rows}</tbody></table>`;
+    // Pagination
+    const pel=document.getElementById('products-pagination');
+    if(d.total_pages<=1){pel.innerHTML='';} else {
+      let ph=`<button class="page-btn" onclick="loadProducts(${Math.max(1,page-1)})" ${page===1?'disabled':''}>‹</button>`;
+      for(let i=1;i<=d.total_pages;i++){
+        if(i===1||i===d.total_pages||(i>=page-2&&i<=page+2))ph+=`<button class="page-btn ${i===page?'active':''}" onclick="loadProducts(${i})">${i}</button>`;
+        else if(i===page-3||i===page+3)ph+='<span class="page-info">…</span>';
+      }
+      ph+=`<button class="page-btn" onclick="loadProducts(${Math.min(d.total_pages,page+1)})" ${page===d.total_pages?'disabled':''}>›</button><span class="page-info">${page}/${d.total_pages}</span>`;
+      pel.innerHTML=ph;
+    }
+  }catch(e){document.getElementById('products-table').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+
+// ── RENK ANALİZİ ─────────────────────────────────────────────────────────────
+async function loadColors(){
+  try{
+    const d=await fetch(`${API}/portal/colors?${buildQ()}`).then(r=>r.json());
+    const mx=Math.max(...d.map(r=>r.brut_ciro))||1;
+    document.getElementById('colors-bars').innerHTML=d.slice(0,15).map(r=>`<div class="hbar-row"><div class="hbar-meta"><span class="hbar-name">${r.renk}</span><span class="hbar-val">${fmtM(r.brut_ciro)} · <span style="color:${IADE_COLOR(r.iade_pct)}">%${r.iade_pct}</span></span></div><div class="hbar-track"><div class="hbar-fill" style="width:${(r.brut_ciro/mx*100).toFixed(0)}%;background:${IADE_COLOR(r.iade_pct)}"></div></div></div>`).join('');
+    document.getElementById('colors-table').innerHTML=`<table class="tbl"><thead><tr><th>Renk</th><th class="num">Brüt</th><th class="num">Pay%</th><th class="num">İade%</th></tr></thead><tbody>`+
+    d.map(r=>`<tr><td class="name">${r.renk}</td><td class="num">${fmtM(r.brut_ciro)}</td><td class="num">${r.pay}%</td><td class="num ${r.iade_pct>30?'red':r.iade_pct>20?'yellow':'green'}">${r.iade_pct}%</td></tr>`).join('')+
+    '</tbody></table>';
+    setTimeout(()=>animBars('colors-bars'),50);
+  }catch(e){}
+}
+
+// ── AI CHAT ───────────────────────────────────────────────────────────────────
+const AI_SUGGESTIONS=[
+  'En çok iade edilen 5 ürün hangileri?',
+  'Kanal bazında net ciro ve iade oranları',
+  'Bu dönem en çok satan ürün grupları',
+  'Trendyol vs ADL satış karşılaştırması',
+  'En düşük iade oranlı sağlıklı ürünler',
+  'Aylık net ciro trendi',
+];
+
+function initAISection(){
+  // Filter info
+  const parts=[];
+  if(state.yil)parts.push(state.yil);
+  if(state.ay.length)parts.push(AY_ADI[state.ay[0]]);
+  if(state.kanal.length)parts.push(state.kanal[0]);
+  document.getElementById('ai-filter-info').textContent=parts.length?'Filtre: '+parts.join(' · '):'Filtre: Tümü';
+  // Hint chips in welcome
+  const chips=document.getElementById('ai-hint-chips');
+  if(chips&&!chips.hasChildNodes()){
+    AI_SUGGESTIONS.slice(0,4).forEach(s=>{
+      const c=document.createElement('span');c.className='ai-chip';c.textContent=s;
+      c.onclick=()=>{document.getElementById('ai-question').value=s;askAI();};
+      chips.appendChild(c);
+    });
+  }
+}
+
+function aiKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askAI();}
+}
+
+function clearChat(){
+  const chat=document.getElementById('ai-chat');
+  // Keep welcome msg
+  const welcome=document.getElementById('ai-welcome');
+  chat.innerHTML='';
+  chat.appendChild(welcome);
+}
+
+// Markdown → HTML renderer
+function renderMD(text){
+  if(!text)return '';
+  let h=text
+    // Escape HTML except in code blocks
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // Code blocks (inline)
+    .replace(/`([^`]+)`/g,'<code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px;color:var(--teal)">$1</code>')
+    // Headers
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    // Bold + italic
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Horizontal rule
+    .replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">')
+    // Numbered lists
+    .replace(/^\d+\.\s+(.+)$/gm,'<li>$1</li>')
+    // Bullet lists
+    .replace(/^[-*]\s+(.+)$/gm,'<li>$1</li>')
+    // Wrap li groups
+    .replace(/((<li>.*<\/li>\n?)+)/g,'<ul>$1</ul>')
+    // Tables
+    .replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g,(m,h,rows)=>{
+      const heads=h.split('|').map(s=>s.trim()).filter(Boolean);
+      const body=rows.trim().split('\n').map(r=>{
+        const cells=r.split('|').map(s=>s.trim()).filter(Boolean);
+        return '<tr>'+cells.map(c=>`<td>${c}</td>`).join('')+'</tr>';
+      }).join('');
+      return '<table><thead><tr>'+heads.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+body+'</tbody></table>';
+    })
+    // Paragraphs
+    .replace(/\n\n/g,'</p><p>')
+    // Line breaks
+    .replace(/\n/g,'<br>');
+  // Wrap in p if no block elements
+  if(!/<(h[123]|ul|ol|table|hr)/.test(h))h=`<p>${h}</p>`;
+  else h=`<div>${h}</div>`;
+  return h;
+}
+
+// Render data rows as table
+function renderDataTable(rows,limit=20){
+  if(!rows||!rows.length)return '';
+  const keys=Object.keys(rows[0]);
+  const shown=rows.slice(0,limit);
+  const header='<tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr>';
+  const body=shown.map(r=>'<tr>'+keys.map(k=>{
+    const v=r[k];
+    const vs=v===null||v===undefined?'—':typeof v==='number'?v.toLocaleString('tr-TR',{maximumFractionDigits:2}):String(v);
+    const isNum=typeof v==='number';
+    const isMoney=isNum&&(k.toLowerCase().includes('ciro')||k.toLowerCase().includes('tutar')||k.toLowerCase().includes('obf'));
+    const display=isMoney&&Math.abs(v)>=1000?fmtM(v):vs;
+    return`<td${isNum?' style="text-align:right"':''}>${display}</td>`;
+  }).join('')+'</tr>').join('');
+  return`<table><thead>${header}</thead><tbody>${body}</tbody></table>`+
+    (rows.length>limit?`<p style="font-size:10px;color:var(--t3);margin-top:4px">İlk ${limit} satır gösteriliyor (toplam ${rows.length})</p>`:'');
+}
+
+async function askAI(){
+  const textarea=document.getElementById('ai-question');
+  const q=textarea.value.trim();if(!q)return;
+  textarea.value='';textarea.style.height='auto';
+  const useFilters=document.getElementById('ai-use-filters').checked;
+  const showSQL=document.getElementById('ai-show-sql').checked;
+  const chat=document.getElementById('ai-chat');
+  document.getElementById('ai-welcome').style.display='none';
+
+  // User message
+  chat.insertAdjacentHTML('beforeend',`
+    <div class="ai-user-msg anim">
+      <div class="ai-user-bubble">${q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>`);
+
+  // Thinking indicator
+  const thinkId='think-'+Date.now();
+  chat.insertAdjacentHTML('beforeend',`
+    <div class="ai-bot-msg" id="${thinkId}">
+      <div class="ai-bot-avatar">🤖</div>
+      <div class="ai-bot-bubble">
+        <div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">Analiz ediliyor...</span></div>
+      </div>
+    </div>`);
+  chat.scrollTop=chat.scrollHeight;
+
+  try{
+    const payload={question:q,use_cache:false};
+    if(useFilters&&(state.yil||state.ay.length||state.kanal.length)){
+      payload.filters={};
+      if(state.yil)payload.filters.yil=state.yil;
+      if(state.ay.length===1)payload.filters.ay=state.ay[0];
+      if(state.kanal.length===1)payload.filters.satiskanali=state.kanal[0];
+    }
+    const d=await fetch(`${API}/query`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json());
+
+    // Remove thinking
+    document.getElementById(thinkId)?.remove();
+
+    if(d.error){
+      chat.insertAdjacentHTML('beforeend',`
+        <div class="ai-bot-msg anim">
+          <div class="ai-bot-avatar">🤖</div>
+          <div class="ai-bot-bubble"><p style="color:var(--red)">${d.detail||'Bilinmeyen hata'}</p></div>
+        </div>`);
+    } else {
+      const answerHtml=renderMD(d.answer||'');
+      const dataHtml=d.rows&&d.rows.length?renderDataTable(d.rows):'';
+      const sqlHtml=showSQL&&d.sql?`
+        <div class="ai-sql-block" onclick="this.style.display='none'" title="Gizlemek için tıklayın">${d.sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
+      const filterTag=useFilters&&(state.yil||state.ay.length)?`<span style="background:rgba(255,107,43,.1);color:var(--orange);padding:1px 7px;border-radius:4px">${state.yil||''} ${state.ay.length?AY_ADI[state.ay[0]]:''}</span>`:'';
+      chat.insertAdjacentHTML('beforeend',`
+        <div class="ai-bot-msg anim">
+          <div class="ai-bot-avatar">🤖</div>
+          <div class="ai-bot-bubble">
+            ${answerHtml}
+            ${dataHtml}
+            ${sqlHtml}
+            <div class="ai-meta">
+              ${filterTag}
+              <span>${d.row_count||0} satır</span>
+              <span>${d.elapsed_ms||0}ms</span>
+              ${d.cached?'<span style="color:var(--teal)">⚡ cache</span>':''}
+            </div>
+          </div>
+        </div>`);
+    }
+  }catch(e){
+    document.getElementById(thinkId)?.remove();
+    chat.insertAdjacentHTML('beforeend',`
+      <div class="ai-bot-msg anim">
+        <div class="ai-bot-avatar">🤖</div>
+        <div class="ai-bot-bubble"><p style="color:var(--red)">Bağlantı hatası: ${e.message}</p></div>
+      </div>`);
+  }
+  chat.scrollTop=chat.scrollHeight;
+}
+
+// ── DRILLDOWN MODAL ───────────────────────────────────────────────────────────
+async function openModal(sku){
+  const overlay=document.getElementById('modal-overlay');overlay.classList.add('open');
+  document.getElementById('modal-sku-code').textContent=sku;
+  document.getElementById('modal-sku-name').textContent='Yükleniyor...';
+  document.getElementById('modal-kpis').innerHTML='';
+  document.getElementById('modal-body').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  document.getElementById('modal-attributes').innerHTML='';
+  document.getElementById('modal-product-img').innerHTML='<span style="font-size:22px;opacity:.2">🖼</span>';
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  modalTabActive='trend';
+  const p=new URLSearchParams(location.search);p.set('drilldown',sku);history.replaceState({},'','?'+p.toString());
+  try{
+    const q=buildQ();
+    const d=await fetch(`${API}/portal/products/${encodeURIComponent(sku)}?${q}`).then(r=>r.json());
+    drilldownData=d;
+    document.getElementById('modal-sku-name').textContent=d.urun_adi;
+    const ic=IADE_COLOR(d.iade_pct);
+    // Image
+    if(d.first_color_code||d.color_codes){
+      const fc=(d.first_color_code||d.color_codes.split(',')[0]||'001');
+      document.getElementById('modal-product-img').innerHTML=`<img src="${IMG_BASE}/${sku}_${fc}_1.jpg" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=font-size:22px;opacity:.2>🖼</span>'" loading="lazy">`;
+    }
+    // Attributes
+    const attrs=[];
+    if(d.marka_adi)attrs.push(`<span style="font-size:9px;background:rgba(255,107,43,.15);color:var(--orange);padding:2px 7px;border-radius:4px">${d.marka_adi}</span>`);
+    if(d.urun_grubu_adi)attrs.push(`<span style="font-size:9px;background:var(--bg3);color:var(--t2);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">${d.urun_grubu_adi}</span>`);
+    if(d.sezon_adi)attrs.push(`<span style="font-size:9px;background:var(--bg4);color:var(--t3);padding:2px 7px;border-radius:4px">${d.sezon_adi}</span>`);
+    document.getElementById('modal-attributes').innerHTML=attrs.join('');
+    // KPIs
+    document.getElementById('modal-kpis').innerHTML=`
+      <div class="modal-kpi"><div class="mk-label">Brüt Ciro</div><div class="mk-val" style="color:var(--orange)">${fmtM(d.brut_ciro)}</div></div>
+      <div class="modal-kpi"><div class="mk-label">Net Ciro</div><div class="mk-val" style="color:var(--teal)">${fmtM(d.net_ciro)}</div></div>
+      <div class="modal-kpi"><div class="mk-label">İade Oranı</div><div class="mk-val" style="color:${ic}">%${d.iade_pct}</div></div>`;
+    renderModalTab('trend');
+  }catch(e){document.getElementById('modal-body').innerHTML=`<div class="empty">Hata: ${e.message}</div>`;}
+}
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-overlay'))return;
+  document.getElementById('modal-overlay').classList.remove('open');
+  const p=new URLSearchParams(location.search);p.delete('drilldown');history.replaceState({},'','?'+p.toString());
+}
+function modalTab(tab,el){
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  modalTabActive=tab;renderModalTab(tab);
+}
+function renderModalTab(tab){
+  if(!drilldownData)return;const d=drilldownData,body=document.getElementById('modal-body');
+  if(tab==='trend'){
+    if(!d.aylik_trend.length){body.innerHTML='<div class="empty">Veri yok</div>';return;}
+    body.innerHTML='<div class="modal-section-title">Aylık Trend</div><table class="tbl"><thead><tr><th>Ay</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">Adet</th><th class="num">İade%</th></tr></thead><tbody>'+
+    d.aylik_trend.map(t=>`<tr><td>${t.ay_adi}</td><td class="num teal">${fmtM(t.brut_ciro)}</td><td class="num red">${fmtM(t.iade_ciro)}</td><td class="num">${fmtAdet(t.brut_adet)}</td><td class="num ${t.iade_pct>30?'red':t.iade_pct>20?'yellow':'green'}">${t.iade_pct}%</td></tr>`).join('')+
+    '</tbody></table>';
+  }else if(tab==='dagilim'){
+    const mkT=(items,col)=>'<table class="tbl"><thead><tr><th>'+col+'</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">İade%</th></tr></thead><tbody>'+items.map(r=>`<tr><td class="name">${r.deger}</td><td class="num">${fmtM(r.brut_ciro)}</td><td class="num red">${fmtM(r.iade_ciro)}</td><td class="num ${r.iade_pct>30?'red':r.iade_pct>20?'yellow':'green'}">${r.iade_pct}%</td></tr>`).join('')+'</tbody></table>';
+    body.innerHTML='<div class="modal-section-title">Renk</div>'+mkT(d.renk_dagilim,'Renk')+'<div class="modal-section-title" style="margin-top:14px">Beden</div>'+mkT(d.beden_dagilim,'Beden');
+  }else if(tab==='kanal'){
+    const mkT=(items)=>'<table class="tbl"><thead><tr><th>Kanal</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">İade%</th></tr></thead><tbody>'+items.map(r=>`<tr><td class="name">${r.deger}</td><td class="num">${fmtM(r.brut_ciro)}</td><td class="num red">${fmtM(r.iade_ciro)}</td><td class="num ${r.iade_pct>30?'red':r.iade_pct>20?'yellow':'green'}">${r.iade_pct}%</td></tr>`).join('')+'</tbody></table>';
+    body.innerHTML='<div class="modal-section-title">Kanal Dağılımı</div>'+mkT(d.kanal_dagilim);
+  }else if(tab==='canli'){
+    loadProductLive(d.urun_kodu);
+  }
+}
+
+async function loadProductLive(sku){
+  const body=document.getElementById('modal-body');
+  body.innerHTML='<div class="loading"><div class="spinner"></div> Pimland\'dan canlı veri çekiliyor...</div>';
+  try{
+    const d=await fetch(`${API}/portal/product-live/${encodeURIComponent(sku)}`).then(r=>r.json());
+
+    // Stok özeti
+    const stokTopla=(stoklar)=>stoklar.reduce((a,s)=>a+s.stok,0);
+    const stokRenk=d.stok.reduce((acc,s)=>{
+      const k=s.renk_kodu||'?';
+      acc[k]=(acc[k]||0)+s.stok;
+      return acc;
+    },{});
+
+    // ERP fiyat
+    const ep=d.erp_fiyat;
+    const margin=ep&&ep.maliyet&&ep.satis_fiyati?
+      ((ep.satis_fiyati-ep.maliyet)/ep.satis_fiyati*100).toFixed(1):null;
+
+    let html=`
+      <!-- KPI bar -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;border:1px solid var(--border)">
+        <div style="background:var(--bg2);padding:12px">
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Toplam Stok</div>
+          <div style="font-size:18px;font-weight:700;color:${d.toplam_stok>0?'var(--teal)':'var(--red)'}">${fmtAdet(d.toplam_stok)}</div>
+          <div style="font-size:9px;color:var(--t3)">${d.bedenler.length} beden mevcut</div>
+        </div>
+        <div style="background:var(--bg2);padding:12px">
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Satış Fiyatı</div>
+          <div style="font-size:18px;font-weight:700;color:var(--orange)">${ep?fmtTL(ep.satis_fiyati):'—'}</div>
+          <div style="font-size:9px;color:var(--t3)">${ep?.indirimli?'🏷 İndirimli':'Normal fiyat'}</div>
+        </div>
+        <div style="background:var(--bg2);padding:12px">
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Gross Margin</div>
+          <div style="font-size:18px;font-weight:700;color:${margin&&parseFloat(margin)>40?'var(--green)':'var(--yellow)'}">${margin?'%'+margin:'—'}</div>
+          <div style="font-size:9px;color:var(--t3)">${ep?'KDV: %'+ep.kdv:'—'}</div>
+        </div>
+      </div>`;
+
+    // Stok — beden bazında
+    if(d.stok.length){
+      html+=`<div class="modal-section-title">Stok Durumu <span style="color:var(--t3);font-weight:400">(${d.stok.length} SKU)</span></div>
+      <div style="overflow-x:auto;margin-bottom:14px"><table class="tbl" style="font-size:10px">
+        <thead><tr><th>Beden</th><th class="num">Stok</th><th>EAN</th><th>Güncelleme</th></tr></thead>
+        <tbody>${d.stok.map(s=>`<tr>
+          <td style="font-weight:600">${s.beden||'—'}</td>
+          <td class="num" style="color:${s.stok>5?'var(--teal)':s.stok>0?'var(--yellow)':'var(--red)'}"><strong>${s.stok}</strong></td>
+          <td style="font-family:monospace;font-size:9px;color:var(--t3)">${s.ean||'—'}</td>
+          <td style="font-size:9px;color:var(--t3)">${s.guncelleme||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+
+    // Finansal
+    if(d.finansal.length){
+      const f=d.finansal[0];
+      html+=`<div class="modal-section-title">Finansal Özet</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        ${[
+          ['Hesaplanan Satış', f.hesaplanan_satis?fmtTL(f.hesaplanan_satis):'—'],
+          ['Markup', f.markup?'×'+f.markup:'—'],
+          ['Maliyet (COG)', f.cog?fmtTL(f.cog):'—'],
+          ['Gerçek Markup', f.gercek_markup?'×'+f.gercek_markup:'—'],
+          ['Maliyet Özet', f.maliyet_ozet?fmtTL(f.maliyet_ozet):'—'],
+          ['Gerçek Satış', f.gercek_satis?fmtTL(f.gercek_satis):'—'],
+        ].map(([lbl,val])=>`
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 10px">
+            <div style="font-size:9px;color:var(--t3);margin-bottom:3px">${lbl}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--t1)">${val}</div>
+          </div>`).join('')}
+      </div>`;
+    }
+
+    // Satış fiyat grupları
+    if(d.satis_fiyat.length){
+      html+=`<div class="modal-section-title">Fiyat Grupları</div>
+      <table class="tbl" style="margin-bottom:14px;font-size:10px">
+        <thead><tr><th>Grup</th><th class="num">Fiyat</th><th>Para Birimi</th></tr></thead>
+        <tbody>${d.satis_fiyat.map(p=>`<tr>
+          <td>${p.grup||'—'}</td>
+          <td class="num teal">${p.fiyat?fmtTL(p.fiyat):'—'}</td>
+          <td style="font-size:9px;color:var(--t3)">${p.para_birimi}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+    }
+
+    // PLM Satış Performansı
+    if(d.performans.length){
+      html+=`<div class="modal-section-title">PLM Satış Performansı</div>
+      <div style="overflow-x:auto"><table class="tbl" style="font-size:10px">
+        <thead><tr><th>Renk</th><th>Beden</th><th class="num">Sezon Satış</th><th class="num">Kalan Stok</th><th>İlk Sevkiyat</th></tr></thead>
+        <tbody>${d.performans.slice(0,10).map(p=>`<tr>
+          <td>${p.renk||'—'}</td>
+          <td>${p.beden||'—'}</td>
+          <td class="num">${p.sezon_satis||0}</td>
+          <td class="num" style="color:${(p.stok_kalan||0)>5?'var(--teal)':'var(--red)'}">${p.stok_kalan||0}</td>
+          <td style="font-size:9px;color:var(--t3)">${p.ilk_sevkiyat||'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+
+    html+=`<div style="font-size:9px;color:var(--t3);margin-top:10px;text-align:right">
+      ${d._cached?'⚡ Cache':'🔄 Canlı'} · Pimland API · 15dk cache
+    </div>`;
+
+    body.innerHTML=html;
+  }catch(e){
+    body.innerHTML=`<div class="empty" style="color:var(--red)">Pimland bağlantı hatası: ${e.message}</div>`;
+  }
+}
+
+// renderPagination kaldırıldı — her section kendi inline pagination'ını yönetiyor
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function animBars(id){
+  document.querySelectorAll(`#${id} .hbar-fill`).forEach(el=>{const w=el.style.width;el.style.width='0';setTimeout(()=>{el.style.width=w;},100);});
+}
+
+// ── ŞİFRE KORUMASI ───────────────────────────────────────────────────────────
+// Şifre hash'i (SHA-256 yerine basit Base64 — production'da değiştirin)
+// Mevcut şifre: pimland2026
+const PW_HASH = btoa('pimland2026');
+const PW_COOKIE = 'pimland_auth';
+const PW_DAYS = 3;
+
+function getCookie(name){
+  return document.cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith(name+'='))?.split('=')[1]||null;
+}
+function setCookie(name,value,days){
+  const exp=new Date(Date.now()+days*864e5).toUTCString();
+  document.cookie=`${name}=${value};expires=${exp};path=/;SameSite=Strict`;
+}
+
+function checkAuth(){
+  const saved=getCookie(PW_COOKIE);
+  if(saved===PW_HASH){
+    document.getElementById('pw-overlay').style.display='none';
+    return true;
+  }
+  document.getElementById('pw-overlay').style.display='flex';
+  setTimeout(()=>document.getElementById('pw-input')?.focus(),100);
+  return false;
+}
+
+function checkPassword(){
+  const val=document.getElementById('pw-input').value;
+  const err=document.getElementById('pw-error');
+  if(btoa(val)===PW_HASH){
+    setCookie(PW_COOKIE,PW_HASH,PW_DAYS);
+    document.getElementById('pw-overlay').style.display='none';
+    err.style.display='none';
+    init();
+  } else {
+    err.style.display='block';
+    err.textContent='Hatalı şifre. Tekrar deneyin.';
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// ── PLM KATALOG ───────────────────────────────────────────────────────────────
+function applyPlmFilters(){
+  plmState.marka=document.getElementById('plm-f-marka').value||null;
+  plmState.sezon=document.getElementById('plm-f-sezon').value||null;
+  plmState.tema=document.getElementById('plm-f-tema').value||null;
+  loadPlmKatalog();
+}
+
+async function loadPlmKatalog(){
+  const kpiEl=document.getElementById('plm-kpis');
+  kpiEl.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  try{
+    const p=new URLSearchParams();
+    if(plmState.marka)p.set('marka',plmState.marka);
+    if(plmState.sezon)p.set('sezon',plmState.sezon);
+    if(plmState.tema)p.set('tema',plmState.tema);
+    const d=await fetch(`${API}/portal/plm-katalog?${p}`).then(r=>r.json());
+
+    // Filtre dropdown'larını ilk açılışta doldur
+    if(!plmFiltersLoaded){
+      const ms=document.getElementById('plm-f-marka');
+      const ss=document.getElementById('plm-f-sezon');
+      const ts=document.getElementById('plm-f-tema');
+      d.filters.markalar.forEach(m=>ms.innerHTML+=`<option value="${m}">${m}</option>`);
+      d.filters.sezonlar.forEach(s=>ss.innerHTML+=`<option value="${s}">${s}</option>`);
+      d.filters.temalar.forEach(t=>ts.innerHTML+=`<option value="${t}">${t}</option>`);
+      // Restore selected values
+      if(plmState.marka)ms.value=plmState.marka;
+      if(plmState.sezon)ss.value=plmState.sezon;
+      if(plmState.tema)ts.value=plmState.tema;
+      plmFiltersLoaded=true;
+    }
+
+    // ── KPI strip ─────────────────────────────────────────────────────
+    const k=d.kpis;
+    const aktifPct=k.toplam>0?Math.round(k.aktif/k.toplam*100):0;
+    kpiEl.innerHTML=[
+      ['Toplam Ürün',     k.toplam.toLocaleString('tr-TR'), 'SKU',              'orange', '--orange'],
+      ['İnternette Aktif',k.aktif.toLocaleString('tr-TR'),  '%'+aktifPct+' aktif','green','--green'],
+      ['Bloke',           k.bloke.toLocaleString('tr-TR'),  'Yayında değil',    'red',   '--red'],
+      ['Pasif',           k.pasif.toLocaleString('tr-TR'),  'Atıl ürün',        'yellow','--yellow'],
+      ['Markalar',        k.marka_sayisi,                   'Koleksiyon',       'teal',  '--teal'],
+      ['Sezonlar',        k.sezon_sayisi,                   'Farklı sezon',     '',      '--blue'],
+      ['Tema / Story',    k.tema_sayisi,                    'Koleksiyon',       '',      '--purple'],
+      ['Ana Gruplar',     k.ana_grup_sayisi,                'Kategori',         '',      '--pink'],
+      ['Ürün Grupları',   k.urun_grubu_sayisi,              'Alt kategori',     '',      '--t2'],
+    ].map(([lbl,val,sub,cls,acc])=>`
+      <div class="kpi-card" style="--accent:var(${acc})">
+        <div class="kpi-label">${lbl}</div>
+        <div class="kpi-val${cls?' '+cls:''}" style="${!cls?'color:var('+acc+')':''}">${val}</div>
+        <div class="kpi-sub">${sub}</div>
+      </div>`).join('');
+
+    // ── Marka bars ────────────────────────────────────────────────────
+    const maxM=Math.max(...d.marka.map(m=>m.urun_sayisi),1);
+    document.getElementById('plm-marka-bars').innerHTML=d.marka.map(m=>`
+      <div class="hbar-row">
+        <div class="hbar-meta">
+          <span class="hbar-name">${m.marka}</span>
+          <span class="hbar-val">${m.urun_sayisi} ürün &nbsp;<span style="color:var(--green);font-size:9px">${m.aktif} aktif</span></span>
+        </div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${Math.round(m.urun_sayisi/maxM*100)}%;background:var(--orange)"></div>
+        </div>
+      </div>`).join('');
+
+    // ── Tema bars (top 10) ────────────────────────────────────────────
+    const top10=d.tema.slice(0,10);
+    const maxT=Math.max(...top10.map(t=>t.urun_sayisi),1);
+    document.getElementById('plm-tema-bars').innerHTML=top10.map(t=>`
+      <div class="hbar-row">
+        <div class="hbar-meta">
+          <span class="hbar-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68%">${t.tema_adi}</span>
+          <span class="hbar-val">${t.urun_sayisi}</span>
+        </div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${Math.round(t.urun_sayisi/maxT*100)}%;background:var(--purple)"></div>
+        </div>
+      </div>`).join('');
+
+    // ── Sezon dikey bar chart ─────────────────────────────────────────
+    const maxS=Math.max(...d.sezon.map(s=>s.urun_sayisi),1);
+    const barW=Math.max(32, Math.floor(540/Math.max(d.sezon.length,1)));
+    document.getElementById('plm-sezon-chart').innerHTML=`
+      <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding-bottom:2px">
+        ${d.sezon.map(s=>`
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0">
+            <span style="font-size:9px;color:var(--t3)">${s.urun_sayisi}</span>
+            <div style="width:100%;background:var(--bg4);border-radius:4px 4px 0 0;position:relative;overflow:hidden;height:${Math.max(8,Math.round(s.urun_sayisi/maxS*80))}px">
+              <div style="position:absolute;bottom:0;left:0;right:0;background:var(--teal);height:${Math.round(s.aktif/Math.max(s.urun_sayisi,1)*100)}%;min-height:2px"></div>
+              <div style="position:absolute;bottom:0;left:0;right:0;background:var(--bg3);opacity:.4;height:${100-Math.round(s.aktif/Math.max(s.urun_sayisi,1)*100)}%"></div>
+            </div>
+            <span style="font-size:8px;color:var(--t3);text-align:center;line-height:1.2;overflow:hidden;width:100%">${(s.sezon_kodu||'').replace('-',' ')}</span>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:14px;margin-top:8px">
+        <span style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--t2)"><span style="width:8px;height:3px;background:var(--teal);border-radius:1px;display:inline-block"></span>Aktif</span>
+        <span style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--t2)"><span style="width:8px;height:3px;background:var(--bg3);border-radius:1px;display:inline-block;opacity:.6"></span>Pasif/Bloke</span>
+      </div>`;
+
+    // ── Ana grup tablosu ──────────────────────────────────────────────
+    document.getElementById('plm-grup-table').innerHTML=`
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:8px 14px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Ana Grup</th>
+            <th style="text-align:left;padding:8px 14px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Ürün Grubu</th>
+            <th style="text-align:right;padding:8px 14px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Toplam</th>
+            <th style="text-align:right;padding:8px 14px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Aktif</th>
+            <th style="text-align:right;padding:8px 14px;font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Aktiflik</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${d.ana_grup.map((r,i)=>{
+            const pct=r.urun_sayisi>0?Math.round(r.aktif/r.urun_sayisi*100):0;
+            const col=pct>=70?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+            return `<tr style="border-bottom:1px solid var(--border);${i%2?'background:rgba(255,255,255,.02)':''}">
+              <td style="padding:7px 14px;font-size:11px;color:var(--t2);font-weight:500">${r.ana_grup}</td>
+              <td style="padding:7px 14px;font-size:11px;color:var(--t1)">${r.urun_grubu}</td>
+              <td style="padding:7px 14px;font-size:11px;color:var(--t1);text-align:right;font-family:monospace">${r.urun_sayisi}</td>
+              <td style="padding:7px 14px;font-size:11px;color:var(--green);text-align:right;font-family:monospace">${r.aktif}</td>
+              <td style="padding:7px 14px;text-align:right">
+                <span style="font-size:10px;font-weight:700;color:${col}">%${pct}</span>
+              </td>
+            </tr>`;}).join('')}
+        </tbody>
+      </table>`;
+
+  }catch(e){
+    console.error('PLM katalog hatası:',e);
+    document.getElementById('plm-kpis').innerHTML='<div style="color:var(--red);padding:20px;grid-column:span 9">Yükleme hatası: '+e.message+'</div>';
+  }
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+if(checkAuth()) init();
+else {} // init() checkPassword'dan çağrılacak
+</script>
+</body>
+</html>

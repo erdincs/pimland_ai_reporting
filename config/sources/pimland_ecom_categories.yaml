@@ -1,0 +1,32 @@
+source_id: pimland_ecom_categories
+enabled: false   # catalogCode zorunlu — hangi catalog kodu kullanılacağı netleşince açılacak
+type: mcp
+target_table: pim_ecom_categories
+description: "Pimland PLM — E-ticaret kategori ağacı"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30001"
+  timeout_seconds: 30
+
+auth:
+  type: oauth2_password_grant
+  token_url_env: PIMLAND_TOKEN_URL
+  client_id_env: PIMLAND_CLIENT_ID
+  client_secret_env: PIMLAND_CLIENT_SECRET
+  scope_env: PIMLAND_SCOPE
+  username_env: PIMLAND_USERNAME
+  password_env: PIMLAND_PASSWORD
+
+tool:
+  name: post_api_EcomCategory_get_all
+  args:
+    catalogCode: null
+  response_data_path: "content.data.result"
+
+field_map:
+  catalogCode: catalog_code
+  parentId: parent_id
+  isActive: is_active
+
+schedule:
+  cron: "0 2 * * *"

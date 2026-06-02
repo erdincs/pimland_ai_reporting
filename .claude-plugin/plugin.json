@@ -1,0 +1,8 @@
+{
+  "name": "pimland-reporting",
+  "description": "Pimland PLM AI Reporting modülü için tasarım sistemi ve rapor üretim motoru skills paketi.",
+  "author": {
+    "name": "Pimland",
+    "email": "erdinc.sezer@upagon.com"
+  }
+}

@@ -1,0 +1,26 @@
+source_id: incorta_ecommerce_sales
+enabled: true
+type: mcp
+target_table: incorta_satis
+description: "Incorta — adL Ecommerce Sales (Yıl/Ay/Kanal/SKU/Renk/Beden/Tutar/Adet)"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30002"
+  timeout_seconds: 120    # 108K satır, sayfalama ile biraz zaman alır
+
+auth:
+  type: none               # AgentUp MCP-2 auth gerektirmiyor
+                           # Incorta token body içinde geçiyor (tool.args)
+
+tool:
+  name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_be9a751b
+  args:
+    Authorization: "__env:INCORTA_TOKEN"   # runtime'da env var'dan çözümlenir
+  response_format: incorta                 # columnar headers+data parsing
+  pagination_start_field: "pagination.startRow"
+  pagination_size_field: "pagination.pageSize"
+  pagination_page_size: 5000
+  total_rows_path: "content.data.headers.totalRows"
+
+schedule:
+  cron: "30 2 * * *"      # her gece 02:30 (MCP-1 sync'inden 30 dk sonra)
