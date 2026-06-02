@@ -1191,3 +1191,512 @@ async def get_plm_katalog(
             "temalar":  [t for t in tema_opts if t],
         },
     }
+
+
+async def get_urun_yonetimi(
+    session: AsyncSession,
+    marka: Optional[str] = None,
+    sezon: Optional[str] = None,
+    tema: Optional[str] = None,
+) -> dict:
+    """Ürün Yönetimi Dashboard — pim_products üzerinden SKU bazlı analiz."""
+    base_conds: List[str] = []
+    params: Dict[str, Any] = {}
+    if marka:
+        base_conds.append("marka_adi = :uy_marka")
+        params["uy_marka"] = marka
+    if sezon:
+        base_conds.append("sezon_adi = :uy_sezon")
+        params["uy_sezon"] = sezon
+    if tema:
+        base_conds.append("tema_adi = :uy_tema")
+        params["uy_tema"] = tema
+
+    def _w(*extra: str) -> str:
+        conds = base_conds + list(extra)
+        return ("WHERE " + " AND ".join(conds)) if conds else ""
+
+    # Hero KPIs
+    kpi = (await session.execute(text(f"""
+        SELECT
+            COUNT(*)                                            AS toplam_sku,
+            COUNT(*) FILTER (WHERE internet_aktif)              AS aktif_sku,
+            COUNT(*) FILTER (WHERE bloke)                       AS bloke_sku,
+            COUNT(DISTINCT sezon_kodu)                          AS sezon_sayisi,
+            COUNT(DISTINCT NULLIF(TRIM(tema_adi), ''))          AS tema_sayisi,
+            COUNT(DISTINCT NULLIF(TRIM(ana_grup_adi), ''))      AS ana_grup_sayisi,
+            COUNT(DISTINCT NULLIF(TRIM(urun_grubu_adi), ''))    AS urun_grubu_sayisi,
+            COUNT(DISTINCT NULLIF(TRIM(marka_adi), ''))         AS marka_sayisi
+        FROM pim_products {_w()}
+    """), params)).mappings().one()
+
+    # Drill-down L1: Marka
+    marka_rows = (await session.execute(text(f"""
+        SELECT marka_adi,
+               COUNT(*)                                          AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)            AS aktif_sku,
+               COUNT(DISTINCT sezon_kodu)                        AS sezon_sayisi,
+               COUNT(DISTINCT NULLIF(TRIM(tema_adi), ''))        AS tema_sayisi,
+               ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pay_pct
+        FROM pim_products {_w("marka_adi IS NOT NULL")}
+        GROUP BY marka_adi ORDER BY sku DESC
+    """), params)).mappings().all()
+
+    # Drill-down L2: Sezon (marka bazında pay)
+    sezon_rows = (await session.execute(text(f"""
+        SELECT marka_adi, sezon_kodu, sezon_adi,
+               COUNT(*)                                           AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)             AS aktif_sku,
+               COUNT(DISTINCT NULLIF(TRIM(ana_grup_adi), ''))     AS ana_grup_sayisi,
+               ROUND(COUNT(*) * 100.0
+                 / NULLIF(SUM(COUNT(*)) OVER (PARTITION BY marka_adi), 0), 1) AS pay_pct
+        FROM pim_products {_w("sezon_adi IS NOT NULL")}
+        GROUP BY marka_adi, sezon_kodu, sezon_adi
+        ORDER BY marka_adi, sezon_kodu DESC NULLS LAST
+        LIMIT 40
+    """), params)).mappings().all()
+
+    # Drill-down L3: Ana grup (marka+sezon bazında)
+    ana_grup_dd = (await session.execute(text(f"""
+        SELECT marka_adi, sezon_kodu,
+               COALESCE(NULLIF(TRIM(ana_grup_adi), ''), 'Diğer') AS ana_grup,
+               COUNT(*)                                            AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)              AS aktif_sku
+        FROM pim_products {_w()}
+        GROUP BY marka_adi, sezon_kodu, ana_grup_adi
+        ORDER BY marka_adi, sezon_kodu DESC NULLS LAST, sku DESC
+    """), params)).mappings().all()
+
+    # Sezon kartları (en yeni 5)
+    sezon_kartlar = (await session.execute(text(f"""
+        SELECT sezon_kodu, sezon_adi,
+               COUNT(*)                                           AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)             AS aktif_sku,
+               COUNT(DISTINCT NULLIF(TRIM(tema_adi), ''))         AS tema_sayisi,
+               COUNT(DISTINCT NULLIF(TRIM(ana_grup_adi), ''))     AS ana_grup_sayisi,
+               COUNT(DISTINCT NULLIF(TRIM(marka_adi), ''))        AS marka_sayisi
+        FROM pim_products {_w("sezon_adi IS NOT NULL")}
+        GROUP BY sezon_kodu, sezon_adi
+        ORDER BY sezon_kodu DESC NULLS LAST LIMIT 5
+    """), params)).mappings().all()
+
+    # Ana grup tiles (top 7)
+    kat_tiles = (await session.execute(text(f"""
+        SELECT COALESCE(NULLIF(TRIM(ana_grup_adi), ''), 'Diğer')  AS ana_grup,
+               COUNT(*)                                            AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)              AS aktif_sku,
+               COUNT(DISTINCT NULLIF(TRIM(tema_adi), ''))          AS tema_sayisi,
+               COUNT(DISTINCT NULLIF(TRIM(sezon_kodu), ''))        AS sezon_sayisi,
+               ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pay_pct
+        FROM pim_products {_w()}
+        GROUP BY ana_grup_adi ORDER BY sku DESC LIMIT 7
+    """), params)).mappings().all()
+
+    # Tema grid (top 6)
+    tema_grid = (await session.execute(text(f"""
+        SELECT COALESCE(NULLIF(TRIM(tema_adi), ''), 'Diğer')      AS tema,
+               marka_adi,
+               COUNT(*)                                            AS sku,
+               COUNT(*) FILTER (WHERE internet_aktif)              AS aktif_sku,
+               COUNT(DISTINCT sezon_kodu)                          AS sezon_sayisi,
+               COUNT(DISTINCT NULLIF(TRIM(ana_grup_adi), ''))      AS ana_grup_sayisi,
+               ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) AS pay_pct
+        FROM pim_products {_w("tema_adi IS NOT NULL")}
+        GROUP BY tema_adi, marka_adi ORDER BY sku DESC LIMIT 6
+    """), params)).mappings().all()
+
+    # Isı haritası: Ana Grup × Sezon
+    isi_raw = (await session.execute(text(f"""
+        SELECT COALESCE(NULLIF(TRIM(ana_grup_adi), ''), 'Diğer') AS ana_grup,
+               sezon_kodu, COUNT(*) AS sku
+        FROM pim_products {_w("ana_grup_adi IS NOT NULL AND sezon_kodu IS NOT NULL")}
+        GROUP BY ana_grup_adi, sezon_kodu
+    """), params)).mappings().all()
+
+    top_sezonlar = (await session.execute(text(
+        "SELECT sezon_kodu FROM (SELECT DISTINCT sezon_kodu FROM pim_products "
+        "WHERE sezon_kodu IS NOT NULL) s ORDER BY sezon_kodu DESC NULLS LAST LIMIT 5"
+    ))).scalars().all()
+
+    top_ana_gruplar = (await session.execute(text(f"""
+        SELECT COALESCE(NULLIF(TRIM(ana_grup_adi), ''), 'Diğer') AS ana_grup
+        FROM pim_products {_w("ana_grup_adi IS NOT NULL")}
+        GROUP BY ana_grup ORDER BY COUNT(*) DESC LIMIT 7
+    """), params)).scalars().all()
+
+    isi_dict: Dict[str, Any] = {}
+    for r in isi_raw:
+        ag = r["ana_grup"]
+        sz = r["sezon_kodu"]
+        if ag not in isi_dict:
+            isi_dict[ag] = {}
+        isi_dict[ag][sz] = int(r["sku"])
+
+    # Filter options (filtresiz)
+    marka_opts = (await session.execute(text(
+        "SELECT DISTINCT TRIM(marka_adi) FROM pim_products "
+        "WHERE marka_adi IS NOT NULL AND TRIM(marka_adi)!='' ORDER BY 1"
+    ))).scalars().all()
+    sezon_opts = (await session.execute(text(
+        "SELECT sezon_adi FROM (SELECT DISTINCT sezon_adi, sezon_kodu "
+        "FROM pim_products WHERE sezon_adi IS NOT NULL) s "
+        "ORDER BY sezon_kodu DESC NULLS LAST LIMIT 20"
+    ))).scalars().all()
+    tema_opts = (await session.execute(text(
+        "SELECT DISTINCT TRIM(tema_adi) FROM pim_products "
+        "WHERE tema_adi IS NOT NULL AND TRIM(tema_adi)!='' ORDER BY 1"
+    ))).scalars().all()
+
+    return {
+        "kpis": {
+            "toplam_sku":       int(kpi["toplam_sku"]),
+            "aktif_sku":        int(kpi["aktif_sku"]),
+            "bloke_sku":        int(kpi["bloke_sku"]),
+            "sezon_sayisi":     int(kpi["sezon_sayisi"]),
+            "tema_sayisi":      int(kpi["tema_sayisi"]),
+            "ana_grup_sayisi":  int(kpi["ana_grup_sayisi"]),
+            "urun_grubu_sayisi": int(kpi["urun_grubu_sayisi"]),
+            "marka_sayisi":     int(kpi["marka_sayisi"]),
+        },
+        "drill_down": {
+            "markalar": [
+                {"marka_adi": r["marka_adi"], "sku": int(r["sku"]),
+                 "aktif_sku": int(r["aktif_sku"]), "sezon_sayisi": int(r["sezon_sayisi"]),
+                 "tema_sayisi": int(r["tema_sayisi"]),
+                 "pay_pct": float(r["pay_pct"]) if r["pay_pct"] else 0}
+                for r in marka_rows
+            ],
+            "sezonlar": [
+                {"marka_adi": r["marka_adi"], "sezon_kodu": r["sezon_kodu"],
+                 "sezon_adi": r["sezon_adi"], "sku": int(r["sku"]),
+                 "aktif_sku": int(r["aktif_sku"]),
+                 "ana_grup_sayisi": int(r["ana_grup_sayisi"]),
+                 "pay_pct": float(r["pay_pct"]) if r["pay_pct"] else 0}
+                for r in sezon_rows
+            ],
+            "ana_gruplar": [
+                {"marka_adi": r["marka_adi"], "sezon_kodu": r["sezon_kodu"],
+                 "ana_grup": r["ana_grup"], "sku": int(r["sku"]),
+                 "aktif_sku": int(r["aktif_sku"])}
+                for r in ana_grup_dd
+            ],
+        },
+        "sezon_kartlar": [
+            {"sezon_kodu": r["sezon_kodu"], "sezon_adi": r["sezon_adi"],
+             "sku": int(r["sku"]), "aktif_sku": int(r["aktif_sku"]),
+             "tema_sayisi": int(r["tema_sayisi"]),
+             "ana_grup_sayisi": int(r["ana_grup_sayisi"]),
+             "marka_sayisi": int(r["marka_sayisi"])}
+            for r in sezon_kartlar
+        ],
+        "ana_gruplar": [
+            {"ana_grup": r["ana_grup"], "sku": int(r["sku"]),
+             "aktif_sku": int(r["aktif_sku"]), "tema_sayisi": int(r["tema_sayisi"]),
+             "sezon_sayisi": int(r["sezon_sayisi"]),
+             "pay_pct": float(r["pay_pct"]) if r["pay_pct"] else 0}
+            for r in kat_tiles
+        ],
+        "temalar": [
+            {"tema": r["tema"], "marka_adi": r["marka_adi"], "sku": int(r["sku"]),
+             "aktif_sku": int(r["aktif_sku"]), "sezon_sayisi": int(r["sezon_sayisi"]),
+             "ana_grup_sayisi": int(r["ana_grup_sayisi"]),
+             "pay_pct": float(r["pay_pct"]) if r["pay_pct"] else 0}
+            for r in tema_grid
+        ],
+        "isi_haritasi": {
+            "sezonlar": list(top_sezonlar),
+            "ana_gruplar": list(top_ana_gruplar),
+            "data": isi_dict,
+        },
+        "filters": {
+            "markalar": list(marka_opts),
+            "sezonlar": [s for s in sezon_opts if s],
+            "temalar":  [t for t in tema_opts if t],
+        },
+    }
+
+
+# ── Ürün Satış Analiz (Hierarchy + Detail) ───────────────────────────────────
+
+async def get_urun_satis_analiz(
+    session: AsyncSession,
+    yil: Optional[int] = None,
+    aylar: List[int] = None,
+    kanallar: List[str] = None,
+    marka: Optional[str] = None,
+    sezon_kodu: Optional[str] = None,
+) -> dict:
+    """Marka → Sezon → AnaGrup → ÜrünGrubu hiyerarşisinde satış/iade/iptal analizi.
+
+    incorta_satis / incorta_depo_iade / incorta_iptal_siparis tabloları pim_products
+    ile LEFT JOIN edilir. Yıl/ay/kanal filtreleri satış tablolarına, marka/sezon_kodu
+    filtreleri pim_products'a uygulanır.
+    """
+    aylar = aylar or []
+    kanallar = kanallar or []
+
+    # ── Satış CTE koşulları (:sa_ prefix — collision önlemi) ──────────────────
+    s_conds: List[str] = []
+    params: Dict[str, Any] = {}
+
+    if yil:
+        s_conds.append("s.yil = :sa_yil")
+        params["sa_yil"] = yil
+    if aylar:
+        s_conds.append("s.ay = ANY(:sa_aylar)")
+        params["sa_aylar"] = aylar
+    if kanallar:
+        s_conds.append("s.satis_kanali = ANY(:sa_kanallar)")
+        params["sa_kanallar"] = kanallar
+
+    s_where = ("WHERE " + " AND ".join(s_conds)) if s_conds else ""
+
+    # iade ve iptal CTE'leri: tablo alias'ı farklı, koşullar aynı değerler
+    d_where = s_where.replace("s.yil", "d.yil").replace("s.ay", "d.ay").replace("s.satis_kanali", "d.satis_kanali") if s_where else ""
+    i_where = s_where.replace("s.yil", "i.yil").replace("s.ay", "i.ay").replace("s.satis_kanali", "i.satis_kanali") if s_where else ""
+
+    # ── PLM filtre koşulları (GROUP BY sonrası HAVING'e eklenir) ──────────────
+    plm_conds: List[str] = []
+    if marka:
+        plm_conds.append("p.marka_adi = :sa_marka")
+        params["sa_marka"] = marka
+    if sezon_kodu:
+        plm_conds.append("p.sezon_kodu = :sa_sezon_kodu")
+        params["sa_sezon_kodu"] = sezon_kodu
+
+    plm_where_extra = (" AND " + " AND ".join(plm_conds)) if plm_conds else ""
+
+    sql = text(f"""
+        WITH satis AS (
+            SELECT s.urun_kodu,
+                   SUM(s.tutar)      AS brut_ciro,
+                   SUM(s.adet::int)  AS satis_adet
+            FROM incorta_satis s {s_where}
+            GROUP BY s.urun_kodu
+        ),
+        iade AS (
+            SELECT d.urun_kodu,
+                   ABS(SUM(d.tutar))      AS iade_ciro,
+                   ABS(SUM(d.adet::int))  AS iade_adet
+            FROM incorta_depo_iade d {d_where}
+            GROUP BY d.urun_kodu
+        ),
+        iptal AS (
+            SELECT i.urun_kodu,
+                   ABS(SUM(i.tutar))      AS iptal_ciro,
+                   ABS(SUM(i.adet::int))  AS iptal_adet
+            FROM incorta_iptal_siparis i {i_where}
+            GROUP BY i.urun_kodu
+        )
+        SELECT
+            p.marka_adi,
+            p.sezon_kodu,
+            p.sezon_adi,
+            COALESCE(NULLIF(TRIM(p.ana_grup_adi),  ''), 'Diğer') AS ana_grup,
+            COALESCE(NULLIF(TRIM(p.urun_grubu_adi),''), 'Diğer') AS urun_grubu,
+            COUNT(DISTINCT s.urun_kodu)                          AS sku_sayisi,
+            COALESCE(SUM(s.satis_adet),  0)                      AS satis_adet,
+            COALESCE(SUM(s.brut_ciro),   0)                      AS brut_ciro,
+            COALESCE(SUM(ia.iade_adet),  0)                      AS iade_adet,
+            COALESCE(SUM(ia.iade_ciro),  0)                      AS iade_ciro,
+            COALESCE(SUM(ip.iptal_adet), 0)                      AS iptal_adet,
+            COALESCE(SUM(ip.iptal_ciro), 0)                      AS iptal_ciro,
+            COALESCE(SUM(s.brut_ciro),   0)
+                - COALESCE(SUM(ia.iade_ciro),  0)
+                - COALESCE(SUM(ip.iptal_ciro), 0)                AS net_ciro,
+            ROUND(
+                ((COALESCE(SUM(ia.iade_ciro),0) + COALESCE(SUM(ip.iptal_ciro),0))
+                / NULLIF(SUM(s.brut_ciro), 0) * 100)::numeric, 2
+            )                                                     AS deger_kaybi_pct,
+            ROUND(
+                (SUM(s.brut_ciro) / NULLIF(SUM(s.satis_adet), 0))::numeric, 2
+            )                                                     AS ort_fiyat
+        FROM satis s
+        LEFT JOIN iade  ia ON s.urun_kodu = ia.urun_kodu
+        LEFT JOIN iptal ip ON s.urun_kodu = ip.urun_kodu
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        WHERE 1=1 {plm_where_extra}
+        GROUP BY p.marka_adi, p.sezon_kodu, p.sezon_adi, p.ana_grup_adi, p.urun_grubu_adi
+        ORDER BY p.marka_adi NULLS LAST, p.sezon_kodu DESC NULLS LAST,
+                 ana_grup, urun_grubu
+        LIMIT 300
+    """)
+
+    rows = (await session.execute(sql, params)).mappings().all()
+
+    hierarchy = []
+    marka_set: set = set()
+    sezon_set: set = set()
+
+    for r in rows:
+        marka_adi   = r["marka_adi"]
+        sezon_k     = r["sezon_kodu"]
+        sezon_a     = r["sezon_adi"]
+        if marka_adi:
+            marka_set.add(marka_adi)
+        if sezon_k:
+            sezon_set.add(sezon_k)
+
+        brut_ciro       = float(r["brut_ciro"]       or 0)
+        iade_ciro       = float(r["iade_ciro"]        or 0)
+        iptal_ciro      = float(r["iptal_ciro"]       or 0)
+        net_ciro        = float(r["net_ciro"]         or 0)
+        deger_kaybi_pct = float(r["deger_kaybi_pct"]  or 0)
+        ort_fiyat       = float(r["ort_fiyat"]        or 0)
+
+        hierarchy.append({
+            "marka_adi":        marka_adi,
+            "sezon_kodu":       sezon_k,
+            "sezon_adi":        sezon_a,
+            "ana_grup":         r["ana_grup"],
+            "urun_grubu":       r["urun_grubu"],
+            "sku_sayisi":       int(r["sku_sayisi"]   or 0),
+            "satis_adet":       float(r["satis_adet"] or 0),
+            "brut_ciro":        brut_ciro,
+            "iade_adet":        float(r["iade_adet"]  or 0),
+            "iade_ciro":        iade_ciro,
+            "iptal_adet":       float(r["iptal_adet"] or 0),
+            "iptal_ciro":       iptal_ciro,
+            "net_ciro":         net_ciro,
+            "deger_kaybi_pct":  deger_kaybi_pct,
+            "ort_fiyat":        ort_fiyat,
+        })
+
+    return {
+        "hierarchy": hierarchy,
+        "filters": {
+            "markalar": sorted(m for m in marka_set if m),
+            "sezonlar": sorted((s for s in sezon_set if s), reverse=True),
+        },
+    }
+
+
+async def get_urun_satis_detail(
+    session: AsyncSession,
+    marka: str,
+    sezon_kodu: str,
+    ana_grup: str,
+    urun_grubu: str,
+    yil: Optional[int] = None,
+    aylar: List[int] = None,
+    kanallar: List[str] = None,
+) -> list:
+    """Belirli bir marka+sezon_kodu+ana_grup+urun_grubu kombinasyonu için bireysel ürün listesi.
+
+    Aynı CTE pattern'i kullanır; WHERE koşuluna pim_products hiyerarşi filtreleri eklenir.
+    """
+    aylar = aylar or []
+    kanallar = kanallar or []
+
+    # ── Satış CTE koşulları (:sa_ prefix) ────────────────────────────────────
+    s_conds: List[str] = []
+    params: Dict[str, Any] = {}
+
+    if yil:
+        s_conds.append("s.yil = :sa_yil")
+        params["sa_yil"] = yil
+    if aylar:
+        s_conds.append("s.ay = ANY(:sa_aylar)")
+        params["sa_aylar"] = aylar
+    if kanallar:
+        s_conds.append("s.satis_kanali = ANY(:sa_kanallar)")
+        params["sa_kanallar"] = kanallar
+
+    s_where = ("WHERE " + " AND ".join(s_conds)) if s_conds else ""
+    d_where = s_where.replace("s.yil", "d.yil").replace("s.ay", "d.ay").replace("s.satis_kanali", "d.satis_kanali") if s_where else ""
+    i_where = s_where.replace("s.yil", "i.yil").replace("s.ay", "i.ay").replace("s.satis_kanali", "i.satis_kanali") if s_where else ""
+
+    # ── Hiyerarşi WHERE koşulları ─────────────────────────────────────────────
+    params["sd_marka"]      = marka
+    params["sd_sezon_kodu"] = sezon_kodu
+    params["sd_ana_grup"]   = ana_grup
+    params["sd_urun_grubu"] = urun_grubu
+
+    sql = text(f"""
+        WITH satis AS (
+            SELECT s.urun_kodu,
+                   SUM(s.tutar)      AS brut_ciro,
+                   SUM(s.adet::int)  AS satis_adet
+            FROM incorta_satis s {s_where}
+            GROUP BY s.urun_kodu
+        ),
+        iade AS (
+            SELECT d.urun_kodu,
+                   ABS(SUM(d.tutar))      AS iade_ciro,
+                   ABS(SUM(d.adet::int))  AS iade_adet
+            FROM incorta_depo_iade d {d_where}
+            GROUP BY d.urun_kodu
+        ),
+        iptal AS (
+            SELECT i.urun_kodu,
+                   ABS(SUM(i.tutar))      AS iptal_ciro,
+                   ABS(SUM(i.adet::int))  AS iptal_adet
+            FROM incorta_iptal_siparis i {i_where}
+            GROUP BY i.urun_kodu
+        )
+        SELECT
+            p.urun_kodu,
+            p.urun_adi,
+            p.marka_adi,
+            p.internet_aktif,
+            p.bloke,
+            p.default_image_url,
+            p.color_codes,
+            COALESCE(s.satis_adet,  0)   AS satis_adet,
+            COALESCE(s.brut_ciro,   0)   AS brut_ciro,
+            COALESCE(ia.iade_adet,  0)   AS iade_adet,
+            COALESCE(ia.iade_ciro,  0)   AS iade_ciro,
+            COALESCE(ip.iptal_adet, 0)   AS iptal_adet,
+            COALESCE(ip.iptal_ciro, 0)   AS iptal_ciro,
+            COALESCE(s.brut_ciro,   0)
+                - COALESCE(ia.iade_ciro,  0)
+                - COALESCE(ip.iptal_ciro, 0) AS net_ciro,
+            ROUND(
+                ((COALESCE(ia.iade_ciro,0) + COALESCE(ip.iptal_ciro,0))
+                / NULLIF(s.brut_ciro, 0) * 100)::numeric, 2
+            )                            AS deger_kaybi_pct,
+            ROUND((s.brut_ciro / NULLIF(s.satis_adet, 0))::numeric, 2) AS ort_fiyat
+        FROM pim_products p
+        LEFT JOIN satis  s  ON s.urun_kodu  = p.urun_kodu
+        LEFT JOIN iade   ia ON ia.urun_kodu = p.urun_kodu
+        LEFT JOIN iptal  ip ON ip.urun_kodu = p.urun_kodu
+        WHERE
+            COALESCE(NULLIF(TRIM(p.ana_grup_adi),  ''), 'Diğer') = :sd_ana_grup
+            AND COALESCE(NULLIF(TRIM(p.urun_grubu_adi),''), 'Diğer') = :sd_urun_grubu
+            AND p.marka_adi   = :sd_marka
+            AND p.sezon_kodu  = :sd_sezon_kodu
+        ORDER BY net_ciro DESC NULLS LAST
+        LIMIT 100
+    """)
+
+    rows = (await session.execute(sql, params)).mappings().all()
+
+    result = []
+    for r in rows:
+        brut_ciro       = float(r["brut_ciro"]       or 0)
+        iade_ciro       = float(r["iade_ciro"]        or 0)
+        iptal_ciro      = float(r["iptal_ciro"]       or 0)
+        net_ciro        = float(r["net_ciro"]         or 0)
+        deger_kaybi_pct = float(r["deger_kaybi_pct"]  or 0)
+        ort_fiyat       = float(r["ort_fiyat"]        or 0)
+
+        result.append({
+            "urun_kodu":        r["urun_kodu"],
+            "urun_adi":         r["urun_adi"],
+            "marka_adi":        r["marka_adi"],
+            "internet_aktif":   bool(r["internet_aktif"]) if r["internet_aktif"] is not None else False,
+            "bloke":            bool(r["bloke"])           if r["bloke"]           is not None else False,
+            "default_image_url": r["default_image_url"],
+            "color_codes":      r["color_codes"] or "",
+            "satis_adet":       float(r["satis_adet"]  or 0),
+            "brut_ciro":        brut_ciro,
+            "iade_adet":        float(r["iade_adet"]   or 0),
+            "iade_ciro":        iade_ciro,
+            "iptal_adet":       float(r["iptal_adet"]  or 0),
+            "iptal_ciro":       iptal_ciro,
+            "net_ciro":         net_ciro,
+            "deger_kaybi_pct":  deger_kaybi_pct,
+            "ort_fiyat":        ort_fiyat,
+        })
+
+    return result

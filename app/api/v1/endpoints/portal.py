@@ -176,6 +176,49 @@ async def karlilik(
     return await q.get_karlilik(session, yil=yil, aylar=ay, kanallar=kanal)
 
 
+@router.get("/urun-satis-analiz")
+async def urun_satis_analiz(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    yil: Optional[int] = Query(default=None),
+    ay: List[int] = Query(default=[]),
+    kanal: List[str] = Query(default=[]),
+    marka: Optional[str] = Query(default=None),
+    sezon_kodu: Optional[str] = Query(default=None),
+) -> dict:
+    return await q.get_urun_satis_analiz(
+        session, yil=yil, aylar=ay, kanallar=kanal,
+        marka=marka, sezon_kodu=sezon_kodu,
+    )
+
+
+@router.get("/urun-satis-detail")
+async def urun_satis_detail(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    marka: str = Query(...),
+    sezon_kodu: str = Query(...),
+    ana_grup: str = Query(...),
+    urun_grubu: str = Query(...),
+    yil: Optional[int] = Query(default=None),
+    ay: List[int] = Query(default=[]),
+    kanal: List[str] = Query(default=[]),
+) -> list:
+    return await q.get_urun_satis_detail(
+        session, marka=marka, sezon_kodu=sezon_kodu,
+        ana_grup=ana_grup, urun_grubu=urun_grubu,
+        yil=yil, aylar=ay, kanallar=kanal,
+    )
+
+
+@router.get("/urun-yonetimi")
+async def urun_yonetimi(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    marka: Optional[str] = Query(default=None),
+    sezon: Optional[str] = Query(default=None),
+    tema:  Optional[str] = Query(default=None),
+) -> dict:
+    return await q.get_urun_yonetimi(session, marka=marka, sezon=sezon, tema=tema)
+
+
 @router.get("/plm-katalog")
 async def plm_katalog(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],

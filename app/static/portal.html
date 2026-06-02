@@ -6,6 +6,7 @@
 <title>Pimland · Analitik Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -15,6 +16,13 @@
   --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
   --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;--pink:#ec4899;
   --sidebar:220px;
+  --shadow:0 4px 16px rgba(0,0,0,.4);
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;--bg5:#d8d8e6;
+  --border:#dcdce8;--border2:#c4c4d8;
+  --t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc;
+  --shadow:0 4px 16px rgba(0,0,0,.08);
 }
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;font-size:13px;display:flex;flex-direction:column}
@@ -25,19 +33,36 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .tb-brand .dot{width:8px;height:8px;background:var(--orange);border-radius:50%}
 .tb-brand .name{font-size:13px;font-weight:700}
 .tb-brand .sub{font-size:10px;color:var(--t3)}
-.tb-filters{flex:1;display:flex;align-items:center;gap:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none}
-.tb-filters::-webkit-scrollbar{display:none}
+.tb-filters{flex:1;display:flex;align-items:center;gap:8px;padding:0 12px;min-width:0}
 .filter-group{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .filter-label{font-size:10px;color:var(--t3);font-weight:500;white-space:nowrap}
-.filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;cursor:pointer;outline:none;font-family:inherit;min-width:80px;max-width:150px}
+.filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;cursor:pointer;outline:none;font-family:inherit;min-width:75px;max-width:140px}
 .filter-select:focus{border-color:var(--orange)}
-.filter-input{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;outline:none;font-family:inherit;width:140px}
+.filter-input{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:5px 8px;border-radius:6px;outline:none;font-family:inherit;width:130px}
 .filter-input:focus{border-color:var(--orange)}
 .filter-input::placeholder{color:var(--t3)}
 .filter-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
 .btn-apply{background:var(--orange);color:#fff;border:none;font-size:11px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0}
 .btn-apply:hover{opacity:.85}
-.tb-right{display:flex;align-items:center;gap:8px;padding:0 16px;flex-shrink:0}
+.btn-adv{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:11px;font-weight:500;padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-adv:hover{background:var(--bg4);color:var(--t1)}
+.btn-adv.active{border-color:var(--orange);color:var(--orange)}
+.adv-badge{background:var(--orange);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
+/* Advanced filter bar */
+.adv-filterbar{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 calc(var(--sidebar) + 12px);max-height:0;overflow:hidden;transition:max-height .2s ease,padding .2s ease}
+.adv-filterbar.open{max-height:52px;padding:8px 16px 8px calc(var(--sidebar) + 12px)}
+/* Hamburger */
+.hb-wrap{position:relative}
+.hb-btn{background:var(--bg3);border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;padding:0;transition:background .12s,border-color .12s}
+.hb-btn:hover{background:var(--bg4);border-color:var(--border2)}
+.hb-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;min-width:190px;box-shadow:var(--shadow);z-index:999;display:none;overflow:hidden}
+.hb-menu.open{display:block}
+.hb-item{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;color:var(--t1);cursor:pointer;transition:background .1s}
+.hb-item:hover{background:var(--bg3)}
+.hb-item.no-hover{cursor:default;pointer-events:none;color:var(--t3)}
+.hb-sep{height:1px;background:var(--border);margin:3px 0}
+.hb-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);padding:8px 14px 4px}
+.tb-right{display:flex;align-items:center;gap:8px;padding:0 12px;flex-shrink:0}
 .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .tb-right span{font-size:10px;color:var(--t3)}
@@ -301,6 +326,151 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .ai-thinking .dot:nth-child(2){animation-delay:.2s}
 .ai-thinking .dot:nth-child(3){animation-delay:.4s}
 @keyframes ai-dot{0%,80%,100%{transform:scale(0.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+/* ÜRÜN YÖNETİMİ DASHBOARD */
+.uy-hero-kpi{background:var(--bg2);padding:20px 18px 16px;cursor:default}
+.uy-hero-kpi .lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.uy-hero-kpi .big{font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:4px}
+.uy-hero-kpi .sub-row{display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.uy-hero-kpi .sub-item .sv{font-size:12px;font-weight:600;color:var(--t1)}
+.uy-hero-kpi .sub-item .sl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
+
+/* Drill-down tablo */
+.hier-row{display:grid;grid-template-columns:32px 1fr 110px 80px 100px 90px 70px;gap:0;padding:9px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.3)}
+.hier-row:hover{background:var(--bg3)}
+.hier-row.expanded .expand-icon{transform:rotate(90deg)}
+.child-row{display:grid;grid-template-columns:32px 1fr 110px 80px 100px 90px 70px;gap:0;padding:7px 14px 7px 40px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.2);background:rgba(0,0,0,.04)}
+.child-row:hover{background:var(--bg3)}
+.child-row.expanded .expand-icon{transform:rotate(90deg)}
+.grandchild-row{display:grid;grid-template-columns:32px 1fr 110px 80px 100px 90px 70px;gap:0;padding:6px 14px 6px 60px;border-bottom:1px solid rgba(42,42,58,.15);background:rgba(0,0,0,.06)}
+.child-rows,.grandchild-rows{display:none}
+.rank-badge{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.rb1{background:rgba(255,107,43,.15);color:var(--orange)}
+.rb2{background:rgba(0,194,168,.12);color:var(--teal)}
+.rb3{background:rgba(59,130,246,.12);color:var(--blue)}
+.rbn{background:var(--bg4);color:var(--t3)}
+.expand-icon{margin-left:5px;font-size:10px;color:var(--t3);transition:transform .15s;display:inline-block}
+.hr-name{font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;padding-right:8px}
+.hr-name small{font-size:9px;color:var(--t3);font-weight:400}
+.hr-val{font-size:11px;color:var(--t2);text-align:right;display:flex;align-items:center;justify-content:flex-end}
+.hr-val.orange{color:var(--orange);font-weight:600}
+.hr-val.teal{color:var(--teal);font-weight:600}
+.hr-val.green{color:var(--green)}
+.hr-val.red{color:var(--red)}
+.hr-bar-wrap{display:flex;align-items:center;gap:6px}
+.hr-bar-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.hr-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.hr-pct{font-size:9px;font-weight:600;color:var(--t1);min-width:30px}
+.hr-status{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px}
+.hs-aktif{background:rgba(0,194,168,.1);color:var(--teal)}
+.hs-arsiv{background:var(--bg4);color:var(--t3)}
+.hs-taslak{background:rgba(245,158,11,.1);color:var(--yellow)}
+
+/* Sezon kartı */
+.season-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:border-color .15s}
+.season-card:hover{border-color:var(--border2)}
+.season-card.current{border-color:var(--orange);border-width:1.5px}
+.sc-name{font-size:13px;font-weight:700;color:var(--t1)}
+.sc-period{font-size:10px;color:var(--t3);margin-top:1px;margin-bottom:10px}
+.sc-big{font-size:22px;font-weight:700;color:var(--orange);letter-spacing:-.5px;line-height:1}
+.sc-sub{font-size:10px;color:var(--t3);margin-bottom:8px}
+.sc-stats{display:flex;gap:14px;flex-wrap:wrap}
+.sc-stat .ssv{font-size:11px;font-weight:600;color:var(--t1)}
+.sc-stat .ssl{font-size:9px;color:var(--t3)}
+.sc-bar-track{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:10px}
+.sc-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+.sc-aktif-badge{display:inline-block;font-size:8px;font-weight:700;background:rgba(255,107,43,.15);color:var(--orange);padding:2px 6px;border-radius:3px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}
+
+/* Kategori tile */
+.cat-tile{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px}
+.cat-tile:hover{border-color:var(--border2)}
+.cat-tile-icon{font-size:20px;margin-bottom:6px}
+.cat-tile-name{font-size:11px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.cat-tile-big{font-size:18px;font-weight:700;color:var(--orange);letter-spacing:-.3px;margin-bottom:6px}
+.ct-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1px}
+.ct-lbl{font-size:9px;color:var(--t3)}
+.ct-val{font-size:10px;font-weight:600;color:var(--t1)}
+.ctb-track{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:6px}
+.ctb-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.16,1,.3,1)}
+
+/* Tema kartı */
+.tema-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;transition:border-color .15s}
+.tema-card:hover{border-color:var(--border2)}
+.tema-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.tema-name{font-size:11px;font-weight:700;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tema-badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;flex-shrink:0}
+.tb-core{background:rgba(59,130,246,.12);color:var(--blue)}
+.tb-new{background:rgba(34,197,94,.1);color:var(--green)}
+.tb-carry{background:rgba(168,85,247,.1);color:var(--purple)}
+.tema-ciro{font-size:20px;font-weight:700;color:var(--orange);letter-spacing:-.3px}
+.tema-sub{font-size:9px;color:var(--t3);margin-bottom:8px}
+.tema-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
+.ts-box{background:var(--bg3);border-radius:4px;padding:5px 7px}
+.ts-val{font-size:11px;font-weight:600;color:var(--t1)}
+.ts-lbl{font-size:8px;color:var(--t3)}
+
+/* Isı haritası */
+.isi-table{border-collapse:collapse;font-size:10px}
+.isi-table th{padding:5px 10px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);white-space:nowrap;text-align:center}
+.isi-table th.row-lbl{text-align:left;min-width:120px}
+.isi-table td.row-lbl{padding:6px 10px;font-size:10px;color:var(--t2);white-space:nowrap;font-weight:500}
+.isi-cell{width:80px;height:32px;text-align:center;font-size:10px;font-weight:600;color:var(--t1);border:1px solid var(--border);transition:all .15s;cursor:default}
+.heat-0{background:var(--bg3);color:var(--t4)}
+.heat-1{background:rgba(255,107,43,.06)}
+.heat-2{background:rgba(255,107,43,.14)}
+.heat-3{background:rgba(255,107,43,.24);color:var(--t1)}
+.heat-4{background:rgba(255,107,43,.36);color:var(--t1)}
+.heat-5{background:rgba(255,107,43,.52);color:#fff}
+.heat-6{background:rgba(255,107,43,.72);color:#fff}
+.isi-cell:hover{filter:brightness(1.15)}
+
+/* ÜRÜN SATIŞ ANALİZİ — geniş drill-down grid */
+.usa-cols{grid-template-columns:32px 1fr 60px 90px 75px 105px 110px 80px}
+.usa-header{display:grid;padding:8px 14px;border-bottom:1px solid var(--border)}
+.usa-row{display:grid;padding:9px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.3)}
+.usa-row:hover{background:var(--bg3)}
+.usa-row.expanded .expand-icon{transform:rotate(90deg)}
+.usa-child{display:grid;padding:7px 14px 7px 40px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.2);background:rgba(0,0,0,.04)}
+.usa-child:hover{background:var(--bg3)}
+.usa-child.expanded .expand-icon{transform:rotate(90deg)}
+.usa-grand{display:grid;padding:7px 14px 7px 60px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.15);background:rgba(0,0,0,.06)}
+.usa-grand:hover{background:var(--bg3)}
+.usa-grand.expanded .expand-icon{transform:rotate(90deg)}
+.usa-gg{display:grid;padding:7px 14px 7px 76px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(42,42,58,.1);background:rgba(0,0,0,.08)}
+.usa-gg:hover{background:var(--bg3)}
+.usa-gg.expanded .expand-icon{transform:rotate(90deg)}
+.usa-product{display:grid;padding:6px 14px 6px 90px;border-bottom:1px solid rgba(42,42,58,.08);background:rgba(0,0,0,.1);transition:background .1s}
+.usa-product:hover{background:var(--bg3)}
+.usa-child-rows,.usa-grand-rows,.usa-gg-rows,.usa-product-rows{display:none}
+.usa-val{font-size:11px;color:var(--t2);text-align:right;display:flex;align-items:center;justify-content:flex-end;white-space:nowrap}
+.usa-val.orange{color:var(--orange);font-weight:600}
+.usa-val.teal{color:var(--teal);font-weight:600}
+.usa-val.green{color:var(--green);font-weight:600}
+.usa-val.red{color:var(--red);font-weight:600}
+.usa-val.yellow{color:var(--yellow);font-weight:600}
+.usa-name{display:flex;align-items:center;gap:5px;overflow:hidden}
+.usa-name-txt{font-size:12px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.usa-name-sub{font-size:9px;color:var(--t3);font-weight:400;white-space:nowrap;flex-shrink:0}
+.usa-thumb{width:28px;height:28px;border-radius:4px;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.usa-status{font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;flex-shrink:0}
+.usa-aktif{background:rgba(0,194,168,.1);color:var(--teal)}
+.usa-pasif{background:var(--bg4);color:var(--t3)}
+
+/* SMOOTH TRANSITIONS ON THEME SWITCH */
+body,
+.topbar,.sidebar,.main,.modal-panel,.pw-box,
+.kpi-card,.kpi-tile,.chart-card,.hbar-card,.donut-card,.table-card,
+.insight-panel,.insight-item,.action-item,.alert-item,
+.tbl tbody tr,.exec-kpi,.exec-col,.modal-kpi,.modal-tab,
+.filter-select,.filter-input,.btn-apply,.page-btn,
+.ai-bot-bubble,.ai-chip,.nav-item
+{transition:background-color .2s,border-color .2s,color .2s}
+
+/* light mode box shadows override */
+[data-theme="light"] .product-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.08)}
+[data-theme="light"] .pw-box{box-shadow:0 8px 32px rgba(0,0,0,.12)}
+[data-theme="light"] .modal-panel{box-shadow:-8px 0 32px rgba(0,0,0,.08)}
+[data-theme="light"] #ai-input{background:var(--bg3);border-color:var(--border)}
 </style>
 </head>
 <body>
@@ -339,36 +509,57 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
       <select id="f-kanal" class="filter-select"><option value="">Tüm Kanallar</option></select>
     </div>
     <div class="filter-sep"></div>
-    <div class="filter-group">
-      <span class="filter-label">SKU/Ürün</span>
-      <input id="f-sku" class="filter-input" type="text" placeholder="Ara...">
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Renk</span>
-      <select id="f-renk" class="filter-select"><option value="">Tümü</option></select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Beden</span>
-      <select id="f-beden" class="filter-select"><option value="">Tümü</option></select>
-    </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group" id="fg-marka" style="display:none">
-      <span class="filter-label">Marka</span>
-      <select id="f-marka" class="filter-select"><option value="">Tümü</option></select>
-    </div>
-    <div class="filter-group" id="fg-sezon" style="display:none">
-      <span class="filter-label">Sezon</span>
-      <select id="f-sezon" class="filter-select"><option value="">Tümü</option></select>
-    </div>
-    <div class="filter-group" id="fg-grup" style="display:none">
-      <span class="filter-label">Ürün Grubu</span>
-      <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
-    </div>
     <button class="btn-apply" onclick="applyFilters()">Uygula</button>
+    <button class="btn-adv" id="btn-adv" onclick="toggleAdvFilters()">⊕ Detaylı</button>
   </div>
   <div class="tb-right">
     <div class="live-dot"></div>
     <span id="data-source">Incorta · Live</span>
+    <div class="hb-wrap">
+      <button class="hb-btn" id="hb-btn" onclick="toggleHamburger()" title="Menü">☰</button>
+      <div class="hb-menu" id="hb-menu">
+        <div class="hb-label">Görünüm</div>
+        <div class="hb-item" onclick="toggleTheme();updateHamburgerTheme()">
+          <span id="hb-theme-icon" style="font-size:15px">☀️</span>
+          <div><div style="font-size:12px;font-weight:500" id="hb-theme-txt">Light Mod</div><div style="font-size:10px;color:var(--t3)">Temayı değiştir</div></div>
+        </div>
+        <div class="hb-sep"></div>
+        <div class="hb-label">Sistem</div>
+        <div class="hb-item no-hover">
+          <span style="width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;display:inline-block;flex-shrink:0"></span>
+          <span id="hb-datasource" style="font-size:11px">Incorta · Live</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCED FILTER BAR -->
+<div class="adv-filterbar" id="adv-filterbar">
+  <div class="filter-group">
+    <span class="filter-label">SKU/Ürün</span>
+    <input id="f-sku" class="filter-input" type="text" placeholder="Kod veya isim..." style="width:120px">
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Renk</span>
+    <select id="f-renk" class="filter-select"><option value="">Tümü</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Beden</span>
+    <select id="f-beden" class="filter-select"><option value="">Tümü</option></select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group" id="fg-marka">
+    <span class="filter-label">Marka</span>
+    <select id="f-marka" class="filter-select"><option value="">Tümü</option></select>
+  </div>
+  <div class="filter-group" id="fg-sezon">
+    <span class="filter-label">Sezon</span>
+    <select id="f-sezon" class="filter-select" style="max-width:160px"><option value="">Tümü</option></select>
+  </div>
+  <div class="filter-group" id="fg-grup">
+    <span class="filter-label">Ürün Grubu</span>
+    <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
   </div>
 </div>
 
@@ -376,14 +567,32 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 <div class="layout">
   <!-- SIDEBAR -->
   <nav class="sidebar">
-    <!-- AI Analiz — pinned top -->
-    <div class="nav-item nav-ai-top active" onclick="showSection('ai')" id="nav-ai" style="padding:13px 16px">
-      <span class="nav-icon" style="font-size:16px">🤖</span>
-      <div style="flex:1;min-width:0">
-        <div class="nav-text">AI Analiz</div>
-        <div style="font-size:9px;color:var(--t3);margin-top:1px">Doğal dil sorgu</div>
+    <!-- AI Agents — pinned top -->
+    <div style="border-bottom:1px solid var(--border)">
+      <div class="nav-item nav-ai-top active" onclick="showSection('ai')" id="nav-ai" style="padding:11px 16px">
+        <span class="nav-icon" style="font-size:15px">🤖</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text">Pimland AI Agent</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px">Veri analiz asistanı</div>
+        </div>
+        <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">AI</span>
       </div>
-      <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;flex-shrink:0">AI</span>
+      <div class="nav-item" onclick="showSection('callcenter')" id="nav-callcenter" style="padding:11px 16px;border-left:3px solid transparent">
+        <span class="nav-icon" style="font-size:15px">📞</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text">Call Center Agent</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px">Ürün bilgi asistanı</div>
+        </div>
+        <span style="font-size:8px;background:rgba(0,194,168,.15);color:var(--teal);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">CC</span>
+      </div>
+      <div class="nav-item" onclick="showSection('sizewin')" id="nav-sizewin" style="padding:11px 16px;border-left:3px solid transparent">
+        <span class="nav-icon" style="font-size:15px">📏</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text">Sizewin Agent</div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px">Beden öneri sistemi</div>
+        </div>
+        <span style="font-size:8px;background:rgba(168,85,247,.15);color:var(--purple);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">SW</span>
+      </div>
     </div>
     <div class="nav-section">E-Ticaret</div>
     <div class="nav-item" onclick="showSection('exec')" id="nav-exec">
@@ -421,6 +630,13 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
     </div>
     <div class="nav-item" onclick="showSection('plm-katalog')" id="nav-plm-katalog">
       <span class="nav-icon">🏷️</span><span class="nav-text">PLM Katalog</span>
+    </div>
+    <div class="nav-item" onclick="showSection('urun-yonetimi')" id="nav-urun-yonetimi">
+      <span class="nav-icon">📊</span><span class="nav-text">Ürün Yönetimi</span>
+      <span class="nav-badge" style="background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:var(--purple)">YK</span>
+    </div>
+    <div class="nav-item" onclick="showSection('urun-satis')" id="nav-urun-satis">
+      <span class="nav-icon">🔍</span><span class="nav-text">Satış Detay Analizi</span>
     </div>
   </nav>
 
@@ -653,7 +869,7 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
     <!-- AI SORGU -->
     <div class="section" id="section-ai" style="height:calc(100vh - 160px);display:none;flex-direction:column">
       <div class="sec-hdr" style="flex-shrink:0">
-        <span class="sec-title">AI Analiz</span>
+        <span class="sec-title">Pimland AI Agent</span>
         <div style="display:flex;gap:8px">
           <span style="font-size:10px;color:var(--t3);align-self:center" id="ai-filter-info"></span>
           <button onclick="clearChat()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">Temizle</button>
@@ -668,7 +884,7 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
         <div id="ai-welcome" style="display:flex;align-items:flex-start;gap:12px">
           <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--orange),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div>
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:75%">
-            <div style="font-size:13px;color:var(--t1);line-height:1.6">Merhaba! <strong>Pimland AI Analiz</strong> asistanıyım.<br>E-ticaret verileriniz hakkında Türkçe soru sorabilirsiniz.</div>
+            <div style="font-size:13px;color:var(--t1);line-height:1.6">Merhaba! <strong>Pimland AI Agent</strong>'ım.<br>Satış, iade, kategori ve ürün verileriniz hakkında soru sorabilirsiniz.</div>
             <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px" id="ai-hint-chips"></div>
           </div>
         </div>
@@ -691,6 +907,131 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
           <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3);cursor:pointer">
             <input type="checkbox" id="ai-show-sql" style="accent-color:var(--orange)"> SQL'i göster
           </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALL CENTER AGENT -->
+    <div class="section" id="section-callcenter" style="height:calc(100vh - 160px);display:none;flex-direction:column">
+      <div class="sec-hdr" style="flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--teal),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📞</div>
+          <div>
+            <span class="sec-title" style="color:var(--teal)">Call Center Agent</span>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Müşteri sorularına hızlı ürün bilgisi</div>
+          </div>
+        </div>
+        <button onclick="clearAgentChat('cc')" style="background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">Temizle</button>
+      </div>
+      <!-- Öneri sorular -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;margin-bottom:4px">
+        <span style="font-size:10px;color:var(--t3);align-self:center">Öneriler:</span>
+        <span class="ai-chip" onclick="agentChipClick('cc',this)">Bu ürünün renkleri neler?</span>
+        <span class="ai-chip" onclick="agentChipClick('cc',this)">Ürün hangi kategoride?</span>
+        <span class="ai-chip" onclick="agentChipClick('cc',this)">Kumaş içeriği nedir?</span>
+        <span class="ai-chip" onclick="agentChipClick('cc',this)">Ürün aktif mi?</span>
+        <span class="ai-chip" onclick="agentChipClick('cc',this)">Bu sezonun ürünleri</span>
+      </div>
+      <!-- Chat -->
+      <div id="cc-chat" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:4px 0;min-height:0">
+        <div id="cc-welcome" style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--teal),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📞</div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:75%">
+            <div style="font-size:13px;color:var(--t1);line-height:1.6">Merhaba! <strong>Call Center Agent</strong>'ım.<br>Müşterilerden gelen ürün sorularını bana iletebilirsiniz. Ürün kodu veya adı ile soru sorabilirsiniz.</div>
+            <div style="margin-top:10px;font-size:11px;color:var(--t3)">💡 Ürün kodu içeren sorular daha hızlı ve doğru sonuç verir.</div>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div style="flex-shrink:0;background:var(--bg2);border:1px solid var(--teal);border-radius:12px;padding:10px 14px;margin-top:8px">
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <textarea id="cc-question"
+            style="flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.5;max-height:120px;min-height:20px"
+            placeholder="Ürün kodu veya soruyu yazın... (Örn: 10146095000 ürününün renkleri neler?)"
+            rows="1"
+            onkeydown="agentKeydown(event,'cc')"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+          <button onclick="askAgent('cc')" style="background:var(--teal);color:#fff;border:none;width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">↑</button>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <span style="font-size:10px;color:var(--t3)">Ürün Kodu (isteğe bağlı):</span>
+          <input id="cc-sku" type="text" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 8px;border-radius:5px;outline:none;font-family:inherit;width:140px" placeholder="10146095000">
+        </div>
+      </div>
+    </div>
+
+    <!-- SIZEWIN AGENT -->
+    <div class="section" id="section-sizewin" style="height:calc(100vh - 160px);display:none;flex-direction:column">
+      <div class="sec-hdr" style="flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📏</div>
+          <div>
+            <span class="sec-title" style="color:var(--purple)">Sizewin Agent</span>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">Müşteri ölçülerine göre beden önerisi</div>
+          </div>
+        </div>
+        <button onclick="clearAgentChat('sw')" style="background:var(--bg3);border:1px solid var(--border);color:var(--t3);font-size:10px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">Temizle</button>
+      </div>
+      <!-- Müşteri ölçü paneli -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex-shrink:0">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:8px">Müşteri Ölçüleri</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Boy</span>
+            <input id="sw-boy" type="number" min="140" max="210" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 6px;border-radius:5px;outline:none;font-family:inherit;width:60px" placeholder="cm">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Kilo</span>
+            <input id="sw-kilo" type="number" min="40" max="150" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 6px;border-radius:5px;outline:none;font-family:inherit;width:60px" placeholder="kg">
+          </div>
+          <div class="filter-sep"></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Göğüs</span>
+            <input id="sw-gogus" type="number" min="60" max="140" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 6px;border-radius:5px;outline:none;font-family:inherit;width:60px" placeholder="cm">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Bel</span>
+            <input id="sw-bel" type="number" min="50" max="130" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 6px;border-radius:5px;outline:none;font-family:inherit;width:60px" placeholder="cm">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Kalça</span>
+            <input id="sw-kalca" type="number" min="60" max="150" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 6px;border-radius:5px;outline:none;font-family:inherit;width:60px" placeholder="cm">
+          </div>
+          <div class="filter-sep"></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px;color:var(--t3)">Ürün Kodu</span>
+            <input id="sw-sku" type="text" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:4px 8px;border-radius:5px;outline:none;font-family:inherit;width:130px" placeholder="SKU (isteğe bağlı)">
+          </div>
+        </div>
+      </div>
+      <!-- Öneri sorular -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;margin-bottom:4px;margin-top:6px">
+        <span style="font-size:10px;color:var(--t3);align-self:center">Öneriler:</span>
+        <span class="ai-chip" onclick="agentChipClick('sw',this)">Hangi bedeni almalıyım?</span>
+        <span class="ai-chip" onclick="agentChipClick('sw',this)">Dar mı, normal mi keser?</span>
+        <span class="ai-chip" onclick="agentChipClick('sw',this)">Rahat giyim için hangi beden?</span>
+        <span class="ai-chip" onclick="agentChipClick('sw',this)">Bu elbise bana olur mu?</span>
+      </div>
+      <!-- Chat -->
+      <div id="sw-chat" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:4px 0;min-height:0">
+        <div id="sw-welcome" style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--purple),var(--pink));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📏</div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:75%">
+            <div style="font-size:13px;color:var(--t1);line-height:1.6">Merhaba! <strong>Sizewin Agent</strong>'ım.<br>Müşterinin ölçülerini girin ve hangi bedeni alması gerektiğini sorun.</div>
+            <div style="margin-top:10px;font-size:11px;color:var(--t3)">📐 Daha doğru öneri için boy, kilo ve göğüs/bel/kalça ölçülerini girin.</div>
+          </div>
+        </div>
+      </div>
+      <!-- Input -->
+      <div style="flex-shrink:0;background:var(--bg2);border:1px solid var(--purple);border-radius:12px;padding:10px 14px;margin-top:8px">
+        <div style="display:flex;gap:10px;align-items:flex-end">
+          <textarea id="sw-question"
+            style="flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;font-family:inherit;resize:none;outline:none;line-height:1.5;max-height:120px;min-height:20px"
+            placeholder="Beden sorusu yazın... (Enter: gönder)"
+            rows="1"
+            onkeydown="agentKeydown(event,'sw')"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+          <button onclick="askAgent('sw')" style="background:var(--purple);color:#fff;border:none;width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px">↑</button>
         </div>
       </div>
     </div>
@@ -755,6 +1096,141 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
       </div>
     </div>
 
+    <!-- ÜRÜN YÖNETİMİ DASHBOARD -->
+    <div class="section" id="section-urun-yonetimi">
+      <div class="sec-hdr">
+        <span class="sec-title">Ürün Yönetimi Dashboard</span>
+        <span class="sec-sub">Marka · Sezon · Tema · Kategori — SKU Analizi</span>
+      </div>
+
+      <!-- UY: Filtre satırı -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <span style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:1px;text-transform:uppercase">Filtre</span>
+        <div style="width:1px;height:16px;background:var(--border)"></div>
+        <div class="filter-group"><span class="filter-label">Marka</span>
+          <select class="filter-select" id="uy-f-marka"><option value="">Tüm Markalar</option></select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Sezon</span>
+          <select class="filter-select" id="uy-f-sezon" style="max-width:170px"><option value="">Tüm Sezonlar</option></select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Tema</span>
+          <select class="filter-select" id="uy-f-tema" style="max-width:180px"><option value="">Tüm Temalar</option></select>
+        </div>
+        <button class="btn-apply" onclick="applyUyFilters()">Uygula</button>
+        <!-- Breadcrumb -->
+        <div id="uy-breadcrumb" style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)"></div>
+      </div>
+
+      <!-- UY: Hero KPI Strip -->
+      <div id="uy-hero" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;border:1px solid var(--border)">
+        <div class="loading" style="grid-column:span 4"><div class="spinner"></div></div>
+      </div>
+
+      <!-- UY: Drill-Down Tablo -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Marka · Sezon · Kategori Analizi</span>
+          <span style="font-size:10px;color:var(--t3)">Satıra tıkla → genişlet</span>
+        </div>
+        <div id="uy-drill-header" style="display:grid;grid-template-columns:32px 1fr 110px 80px 100px 90px 70px;gap:0;padding:8px 14px;border-bottom:1px solid var(--border)">
+          <div></div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3)">Ad</div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);text-align:right">SKU</div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);text-align:right">Aktif</div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3)">Pay %</div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);text-align:right">Sezon</div>
+          <div style="font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--t3)">Durum</div>
+        </div>
+        <div id="uy-drill-table"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+
+      <!-- UY: Sezon Kartları + Kategori Tiles -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Sezon Kartları -->
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:10px">Sezonlar</div>
+          <div id="uy-sezon-cards" style="display:flex;flex-direction:column;gap:10px">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        <!-- Son 5 Sezon × Kategori Dağılımı -->
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:10px">Sezon × Kategori Dağılımı</div>
+          <div id="uy-sezon-grup" style="display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UY: Tema Grid + Alert Panel -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:10px">Tema / Koleksiyon</div>
+          <div id="uy-tema-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div class="loading" style="grid-column:span 3"><div class="spinner"></div></div>
+          </div>
+        </div>
+        <div class="insight-panel" id="uy-alerts" style="align-self:start">
+          <div class="insight-title">Yönetici Özeti</div>
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- UY: Isı Haritası -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Kategori × Sezon Isı Haritası</span>
+          <span style="font-size:10px;color:var(--t3)">SKU yoğunluğu</span>
+        </div>
+        <div id="uy-isi-harita" style="padding:16px;overflow-x:auto">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div><!-- /section-urun-yonetimi -->
+
+    <!-- ÜRÜN SATIŞ DETAY ANALİZİ -->
+    <div class="section" id="section-urun-satis">
+      <div class="sec-hdr">
+        <span class="sec-title">Satış Detay Analizi</span>
+        <span class="sec-sub">Marka · Sezon · Kategori · Ürün Grubu · Ürün — Satış × PLM birleşimi</span>
+      </div>
+
+      <!-- Filtre satırı -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <span style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:1px;text-transform:uppercase">PLM Filtre</span>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><span class="filter-label">Marka</span>
+          <select class="filter-select" id="usa-f-marka"><option value="">Tüm Markalar</option></select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Sezon</span>
+          <select class="filter-select" id="usa-f-sezon" style="max-width:170px"><option value="">Tüm Sezonlar</option></select>
+        </div>
+        <button class="btn-apply" onclick="applyUsaFilters()">Uygula</button>
+        <span style="margin-left:auto;font-size:10px;color:var(--t3)">Topbar filtresi (yıl/ay/kanal) de uygulanır</span>
+      </div>
+
+      <!-- Drill-down tablo -->
+      <div class="table-card">
+        <div class="table-header" style="padding:10px 14px">
+          <span class="table-title">Marka · Sezon · Kategori · Ürün Grubu · Ürünler</span>
+          <span style="font-size:10px;color:var(--t3)">Her satıra tıkla → alt seviye açılır</span>
+        </div>
+        <!-- Kolon başlıkları -->
+        <div class="usa-header usa-cols" style="background:var(--bg3)">
+          <div></div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">Ad / SKU</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">SKU</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">Satılan</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">İade</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">Ort.Fiyat</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">Net Ciro</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">Kayıp%</div>
+        </div>
+        <div id="usa-drill-table"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
+    </div><!-- /section-urun-satis -->
+
   </main>
 </div>
 
@@ -792,6 +1268,10 @@ let drilldownData=null;
 let modalTabActive='trend';
 let plmState={marka:null,sezon:null,tema:null};
 let plmFiltersLoaded=false;
+let uyState={marka:null,sezon:null,tema:null};
+let uyFiltersLoaded=false;
+let usaState={marka:null,sezon_kodu:null};
+let usaFiltersLoaded=false;
 const AY_ADI={1:'Ocak',2:'Şubat',3:'Mart',4:'Nisan',5:'Mayıs',6:'Haziran',7:'Temmuz',8:'Ağustos',9:'Eylül',10:'Ekim',11:'Kasım',12:'Aralık'};
 const KANAL_COLOR={'TRENDYOL':'#f97316','ADL':'#00c2a8','ADL IOS APP':'#3b82f6','ADL ANDROID APP':'#a855f7','HEPSIBURADA':'#ec4899','BOYNER':'#f59e0b','LOVEMYBODY':'#22c55e','LMB IOS APP':'#6b7280','LMB ANDROID APP':'#14b8a6','TY ADL AZ':'#ef4444','TY LMB AZ':'#8b5cf6'};
 const IADE_COLOR=p=>p<15?'var(--green)':p<30?'var(--yellow)':'var(--red)';
@@ -806,6 +1286,7 @@ function fmtPct(v){return parseFloat(v).toFixed(1)+'%';}
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
+  updateHamburgerTheme();
   const p=new URLSearchParams(location.search);
   if(p.get('yil'))state.yil=parseInt(p.get('yil'));
   if(p.get('ay'))state.ay=p.get('ay').split(',').map(Number).filter(Boolean);
@@ -866,6 +1347,7 @@ function applyFilters(){
   state.marka=document.getElementById('f-marka')?.value||null;
   state.sezon=document.getElementById('f-sezon')?.value||null;
   state.grup=document.getElementById('f-grup')?.value||null;
+  updateAdvBadge();
   pushURL();loadSection(currentSection);
 }
 
@@ -920,7 +1402,11 @@ function loadSection(id){
   else if(id==='products')loadProducts(1);
   else if(id==='colors')loadColors();
   else if(id==='ai')initAISection();
+  else if(id==='callcenter')initAgentSection('cc');
+  else if(id==='sizewin')initAgentSection('sw');
   else if(id==='plm-katalog')loadPlmKatalog();
+  else if(id==='urun-yonetimi')loadUrunYonetimi();
+  else if(id==='urun-satis')loadUrunSatisAnaliz();
 }
 
 // ── EXECUTIVE ÖZET ────────────────────────────────────────────────────────────
@@ -1373,6 +1859,154 @@ const AI_SUGGESTIONS=[
   'Aylık net ciro trendi',
 ];
 
+// ── AGENT HELPERS (Call Center + Sizewin) ────────────────────────────────────
+// Konuşma geçmişi — agent başına [{role, content}] listesi
+const agentHistory = { cc: [], sw: [] };
+const MAX_HISTORY = 20; // max turn sayısı (token limiti için)
+
+const AGENT_CFG = {
+  cc: {
+    prefix:    'cc',
+    endpoint:  `${API}/agents/callcenter`,
+    avatar:    'linear-gradient(135deg,var(--teal),var(--blue))',
+    icon:      '📞',
+    color:     'var(--teal)',
+    thinking:  'Ürün bilgileri araştırılıyor...',
+    buildPayload: (q) => {
+      const sku = document.getElementById('cc-sku')?.value.trim() || null;
+      return { question: q, urun_kodu: sku, history: agentHistory.cc };
+    },
+  },
+  sw: {
+    prefix:    'sw',
+    endpoint:  `${API}/agents/sizewin`,
+    avatar:    'linear-gradient(135deg,var(--purple),var(--pink))',
+    icon:      '📏',
+    color:     'var(--purple)',
+    thinking:  'Beden analizi yapılıyor...',
+    buildPayload: (q) => {
+      const m = {};
+      const boy   = parseFloat(document.getElementById('sw-boy')?.value);
+      const kilo  = parseFloat(document.getElementById('sw-kilo')?.value);
+      const gogus = parseFloat(document.getElementById('sw-gogus')?.value);
+      const bel   = parseFloat(document.getElementById('sw-bel')?.value);
+      const kalca = parseFloat(document.getElementById('sw-kalca')?.value);
+      if(boy)   m.boy   = boy;
+      if(kilo)  m.kilo  = kilo;
+      if(gogus) m.gogus = gogus;
+      if(bel)   m.bel   = bel;
+      if(kalca) m.kalca = kalca;
+      const sku = document.getElementById('sw-sku')?.value.trim() || null;
+      return {
+        question: q,
+        measurements: Object.keys(m).length ? m : null,
+        urun_kodu: sku,
+        history: agentHistory.sw,
+      };
+    },
+  },
+};
+
+function initAgentSection(agentKey) {
+  // nothing to init for now — chat is static
+}
+
+function agentKeydown(e, agentKey) {
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askAgent(agentKey);}
+}
+
+function agentChipClick(agentKey, el) {
+  const inp = document.getElementById(`${agentKey}-question`);
+  if(inp){ inp.value = el.textContent; askAgent(agentKey); }
+}
+
+function clearAgentChat(agentKey) {
+  const chat = document.getElementById(`${agentKey}-chat`);
+  const welcome = document.getElementById(`${agentKey}-welcome`);
+  if(!chat||!welcome) return;
+  chat.innerHTML='';
+  chat.appendChild(welcome);
+  welcome.style.display='flex';
+  if(agentHistory[agentKey]) agentHistory[agentKey] = [];
+}
+
+async function askAgent(agentKey) {
+  const cfg = AGENT_CFG[agentKey];
+  if(!cfg) return;
+  const textarea = document.getElementById(`${agentKey}-question`);
+  const q = textarea?.value.trim();
+  if(!q) return;
+  textarea.value=''; textarea.style.height='auto';
+
+  const chat = document.getElementById(`${agentKey}-chat`);
+  const welcome = document.getElementById(`${agentKey}-welcome`);
+  if(welcome) welcome.style.display='none';
+
+  // User bubble
+  chat.insertAdjacentHTML('beforeend',`
+    <div class="ai-user-msg anim">
+      <div class="ai-user-bubble">${q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>`);
+
+  // Thinking indicator
+  const thinkId = 'think-'+agentKey+'-'+Date.now();
+  chat.insertAdjacentHTML('beforeend',`
+    <div class="ai-bot-msg" id="${thinkId}">
+      <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
+      <div class="ai-bot-bubble">
+        <div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">${cfg.thinking}</span></div>
+      </div>
+    </div>`);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const payload = cfg.buildPayload(q);
+    const d = await fetch(cfg.endpoint, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    }).then(r => r.json());
+
+    document.getElementById(thinkId)?.remove();
+
+    if(d.detail || d.error) {
+      chat.insertAdjacentHTML('beforeend',`
+        <div class="ai-bot-msg anim">
+          <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
+          <div class="ai-bot-bubble"><p style="color:var(--red)">${d.detail||d.error||'Hata oluştu'}</p></div>
+        </div>`);
+    } else {
+      // Konuşma geçmişine ekle
+      if(agentHistory[agentKey] !== undefined) {
+        agentHistory[agentKey].push({role:'user', content: q});
+        agentHistory[agentKey].push({role:'assistant', content: d.answer||''});
+        // Çok uzamasın — en eski turları at
+        if(agentHistory[agentKey].length > MAX_HISTORY * 2)
+          agentHistory[agentKey] = agentHistory[agentKey].slice(-MAX_HISTORY * 2);
+      }
+      const answerHtml = renderMD(d.answer||'');
+      const metaHtml = `<div class="ai-meta">
+        <span style="font-size:10px;color:var(--t3)">${d.elapsed_ms?.toFixed(0)||'—'} ms</span>
+        ${d.products_found!==undefined?`<span style="font-size:10px;color:var(--t3)">${d.products_found} ürün bulundu</span>`:''}
+        ${d.size_chart_used?`<span style="font-size:10px;color:var(--t3)">Beden tablosu: ${d.size_chart_used}</span>`:''}
+      </div>`;
+      chat.insertAdjacentHTML('beforeend',`
+        <div class="ai-bot-msg anim">
+          <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
+          <div class="ai-bot-bubble">${answerHtml}${metaHtml}</div>
+        </div>`);
+    }
+  } catch(e) {
+    document.getElementById(thinkId)?.remove();
+    chat.insertAdjacentHTML('beforeend',`
+      <div class="ai-bot-msg anim">
+        <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
+        <div class="ai-bot-bubble"><p style="color:var(--red)">Bağlantı hatası: ${e.message}</p></div>
+      </div>`);
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
 function initAISection(){
   // Filter info
   const parts=[];
@@ -1406,6 +2040,9 @@ function clearChat(){
 // Markdown → HTML renderer
 function renderMD(text){
   if(!text)return '';
+  // Img tag'larını önceden ayır, sonra geri koy
+  const imgs=[];
+  text=text.replace(/<img\s[^>]+>/gi,m=>{const ph=`\x00img${imgs.length}\x00`;imgs.push(m);return ph;});
   let h=text
     // Escape HTML except in code blocks
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -1443,6 +2080,11 @@ function renderMD(text){
   // Wrap in p if no block elements
   if(!/<(h[123]|ul|ol|table|hr)/.test(h))h=`<p>${h}</p>`;
   else h=`<div>${h}</div>`;
+  // Img placeholder'larını geri koy (style ekle)
+  imgs.forEach((img,i)=>{
+    const styled=img.replace('<img ','<img style="max-width:120px;border-radius:8px;margin:4px 0;display:block" ');
+    h=h.replace(`\x00img${i}\x00`,styled);
+  });
   return h;
 }
 
@@ -1725,9 +2367,8 @@ function animBars(id){
 }
 
 // ── ŞİFRE KORUMASI ───────────────────────────────────────────────────────────
-// Şifre hash'i (SHA-256 yerine basit Base64 — production'da değiştirin)
 // Mevcut şifre: pimland2026
-const PW_HASH = btoa('pimland2026');
+const PW_HASH = 'pimland2026';
 const PW_COOKIE = 'pimland_auth';
 const PW_DAYS = 3;
 
@@ -1741,7 +2382,7 @@ function setCookie(name,value,days){
 
 function checkAuth(){
   const saved=getCookie(PW_COOKIE);
-  if(saved===PW_HASH){
+  if(saved==='ok'){
     document.getElementById('pw-overlay').style.display='none';
     return true;
   }
@@ -1751,10 +2392,10 @@ function checkAuth(){
 }
 
 function checkPassword(){
-  const val=document.getElementById('pw-input').value;
+  const val=document.getElementById('pw-input').value.trim();
   const err=document.getElementById('pw-error');
-  if(btoa(val)===PW_HASH){
-    setCookie(PW_COOKIE,PW_HASH,PW_DAYS);
+  if(val===PW_HASH){
+    setCookie(PW_COOKIE,'ok',PW_DAYS);
     document.getElementById('pw-overlay').style.display='none';
     err.style.display='none';
     init();
@@ -1764,6 +2405,316 @@ function checkPassword(){
     document.getElementById('pw-input').value='';
     document.getElementById('pw-input').focus();
   }
+}
+
+// ── ÜRÜN YÖNETİMİ DASHBOARD ──────────────────────────────────────────────────
+const ANA_GRUP_ICON={'UST GRUP':'👔','ALT GRUP':'👖','ELBISE':'👗','UST DIS GIYIM':'🧥','AKSESUAR':'👜','TULUM':'🧶','BEACHWEAR':'🩴','default':'📦'};
+function uyGrupIcon(g){return ANA_GRUP_ICON[g]||ANA_GRUP_ICON.default;}
+
+function applyUyFilters(){
+  uyState.marka=document.getElementById('uy-f-marka').value||null;
+  uyState.sezon=document.getElementById('uy-f-sezon').value||null;
+  uyState.tema=document.getElementById('uy-f-tema').value||null;
+  loadUrunYonetimi();
+}
+
+function heatClass(v,mx){
+  if(!v||v===0)return 'heat-0';
+  const r=v/mx;
+  if(r<.05)return 'heat-1';
+  if(r<.15)return 'heat-2';
+  if(r<.30)return 'heat-3';
+  if(r<.50)return 'heat-4';
+  if(r<.75)return 'heat-5';
+  return 'heat-6';
+}
+
+function toggleRow(el){
+  const next=el.nextElementSibling;
+  if(!next)return;
+  const isExp=next.classList.contains('child-rows')||next.classList.contains('grandchild-rows');
+  if(!isExp)return;
+  const isOpen=next.style.display==='block';
+  next.style.display=isOpen?'none':'block';
+  el.classList.toggle('expanded',!isOpen);
+}
+
+function uyHeroEl(lbl,big,bigCls,subs){
+  const subHtml=subs.map(s=>`<div class="sub-item"><div class="sv">${s.v}</div><div class="sl">${s.l}</div></div>`).join('');
+  return `<div class="uy-hero-kpi"><div class="lbl">${lbl}</div><div class="big ${bigCls}">${big}</div><div class="sub-row">${subHtml}</div></div>`;
+}
+
+function uySezonDurum(kodu){
+  if(!kodu)return{cls:'hs-arsiv',txt:'Arşiv'};
+  if(kodu>='26-SR')return{cls:'hs-aktif',txt:'Aktif'};
+  if(kodu>='25-SR')return{cls:'hs-arsiv',txt:'Arşiv'};
+  return{cls:'hs-arsiv',txt:'Arşiv'};
+}
+
+async function loadUrunYonetimi(){
+  const sections=['uy-hero','uy-drill-table','uy-sezon-cards','uy-sezon-grup','uy-tema-grid','uy-alerts','uy-isi-harita'];
+  const spin='<div class="loading"><div class="spinner"></div></div>';
+  sections.forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=spin;});
+
+  const p=new URLSearchParams();
+  if(uyState.marka)p.set('marka',uyState.marka);
+  if(uyState.sezon)p.set('sezon',uyState.sezon);
+  if(uyState.tema)p.set('tema',uyState.tema);
+
+  let d;
+  try{
+    d=await fetch(`${API}/portal/urun-yonetimi?${p}`).then(r=>r.json());
+  }catch(e){
+    document.getElementById('uy-hero').innerHTML=`<div style="padding:20px;color:var(--red);grid-column:span 4">Hata: ${e.message}</div>`;
+    return;
+  }
+
+  // Filtre doldurucu (ilk kez)
+  if(!uyFiltersLoaded){
+    uyFiltersLoaded=true;
+    const fm=document.getElementById('uy-f-marka');
+    const fs=document.getElementById('uy-f-sezon');
+    const ft=document.getElementById('uy-f-tema');
+    d.filters.markalar.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;fm.appendChild(o);});
+    d.filters.sezonlar.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;fs.appendChild(o);});
+    d.filters.temalar.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;ft.appendChild(o);});
+    if(uyState.marka)fm.value=uyState.marka;
+    if(uyState.sezon)fs.value=uyState.sezon;
+    if(uyState.tema)ft.value=uyState.tema;
+  }
+
+  // Breadcrumb
+  const bc=document.getElementById('uy-breadcrumb');
+  if(bc){
+    const parts=[uyState.marka||'Tüm Markalar',uyState.sezon||'Tüm Sezonlar',uyState.tema||'Tüm Temalar'];
+    bc.innerHTML=parts.map((p,i)=>`<span style="color:${i===0?'var(--orange)':'var(--t3)'}">${p}</span>`).join('<span style="margin:0 3px">›</span>');
+  }
+
+  // ── Hero KPI Strip ──
+  const k=d.kpis;
+  const aktifPct=k.toplam_sku?Math.round(k.aktif_sku*100/k.toplam_sku):0;
+  const heroEl=document.getElementById('uy-hero');
+  heroEl.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;border:1px solid var(--border)';
+  heroEl.innerHTML=
+    uyHeroEl('Toplam SKU',fmtAdet(k.toplam_sku),'orange',[
+      {v:fmtAdet(k.aktif_sku),l:'Aktif'},{v:`%${aktifPct}`,l:'Aktiflik'},{v:fmtAdet(k.bloke_sku),l:'Bloke'}
+    ])+
+    uyHeroEl('Aktif Sezon',k.sezon_sayisi,'teal',[
+      {v:k.marka_sayisi,l:'Marka'},{v:k.sezon_sayisi,l:'Sezon'},{v:'—',l:'YoY'}
+    ])+
+    uyHeroEl('Aktif SKU',fmtAdet(k.aktif_sku),'green',[
+      {v:`%${aktifPct}`,l:'Aktiflik'},{v:fmtAdet(k.bloke_sku),l:'Bloke'},{v:'—',l:'Trend'}
+    ])+
+    uyHeroEl('Tema & Kategori',k.tema_sayisi,'purple',[
+      {v:k.tema_sayisi,l:'Tema'},{v:k.ana_grup_sayisi,l:'Ana Grup'},{v:k.urun_grubu_sayisi,l:'Ürün Grubu'}
+    ]);
+
+  // ── Drill-Down Tablo ──
+  const dd=d.drill_down;
+  const sezonByMarka={};
+  dd.sezonlar.forEach(s=>{
+    if(!sezonByMarka[s.marka_adi])sezonByMarka[s.marka_adi]=[];
+    sezonByMarka[s.marka_adi].push(s);
+  });
+  const anaGrupBySezon={};
+  dd.ana_gruplar.forEach(r=>{
+    const key=`${r.marka_adi}|${r.sezon_kodu}`;
+    if(!anaGrupBySezon[key])anaGrupBySezon[key]=[];
+    anaGrupBySezon[key].push(r);
+  });
+
+  const rbCls=i=>['rb1','rb2','rb3','rbn'][Math.min(i,3)];
+  const maxSku=dd.markalar.reduce((m,r)=>Math.max(m,r.sku),0);
+
+  let drillHtml='';
+  dd.markalar.forEach((m,mi)=>{
+    const dur=uySezonDurum(null);
+    drillHtml+=`<div class="hier-row" onclick="toggleRow(this)">
+      <div class="rank-badge ${rbCls(mi)}">${mi+1}</div>
+      <div class="hr-name">${m.marka_adi}<small>· ${m.sezon_sayisi} sezon · ${m.tema_sayisi} tema</small><span class="expand-icon">›</span></div>
+      <div class="hr-val orange">${fmtAdet(m.sku)}</div>
+      <div class="hr-val teal">${fmtAdet(m.aktif_sku)}</div>
+      <div class="hr-bar-wrap"><div class="hr-bar-track"><div class="hr-bar-fill" style="width:${m.pay_pct}%;background:var(--orange)"></div></div><div class="hr-pct">%${m.pay_pct.toFixed(1)}</div></div>
+      <div class="hr-val">${m.sezon_sayisi}</div>
+      <div class="hr-val"><span class="hr-status hs-aktif">Aktif</span></div>
+    </div>
+    <div class="child-rows">`;
+
+    const sezonlar=sezonByMarka[m.marka_adi]||[];
+    sezonlar.slice(0,8).forEach((s,si)=>{
+      const sdur=uySezonDurum(s.sezon_kodu);
+      drillHtml+=`<div class="child-row" onclick="toggleRow(this)">
+        <div class="rank-badge ${rbCls(si)}" style="width:16px;height:16px;font-size:8px">S</div>
+        <div class="hr-name" style="font-size:11px">${s.sezon_adi}<small>· ${s.ana_grup_sayisi} grup</small><span class="expand-icon">›</span></div>
+        <div class="hr-val orange" style="font-size:10px">${fmtAdet(s.sku)}</div>
+        <div class="hr-val teal" style="font-size:10px">${fmtAdet(s.aktif_sku)}</div>
+        <div class="hr-bar-wrap"><div class="hr-bar-track"><div class="hr-bar-fill" style="width:${s.pay_pct}%;background:var(--teal)"></div></div><div class="hr-pct">%${s.pay_pct.toFixed(1)}</div></div>
+        <div class="hr-val" style="font-size:10px">${s.sezon_kodu||'—'}</div>
+        <div class="hr-val"><span class="hr-status ${sdur.cls}">${sdur.txt}</span></div>
+      </div>
+      <div class="grandchild-rows">`;
+
+      const agKey=`${s.marka_adi}|${s.sezon_kodu}`;
+      const agList=anaGrupBySezon[agKey]||[];
+      agList.slice(0,6).forEach((ag,agi)=>{
+        drillHtml+=`<div class="grandchild-row">
+          <div class="rank-badge rbn" style="width:14px;height:14px;font-size:8px;margin-left:0">${agi+1}</div>
+          <div class="hr-name" style="font-size:10px;color:var(--t2)">${uyGrupIcon(ag.ana_grup)} ${ag.ana_grup}</div>
+          <div class="hr-val" style="font-size:10px">${fmtAdet(ag.sku)}</div>
+          <div class="hr-val teal" style="font-size:10px">${fmtAdet(ag.aktif_sku)}</div>
+          <div class="hr-bar-wrap"></div>
+          <div class="hr-val" style="font-size:10px">—</div>
+          <div class="hr-val"></div>
+        </div>`;
+      });
+      drillHtml+='</div>';// /grandchild-rows
+    });
+    drillHtml+='</div>';// /child-rows
+  });
+  document.getElementById('uy-drill-table').innerHTML=drillHtml||'<div class="empty">Veri yok</div>';
+
+  // Animate bars
+  setTimeout(()=>{
+    document.querySelectorAll('#uy-drill-table .hr-bar-fill').forEach(el=>{
+      const w=el.style.width; el.style.width='0';
+      setTimeout(()=>{el.style.width=w;},100);
+    });
+  },50);
+
+  // ── Sezon Kartları ──
+  const maxSkuSezon=d.sezon_kartlar.reduce((m,r)=>Math.max(m,r.sku),0);
+  const sezonHtml=d.sezon_kartlar.map(s=>{
+    const isCurrent=s.sezon_kodu>='26-SR'&&s.sku>100;
+    const pct=maxSkuSezon?Math.round(s.sku*100/maxSkuSezon):0;
+    const aktifPct=s.sku?Math.round(s.aktif_sku*100/s.sku):0;
+    return `<div class="season-card${isCurrent?' current':''}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="sc-name">${s.sezon_adi}${isCurrent?'<span class="sc-aktif-badge">AKTİF</span>':''}</div>
+        <div style="font-size:9px;color:var(--t3)">${s.sezon_kodu}</div>
+      </div>
+      <div class="sc-period">${s.marka_sayisi} marka · ${s.tema_sayisi} tema · ${s.ana_grup_sayisi} kategori</div>
+      <div class="sc-big">${fmtAdet(s.sku)}</div>
+      <div class="sc-sub">SKU — %${aktifPct} aktif</div>
+      <div class="sc-stats">
+        <div class="sc-stat"><div class="ssv">${fmtAdet(s.aktif_sku)}</div><div class="ssl">Aktif</div></div>
+        <div class="sc-stat"><div class="ssv">${s.tema_sayisi}</div><div class="ssl">Tema</div></div>
+        <div class="sc-stat"><div class="ssv">${s.ana_grup_sayisi}</div><div class="ssl">Grup</div></div>
+      </div>
+      <div class="sc-bar-track"><div class="sc-bar-fill" style="width:${pct}%;background:${isCurrent?'var(--orange)':'var(--teal)'}"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('uy-sezon-cards').innerHTML=sezonHtml||'<div class="empty">Veri yok</div>';
+
+  // ── Sezon × Kategori Tablosu ──
+  const isiSg=d.isi_haritasi;
+  const top5Sezon=(isiSg.sezonlar||[]).slice(0,5);
+  const anaGruplar=isiSg.ana_gruplar||[];
+  const sgData=isiSg.data||{};
+
+  // Başlık satırı
+  let sgHtml=`<div style="display:grid;grid-template-columns:110px repeat(${top5Sezon.length},1fr);background:var(--bg3);border-bottom:1px solid var(--border)">
+    <div style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">Kategori</div>`;
+  top5Sezon.forEach(sz=>{
+    const isCurrent=sz>='26-SR';
+    sgHtml+=`<div style="padding:8px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:${isCurrent?'var(--orange)':'var(--t3)'};text-align:center">${sz}<br><span style="font-weight:400;text-transform:none;letter-spacing:0">
+      ${d.sezon_kartlar.find(s=>s.sezon_kodu===sz)?.sezon_adi?.replace(/\d{4}/,'').trim()||''}</span></div>`;
+  });
+  sgHtml+='</div>';
+
+  // Veri satırları
+  anaGruplar.forEach((ag,i)=>{
+    const isEven=i%2===0;
+    sgHtml+=`<div style="display:grid;grid-template-columns:110px repeat(${top5Sezon.length},1fr);background:${isEven?'var(--bg2)':'var(--bg3)'};border-bottom:1px solid var(--border)">
+      <div style="padding:7px 10px;font-size:10px;color:var(--t2);font-weight:500;display:flex;align-items:center;gap:4px">${uyGrupIcon(ag)} <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ag}</span></div>`;
+
+    // Her sezon için değer ve mini bar
+    const rowMax=Math.max(...top5Sezon.map(sz=>(sgData[ag]&&sgData[ag][sz])||0),1);
+    top5Sezon.forEach(sz=>{
+      const cnt=(sgData[ag]&&sgData[ag][sz])||0;
+      const pct=cnt?Math.round(cnt/rowMax*100):0;
+      const isCurrent=sz>='26-SR';
+      sgHtml+=`<div style="padding:6px 10px;text-align:center">
+        ${cnt>0?`<div style="font-size:10px;font-weight:600;color:${isCurrent?'var(--orange)':'var(--t1)'};margin-bottom:3px">${cnt}</div>
+        <div style="height:3px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${isCurrent?'var(--orange)':'var(--teal)'};border-radius:2px;transition:width .8s cubic-bezier(.16,1,.3,1)"></div></div>`
+        :`<div style="color:var(--t4);font-size:10px">—</div>`}
+      </div>`;
+    });
+    sgHtml+='</div>';
+  });
+
+  // Toplam satırı
+  sgHtml+=`<div style="display:grid;grid-template-columns:110px repeat(${top5Sezon.length},1fr);background:var(--bg2);border-top:2px solid var(--border)">
+    <div style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--t2)">Toplam</div>`;
+  top5Sezon.forEach(sz=>{
+    const total=anaGruplar.reduce((s,ag)=>s+((sgData[ag]&&sgData[ag][sz])||0),0);
+    const isCurrent=sz>='26-SR';
+    sgHtml+=`<div style="padding:8px 10px;text-align:center;font-size:11px;font-weight:700;color:${isCurrent?'var(--orange)':'var(--t1)'}">${total||'—'}</div>`;
+  });
+  sgHtml+='</div>';
+
+  document.getElementById('uy-sezon-grup').innerHTML=sgHtml;
+
+  // ── Tema Grid ──
+  const temaBadge=marka=>{if(!marka)return{cls:'tb-core',txt:'—'};if(marka.toLowerCase().includes('night'))return{cls:'tb-carry',txt:'CARRY'};if(marka.toLowerCase().includes('body'))return{cls:'tb-new',txt:'YENİ'};return{cls:'tb-core',txt:'CORE'};};
+  const temaHtml=d.temalar.map(t=>{
+    const badge=temaBadge(t.marka_adi);
+    return `<div class="tema-card">
+      <div class="tema-header">
+        <div class="tema-name" title="${t.tema}">${t.tema}</div>
+        <div class="tema-badge ${badge.cls}">${badge.txt}</div>
+      </div>
+      <div class="tema-ciro">${fmtAdet(t.sku)}</div>
+      <div class="tema-sub">SKU · %${t.pay_pct.toFixed(1)} pay · ${t.marka_adi||'—'}</div>
+      <div class="tema-stats">
+        <div class="ts-box"><div class="ts-val">${fmtAdet(t.aktif_sku)}</div><div class="ts-lbl">Aktif SKU</div></div>
+        <div class="ts-box"><div class="ts-val">${t.sezon_sayisi}</div><div class="ts-lbl">Sezon</div></div>
+        <div class="ts-box"><div class="ts-val">${t.ana_grup_sayisi}</div><div class="ts-lbl">Kategori</div></div>
+        <div class="ts-box"><div class="ts-val">%${t.pay_pct.toFixed(1)}</div><div class="ts-lbl">Pay</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('uy-tema-grid').innerHTML=temaHtml||'<div class="empty" style="grid-column:span 3">Veri yok</div>';
+
+  // ── Alert Paneli ──
+  const alerts=[];
+  // En düşük aktiflik oranı
+  const lowAktif=d.ana_gruplar.filter(r=>r.sku>10&&(r.aktif_sku/r.sku)<0.4);
+  if(lowAktif.length)alerts.push({cls:'crit',icon:'⚠️',title:`${lowAktif[0].ana_grup}: Düşük Aktiflik`,desc:`%${Math.round(lowAktif[0].aktif_sku*100/lowAktif[0].sku)} aktif — Pasif ürünler incelenmeli`});
+  // En büyük tema
+  if(d.temalar.length){const t=d.temalar[0];alerts.push({cls:'good',icon:'📈',title:`${t.tema}: Güçlü Performans`,desc:`${fmtAdet(t.sku)} SKU — %${t.pay_pct.toFixed(1)} portföy payı`});}
+  // Bloke ürünler
+  if(k.bloke_sku>0)alerts.push({cls:'warn',icon:'🔒',title:`${fmtAdet(k.bloke_sku)} Bloke SKU`,desc:`Toplam SKU'nun %${Math.round(k.bloke_sku*100/k.toplam_sku)}'i bloke — İnceleme gerekebilir`});
+  // Sezon çeşitliliği
+  if(k.sezon_sayisi>10)alerts.push({cls:'good',icon:'🗓',title:'Geniş Sezon Portföyü',desc:`${k.sezon_sayisi} farklı sezon aktif — Portföy çeşitli`});
+  if(d.temalar.length>1){const t2=d.temalar[1];alerts.push({cls:'warn',icon:'💡',title:`${t2.tema}: Büyüme Fırsatı`,desc:`${fmtAdet(t2.sku)} SKU — ${t2.sezon_sayisi} sezonda yer alıyor`});}
+
+  const alertHtml=alerts.slice(0,5).map(a=>`<div class="insight-item">
+    <div class="insight-tag ${a.cls==='crit'?'red':a.cls==='warn'?'yellow':'green'}">${a.icon} ${a.cls.toUpperCase()}</div>
+    <div class="insight-text"><strong>${a.title}</strong><br><span style="color:var(--t2)">${a.desc}</span></div>
+  </div>`).join('');
+  document.getElementById('uy-alerts').innerHTML=`<div class="insight-title">Yönetici Özeti</div>${alertHtml}`;
+
+  // ── Isı Haritası ──
+  const isiH=d.isi_haritasi;
+  const isiSezonlar=isiH.sezonlar||[];
+  const isiAnaGruplar=isiH.ana_gruplar||[];
+  const isiData=isiH.data||{};
+  const maxVal=Math.max(...isiAnaGruplar.flatMap(ag=>isiSezonlar.map(sz=>isiData[ag]&&isiData[ag][sz]||0)));
+
+  let isiHtml=`<table class="isi-table"><thead><tr><th class="row-lbl">Kategori</th>`;
+  isiSezonlar.forEach(sz=>{isiHtml+=`<th>${sz}</th>`;});
+  isiHtml+='</tr></thead><tbody>';
+  isiAnaGruplar.forEach(ag=>{
+    isiHtml+=`<tr><td class="row-lbl">${uyGrupIcon(ag)} ${ag}</td>`;
+    isiSezonlar.forEach(sz=>{
+      const v=(isiData[ag]&&isiData[ag][sz])||0;
+      const hc=heatClass(v,maxVal);
+      isiHtml+=`<td class="isi-cell ${hc}">${v||'—'}</td>`;
+    });
+    isiHtml+='</tr>';
+  });
+  isiHtml+='</tbody></table>';
+  document.getElementById('uy-isi-harita').innerHTML=isiHtml;
 }
 
 // ── PLM KATALOG ───────────────────────────────────────────────────────────────
@@ -1898,6 +2849,295 @@ async function loadPlmKatalog(){
     console.error('PLM katalog hatası:',e);
     document.getElementById('plm-kpis').innerHTML='<div style="color:var(--red);padding:20px;grid-column:span 9">Yükleme hatası: '+e.message+'</div>';
   }
+}
+
+// ── ÜRÜN SATIŞ DETAY ANALİZİ ────────────────────────────────────────────────
+const USA_IMG='https://img-adl.sm.mncdn.com/cdnimages/products';
+
+// ERP renk kodu → görsel renk (HSL hash, aynı kod her zaman aynı renk verir)
+function colorCodeToHsl(code){
+  const n=parseInt((code||'0').trim(),10)||0;
+  // golden angle spread — yeterince farklı renkler üretir
+  const h=Math.round((n*137.508)%360);
+  const s=40+((n*7)%30);
+  const l=38+((n*11)%24);
+  return `hsl(${h},${s}%,${l}%)`;
+}
+
+function renderColorDots(colorCodesStr){
+  if(!colorCodesStr)return '';
+  const codes=colorCodesStr.split(',').map(c=>c.trim()).filter(Boolean).slice(0,8);
+  if(!codes.length)return '';
+  const dots=codes.map(c=>`<span title="Renk: ${c}" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${colorCodeToHsl(c)};border:1px solid rgba(255,255,255,.18);flex-shrink:0"></span>`).join('');
+  return `<div style="display:flex;gap:2px;align-items:center;flex-wrap:wrap;max-width:100px">${dots}</div>`;
+}
+
+function usaFmtCiro(v){v=parseFloat(v)||0;return new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:0}).format(v);}
+function usaKayipCls(p){return p>=40?'red':p>=20?'yellow':p>=10?'':'green';}
+
+function applyUsaFilters(){
+  usaState.marka=document.getElementById('usa-f-marka').value||null;
+  const sv=document.getElementById('usa-f-sezon').value;
+  usaState.sezon_kodu=sv||null;
+  loadUrunSatisAnaliz();
+}
+
+// Yeni bölümde lazy-load için: marka+sezon+anaGrup+urünGrubu key → loaded flag
+const usaLoadedKeys=new Set();
+
+async function toggleUsaRow(el,level){
+  const next=el.nextElementSibling;
+  if(!next)return;
+  const isOpen=next.style.display==='block';
+  if(isOpen){next.style.display='none';el.classList.remove('expanded');return;}
+  next.style.display='block';
+  el.classList.add('expanded');
+
+  // Ürün grubu satırı → ürünleri lazy yükle
+  if(level===4&&!next.dataset.loaded){
+    next.innerHTML='<div class="loading" style="padding:10px"><div class="spinner"></div></div>';
+    const marka=el.dataset.marka, sezon=el.dataset.sezon, ag=el.dataset.ag, ug=el.dataset.ug;
+    const p=new URLSearchParams({marka,sezon_kodu:sezon,ana_grup:ag,urun_grubu:ug});
+    if(state.yil)p.set('yil',state.yil);
+    state.ay.forEach(a=>p.append('ay',a));
+    state.kanal.forEach(k=>p.append('kanal',k));
+    try{
+      const rows=await fetch(`${API}/portal/urun-satis-detail?${p}`).then(r=>r.json());
+      next.dataset.loaded='1';
+      next.innerHTML=rows.length?rows.map(pr=>usaProductRow(pr)).join(''):'<div class="empty">Ürün verisi bulunamadı</div>';
+    }catch(e){next.innerHTML=`<div style="padding:10px;color:var(--red)">Hata: ${e.message}</div>`;}
+  }
+}
+
+function usaProductRow(pr){
+  const aktif=pr.internet_aktif;
+  const imgUrl=pr.default_image_url
+    ?`<img src="${pr.default_image_url}" class="usa-thumb" onerror="this.style.display='none'">`
+    :`<div class="usa-thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3)">📦</div>`;
+  const net=parseFloat(pr.net_ciro)||0;
+  const kayip=parseFloat(pr.deger_kaybi_pct)||0;
+  const ort=parseFloat(pr.ort_fiyat)||0;
+  const colorDots=renderColorDots(pr.color_codes);
+  return `<div class="usa-product usa-cols">
+    <div></div>
+    <div class="usa-name" style="gap:6px">
+      ${imgUrl}
+      <div style="min-width:0;display:flex;flex-direction:column;gap:2px">
+        <div class="usa-name-txt" style="font-size:11px;font-weight:500" title="${pr.urun_adi}">${pr.urun_adi}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;color:var(--t3);font-family:monospace">${pr.urun_kodu}</span>
+          ${colorDots}
+        </div>
+      </div>
+    </div>
+    <div class="usa-val"><span class="usa-status ${aktif?'usa-aktif':'usa-pasif'}">${aktif?'Aktif':'Pasif'}</span></div>
+    <div class="usa-val">${fmtAdet(pr.satis_adet||0)}</div>
+    <div class="usa-val ${parseFloat(pr.iade_adet)>0?'red':''}">${fmtAdet(pr.iade_adet||0)}</div>
+    <div class="usa-val" style="font-size:10px">${ort>0?usaFmtCiro(ort):'—'}</div>
+    <div class="usa-val ${net>=0?'teal':'red'}" style="font-size:10px">${usaFmtCiro(net)}</div>
+    <div class="usa-val ${usaKayipCls(kayip)}">${kayip>0?'%'+kayip.toFixed(1):'—'}</div>
+  </div>`;
+}
+
+function usaAggRow(cls,indent,rbCls,rank,name,sub,data,level,attrs=''){
+  const sku=parseInt(data.sku_sayisi)||0;
+  const satis=parseFloat(data.satis_adet)||0;
+  const iade=parseFloat(data.iade_adet)||0;
+  const ort=parseFloat(data.ort_fiyat)||0;
+  const net=parseFloat(data.net_ciro)||0;
+  const kayip=parseFloat(data.deger_kaybi_pct)||0;
+  return `<div class="${cls} usa-cols" onclick="toggleUsaRow(this,${level})" ${attrs}>
+    <div class="rank-badge ${rbCls}">${rank}</div>
+    <div class="usa-name" style="padding-left:${indent}px">
+      <div class="usa-name-txt">${name}</div>
+      ${sub?`<span class="usa-name-sub">· ${sub}</span>`:''}
+      <span class="expand-icon">›</span>
+    </div>
+    <div class="usa-val orange">${sku}</div>
+    <div class="usa-val">${fmtAdet(satis)}</div>
+    <div class="usa-val ${iade>0?'red':''}">${fmtAdet(iade)}</div>
+    <div class="usa-val">${ort>0?usaFmtCiro(ort):'—'}</div>
+    <div class="usa-val ${net>=0?'teal':'red'}">${usaFmtCiro(net)}</div>
+    <div class="usa-val ${usaKayipCls(kayip)}">${kayip>0?'%'+kayip.toFixed(1):'—'}</div>
+  </div>`;
+}
+
+async function loadUrunSatisAnaliz(){
+  document.getElementById('usa-drill-table').innerHTML='<div class="loading"><div class="spinner"></div></div>';
+
+  const p=new URLSearchParams();
+  if(state.yil)p.set('yil',state.yil);
+  state.ay.forEach(a=>p.append('ay',a));
+  state.kanal.forEach(k=>p.append('kanal',k));
+  if(usaState.marka)p.set('marka',usaState.marka);
+  if(usaState.sezon_kodu)p.set('sezon_kodu',usaState.sezon_kodu);
+
+  let d;
+  try{d=await fetch(`${API}/portal/urun-satis-analiz?${p}`).then(r=>r.json());}
+  catch(e){document.getElementById('usa-drill-table').innerHTML=`<div style="padding:20px;color:var(--red)">Hata: ${e.message}</div>`;return;}
+
+  // Filtre dropdowns (ilk yükleme)
+  if(!usaFiltersLoaded){
+    usaFiltersLoaded=true;
+    const fm=document.getElementById('usa-f-marka');
+    const fs=document.getElementById('usa-f-sezon');
+    d.filters.markalar.forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;fm.appendChild(o);});
+    // Sezon listesi: sezon_kodu+sezon_adi çiftlerini hierarchy'den çıkar
+    const sezonSet=new Map();
+    d.hierarchy.forEach(r=>{if(r.sezon_kodu&&r.sezon_adi&&!sezonSet.has(r.sezon_kodu))sezonSet.set(r.sezon_kodu,r.sezon_adi);});
+    [...sezonSet.entries()].sort((a,b)=>b[0].localeCompare(a[0])).forEach(([kodu,adi])=>{
+      const o=document.createElement('option');o.value=kodu;o.textContent=adi;fs.appendChild(o);
+    });
+    if(usaState.marka)fm.value=usaState.marka;
+    if(usaState.sezon_kodu)fs.value=usaState.sezon_kodu;
+  }
+
+  // Hierarchy'i nested map'e dönüştür
+  // Marka → Sezon → AnaGrup → UrünGrubu
+  const tree={};
+  d.hierarchy.forEach(r=>{
+    const m=r.marka_adi||'—';
+    const s=r.sezon_kodu||'—';
+    const ag=r.ana_grup||'Diğer';
+    const ug=r.urun_grubu||'Diğer';
+    if(!tree[m])tree[m]={data:null,sezonlar:{}};
+    if(!tree[m].sezonlar[s])tree[m].sezonlar[s]={data:null,sezon_adi:r.sezon_adi,ana_gruplar:{}};
+    if(!tree[m].sezonlar[s].ana_gruplar[ag])tree[m].sezonlar[s].ana_gruplar[ag]={data:null,urun_gruplari:{}};
+    tree[m].sezonlar[s].ana_gruplar[ag].urun_gruplari[ug]=r;
+  });
+
+  // Aggregate L3, L2, L1
+  const aggRows=(rows)=>rows.reduce((a,r)=>({
+    sku_sayisi:(a.sku_sayisi||0)+(r.sku_sayisi||0),
+    satis_adet:(a.satis_adet||0)+(r.satis_adet||0),
+    brut_ciro:(a.brut_ciro||0)+(r.brut_ciro||0),
+    iade_adet:(a.iade_adet||0)+(r.iade_adet||0),
+    iade_ciro:(a.iade_ciro||0)+(r.iade_ciro||0),
+    iptal_ciro:(a.iptal_ciro||0)+(r.iptal_ciro||0),
+    net_ciro:(a.net_ciro||0)+(r.net_ciro||0),
+  },{sku_sayisi:0,satis_adet:0,brut_ciro:0,iade_adet:0,iade_ciro:0,iptal_ciro:0,net_ciro:0}));
+  const calcFin=(agg)=>{
+    const bc=agg.brut_ciro||0;
+    const loss=(agg.iade_ciro||0)+(agg.iptal_ciro||0);
+    agg.deger_kaybi_pct=bc>0?parseFloat((loss/bc*100).toFixed(1)):0;
+    agg.ort_fiyat=agg.satis_adet>0?parseFloat((bc/agg.satis_adet).toFixed(2)):0;
+    return agg;
+  };
+
+  // HTML oluştur
+  let html='';
+  const mRbCls=i=>['rb1','rb2','rb3','rbn'][Math.min(i,3)];
+
+  Object.entries(tree).sort((a,b)=>{
+    const netA=Object.values(a[1].sezonlar).reduce((s,sz)=>s+Object.values(sz.ana_gruplar).reduce((s2,ag)=>s2+Object.values(ag.urun_gruplari).reduce((s3,ug)=>s3+(ug.net_ciro||0),0),0),0);
+    const netB=Object.values(b[1].sezonlar).reduce((s,sz)=>s+Object.values(sz.ana_gruplar).reduce((s2,ag)=>s2+Object.values(ag.urun_gruplari).reduce((s3,ug)=>s3+(ug.net_ciro||0),0),0),0);
+    return netB-netA;
+  }).forEach(([marka,mData],mi)=>{
+    // L1 aggregate
+    const allRows=Object.values(mData.sezonlar).flatMap(sz=>Object.values(sz.ana_gruplar).flatMap(ag=>Object.values(ag.urun_gruplari)));
+    const mAgg=calcFin(aggRows(allRows));
+    const sezonSay=Object.keys(mData.sezonlar).length;
+
+    html+=usaAggRow('usa-row',0,mRbCls(mi),mi+1,marka,`${sezonSay} sezon · ${parseInt(mAgg.sku_sayisi)} SKU`,mAgg,1);
+    html+='<div class="usa-child-rows">';
+
+    Object.entries(mData.sezonlar).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([sezon_kodu,sData],si)=>{
+      const sAllRows=Object.values(sData.ana_gruplar).flatMap(ag=>Object.values(ag.urun_gruplari));
+      const sAgg=calcFin(aggRows(sAllRows));
+      const agSay=Object.keys(sData.ana_gruplar).length;
+
+      html+=usaAggRow('usa-child',0,mRbCls(si),si+1,sData.sezon_adi||sezon_kodu,`${agSay} kategori · ${sezon_kodu}`,sAgg,2);
+      html+='<div class="usa-grand-rows">';
+
+      Object.entries(sData.ana_gruplar).sort((a,b)=>{
+        const na=Object.values(a[1].urun_gruplari).reduce((s,r)=>s+(r.net_ciro||0),0);
+        const nb=Object.values(b[1].urun_gruplari).reduce((s,r)=>s+(r.net_ciro||0),0);
+        return nb-na;
+      }).forEach(([ag,agData],agi)=>{
+        const agAllRows=Object.values(agData.urun_gruplari);
+        const agAgg=calcFin(aggRows(agAllRows));
+        const ugSay=Object.keys(agData.urun_gruplari).length;
+
+        html+=usaAggRow('usa-grand',0,mRbCls(agi),agi+1,`${uyGrupIcon(ag)} ${ag}`,`${ugSay} ürün grubu`,agAgg,3);
+        html+='<div class="usa-gg-rows">';
+
+        Object.entries(agData.urun_gruplari).sort((a,b)=>(b[1].net_ciro||0)-(a[1].net_ciro||0)).forEach(([ug,ugData],ugi)=>{
+          const ugAgg=calcFin({...ugData});
+          const attrs=`data-marka="${marka}" data-sezon="${sezon_kodu}" data-ag="${ag}" data-ug="${ug}"`;
+          html+=usaAggRow('usa-gg',0,mRbCls(ugi),ugi+1,ug,`${parseInt(ugData.sku_sayisi)} SKU`,ugAgg,4,attrs);
+          html+='<div class="usa-product-rows"></div>';
+        });
+        html+='</div>'; // /usa-gg-rows
+      });
+      html+='</div>'; // /usa-grand-rows
+    });
+    html+='</div>'; // /usa-child-rows
+  });
+
+  document.getElementById('usa-drill-table').innerHTML=html||'<div class="empty">Veri bulunamadı</div>';
+}
+
+// ── HAMBURGER MENU ───────────────────────────────────────────────────────────
+function toggleHamburger(){
+  document.getElementById('hb-menu').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.hb-wrap'))document.getElementById('hb-menu')?.classList.remove('open');
+});
+
+function updateHamburgerTheme(){
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const icon=document.getElementById('hb-theme-icon');
+  const txt=document.getElementById('hb-theme-txt');
+  if(icon)icon.textContent=isLight?'🌙':'☀️';
+  if(txt)txt.textContent=isLight?'Dark Mod':'Light Mod';
+}
+
+// ── ADVANCED FILTERBAR ───────────────────────────────────────────────────────
+function toggleAdvFilters(){
+  const bar=document.getElementById('adv-filterbar');
+  const btn=document.getElementById('btn-adv');
+  const isOpen=bar.classList.contains('open');
+  bar.classList.toggle('open',!isOpen);
+  btn.classList.toggle('active',!isOpen);
+  updateAdvBadge();
+}
+
+function countAdvFilters(){
+  let n=0;
+  if(document.getElementById('f-sku')?.value.trim())n++;
+  if(document.getElementById('f-renk')?.value)n++;
+  if(document.getElementById('f-beden')?.value)n++;
+  if(document.getElementById('f-marka')?.value)n++;
+  if(document.getElementById('f-sezon')?.value)n++;
+  if(document.getElementById('f-grup')?.value)n++;
+  return n;
+}
+
+function updateAdvBadge(){
+  const btn=document.getElementById('btn-adv');
+  if(!btn)return;
+  const n=countAdvFilters();
+  const bar=document.getElementById('adv-filterbar');
+  const isOpen=bar?.classList.contains('open');
+  if(n>0){
+    btn.innerHTML=`${isOpen?'⊖':'⊕'} Detaylı <span class="adv-badge">${n}</span>`;
+  }else{
+    btn.textContent=isOpen?'⊖ Kapat':'⊕ Detaylı';
+  }
+}
+
+// ── THEME TOGGLE ─────────────────────────────────────────────────────────────
+function toggleTheme(){
+  const html=document.documentElement;
+  const isLight=html.getAttribute('data-theme')==='light';
+  const next=isLight?'dark':'light';
+  html.setAttribute('data-theme',next);
+  localStorage.setItem('pimland-theme',next);
+  updateHamburgerTheme();
+}
+function applyThemeBtn(){
+  updateHamburgerTheme();
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────

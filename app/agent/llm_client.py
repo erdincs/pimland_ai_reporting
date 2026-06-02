@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from typing import Optional
+from typing import Dict, List, Optional
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -53,13 +53,22 @@ class LLMClient:
         user: str,
         max_tokens: int,
         temperature: float,
+        history: Optional[List[Dict]] = None,
     ) -> str:
         """Synchronous Converse call — runs inside the thread executor."""
+        # Build messages: prior turns + current user message
+        messages: List[Dict] = []
+        for turn in (history or []):
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            messages.append({"role": role, "content": [{"text": str(content)}]})
+        messages.append({"role": "user", "content": [{"text": user}]})
+
         try:
             resp = self._get_client().converse(
                 modelId=self._model_id,
                 system=[{"text": system}],
-                messages=[{"role": "user", "content": [{"text": user}]}],
+                messages=messages,
                 inferenceConfig={
                     "maxTokens": max_tokens,
                     "temperature": temperature,
@@ -87,6 +96,7 @@ class LLMClient:
         user: str,
         max_tokens: Optional[int] = None,
         temperature: float = 0.0,
+        history: Optional[List[Dict]] = None,
     ) -> str:
         """Async completion — offloads the blocking boto3 call to a thread."""
         loop = asyncio.get_event_loop()
@@ -100,6 +110,7 @@ class LLMClient:
                         user,
                         max_tokens or self._max_tokens,
                         temperature,
+                        history,
                     ),
                 ),
                 timeout=settings.llm_timeout_seconds,
