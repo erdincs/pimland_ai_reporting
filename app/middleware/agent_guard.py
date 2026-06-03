@@ -111,21 +111,23 @@ def input_guard(mesaj: str) -> tuple[bool, str]:
 # ══════════════════════════════════════════════════
 # KATMAN 3 — FINANCIAL DATA FIELD FİLTRESİ
 # ══════════════════════════════════════════════════
+# get_product_financial_datas aracı agent akışında KALIYOR.
+# Bu araç astar/tela/iç bez gibi ALT malzeme bileşenlerini içeriyor;
+# get_products_with_squ bunu sunmuyor.
+# Yalnızca finansal kırılım alanları filtreleniyor.
 
-# get_product_financial_datas'tan izin verilen alanlar
-FINANCIAL_IZINLI_ALANLAR = {
-    "liningMaterial",        # astar malzeme
-    "interlingMaterial",     # tela malzeme
-    "innerFabric",           # iç bez
-    "liningContent",         # astar içerik
-    "accessoryMaterials",    # aksesuar malzeme
-    "subMaterials",          # alt malzemeler
-    "materialComponents",    # malzeme bileşenleri
-    "fabricComposition",     # kumaş kompozisyonu (detay)
-}
-
-# Kesinlikle filtrelenecek finansal alanlar
+# Kesinlikle geçmeyecek finansal alanlar
 FINANCIAL_YASAK_ALANLAR = {
+    "calculatedSalesPrice",
+    "markUp",
+    "bareCostOfGoods",
+    "costSummary",
+    "actualMarkUp",
+    "realSellingPriceInTurkishLira",
+    "realSellingPriceInDolar",
+    "costSummaryItem",       # tüm maliyet kırılımı dict'i
+    "revisionCode",
+    "revisionDescription",
     "cost", "unitCost", "productionCost",
     "purchasePrice", "supplierPrice", "costBreakdown",
     "profitMargin", "margin", "grossProfit",
@@ -133,12 +135,27 @@ FINANCIAL_YASAK_ALANLAR = {
     "costPerUnit", "totalCost", "manufacturingCost",
 }
 
+# İzin verilen alt malzeme alanları
+FINANCIAL_IZINLI_ALANLAR = {
+    "liningMaterial",       # astar malzeme adı
+    "interlingMaterial",    # tela malzeme adı
+    "innerFabric",          # iç bez adı
+    "liningContent",        # astar içerik
+    "accessoryMaterials",   # aksesuar bileşenleri
+    "subMaterials",         # alt malzemeler listesi
+    "materialComponents",   # malzeme bileşenleri
+    "fabricComposition",    # kumaş kompozisyonu (%)
+    "rawMaterials",         # ham madde listesi (isimler)
+}
+
+_YASAK_LOWER = {f.lower() for f in FINANCIAL_YASAK_ALANLAR}
+
 
 def financial_field_filter(data: dict) -> dict:
     """
-    get_product_financial_datas yanıtından
-    yalnızca malzeme alanlarını bırak,
-    finansal alanları temizle.
+    get_product_financial_datas yanıtından yalnızca malzeme
+    alanlarını geçir; finansal kırılım alanlarını filtrele.
+    Nested dict/list içindeki finansal değerler de temizlenir.
     """
     if not isinstance(data, dict):
         return data
@@ -146,12 +163,27 @@ def financial_field_filter(data: dict) -> dict:
     temizlendi = {}
     for key, value in data.items():
         key_lower = key.lower()
-        # Yasak alan mı?
-        if any(yasak.lower() in key_lower for yasak in FINANCIAL_YASAK_ALANLAR):
-            logger.debug(f"[FIELD_FILTER] Finansal alan temizlendi: {key}")
+
+        # Tam eşleşme
+        if key_lower in _YASAK_LOWER:
+            logger.debug(f"[FIELD_FILTER] Finansal alan filtrelendi: {key}")
             continue
-        # İzinli alan veya malzeme içeriyor mu?
-        temizlendi[key] = value
+
+        # Kısmi eşleşme (≥4 karakter yasak kelime içeriyorsa)
+        if any(y in key_lower for y in _YASAK_LOWER if len(y) >= 4):
+            logger.debug(f"[FIELD_FILTER] Finansal alan filtrelendi (kısmi): {key}")
+            continue
+
+        # Nested temizleme
+        if isinstance(value, list):
+            temizlendi[key] = [
+                financial_field_filter(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+        elif isinstance(value, dict):
+            temizlendi[key] = financial_field_filter(value)
+        else:
+            temizlendi[key] = value
 
     return temizlendi
 
