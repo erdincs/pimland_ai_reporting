@@ -1,0 +1,38 @@
+{
+  "rules": [
+    {
+      "name": "pimland-incorta-sync",
+      "schedule": "cron(30 23 * * ? *)",
+      "description": "Incorta delta sync — her gece 02:30 TR (UTC+3)",
+      "input": {"job": "incorta_sync"}
+    },
+    {
+      "name": "pimland-product-sync",
+      "schedule": "cron(0 1 * * ? *)",
+      "description": "Pimland ürün delta sync — her gece 04:00 TR (UTC+3)",
+      "input": {"job": "pimland_sync"}
+    },
+    {
+      "name": "pimland-view-refresh",
+      "schedule": "cron(30 1 * * ? *)",
+      "description": "Materialized view refresh — her gece 04:30 TR (UTC+3)",
+      "input": {"job": "view_refresh"}
+    },
+    {
+      "name": "pimland-master-data",
+      "schedule": "cron(0 0 ? * SUN *)",
+      "description": "Master data full sync — her Pazar 03:00 TR (UTC+3)",
+      "input": {"job": "master_data"}
+    },
+    {
+      "name": "pimland-validation",
+      "schedule": "cron(0 2 * * ? *)",
+      "description": "Veri bütünlüğü kontrolü — her gece 05:00 TR (UTC+3)",
+      "input": {"job": "validation"}
+    }
+  ],
+  "target": {
+    "lambda_function": "pimland-sync-orchestrator",
+    "role_arn": "arn:aws:iam::448049806345:role/EventBridgeLambdaRole"
+  }
+}

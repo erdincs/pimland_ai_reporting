@@ -1,0 +1,41 @@
+{
+  "function_name": "pimland-sync-orchestrator",
+  "runtime": "python3.11",
+  "handler": "sync.lambda_handler.handler",
+  "timeout": 900,
+  "memory_size": 512,
+  "environment_variables": {
+    "DB_HOST":           "RDS_ENDPOINT_BURAYA",
+    "DB_PORT":           "5432",
+    "DB_NAME":           "pimland_reporting",
+    "DB_USER":           "pimland",
+    "DB_PASSWORD":       "SECRETS_MANAGER:pimland/db/password",
+    "INCORTA_TOKEN":     "SECRETS_MANAGER:pimland/incorta/token",
+    "PIMLAND_TOKEN_URL": "https://ids.pimland.com/connect/token",
+    "PIMLAND_CLIENT_ID": "SECRETS_MANAGER:pimland/api/client_id",
+    "PIMLAND_CLIENT_SECRET": "SECRETS_MANAGER:pimland/api/client_secret",
+    "PIMLAND_USERNAME":  "SECRETS_MANAGER:pimland/api/username",
+    "PIMLAND_PASSWORD":  "SECRETS_MANAGER:pimland/api/password",
+    "PIMLAND_SCOPE":     "PimlandAPI.read PimlandAPI.write openid offline_access"
+  },
+  "layers": [
+    "arn:aws:lambda:eu-north-1:898466741470:layer:psycopg2-py311:1",
+    "arn:aws:lambda:eu-north-1:898466741470:layer:httpx-py311:1"
+  ],
+  "vpc_config": {
+    "note": "Lambda, RDS ile aynı VPC ve subnet'te olmalı",
+    "subnet_ids": ["SUBNET_ID_1", "SUBNET_ID_2"],
+    "security_group_ids": ["SG_ID_LAMBDA"]
+  },
+  "iam_role": {
+    "permissions": [
+      "secretsmanager:GetSecretValue",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DeleteNetworkInterface"
+    ]
+  }
+}
