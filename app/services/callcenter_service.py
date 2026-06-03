@@ -58,18 +58,54 @@ profesyonel yanıtlar verirsin.
 - Stok adetleri (yalnızca stok yorumu yap)
 
 # ══════════════════════════════════════════════════
-# VERİ — HAZIR SUNULACAK
+# VERİ — HAZIR SUNULACAK (Pimland Live API + PLM DB)
 # ══════════════════════════════════════════════════
 
-Aşağıdaki veri bölümleri otomatik olarak sorgulanmış ve
-kullanıcı mesajına eklenmiştir. Bunları kullan:
+Aşağıdaki tüm veri Pimland'ın canlı sisteminden otomatik
+çekilmiştir. Her alanı bu şekilde oku ve kullan:
 
-• details        → ürün açıklaması, kumaş, bakım talimatları
-• stocks         → beden/renk stok durumu
-• sales_prices   → RPITL fiyatlar (öncelikli)
-• erp_prices     → alternatif ERP fiyatları
-• relations      → ilişkili ürün ve kombinasyon önerileri
-• db_product     → PLM katalog bilgisi (marka, sezon, kategori)
+## db_product (PLM Veritabanı)
+• urun_kodu         → ürün stok kodu (SKU)
+• urun_adi          → ürün adı
+• marka_adi         → marka (ADL, Love My Body, Night Zoom)
+• sezon_adi         → sezon adı
+• ana_grup_adi      → ana kategori (ör. ÜST GRUP, ALT GRUP)
+• urun_grubu_adi    → alt kategori (ör. Bluz, Pantolon)
+• fabricmaterialname → ham kumaş/malzeme bilgisi — MUTLAKA oku
+• internet_aktif    → true/false — sitede satışta mı
+• default_image_url → ürün görseli URL'i
+
+## details (Pimland Live API — post_api_Product_get_products_with_squ)
+• productName       → ürün adı (API'deki)
+• productDescription → ürün açıklaması
+• productComposition / composition → kumaş kompozisyonu (ör. "%95 Pamuk, %5 Elastan")
+• careInstructions  → bakım talimatları
+• productImages     → görsel listesi [{imageUrl: ...}]
+
+## stocks (Pimland Live API — get_product_stocks)
+Her kayıt bir beden × renk kombinasyonu:
+• stockCode    → SKU
+• colorCode    → renk kodu
+• sizeCode     → beden (XS, S, M, L, XL, XXL vb.)
+• quantity     → mevcut stok adedi (müşteriye ASLA söyleme, sadece yorum yap)
+
+## sales_prices (Pimland Live API — get_product_sales_prices)
+• priceTypeCode → "RPITL" = müşteri satış fiyatı (bunu kullan)
+• price         → fiyat değeri
+• currencyCode  → "TRY"
+
+## erp_prices (Pimland Live API — get_product_erp_prices)
+Alternatif ERP fiyatları — sales_prices boşsa buraya bak.
+
+## relations (Pimland Live API — get_product_relations)
+İlişkili ürünler — kombinasyon ve tamamlayıcı ürün önerileri için.
+
+## size_values (Pimland Live API — get_product_size_type_values)
+Ürünün beden ölçü değerleri (göğüs, bel, kalça cm değerleri beden bazında).
+
+## gorsel_url
+Doğrudan kullanılabilir görsel URL. Varsa yanıtın başına ekle:
+<img src="BURAYA_URL" width="120">
 
 # ══════════════════════════════════════════════════
 # YANIT KURALLARI
@@ -154,14 +190,14 @@ deniyorum..." tonunda kibarca belirt.
 """
 
 # ── SKU ayıkla ────────────────────────────────────────────────────────────────
-
-_SKU_RE = re.compile(r'\b\d{10,13}\b')
+# Pimland urun_kodu formatları: alfanumerik 4-20 karakter (ör. KH23041, ADL-1234, 1234567890)
+_SKU_RE = re.compile(r'\b[A-Z]{1,5}[-.]?[0-9]{3,15}\b|\b[0-9]{6,15}\b')
 
 
 def _extract_skus(question: str, explicit: Optional[str] = None) -> List[str]:
-    found = _SKU_RE.findall(question)
+    found = _SKU_RE.findall(question.upper())
     if explicit:
-        found = [explicit] + found
+        found = [explicit.upper()] + found
     return list(dict.fromkeys(found))  # unique, order preserved
 
 
@@ -216,14 +252,14 @@ async def run_callcenter(
     started = time.perf_counter()
     skus = _extract_skus(question, urun_kodu)
 
-    # DB + live paralel
-    if skus:
-        db_products, live_data = await _asyncio.gather(
-            _fetch_db_products(session, skus, question),
-            fetch_product_full(skus[0]),
-        )
+    # DB'den ürünleri çek — SKU yoksa keyword arama yapar
+    db_products = await _fetch_db_products(session, skus, question)
+
+    # Live veri için SKU: explicit > regex > DB'den bulunanın kodu
+    live_sku = skus[0] if skus else (db_products[0]["urun_kodu"] if db_products else None)
+    if live_sku:
+        live_data = await fetch_product_full(live_sku)
     else:
-        db_products = await _fetch_db_products(session, skus, question)
         live_data = {}
 
     # İlk SKU'nun görsel URL'ini ekle
@@ -236,7 +272,7 @@ async def run_callcenter(
             img_url = (images[0].get("imageUrl") or images[0].get("url") or "")
 
     context = {
-        "sorgu_stok_kodu": skus[0] if skus else None,
+        "sorgu_stok_kodu": live_sku,
         "gorsel_url": img_url,
         "db_product":    db_products[0] if db_products else None,
         "details":       live_data.get("details"),

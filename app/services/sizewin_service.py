@@ -50,19 +50,39 @@ hakkında iyi hissettirirsin.
 - Arka planda yapılan veri sorgularını müşteriye gösterme
 
 # ══════════════════════════════════════════════════
-# VERİ — HAZIR SUNULACAK
+# VERİ — HAZIR SUNULACAK (Pimland Live API + PLM DB)
 # ══════════════════════════════════════════════════
 
-Aşağıdaki veri bölümleri otomatik sorgulanmış ve
-kullanıcı mesajına eklenmiştir:
+Tüm veri Pimland'ın canlı sisteminden çekilmiştir.
+Her alanı şu şekilde oku:
 
-• db_product     → PLM: marka, sezon, kategori, kumaş (fabricmaterialname)
-• details        → MCP: ürün tanımı, kumaş kompozisyonu, kalıp bilgisi
-• sizes          → MCP: standart beden tablosu (XS/S/M/L/XL ↔ göğüs/bel/kalça cm)
-• size_values    → MCP: detay ölçüler (kol boyu, paça boyu, bel genişliği vb.)
-• iade_analiz    → Incorta: bu ürünün iade oranı ve eğilimi
+## db_product (PLM Veritabanı)
+• urun_kodu         → stok kodu (SKU)
+• urun_adi          → ürün adı
+• ana_grup_adi      → kategori (ALT GRUP=pantolon, ÜST GRUP=üst, ELBISE, UST DIS GIYIM)
+• urun_grubu_adi    → alt kategori
+• fabricmaterialname → kumaş (ör. "%95 Pamuk %5 Elastan") — kalıp kararı için kullan
 
+## details (Pimland Live API — get_products_with_squ)
+• productComposition / composition → tam kumaş % oranları
+• productDescription → kalıp ipuçları (slim fit, relaxed, oversize vb.)
+• careInstructions  → bakım (müşteriye aktarabilirsin)
+
+## sizes (Pimland Live API — get_product_sizes)
+Bu ürünün gerçek beden tablosu. Her satır:
+• sizeCode    → beden adı (XS, S, M, L, XL, XXL, 34, 36, 38 vb.)
+• chest / gogus_cm   → göğüs ölçüsü
+• waist / bel_cm     → bel ölçüsü
+• hip / kalca_cm     → kalça ölçüsü
+"sizes" boşsa sağlanan "Genel Fallback" tablosunu kullan.
 Birden fazla ölçü tipi varsa "internet" tipini önceliklendir.
+
+## size_values (Pimland Live API — get_product_size_type_values)
+Detay bedenler — kol boyu, paça boyu, ürün uzunluğu vb.
+
+## iade_analiz (Incorta Satış Verisi)
+• iade_orani_pct → bu ürünün gerçek iade oranı (%)
+• uyari          → %15+ ise otomatik uyarı metni (varsa müşteriye söyle)
 
 # ══════════════════════════════════════════════════
 # MÜŞTERİDEN BİLGİ TOPLAMA
@@ -175,14 +195,14 @@ dikkatli olmanızı öneririm."
 """
 
 # ── SKU ayıkla ────────────────────────────────────────────────────────────────
-
-_SKU_RE = re.compile(r'\b\d{10,13}\b')
+# Pimland urun_kodu formatları: alfanumerik 4-20 karakter (ör. KH23041, ADL-1234, 1234567890)
+_SKU_RE = re.compile(r'\b[A-Z]{1,5}[-.]?[0-9]{3,15}\b|\b[0-9]{6,15}\b')
 
 
 def _extract_sku(question: str, explicit: Optional[str] = None) -> Optional[str]:
     if explicit:
-        return explicit
-    found = _SKU_RE.findall(question)
+        return explicit.upper()
+    found = _SKU_RE.findall(question.upper())
     return found[0] if found else None
 
 
@@ -278,18 +298,20 @@ async def run_sizewin(
     started = time.perf_counter()
     sku = _extract_sku(question, urun_kodu)
 
-    # Paralel veri çekme: DB (PLM + iade) + Pimland live
-    if sku:
-        db_product, iade_analiz, live_data = await _asyncio.gather(
-            _fetch_db_product(session, sku, urun_adi),
-            _fetch_iade_analiz(session, sku),
-            fetch_product_full(sku),
+    # DB'den ürünü çek (SKU yoksa ürün adına göre ara)
+    db_product = await _fetch_db_product(session, sku, urun_adi)
+
+    # Live veri için SKU: explicit > regex > DB'de bulunanın kodu
+    live_sku = sku or (db_product["urun_kodu"] if db_product else None)
+
+    if live_sku:
+        iade_analiz, live_data = await _asyncio.gather(
+            _fetch_iade_analiz(session, live_sku),
+            fetch_product_full(live_sku),
         )
+        sku = live_sku  # context için güncelle
     else:
-        db_product, iade_analiz = await _asyncio.gather(
-            _fetch_db_product(session, None, urun_adi),
-            _noop(),
-        )
+        iade_analiz = {}
         live_data = {}
 
     # Beden tablosu fallback (MCP'den gelmezse yerel tablo)
