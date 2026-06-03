@@ -111,77 +111,69 @@ def input_guard(mesaj: str) -> tuple[bool, str]:
 # ══════════════════════════════════════════════════
 # KATMAN 3 — FINANCIAL DATA FIELD FİLTRESİ
 # ══════════════════════════════════════════════════
-# get_product_financial_datas aracı agent akışında KALIYOR.
-# Bu araç astar/tela/iç bez gibi ALT malzeme bileşenlerini içeriyor;
-# get_products_with_squ bunu sunmuyor.
-# Yalnızca finansal kırılım alanları filtreleniyor.
+# Kural listesi artık sync/config/agent_tools.yaml'dan okunur.
+# Yeni alan eklemek: YAML'daki field_filter.block listesini güncelle.
 
-# Kesinlikle geçmeyecek finansal alanlar
-FINANCIAL_YASAK_ALANLAR = {
-    "calculatedSalesPrice",
-    "markUp",
-    "bareCostOfGoods",
-    "costSummary",
-    "actualMarkUp",
-    "realSellingPriceInTurkishLira",
-    "realSellingPriceInDolar",
-    "costSummaryItem",       # tüm maliyet kırılımı dict'i
-    "revisionCode",
-    "revisionDescription",
-    "cost", "unitCost", "productionCost",
-    "purchasePrice", "supplierPrice", "costBreakdown",
-    "profitMargin", "margin", "grossProfit",
-    "targetCost", "actualCost", "budgetCost",
-    "costPerUnit", "totalCost", "manufacturingCost",
+try:
+    from sync.config_loader import get_blocked_fields as _get_blocked_fields
+    _CONFIG_LOADED = True
+except ImportError:
+    _CONFIG_LOADED = False
+
+# Fallback — config yoksa (test ortamı) bu sabit set kullanılır
+_FALLBACK_YASAK = {
+    "calculatedsalesprice", "markup", "barecostofgoods", "costsummary",
+    "actualmarkup", "realsellingpriceInturkishlira", "realsellingpriceindolar",
+    "costsummaryitem", "revisioncode", "revisiondescription",
+    "cost", "unitcost", "productioncost", "purchaseprice", "supplierprice",
+    "costbreakdown", "profitmargin", "margin", "grossprofit",
+    "targetcost", "actualcost", "budgetcost", "costperunit",
+    "totalcost", "manufacturingcost",
 }
 
-# İzin verilen alt malzeme alanları
-FINANCIAL_IZINLI_ALANLAR = {
-    "liningMaterial",       # astar malzeme adı
-    "interlingMaterial",    # tela malzeme adı
-    "innerFabric",          # iç bez adı
-    "liningContent",        # astar içerik
-    "accessoryMaterials",   # aksesuar bileşenleri
-    "subMaterials",         # alt malzemeler listesi
-    "materialComponents",   # malzeme bileşenleri
-    "fabricComposition",    # kumaş kompozisyonu (%)
-    "rawMaterials",         # ham madde listesi (isimler)
-}
 
-_YASAK_LOWER = {f.lower() for f in FINANCIAL_YASAK_ALANLAR}
+def _blocked_for_agent(agent: str) -> set:
+    if _CONFIG_LOADED:
+        try:
+            return _get_blocked_fields(agent)
+        except Exception:
+            pass
+    return _FALLBACK_YASAK
 
 
-def financial_field_filter(data: dict) -> dict:
+def financial_field_filter(data: dict, agent: str = "callcenter") -> dict:
     """
-    get_product_financial_datas yanıtından yalnızca malzeme
-    alanlarını geçir; finansal kırılım alanlarını filtrele.
+    get_product_financial_datas yanıtından finansal kırılım alanlarını filtrele.
+    Blocked alan listesi agent_tools.yaml'dan okunur.
     Nested dict/list içindeki finansal değerler de temizlenir.
     """
     if not isinstance(data, dict):
         return data
+
+    yasak = _blocked_for_agent(agent)
 
     temizlendi = {}
     for key, value in data.items():
         key_lower = key.lower()
 
         # Tam eşleşme
-        if key_lower in _YASAK_LOWER:
+        if key_lower in yasak:
             logger.debug(f"[FIELD_FILTER] Finansal alan filtrelendi: {key}")
             continue
 
         # Kısmi eşleşme (≥4 karakter yasak kelime içeriyorsa)
-        if any(y in key_lower for y in _YASAK_LOWER if len(y) >= 4):
+        if any(y in key_lower for y in yasak if len(y) >= 4):
             logger.debug(f"[FIELD_FILTER] Finansal alan filtrelendi (kısmi): {key}")
             continue
 
         # Nested temizleme
         if isinstance(value, list):
             temizlendi[key] = [
-                financial_field_filter(item) if isinstance(item, dict) else item
+                financial_field_filter(item, agent) if isinstance(item, dict) else item
                 for item in value
             ]
         elif isinstance(value, dict):
-            temizlendi[key] = financial_field_filter(value)
+            temizlendi[key] = financial_field_filter(value, agent)
         else:
             temizlendi[key] = value
 

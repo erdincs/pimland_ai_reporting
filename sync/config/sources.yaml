@@ -1,0 +1,150 @@
+# Pimland AI Reporting — Veri Kaynağı Konfigürasyonu
+# Yeni Incorta tablosu veya Pimland master data eklemek için
+# buraya yeni bir giriş eklemek yeterli.
+#
+# ${ENV_VAR} → runtime'da os.environ'dan çözümlenir
+# YAML anchor (&) ile tekrar eden kolon tanımları paylaşılır
+
+incorta:
+  base_url: "https://agentup-mcp-test.pimland.com/30002"
+  auth_token: "${INCORTA_TOKEN}"
+
+  # Tekrar eden kolon tanımı — anchor ile paylaşılır
+  _satis_columns: &satis_columns
+    - {source: "Yıl",          target: yil,          type: integer}
+    - {source: "Ay",           target: ay,           type: integer}
+    - {source: "Satis Kanalı", target: satis_kanali, type: text}
+    - {source: "Urun Kodu",    target: urun_kodu,    type: text}
+    - {source: "Urun Adı",     target: urun_adi,     type: text}
+    - {source: "Renk",         target: renk,         type: text}
+    - {source: "Beden",        target: beden,        type: text}
+    - {source: "Tutar",        target: tutar,        type: numeric}
+    - {source: "Adet",         target: adet,         type: numeric}
+
+  tables:
+    - name: incorta_satis
+      tool: "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_be9a751b"
+      strategy: delta_3_month
+      filter_type: year_month
+      year_field:  "CALCULATIONS.EticaretOzet.Year"
+      month_field: "CALCULATIONS.EticaretOzet.Month"
+      rds_table: incorta_satis
+      columns: *satis_columns
+      delete_key: [yil, ay]
+      page_size: 5000
+
+    - name: incorta_depo_iade
+      tool: "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_94f3f1b2"
+      strategy: delta_3_month
+      filter_type: year_month
+      year_field:  "CALCULATIONS.EticaretOzet.Year"
+      month_field: "CALCULATIONS.EticaretOzet.Month"
+      rds_table: incorta_depo_iade
+      columns: *satis_columns
+      delete_key: [yil, ay]
+      page_size: 5000
+
+    - name: incorta_iptal_siparis
+      tool: "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_091c37f6"
+      strategy: delta_3_month
+      filter_type: year_month
+      year_field:  "CALCULATIONS.EticaretOzet.Year"
+      month_field: "CALCULATIONS.EticaretOzet.Month"
+      rds_table: incorta_iptal_siparis
+      columns: *satis_columns
+      delete_key: [yil, ay]
+      page_size: 5000
+
+    - name: incorta_analytics
+      tool: "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_3961ae53"
+      strategy: delta_3_month
+      filter_type: date_range
+      date_field: "E_Commerce.GA4_Oturum_Kampanyası_Raporu.date"
+      rds_table: incorta_analytics
+      columns:
+        - {source: "Date",                  target: date,                   type: text}
+        - {source: "Marka",                 target: marka,                  type: text}
+        - {source: "Oturum Kaynağı",        target: oturum_kaynagi,         type: text}
+        - {source: "Oturum Kampanyası",     target: oturum_kampanyasi,      type: text}
+        - {source: "Kullanıcılar",          target: kullanicilar,           type: bigint}
+        - {source: "Oturumlar",             target: oturumlar,              type: bigint}
+        - {source: "Ciro",                  target: ciro,                   type: numeric}
+        - {source: "İşlem Sayısı",          target: i_slem_sayisi,          type: bigint}
+        - {source: "Conversion Rate",       target: conversion_rate,        type: numeric}
+        - {source: "Hemen Çıkma Oranı",    target: hemen_cikma_orani,      type: numeric}
+        - {source: "Ortalama Oturum Süresi", target: ortalama_oturum_suresi, type: numeric}
+      delete_key: [date, marka]
+      page_size: 5000
+
+pimland:
+  base_url: "https://agentup-mcp-test.pimland.com/30001"
+  token_url: "${PIMLAND_TOKEN_URL}"
+  client_id: "${PIMLAND_CLIENT_ID}"
+  client_secret: "${PIMLAND_CLIENT_SECRET}"
+  username: "${PIMLAND_USERNAME}"
+  password: "${PIMLAND_PASSWORD}"
+  scope: "${PIMLAND_SCOPE}"
+
+  master_data:
+    strategy: weekly_full_replace
+    tables:
+      - tool: "post_api_MasterData_brands_get_brands"
+        rds_table: pim_brands
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,          type: integer}
+          - {source: name,          target: brand_name,  type: text}
+          - {source: referenceCode, target: brand_code,  type: text}
+          - {source: isActive,      target: is_active,   type: boolean}
+
+      - tool: "post_api_MasterData_seasons_get_seasons"
+        rds_table: pim_seasons
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,           type: integer}
+          - {source: name,          target: season_name,  type: text}
+          - {source: referenceCode, target: season_code,  type: text}
+          - {source: isActive,      target: is_active,    type: boolean}
+
+      - tool: "post_api_MasterData_product_themes_get_product_themes"
+        rds_table: pim_themes
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,           type: integer}
+          - {source: name,          target: theme_name,   type: text}
+          - {source: referenceCode, target: theme_code,   type: text}
+          - {source: isActive,      target: is_active,    type: boolean}
+
+      - tool: "post_api_MasterData_main_product_groups_get_main_product_groups"
+        rds_table: pim_main_groups
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,                type: integer}
+          - {source: name,          target: main_group_name,   type: text}
+          - {source: referenceCode, target: main_group_code,   type: text}
+          - {source: isActive,      target: is_active,         type: boolean}
+
+      - tool: "post_api_MasterData_product_groups_get_product_groups"
+        rds_table: pim_product_groups
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,          type: integer}
+          - {source: name,          target: group_name,  type: text}
+          - {source: referenceCode, target: group_code,  type: text}
+          - {source: isActive,      target: is_active,   type: boolean}
+
+      - tool: "post_api_MasterData_colors_get_colors"
+        rds_table: pim_colors
+        pk: referenceCode
+        columns:
+          - {source: id,            target: id,          type: integer}
+          - {source: name,          target: color_name,  type: text}
+          - {source: referenceCode, target: color_code,  type: text}
+          - {source: isActive,      target: is_active,   type: boolean}
+
+  products:
+    tool: "post_api_Product_get_products_with_squ"
+    strategy: daily_delta
+    rds_table: pim_products
+    pk: stockCode
+    page_size: 100

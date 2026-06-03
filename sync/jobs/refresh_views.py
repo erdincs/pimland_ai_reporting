@@ -14,16 +14,19 @@ import psycopg2
 
 log = logging.getLogger(__name__)
 
-# Bağımlılık sırası: fact tabloları önce, pim_products JOIN'li view'lar sonra
-VIEW_ORDER = [
-    "mv_net_satis_aylik",     # fact tabloları (bağımsız)
-    "mv_net_satis_urun",      # fact tabloları (bağımsız)
-    "mv_net_satis_kanal",     # fact tabloları (bağımsız)
-    "mv_analytics_kanal",     # incorta_analytics (bağımsız)
-    "mv_analytics_gunluk",    # incorta_analytics (bağımsız)
-    "mv_satis_marka_sezon",   # pim_products JOIN — ürün sync sonrası
-    "mv_satis_kategori",      # pim_products JOIN — ürün sync sonrası
-]
+
+def _get_view_order() -> list:
+    """views.yaml'dan view listesini al; yüklenemezse hardcode fallback."""
+    try:
+        from sync.config_loader import load_views
+        return [v["name"] for v in load_views()]
+    except Exception as e:
+        log.warning("views.yaml yüklenemedi, fallback kullanılıyor: %s", e)
+        return [
+            "mv_net_satis_aylik", "mv_net_satis_urun", "mv_net_satis_kanal",
+            "mv_analytics_kanal", "mv_analytics_gunluk",
+            "mv_satis_marka_sezon", "mv_satis_kategori",
+        ]
 
 
 def refresh_all_views(db_conn: "psycopg2.connection") -> Dict[str, Any]:
@@ -31,7 +34,7 @@ def refresh_all_views(db_conn: "psycopg2.connection") -> Dict[str, Any]:
     basarili: List[Dict] = []
     hatali:   List[Dict] = []
 
-    for view in VIEW_ORDER:
+    for view in _get_view_order():
         t0 = time.perf_counter()
         log.info("view refresh başlıyor: %s", view)
         try:

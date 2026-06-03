@@ -1,0 +1,47 @@
+# Pimland AI Reporting — Materialized View Tanımları
+# Yeni view eklemek: listeye giriş ekle, order sırasını belirt.
+# depends_on: hangi tablolar sync'lendikten sonra refresh edilmeli
+# refresh_strategy: concurrent (okuma sırasında kilitlenme olmaz)
+
+views:
+  - name: mv_net_satis_aylik
+    order: 1
+    depends_on: [incorta_satis, incorta_depo_iade, incorta_iptal_siparis]
+    refresh_strategy: concurrent
+    description: "Aylık net satış — kanal bazlı brüt/iade/iptal/net"
+
+  - name: mv_net_satis_urun
+    order: 2
+    depends_on: [incorta_satis, incorta_depo_iade, incorta_iptal_siparis]
+    refresh_strategy: concurrent
+    description: "Ürün bazlı net satış — iade oranı dahil"
+
+  - name: mv_net_satis_kanal
+    order: 3
+    depends_on: [incorta_satis, incorta_depo_iade, incorta_iptal_siparis]
+    refresh_strategy: concurrent
+    description: "Kanal bazlı net satış — pazar payı dahil"
+
+  - name: mv_analytics_kanal
+    order: 4
+    depends_on: [incorta_analytics]
+    refresh_strategy: concurrent
+    description: "GA4 kanal/kaynak bazlı toplam performans"
+
+  - name: mv_analytics_gunluk
+    order: 5
+    depends_on: [incorta_analytics]
+    refresh_strategy: concurrent
+    description: "GA4 günlük özet — trend analizi için"
+
+  - name: mv_satis_marka_sezon
+    order: 6
+    depends_on: [incorta_satis, pim_products]
+    refresh_strategy: concurrent
+    description: "Marka × Sezon bazlı satış — pim_products JOIN gerektirir"
+
+  - name: mv_satis_kategori
+    order: 7
+    depends_on: [incorta_satis, pim_products]
+    refresh_strategy: concurrent
+    description: "Kategori bazlı satış — pim_products JOIN gerektirir"

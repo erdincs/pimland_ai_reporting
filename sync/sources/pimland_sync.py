@@ -177,6 +177,76 @@ def sync_master_data(db_conn: "psycopg2.connection") -> List[Dict[str, Any]]:
     return results
 
 
+# ── Generic master data sync (config-driven) ──────────────────────────────────
+
+def sync_master_table(
+    db_conn: "psycopg2.connection",
+    table_cfg: Dict[str, Any],
+    creds: Dict[str, str],
+) -> Dict[str, Any]:
+    """
+    sources.yaml'daki tek bir master data tablosunu full replace ile güncelle.
+
+    table_cfg yapısı:
+        tool, rds_table, pk, columns [{source, target, type}]
+    creds:
+        token_url, client_id, client_secret, username, password, scope
+    """
+    t0 = time.perf_counter()
+    tool      = table_cfg["tool"]
+    rds_table = table_cfg["rds_table"]
+    columns   = table_cfg["columns"]
+
+    # Token al
+    with httpx.Client(timeout=30) as client:
+        resp = client.post(creds["token_url"], data={
+            "grant_type":    "password",
+            "client_id":     creds["client_id"],
+            "client_secret": creds["client_secret"],
+            "username":      creds["username"],
+            "password":      creds["password"],
+            "scope":         creds["scope"],
+        })
+        resp.raise_for_status()
+        token = resp.json()["access_token"]
+
+        raw = _call_tool(client, token, tool, {"filter": None})
+
+    records = _listify(raw)
+    if not records:
+        log.warning("sync_master_table boş döndü: %s", rds_table)
+        return {"tablo": rds_table, "eklenen": 0, "guncellenen": 0, "sure_sn": 0}
+
+    # source alanından hedef tuple oluştur
+    col_targets = [c["target"] for c in columns]
+    col_sources = [c["source"] for c in columns]
+    rows = [
+        tuple(r.get(src) for src in col_sources)
+        for r in records if r
+    ]
+
+    with db_conn.cursor() as cur:
+        # Tablo var mı?
+        cur.execute("SELECT to_regclass(%s::text) IS NOT NULL", (rds_table,))
+        if not cur.fetchone()[0]:
+            log.warning("sync_master_table tablo yok, atlanıyor: %s", rds_table)
+            return {"tablo": rds_table, "eklenen": 0, "guncellenen": 0, "sure_sn": 0}
+
+        cur.execute(f"TRUNCATE TABLE {rds_table}")
+        cols_sql = ", ".join(col_targets)
+        psycopg2.extras.execute_values(
+            cur,
+            f"INSERT INTO {rds_table} ({cols_sql}) VALUES %s",
+            rows,
+            page_size=500,
+        )
+    db_conn.commit()
+
+    sure = round(time.perf_counter() - t0, 1)
+    log.info("sync_master_table bitti: %s eklenen=%d sure=%.1fs", rds_table, len(rows), sure)
+    return {"tablo": rds_table, "eklenen": len(rows), "guncellenen": 0, "sure_sn": sure}
+
+
 # ── Ürün kataloğu delta sync ──────────────────────────────────────────────────
 
 def _extract_image_url(product: Dict) -> Optional[str]:

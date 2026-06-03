@@ -1,0 +1,130 @@
+# Pimland AI Reporting — Agent Tool Whitelist
+# Yeni tool eklemek: ilgili agent'ın tools listesine 2 satır ekle.
+# allowed: false → tool çağrılmaz, istense bile bloke edilir.
+# field_filter: tool yanıtından hangi alanlar filtrelenir.
+
+callcenter:
+  tools:
+    - name: post_api_Product_get_products_with_squ
+      allowed: true
+
+    - name: post_api_Product_get_product_stocks
+      allowed: true
+
+    - name: post_api_Product_get_product_sales_prices
+      allowed: true
+
+    - name: post_api_Product_get_product_erp_prices
+      allowed: true
+
+    - name: post_api_Product_get_product_financial_datas
+      allowed: true
+      field_filter:
+        block:
+          - calculatedSalesPrice
+          - markUp
+          - bareCostOfGoods
+          - costSummary
+          - actualMarkUp
+          - realSellingPriceInTurkishLira
+          - realSellingPriceInDolar
+          - costSummaryItem
+          - revisionCode
+          - revisionDescription
+        allow:
+          - liningMaterial
+          - interlingMaterial
+          - innerFabric
+          - liningContent
+          - accessoryMaterials
+          - subMaterials
+          - materialComponents
+          - fabricComposition
+          - rawMaterials
+
+    - name: post_api_Product_get_product_relations
+      allowed: true
+
+    - name: post_api_Product_get_products_by_filter
+      allowed: true
+
+    - name: post_api_Product_get_product_size_type_values
+      allowed: true
+
+    - name: post_api_MasterData_brands_get_brands
+      allowed: true
+
+    - name: post_api_MasterData_colors_get_colors
+      allowed: true
+
+    - name: post_api_MasterData_seasons_get_seasons
+      allowed: true
+
+    - name: post_api_MasterData_product_themes_get_product_themes
+      allowed: true
+
+    - name: post_api_MasterData_product_stories_get_product_stories
+      allowed: true
+
+    - name: post_api_MasterData_main_product_groups_get_main_product_groups
+      allowed: true
+
+    - name: post_api_MasterData_product_groups_get_product_groups
+      allowed: true
+
+    - name: post_api_Product_get_product_sales_performances
+      allowed: false
+      reason: "Finansal performans verisi — müşteriye sunulmaz"
+
+    - name: post_api_OrderIntegration_send_orders
+      allowed: false
+      reason: "Yazma işlemi — tüm agent'lara kapalı"
+
+sizewin:
+  tools:
+    - name: post_api_Product_get_products_with_squ
+      allowed: true
+
+    - name: post_api_Product_get_product_size_type_values
+      allowed: true
+
+    - name: post_api_Product_get_product_sizes
+      allowed: true
+
+    - name: post_api_Product_get_product_financial_datas
+      allowed: true
+      field_filter:
+        block:
+          - calculatedSalesPrice
+          - markUp
+          - bareCostOfGoods
+          - costSummary
+          - actualMarkUp
+          - realSellingPriceInTurkishLira
+          - realSellingPriceInDolar
+          - costSummaryItem
+          - revisionCode
+          - revisionDescription
+        allow:
+          - liningMaterial
+          - interlingMaterial
+          - innerFabric
+          - subMaterials
+          - materialComponents
+          - fabricComposition
+
+    - name: post_api_Product_get_product_stocks
+      allowed: false
+      reason: "Sizewin için stok bilgisi gereksiz"
+
+    - name: post_api_Product_get_product_sales_prices
+      allowed: false
+      reason: "Sizewin için fiyat bilgisi gereksiz"
+
+    - name: post_api_Product_get_product_sales_performances
+      allowed: false
+      reason: "Finansal performans verisi — müşteriye sunulmaz"
+
+    - name: post_api_OrderIntegration_send_orders
+      allowed: false
+      reason: "Yazma işlemi — tüm agent'lara kapalı"
