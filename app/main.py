@@ -18,6 +18,7 @@ from app.connectors.registry import registry
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
+from app.middleware.agent_guard import AgentGuardMiddleware
 from app.services import scheduler
 
 
@@ -51,6 +52,8 @@ def create_app() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+
+    app.add_middleware(AgentGuardMiddleware)
 
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.api_v1_prefix)
