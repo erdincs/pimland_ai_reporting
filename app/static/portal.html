@@ -1334,9 +1334,7 @@ body,
           <select id="mp-yil" onchange="loadMagazaPerformans()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <select id="mp-bolge" onchange="loadMagazaPerformans()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px;min-width:120px">
-            <option value="">Tüm Bölgeler</option>
-          </select>
+
           <select id="mp-ay" onchange="loadMagazaPerformans()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
             <option value="">YTD</option>
             <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
@@ -1363,9 +1361,7 @@ body,
           <select id="dp-yil" onchange="loadDonemseel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <select id="dp-bolge" onchange="loadDonemseel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px;min-width:120px">
-            <option value="">Tüm Bölgeler</option>
-          </select>
+
           <span id="dp-status" style="font-size:11px;color:var(--t3)"></span>
         </div>
       </div>
@@ -6293,7 +6289,7 @@ let _mpSortKey = 'hedef_oran';  // aktif sıralama kolonu
 
 async function loadMagazaPerformans() {
   const yil   = document.getElementById('mp-yil')?.value   || '2026';
-  const bolge = document.getElementById('mp-bolge')?.value || '';
+  const bolge = '';
   const ay    = document.getElementById('mp-ay')?.value    || '';
   const st    = document.getElementById('mp-status');
   const content = document.getElementById('mp-content');
@@ -6307,18 +6303,7 @@ async function loadMagazaPerformans() {
     const d = await fetch(`${API}/magaza-satis/magaza-performans?${params}`).then(r=>r.json());
     if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
 
-    // Bölge dropdown - her yüklemede güncelle
-    if(d.bolge_listesi?.length) {
-      const sel = document.getElementById('mp-bolge');
-      if(sel) {
-        const curVal = sel.value;
-        sel.innerHTML = '<option value="">Tüm Bölgeler</option>';
-        d.bolge_listesi.forEach(b=>{
-          sel.insertAdjacentHTML('beforeend',`<option value="${b}">${b}</option>`);
-        });
-        if(curVal) sel.value = curVal;
-      }
-    }
+
 
     console.log('[MP] Data received:', JSON.stringify({donem:d.donem, mag:d.magaza_sayisi, keys:Object.keys(d)}));
     renderMagazaPerformans(d);
@@ -6528,7 +6513,7 @@ let _dpBolgeLoaded = false;
 
 async function loadDonemseel() {
   const yil   = document.getElementById('dp-yil')?.value   || '2026';
-  const bolge = document.getElementById('dp-bolge')?.value || '';
+  const bolge = '';
   const st    = document.getElementById('dp-status');
   const content = document.getElementById('dp-content');
   if(st) st.textContent = '⏳ Yükleniyor...';
@@ -6539,16 +6524,7 @@ async function loadDonemseel() {
     if(bolge) params.set('bolge', bolge);
     const d = await fetch(`${API}/magaza-satis/donemseel-performans?${params}`).then(r=>r.json());
     if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
-    // Bölge dropdown
-    if(d.bolge_listesi?.length) {
-      const sel = document.getElementById('dp-bolge');
-      if(sel) {
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">Tüm Bölgeler</option>';
-        d.bolge_listesi.forEach(b=>sel.insertAdjacentHTML('beforeend',`<option value="${b}">${b}</option>`));
-        if(cur) sel.value = cur;
-      }
-    }
+
     renderDonemseel(d);
     if(st) st.textContent = `${yil} YTD · ${d.aylik?.length||0} ay`;
   } catch(e) {
