@@ -1343,7 +1343,8 @@ body,
         <select id="enr-season-sel" onchange="onEnrSeasonChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
           <option value="">Sezon Seç...</option>
         </select>
-        <button onclick="startEnrichmentScoring()" style="background:var(--orange);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">▶ Puanla</button>
+        <button onclick="startEnrichmentScoring(true)" title="MCP'den gerçek veri çeker (~3-5 dk)" style="background:var(--orange);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">▶ Tam Puanla</button>
+        <button onclick="startEnrichmentScoring(false)" title="Sadece DB verisi, hızlı (~5 sn)" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px">⚡ Hızlı</button>
         <span id="enr-progress" style="font-size:11px;color:var(--t3)"></span>
       </div>
 
@@ -4064,12 +4065,12 @@ async function openEnrModal(urunKodu){
 function closeEnrModal(){document.getElementById('enr-modal').style.display='none';}
 
 // ─ Puanlama ─
-async function startEnrichmentScoring(){
+async function startEnrichmentScoring(useMcp=true){
   const sc=document.getElementById('enr-season-sel').value;
   if(!sc){alert('Önce sezon seçin');return;}
   const prog=document.getElementById('enr-progress');
-  prog.textContent='Başlatılıyor...';
-  const r=await fetch(`${API}/enrichment/score/${sc}`,{method:'POST'}).then(r=>r.json()).catch(()=>null);
+  prog.textContent=useMcp?'MCP ile tam puanlama (~3-5 dk)...':'Hızlı puanlama...';
+  const r=await fetch(`${API}/enrichment/score/${sc}?use_mcp=${useMcp}`,{method:'POST'}).then(r=>r.json()).catch(()=>null);
   if(!r){prog.textContent='❌ Hata';return;}
   _enrJobId=r.job_id;
   if(_enrJobTimer)clearInterval(_enrJobTimer);

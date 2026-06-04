@@ -258,12 +258,74 @@ def score_product(stock_code: str, product_data: dict) -> dict:
     }
 
 
+def _merge_mcp_into_product_data(product_data: dict, mcp_details: dict) -> dict:
+    """
+    Pimland MCP'den gelen get_products_with_squ verisini DB tabanlı
+    product_data ile birleştir. MCP verisi önceliklidir.
+    """
+    if not mcp_details:
+        return product_data
+
+    merged = dict(product_data)
+
+    # MCP'den gelen zengin alanlar
+    for field in [
+        "description", "notes", "vatRate",
+        "fitCode", "fitName", "productTypeCode", "productTypeName",
+        "fabricMaterialCode", "fabricMaterialName",
+        "ecomTag1Code", "ecomTag1Name",
+        "ecomTag2Code", "ecomTag2Name",
+        "ecomTag3Code", "ecomTag3Name",
+        "ecomTag4Code", "ecomTag4Name",
+        "productThemeCode", "productThemeName",
+        "productGroupCode", "productGroupName",
+        "productMainGroupCode", "productMainGroupName",
+        "brandCode", "brandName",
+        "seasonCode", "seasonName",
+        "isBlocked", "useInternet", "hasDiscount", "isNewProduct",
+    ]:
+        val = mcp_details.get(field)
+        if val is not None:
+            merged[field] = val
+
+    # Barcodes — mainMaterialContent ve colorHexCode zengin gelir
+    if mcp_details.get("barcodes"):
+        merged["barcodes"] = mcp_details["barcodes"]
+
+    # Görseller — tüm renk ve tipler
+    if mcp_details.get("productImages"):
+        merged["productImages"] = mcp_details["productImages"]
+
+    # Bakım talimatları
+    care = mcp_details.get("washingAndCareInstructions") or []
+    if care:
+        merged["washingAndCareInstructions"] = care
+
+    # İlişkili ürünler
+    relations = mcp_details.get("productRelations") or []
+    if relations:
+        merged["productRelations"] = relations
+
+    # Hikayeler
+    stories = mcp_details.get("productStories") or []
+    if stories:
+        merged["productStories"] = stories
+
+    return merged
+
+
 async def score_season(
     season_code: str,
     db_conn: "psycopg2.connection",
     progress_callback: Optional[Callable] = None,
+    use_mcp: bool = True,
 ) -> dict:
-    """Sezonun tüm ürünlerini pim_products'tan okuyup puanlar."""
+    """
+    Sezonun tüm ürünlerini puanlar.
+    use_mcp=True (varsayılan): Pimland MCP'den gerçek veri çeker,
+    DB verisiyle birleştirir. Daha doğru ama yavaş.
+    use_mcp=False: Sadece DB verisi (hızlı ama eksik).
+    """
     import json
     started = time.perf_counter()
 
@@ -284,7 +346,34 @@ async def score_season(
     if total == 0:
         return {"error": f"'{season_code}' sezonu için ürün bulunamadı"}
 
-    log.info("quality_scorer.season_start", season=season_code, total=total)
+    log.info("quality_scorer.season_start", season=season_code, total=total, use_mcp=use_mcp)
+
+    # MCP'den toplu veri çek (20'şerli batch)
+    mcp_map: Dict[str, Any] = {}
+    if use_mcp:
+        try:
+            from app.services.batch_mcp_service import fetch_batch
+            all_skus = [r["urun_kodu"] for r in db_rows]
+            MCP_CHUNK = 20
+            for i in range(0, len(all_skus), MCP_CHUNK):
+                chunk = all_skus[i:i + MCP_CHUNK]
+                chunk_data = await fetch_batch(chunk, limit=MCP_CHUNK)
+                # details alanını al
+                for sku, data in chunk_data.items():
+                    det = data.get("details")
+                    if det:
+                        mcp_map[sku] = det
+                done_so_far = min(i + MCP_CHUNK, total)
+                log.info("quality_scorer.mcp_chunk",
+                         done=done_so_far, total=total, fetched=len(mcp_map))
+                if progress_callback:
+                    progress_callback(done_so_far, total)
+            log.info("quality_scorer.mcp_done",
+                     mcp_fetched=len(mcp_map), total=total,
+                     coverage_pct=round(len(mcp_map) / total * 100, 1))
+        except Exception as e:
+            log.warning("quality_scorer.mcp_failed", error=str(e))
+
     results = []
     grade_counts = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
     sorun_sayac: Dict[str, int] = {}
@@ -296,6 +385,7 @@ async def score_season(
             if c.strip()
         ]
 
+        # Temel DB verisi
         product_data = {
             "stockCode":           row["urun_kodu"],
             "description":         row["urun_adi"] or "",
@@ -315,7 +405,7 @@ async def score_season(
             "ecomTag4Code":        None,
             "notes":               None,
             "productTypeCode":     None,
-            "vatRate":             10,  # varsayılan
+            "vatRate":             10,
             "productImages":       [{"colorCode": row["first_color_code"], "type": "product"}]
                                    if row.get("default_image_url") else [],
             "barcodes":            color_list,
@@ -323,6 +413,11 @@ async def score_season(
             "productRelations":    [],
             "productStories":      [],
         }
+
+        # MCP verisi varsa DB verisinin üzerine yaz
+        mcp_details = mcp_map.get(row["urun_kodu"])
+        if mcp_details:
+            product_data = _merge_mcp_into_product_data(product_data, mcp_details)
 
         result = score_product(row["urun_kodu"], product_data)
         results.append(result)

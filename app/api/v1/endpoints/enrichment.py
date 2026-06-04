@@ -57,16 +57,22 @@ async def get_seasons(
 
 # ── POST /score/{season_code} ─────────────────────────────────────────────────
 
-def _run_scoring_bg(job_id: str, season_code: str) -> None:
+def _run_scoring_bg(job_id: str, season_code: str, use_mcp: bool = True) -> None:
     """Background task — senkron psycopg2 ile çalışır."""
     import asyncio
+    import redis.asyncio as _aioredis
 
-    async def _update(key: str, data: dict) -> None:
-        await _redis.setex(key, 3600, json.dumps(data, ensure_ascii=False))
+    async def _update(redis_cli, key: str, data: dict) -> None:
+        await redis_cli.setex(key, 7200, json.dumps(data, ensure_ascii=False))
 
     async def _run() -> None:
+        # Yeni event loop'a ait Redis bağlantısı oluştur
+        redis_cli = _aioredis.from_url(
+            settings.redis_url, encoding="utf-8", decode_responses=True
+        )
         key = f"enrichment:job:{job_id}"
-        await _update(key, {"status": "running", "current": 0, "total": 0})
+        await _update(redis_cli, key, {"status": "running", "current": 0, "total": 0,
+                                        "use_mcp": use_mcp})
 
         conn = psycopg2.connect(
             host=settings.postgres_host, port=settings.postgres_port,
@@ -77,17 +83,23 @@ def _run_scoring_bg(job_id: str, season_code: str) -> None:
             from app.services.enrichment.quality_scorer import score_season
 
             def progress(current: int, total: int) -> None:
-                asyncio.get_event_loop().run_until_complete(
-                    _update(key, {"status": "running", "current": current, "total": total})
+                asyncio.ensure_future(
+                    _update(redis_cli, key, {"status": "running", "current": current,
+                                              "total": total, "use_mcp": use_mcp})
                 )
 
-            result = await score_season(season_code, conn, progress_callback=None)
-            await _update(key, {"status": "done", **result})
+            result = await score_season(
+                season_code, conn,
+                progress_callback=progress,
+                use_mcp=use_mcp,
+            )
+            await _update(redis_cli, key, {"status": "done", "use_mcp": use_mcp, **result})
         except Exception as e:
             log.error("enrichment.scoring_failed", season=season_code, error=str(e))
-            await _update(key, {"status": "failed", "error": str(e)})
+            await _update(redis_cli, key, {"status": "failed", "error": str(e)})
         finally:
             conn.close()
+            await redis_cli.aclose()
 
     asyncio.run(_run())
 
@@ -96,14 +108,24 @@ def _run_scoring_bg(job_id: str, season_code: str) -> None:
 async def start_scoring(
     season_code: str,
     background_tasks: BackgroundTasks,
-) -> Dict[str, str]:
-    """Sezon puanlamasını arka planda başlat."""
+    use_mcp: bool = True,
+) -> Dict[str, Any]:
+    """Sezon puanlamasını arka planda başlat.
+    use_mcp=true (varsayılan): Pimland MCP'den gerçek veri çeker (~3-5 dk).
+    use_mcp=false: Sadece DB verisi, hızlı (~5 sn) ama eksik."""
     job_id = str(uuid.uuid4())[:8]
     key    = f"enrichment:job:{job_id}"
     await _redis.setex(key, 3600, json.dumps({"status": "queued", "current": 0, "total": 0}))
 
-    background_tasks.add_task(_run_scoring_bg, job_id, season_code)
-    return {"job_id": job_id, "status": "started", "season_code": season_code}
+    background_tasks.add_task(_run_scoring_bg, job_id, season_code, use_mcp)
+    return {
+        "job_id": job_id,
+        "status": "started",
+        "season_code": season_code,
+        "use_mcp": use_mcp,
+        "info": ("MCP ile tam puanlama (~3-5 dk). MCP kapalıysa ?use_mcp=false deneyin."
+                 if use_mcp else "DB tabanlı hızlı puanlama (~5 sn)."),
+    }
 
 
 # ── GET /score/status/{job_id} ────────────────────────────────────────────────
