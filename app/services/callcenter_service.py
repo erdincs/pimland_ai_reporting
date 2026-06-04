@@ -506,7 +506,10 @@ async def run_callcenter(
         skus = _extract_skus(question, urun_kodu)
         db_products = await _fetch_db_products(session, skus, question)
         live_sku = skus[0] if skus else (db_products[0]["urun_kodu"] if db_products else None)
-        live_data = await fetch_product_full(live_sku) if live_sku else {}
+        try:
+            live_data = await fetch_product_full(live_sku) if live_sku else {}
+        except Exception:
+            live_data = {}
         base_msg = f"SORU: {question}"
         user_msg, has_df = build_message_with_files(base_msg, session_files)
         system = system + get_system_addendum(has_df)
@@ -523,7 +526,11 @@ async def run_callcenter(
 
     live_sku = skus[0] if skus else (db_products[0]["urun_kodu"] if db_products else None)
     if live_sku:
-        live_data = await fetch_product_full(live_sku)
+        try:
+            live_data = await fetch_product_full(live_sku)
+        except Exception as e:
+            log.warning("callcenter.mcp_unavailable", sku=live_sku, error=str(e))
+            live_data = {}
     else:
         live_data = {}
 

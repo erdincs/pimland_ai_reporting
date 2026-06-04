@@ -370,11 +370,15 @@ async def run_sizewin(
     live_sku = sku or (db_product["urun_kodu"] if db_product else None)
 
     if live_sku:
-        iade_analiz, live_data = await _asyncio.gather(
-            _fetch_iade_analiz(session, live_sku),
-            fetch_product_full(live_sku),
-        )
-        sku = live_sku  # context için güncelle
+        try:
+            iade_analiz, live_data = await _asyncio.gather(
+                _fetch_iade_analiz(session, live_sku),
+                fetch_product_full(live_sku),
+            )
+        except Exception as e:
+            log.warning("sizewin.mcp_unavailable", sku=live_sku, error=str(e))
+            iade_analiz, live_data = {}, {}
+        sku = live_sku
     else:
         iade_analiz = {}
         live_data = {}
