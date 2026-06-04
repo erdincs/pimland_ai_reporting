@@ -713,6 +713,9 @@ body,
       <div class="nav-item nav-sub" onclick="showEnrPage('story')" id="nav-enr-story">
         <span class="nav-icon" style="font-size:12px">✍️</span><span class="nav-text">Hikaye Yazıcı</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('story-archive')" id="nav-enr-story-archive">
+        <span class="nav-icon" style="font-size:12px">📚</span><span class="nav-text">Hikaye Arşivi</span>
+      </div>
     </div>
 
     <!-- ── DİĞER ────────────────────────────────────────────────────── -->
@@ -1550,17 +1553,19 @@ body,
 
           <!-- CENTER: Hikaye Üretim Alanı -->
           <div style="display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
-            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)">
-              <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">HİKAYE ÜRETİM ALANI</span>
+            <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)">
+              <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">
+                SEÇİLİ ÜRÜNLER (<span id="sw-sel-count-c">0</span>)
+              </span>
               <button id="sw-gen-btn" onclick="swGenerateStories()"
-                style="background:var(--orange);border:none;color:#fff;font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;cursor:pointer;font-family:inherit;transition:opacity .15s">
+                style="background:var(--orange);border:none;color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:7px;cursor:pointer;font-family:inherit;opacity:.5;transition:opacity .15s">
                 + Hikaye Oluştur (<span id="sw-gen-count">0</span>)
               </button>
             </div>
-            <div id="sw-cards-wrap" style="overflow-y:auto;flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4);gap:8px">
+            <div id="sw-cards-wrap" style="overflow-y:auto;flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+              <div id="sw-empty-msg" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4);gap:8px">
                 <div style="font-size:32px">✍️</div>
-                <div style="font-size:12px">Sol panelden ürün seçin, ardından "Hikaye Oluştur" butonuna tıklayın</div>
+                <div style="font-size:12px">Sol panelden ürün seçin</div>
               </div>
             </div>
           </div>
@@ -1705,6 +1710,36 @@ body,
 
         </div>
       </div><!-- /enr-page-story -->
+
+      <!-- ── HİKAYE ARŞİVİ ─────────────────────────────────────────── -->
+      <div id="enr-page-story-archive" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <!-- Filtre bar -->
+        <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--bg2)">
+          <input id="swa-q" placeholder="Ürün adı, kodu veya hikayede ara..."
+            oninput="swaSearchDebounce()"
+            style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:6px 10px;border-radius:6px;font-family:inherit;font-size:12px;outline:none">
+          <select id="swa-kanal" onchange="swaLoad()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
+            <option value="">Tüm Kanallar</option>
+            <option value="trendyol">Trendyol</option>
+            <option value="hepsiburada">Hepsiburada</option>
+            <option value="amazon">Amazon</option>
+            <option value="web_sitesi">Web Sitesi</option>
+            <option value="magaza">Mağaza</option>
+          </select>
+          <select id="swa-durum" onchange="swaLoad()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
+            <option value="">Tüm Durumlar</option>
+            <option value="taslak">Taslak</option>
+            <option value="onaylandi">Onaylı</option>
+          </select>
+          <span id="swa-total" style="font-size:11px;color:var(--t3);white-space:nowrap"></span>
+        </div>
+        <!-- Liste -->
+        <div id="swa-wrap" style="overflow-y:auto;flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:8px">
+          <div style="color:var(--t4);font-size:12px;text-align:center;padding:40px">Yükleniyor...</div>
+        </div>
+        <!-- Sayfalama -->
+        <div id="swa-pagination" style="padding:8px 18px;border-top:1px solid var(--border);display:flex;gap:6px;justify-content:center;flex-shrink:0"></div>
+      </div><!-- /enr-page-story-archive -->
 
     </div><!-- /section-enrichment -->
 
@@ -3942,7 +3977,7 @@ function showEnrPage(page){
   // Enrichment grubunu aç
   _openNavGroup('enrichment');
   // Sayfalar
-  ['dashboard','scorelist','products','story'].forEach(p=>{
+  ['dashboard','scorelist','products','story','story-archive'].forEach(p=>{
     const el=document.getElementById('enr-page-'+p);
     if(el) el.style.display = p===page?'flex':'none';
     const nb=document.getElementById('nav-enr-'+p);
@@ -3950,13 +3985,13 @@ function showEnrPage(page){
   });
   document.getElementById('enr-page-title').textContent = {
     dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi',
-    products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı'
+    products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı', 'story-archive':'📚 Hikaye Arşivi'
   }[page]||'✨ Ürün Zenginleştirme';
-  // Story sayfasında ortak üst bar gizli — kendi sol paneli var
+  // Story sayfalarında ortak üst bar gizli
   const topbar=document.getElementById('enr-topbar');
-  if(topbar) topbar.style.display=page==='story'?'none':'flex';
-  if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
-  if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
+  if(topbar) topbar.style.display=(page==='story'||page==='story-archive')?'none':'flex';
+  if(page==='dashboard')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
+  if(page==='scorelist')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
   if(page==='products'){
     (async()=>{
       try{ await loadEnrMarkas(); } catch(e){}
@@ -3966,7 +4001,8 @@ function showEnrPage(page){
       loadEnrichmentList(1);
     })();
   }
-  if(page==='story') swInit();
+  if(page==='story')         swInit();
+  if(page==='story-archive') swaLoad();
 }
 
 async function onEnrFilterChange(){
@@ -4649,35 +4685,37 @@ const _SECTION_GROUP = {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// STORY WRITER (sw*)
+// STORY WRITER (sw*) — v2: ürün seçince kart çıkar, kanal bazlı hikayeler DB'de
 // ══════════════════════════════════════════════════════════════════════════════
 
 const _SW = {
-  selectedCodes: new Set(),   // seçili ürün kodları
-  products: [],               // sayfadaki ürün listesi
-  stories: {},                // { urun_kodu: { story, approved } }
-  page: 1,
-  total: 0,
+  selectedCodes: new Set(),  // seçili ürün kodları
+  productMap: {},            // { urun_kodu: productObj } — seçili ürün verileri
+  storyData: {},             // { urun_kodu: { kanal: { id, story, durum } } }
+  products: [],              // sol listede gösterilen ürünler
+  page: 1, total: 0,
   ton: 'lüks_zarif',
   stats: { uretilen:0, onaylanan:0, yeniden:0 },
-  searchTimer: null,
+  searchTimer: null, swaTimer: null,
 };
 
 // Tüm urun emojileri
-const _SW_EMOJI = { 'ELBISE':'👗','UST GRUP':'👚','ALT GRUP':'👖','DIŞ GİYİM':'🧥',
+const _SW_EMOJI={'ELBISE':'👗','UST GRUP':'👚','ALT GRUP':'👖','DIŞ GİYİM':'🧥',
   'Gömlek':'👔','Elbise':'👗','Pantolon':'👖','Ceket':'🧥','Kazak':'🧶',
-  'Etek':'👗','Atlet':'👕','Yelek':'🦺','Triko':'🧶' };
-function _swEmoji(g,a){ return _SW_EMOJI[a]||_SW_EMOJI[g]||'👕'; }
-function _swGradeColor(g){ return {A:'var(--green)',B:'var(--teal)',C:'var(--yellow)',D:'var(--orange)',F:'var(--red)'}[g]||'var(--t3)'; }
+  'Etek':'👗','Atlet':'👕','Yelek':'🦺','Triko':'🧶'};
+const _SW_KANAL_LABEL={'trendyol':'Trendyol','hepsiburada':'Hepsiburada','amazon':'Amazon','web_sitesi':'Web Sitesi','magaza':'Mağaza'};
+const _SW_KANAL_COLOR={'trendyol':'var(--orange)','hepsiburada':'var(--blue)','amazon':'#f90','web_sitesi':'var(--teal)','magaza':'var(--purple)'};
+function _swEmoji(g,a){return _SW_EMOJI[a]||_SW_EMOJI[g]||'👕';}
+function _swGradeColor(g){return{A:'var(--green)',B:'var(--teal)',C:'var(--yellow)',D:'var(--orange)',F:'var(--red)'}[g]||'var(--t3)';}
 
 async function swInit(){
-  // Sezon dropdown'ı doldur
+  if(_SW._inited) return;
+  _SW._inited=false; // reset on each page open
+  // Sezon dropdown
   const sel=document.getElementById('sw-season-sel');
   const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
   sel.innerHTML='<option value="">Tüm Sezonlar</option>';
-  (seasons||[]).forEach(s=>{
-    sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}">${s.sezon_kodu} ${s.sezon_adi||''}</option>`);
-  });
+  (seasons||[]).forEach(s=>{sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}">${s.sezon_kodu} ${s.sezon_adi||''}</option>`);});
   if(seasons&&seasons.length>0) sel.value=seasons[0].sezon_kodu;
   swLoadProducts();
 }
@@ -4693,7 +4731,7 @@ async function swLoadProducts(page){
   if(sezon) params.set('sezon',sezon);
   if(marka) params.set('marka',marka);
   const wrap=document.getElementById('sw-product-list');
-  wrap.innerHTML='<div style="padding:20px;text-align:center;color:var(--t3);font-size:11px">Yükleniyor...</div>';
+  wrap.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:11px">Yükleniyor...</div>';
   try{
     const d=await fetch(`${API}/enrichment/story/products?${params}`).then(r=>r.json());
     _SW.total=d.total||0;
@@ -4701,55 +4739,65 @@ async function swLoadProducts(page){
     if(grade) items=items.filter(p=>p.quality_grade===grade);
     _SW.products=items;
     swRenderList(items);
-    swRenderListPagination(d.total, page, 30);
-  } catch(e){
-    wrap.innerHTML=`<div style="padding:20px;text-align:center;color:var(--red);font-size:11px">Hata: ${e.message}</div>`;
+    swRenderListPagination(d.total,page,30);
+  }catch(e){
+    wrap.innerHTML=`<div style="padding:16px;color:var(--red);font-size:11px">Hata: ${e.message}</div>`;
   }
 }
 
 function swRenderList(items){
   const wrap=document.getElementById('sw-product-list');
-  if(!items.length){ wrap.innerHTML='<div style="padding:20px;text-align:center;color:var(--t3);font-size:11px">Ürün bulunamadı</div>'; return; }
+  if(!items.length){wrap.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:11px">Ürün bulunamadı</div>';return;}
   wrap.innerHTML=items.map(p=>{
     const sel=_SW.selectedCodes.has(p.urun_kodu);
     const gc=_swGradeColor(p.quality_grade);
     const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
     return `<div class="sw-prow${sel?' sw-prow-sel':''}" data-kod="${p.urun_kodu}"
       onclick="swToggleProduct('${p.urun_kodu}')"
-      style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);${sel?'background:rgba(255,107,43,.08)':''}">
+      style="display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);${sel?'background:rgba(255,107,43,.08)':''}">
       <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();swToggleProduct('${p.urun_kodu}')"
         style="accent-color:var(--orange);cursor:pointer;flex-shrink:0">
-      <div style="width:32px;height:32px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div>
+      <div style="width:28px;height:28px;background:var(--bg3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${emoji}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.urun_adi}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.urun_adi}</div>
         <div style="font-size:10px;color:var(--t3)">${p.urun_kodu} · <span style="color:var(--t2)">${p.marka_adi||''}</span></div>
       </div>
-      ${p.quality_grade?`<span style="font-size:10px;font-weight:700;color:${gc};background:${gc}22;border-radius:4px;padding:2px 5px;flex-shrink:0">${p.quality_grade}</span>`:''}
+      ${p.quality_grade?`<span style="font-size:10px;font-weight:700;color:${gc};flex-shrink:0">${p.quality_grade}</span>`:''}
     </div>`;
   }).join('');
-  swUpdateSelCount();
 }
 
 function swRenderListPagination(total,page,limit){
-  const pages=Math.ceil(total/limit);
+  const pages=Math.ceil((total||0)/limit);
   const wrap=document.getElementById('sw-list-pagination');
   if(pages<=1){wrap.innerHTML='';return;}
   wrap.innerHTML=`
     <button onclick="swLoadProducts(${page-1})" ${page<=1?'disabled':''}
-      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">‹</button>
-    <span style="font-size:11px;color:var(--t3);padding:0 4px">${page}/${pages}</span>
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">‹</button>
+    <span style="font-size:11px;color:var(--t3)">${page}/${pages}</span>
     <button onclick="swLoadProducts(${page+1})" ${page>=pages?'disabled':''}
-      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">›</button>`;
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">›</button>`;
 }
 
 function swToggleProduct(kod){
-  if(_SW.selectedCodes.has(kod)) _SW.selectedCodes.delete(kod);
-  else _SW.selectedCodes.add(kod);
-  // DOM güncelle
+  const p=_SW.products.find(x=>x.urun_kodu===kod);
+  if(!p) return;
+  if(_SW.selectedCodes.has(kod)){
+    _SW.selectedCodes.delete(kod);
+    delete _SW.productMap[kod];
+    // Kartı orta panelden kaldır
+    const card=document.getElementById(`sw-card-${kod}`);
+    if(card) card.remove();
+  } else {
+    _SW.selectedCodes.add(kod);
+    _SW.productMap[kod]=p;
+    // Kartı orta panele ekle
+    swAddCard(p);
+  }
+  // Sol listedeki checkbox güncelle
   const row=document.querySelector(`.sw-prow[data-kod="${kod}"]`);
   if(row){
     const sel=_SW.selectedCodes.has(kod);
-    row.classList.toggle('sw-prow-sel',sel);
     row.style.background=sel?'rgba(255,107,43,.08)':'';
     const cb=row.querySelector('input[type=checkbox]');
     if(cb) cb.checked=sel;
@@ -4757,21 +4805,145 @@ function swToggleProduct(kod){
   swUpdateSelCount();
 }
 
-function swSelectAll(){
-  _SW.products.forEach(p=>_SW.selectedCodes.add(p.urun_kodu));
-  swRenderList(_SW.products);
+function swGetSelectedChannels(){
+  return [...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
 }
 
-function swClearAll(){
-  _SW.selectedCodes.clear();
-  swRenderList(_SW.products);
+function swAddCard(p){
+  const emptyMsg=document.getElementById('sw-empty-msg');
+  if(emptyMsg) emptyMsg.style.display='none';
+  const wrap=document.getElementById('sw-cards-wrap');
+  const channels=swGetSelectedChannels();
+  const html=swCardHtml(p,channels);
+  wrap.insertAdjacentHTML('beforeend',html);
+}
+
+function swCardHtml(p,channels){
+  const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
+  const gc=_swGradeColor(p.quality_grade);
+  const firstChan=channels[0]||'trendyol';
+
+  const tabsHtml=channels.map((k,i)=>{
+    const sd=(_SW.storyData[p.urun_kodu]||{})[k];
+    const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
+    const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
+    return `<button class="sw-chan-tab${i===0?' sw-tab-active':''}" data-kod="${p.urun_kodu}" data-kanal="${k}"
+      onclick="swSwitchTab('${p.urun_kodu}','${k}')"
+      style="background:${i===0?cc+'22':'var(--bg3)'};border:1px solid ${i===0?cc:'var(--border)'};color:${i===0?cc:'var(--t2)'};
+             padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap">
+      ${_SW_KANAL_LABEL[k]||k}${badge}
+    </button>`;
+  }).join('');
+
+  const chanContents=channels.map((k,i)=>{
+    const sd=(_SW.storyData[p.urun_kodu]||{})[k];
+    return `<div id="sw-cc-${p.urun_kodu}-${k}" style="display:${i===0?'flex':'none'};flex-direction:column;gap:6px">
+      ${swChanContent(p.urun_kodu,k,sd)}
+    </div>`;
+  }).join('');
+
+  return `<div id="sw-card-${p.urun_kodu}" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border)">
+      <div style="width:30px;height:30px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--t1)">${p.urun_adi||p.urun_kodu}</div>
+        <div style="font-size:10px;color:var(--t3)">${p.urun_kodu} · <span style="color:var(--t2)">${p.marka_adi||''}</span>
+          ${p.fabricmaterialname?` · <span style="color:var(--t3)">${p.fabricmaterialname}</span>`:''}
+        </div>
+      </div>
+      ${p.quality_grade?`<span style="font-size:11px;font-weight:700;color:${gc};background:${gc}22;padding:2px 7px;border-radius:4px;flex-shrink:0">${p.quality_grade}</span>`:''}
+      <button onclick="swToggleProduct('${p.urun_kodu}')"
+        style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:16px;padding:0 4px;line-height:1" title="Kaldır">×</button>
+    </div>
+    <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap" id="sw-tabs-${p.urun_kodu}">
+      ${tabsHtml}
+    </div>
+    <div style="padding:10px 12px" id="sw-chan-wrap-${p.urun_kodu}">
+      ${chanContents}
+    </div>
+  </div>`;
+}
+
+function swChanContent(kod,kanal,sd){
+  if(!sd){
+    return `<div style="min-height:56px;display:flex;align-items:center;color:var(--t4);font-size:11px;font-style:italic">
+      Hikaye henüz üretilmedi — "Hikaye Oluştur" butonuna tıklayın
+    </div>`;
+  }
+  const durumColor=sd.durum==='onaylandi'?'var(--green)':'var(--yellow)';
+  const durumLabel=sd.durum==='onaylandi'?'✓ Onaylı':'Taslak';
+  return `<div style="margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.5px">${(_SW_KANAL_LABEL[kanal]||kanal).toUpperCase()} HİKAYESİ</span>
+      <span style="font-size:10px;color:${durumColor};font-weight:600">${durumLabel}</span>
+    </div>
+    <textarea id="sw-ta-${kod}-${kanal}"
+      style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);
+             font-size:12px;font-family:inherit;line-height:1.6;border-radius:6px;padding:8px;resize:none;outline:none;min-height:60px"
+      oninput="swUpdateCharCount('${kod}','${kanal}')">${sd.story||''}</textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
+      <span id="sw-kar-${kod}-${kanal}" style="font-size:11px;color:var(--t3)">${sd.karakter_sayisi||sd.story?.length||0} karakter</span>
+      <div style="display:flex;gap:5px">
+        ${sd.durum!=='onaylandi'?`<button onclick="swApprove(${sd.id},'${kod}','${kanal}')"
+          style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
+        <button onclick="swRegenerate('${kod}','${kanal}')"
+          style="background:none;border:1px solid var(--border);color:var(--t2);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">↺ Yeniden</button>
+        <button onclick="swCopy('${kod}','${kanal}')"
+          style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>
+      </div>
+    </div>`;
+}
+
+function swSwitchTab(kod,kanal){
+  // Tab butonları
+  document.querySelectorAll(`.sw-chan-tab[data-kod="${kod}"]`).forEach(btn=>{
+    const k=btn.dataset.kanal;
+    const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
+    const active=k===kanal;
+    btn.style.background=active?cc+'22':'var(--bg3)';
+    btn.style.borderColor=active?cc:'var(--border)';
+    btn.style.color=active?cc:'var(--t2)';
+    btn.classList.toggle('sw-tab-active',active);
+  });
+  // İçerik panel'ları
+  const wrap=document.getElementById(`sw-chan-wrap-${kod}`);
+  if(wrap) wrap.querySelectorAll('[id^="sw-cc-"]').forEach(div=>{
+    div.style.display=div.id===`sw-cc-${kod}-${kanal}`?'flex':'none';
+  });
 }
 
 function swUpdateSelCount(){
   const n=_SW.selectedCodes.size;
   document.getElementById('sw-sel-count').textContent=`${n} ürün seçildi`;
+  document.getElementById('sw-sel-count-c').textContent=n;
   document.getElementById('sw-gen-count').textContent=n;
-  document.getElementById('sw-gen-btn').style.opacity=n?'1':'0.5';
+  const btn=document.getElementById('sw-gen-btn');
+  if(btn) btn.style.opacity=n?'1':'0.5';
+  // Boş mesajı göster/gizle
+  const emptyMsg=document.getElementById('sw-empty-msg');
+  if(emptyMsg) emptyMsg.style.display=n===0?'flex':'none';
+}
+
+function swSelectAll(){
+  _SW.products.forEach(p=>{
+    if(!_SW.selectedCodes.has(p.urun_kodu)){
+      _SW.selectedCodes.add(p.urun_kodu);
+      _SW.productMap[p.urun_kodu]=p;
+      swAddCard(p);
+    }
+  });
+  swRenderList(_SW.products);
+  swUpdateSelCount();
+}
+
+function swClearAll(){
+  _SW.selectedCodes.forEach(kod=>{
+    const card=document.getElementById(`sw-card-${kod}`);
+    if(card) card.remove();
+  });
+  _SW.selectedCodes.clear();
+  _SW.productMap={};
+  swRenderList(_SW.products);
+  swUpdateSelCount();
 }
 
 function swSearchDebounce(){
@@ -4781,178 +4953,239 @@ function swSearchDebounce(){
 
 function swSetTon(btn){
   document.querySelectorAll('.sw-ton-btn').forEach(b=>{
-    b.classList.remove('active');
-    b.style.borderColor='var(--border)';
-    b.style.color='var(--t2)';
+    b.style.borderColor='var(--border)';b.style.color='var(--t2)';
   });
-  btn.classList.add('active');
-  btn.style.borderColor='var(--orange)';
-  btn.style.color='var(--t1)';
+  btn.style.borderColor='var(--orange)'; btn.style.color='var(--t1)';
   _SW.ton=btn.dataset.ton;
 }
 
-// Kanal checkbox border güncellemesi
-document.querySelectorAll('.sw-kanal-cb').forEach(cb=>{
-  cb.addEventListener('change',()=>{
-    const row=cb.closest('.sw-kanal-row');
-    if(row) row.style.borderColor=cb.checked?'var(--orange)':'var(--border)';
-  });
+document.addEventListener('change',e=>{
+  if(e.target.classList.contains('sw-kanal-cb')){
+    const row=e.target.closest('.sw-kanal-row');
+    if(row) row.style.borderColor=e.target.checked?(_SW_KANAL_COLOR[e.target.value]||'var(--orange)'):'var(--border)';
+    // Kanallar değişince mevcut kartları yenile
+    swRefreshCardTabs();
+  }
 });
+
+function swRefreshCardTabs(){
+  const channels=swGetSelectedChannels();
+  _SW.selectedCodes.forEach(kod=>{
+    const p=_SW.productMap[kod]; if(!p) return;
+    const card=document.getElementById(`sw-card-${kod}`);
+    if(card){
+      // Tab'ları yenile
+      const tabsEl=document.getElementById(`sw-tabs-${kod}`);
+      if(tabsEl) tabsEl.innerHTML=channels.map((k,i)=>{
+        const sd=(_SW.storyData[kod]||{})[k];
+        const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
+        const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
+        const isFirst=document.querySelector(`.sw-tab-active[data-kod="${kod}"]`)?.dataset.kanal===k||i===0;
+        return `<button class="sw-chan-tab${isFirst?' sw-tab-active':''}" data-kod="${kod}" data-kanal="${k}"
+          onclick="swSwitchTab('${kod}','${k}')"
+          style="background:${isFirst?cc+'22':'var(--bg3)'};border:1px solid ${isFirst?cc:'var(--border)'};color:${isFirst?cc:'var(--t2)'};
+                 padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap">
+          ${_SW_KANAL_LABEL[k]||k}${badge}
+        </button>`;
+      }).join('');
+      // İçerikleri yenile (yeni kanallar için içerik ekle)
+      const chanWrap=document.getElementById(`sw-chan-wrap-${kod}`);
+      if(chanWrap){
+        channels.forEach((k,i)=>{
+          if(!document.getElementById(`sw-cc-${kod}-${k}`)){
+            chanWrap.insertAdjacentHTML('beforeend',
+              `<div id="sw-cc-${kod}-${k}" style="display:none;flex-direction:column;gap:6px">${swChanContent(kod,k,null)}</div>`);
+          }
+        });
+      }
+    }
+  });
+}
 
 async function swGenerateStories(){
   const kodlar=[..._SW.selectedCodes];
   if(!kodlar.length) return;
+  const channels=swGetSelectedChannels();
+  if(!channels.length){alert('En az bir kanal seçin');return;}
   const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
-  const kanallar=[...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
+  const btn=document.getElementById('sw-gen-btn');
+  btn.disabled=true; btn.textContent='Üretiliyor...';
 
-  // Seçili ürün bilgilerini bul
-  const allProds={};
-  _SW.products.forEach(p=>{ allProds[p.urun_kodu]=p; });
-  // Sayfalarda olmayan seçili ürünler için de devam et
-
-  const wrap=document.getElementById('sw-cards-wrap');
-  // İlk render — Bekliyor kartları
-  wrap.innerHTML='';
+  // Her kart için "üretiliyor" göster
   kodlar.forEach(kod=>{
-    const p=allProds[kod]||{urun_kodu:kod,urun_adi:kod};
-    wrap.insertAdjacentHTML('beforeend',swCardHtml(p,'bekliyor',''));
+    channels.forEach(k=>{
+      const cc=document.getElementById(`sw-cc-${kod}-${k}`);
+      if(cc) cc.innerHTML=`<div style="color:var(--t3);font-size:11px;padding:8px 0;font-style:italic">⏳ Üretiliyor...</div>`;
+    });
   });
-  _SW.stats.bekleyen=kodlar.length;
-  swUpdateStats();
 
-  // API çağrısı
-  document.getElementById('sw-gen-btn').disabled=true;
-  try{
-    const res=await fetch(`${API}/enrichment/story/generate`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({urun_kodlari:kodlar,ton:_SW.ton,karakter_limit:karakter,kanallar})
-    });
-    if(!res.ok){
-      const err=await res.text();
-      wrap.innerHTML=`<div style="padding:20px;color:var(--red);font-size:12px">Hata: ${err}</div>`;
-      return;
-    }
-    const results=await res.json();
-    // Kartları güncelle
-    results.forEach(r=>{
-      _SW.stories[r.urun_kodu]={story:r.story,approved:false};
-      const card=document.getElementById(`sw-card-${r.urun_kodu}`);
-      if(card){
-        const p=allProds[r.urun_kodu]||{urun_kodu:r.urun_kodu,urun_adi:r.urun_kodu};
-        card.outerHTML=swCardHtml(p,'uretildi',r.story,r.karakter_sayisi);
-      }
-    });
-    _SW.stats.uretilen+=results.length;
-    _SW.stats.bekleyen=0;
-    swUpdateStats();
-  } catch(e){
-    wrap.innerHTML=`<div style="padding:20px;color:var(--red);font-size:12px">Bağlantı hatası: ${e.message}</div>`;
-  } finally{
-    document.getElementById('sw-gen-btn').disabled=false;
-  }
-}
-
-function swCardHtml(p, durum, story, karSayisi){
-  const gc=_swGradeColor(p.quality_grade);
-  const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
-  const durumBadge={
-    bekliyor:`<span style="font-size:10px;color:var(--t3);background:var(--bg3);padding:3px 8px;border-radius:5px">Bekliyor</span>`,
-    uretildi:`<span style="font-size:10px;color:var(--teal);background:rgba(0,194,168,.12);padding:3px 8px;border-radius:5px">Oluşturuldu</span>`,
-    onaylandi:`<span style="font-size:10px;color:var(--green);background:rgba(34,197,94,.12);padding:3px 8px;border-radius:5px">✓ Onaylandı</span>`,
-  }[durum]||'';
-
-  const tags=[p.fabricmaterialname,p.urun_grubu_adi,p.ana_grup_adi].filter(Boolean);
-  const tagsHtml=tags.map(t=>`<span style="font-size:10px;background:var(--bg3);color:var(--t2);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">${t}</span>`).join('');
-
-  const storyArea=durum==='bekliyor'
-    ?`<div style="min-height:64px;display:flex;align-items:center;justify-content:center;color:var(--t4);font-size:11px">Hikaye üretilmeyi bekliyor...</div>`
-    :`<textarea id="sw-ta-${p.urun_kodu}" style="width:100%;box-sizing:border-box;background:transparent;border:none;color:var(--t1);font-size:13px;font-family:inherit;line-height:1.6;resize:none;outline:none;min-height:72px"
-        oninput="swUpdateCharCount('${p.urun_kodu}')">${story||''}</textarea>`;
-
-  const karHtml=durum!=='bekliyor'
-    ?`<span id="sw-kar-${p.urun_kodu}" style="font-size:11px;color:var(--t3)">${karSayisi||story?.length||0} karakter</span>`
-    :`<span style="font-size:11px;color:var(--t3)">— karakter</span>`;
-
-  const actions=durum!=='bekliyor'?`
-    <button onclick="swRegenerate('${p.urun_kodu}')" style="background:none;border:1px solid var(--border);color:var(--t2);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">↺ Yeniden Üret</button>
-    <button onclick="swApprove('${p.urun_kodu}',this)" style="background:none;border:1px solid var(--teal);color:var(--teal);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">✓ Onayla</button>
-    <button onclick="swCopyStory('${p.urun_kodu}')" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>`:''
-
-  return `<div id="sw-card-${p.urun_kodu}" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">
-      <div style="width:36px;height:36px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${emoji}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.urun_adi||p.urun_kodu}</div>
-        <div style="font-size:10px;color:var(--t3)">${p.urun_kodu} · <span style="color:var(--t2)">${p.marka_adi||''}</span></div>
-      </div>
-      ${durumBadge}
-    </div>
-    ${tagsHtml?`<div style="padding:8px 14px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border)">${tagsHtml}</div>`:''}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--border)">
-      <div style="background:var(--bg2);padding:8px 14px"><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:2px">MATERYAL</div><div style="font-size:12px;color:var(--t1)">${p.fabricmaterialname||'—'}</div></div>
-      <div style="background:var(--bg2);padding:8px 14px;border-left:1px solid var(--border)"><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:2px">TEMA</div><div style="font-size:12px;color:var(--t1)">${p.tema_adi||'—'}</div></div>
-    </div>
-    <div style="padding:12px 14px">
-      <div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.6px;margin-bottom:8px">OLUŞTURULAN HİKAYE</div>
-      ${storyArea}
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;flex-wrap:wrap">
-        ${karHtml}
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${actions}</div>
-      </div>
-    </div>
-  </div>`;
-}
-
-function swUpdateCharCount(kod){
-  const ta=document.getElementById(`sw-ta-${kod}`);
-  const span=document.getElementById(`sw-kar-${kod}`);
-  if(ta&&span) span.textContent=`${ta.value.length} karakter`;
-}
-
-async function swRegenerate(kod){
-  const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
-  const kanallar=[...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
-  const card=document.getElementById(`sw-card-${kod}`);
-  const p=_SW.products.find(x=>x.urun_kodu===kod)||{urun_kodu:kod,urun_adi:kod};
-  if(card) card.outerHTML=swCardHtml(p,'bekliyor','');
   try{
     const res=await fetch(`${API}/enrichment/story/generate`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({urun_kodlari:[kod],ton:_SW.ton,karakter_limit:karakter,kanallar})
+      body:JSON.stringify({urun_kodlari:kodlar,ton:_SW.ton,karakter_limit:karakter,kanallar:channels})
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const results=await res.json();
+
+    results.forEach(r=>{
+      if(!_SW.storyData[r.urun_kodu]) _SW.storyData[r.urun_kodu]={};
+      _SW.storyData[r.urun_kodu][r.kanal]={id:r.id,story:r.story,karakter_sayisi:r.karakter_sayisi,durum:r.durum};
+      // Kart içeriğini güncelle
+      const cc=document.getElementById(`sw-cc-${r.urun_kodu}-${r.kanal}`);
+      if(cc) cc.innerHTML=swChanContent(r.urun_kodu,r.kanal,_SW.storyData[r.urun_kodu][r.kanal]);
+      // Tab badge güncelle
+      const tab=document.querySelector(`.sw-chan-tab[data-kod="${r.urun_kodu}"][data-kanal="${r.kanal}"]`);
+      if(tab) tab.innerHTML=(_SW_KANAL_LABEL[r.kanal]||r.kanal)+(r.durum==='onaylandi'?' ✓':'');
+    });
+    _SW.stats.uretilen+=results.length;
+    swUpdateStats();
+  }catch(e){
+    console.error('swGenerateStories',e);
+    alert('Hata: '+e.message);
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=`+ Hikaye Oluştur (<span id="sw-gen-count">${kodlar.length}</span>)`;
+  }
+}
+
+async function swApprove(storyId,kod,kanal){
+  try{
+    const res=await fetch(`${API}/enrichment/story/${storyId}/approve`,{method:'POST'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d=await res.json();
+    if(_SW.storyData[kod]&&_SW.storyData[kod][kanal]){
+      _SW.storyData[kod][kanal].durum='onaylandi';
+    }
+    const cc=document.getElementById(`sw-cc-${kod}-${kanal}`);
+    if(cc) cc.innerHTML=swChanContent(kod,kanal,_SW.storyData[kod][kanal]);
+    const tab=document.querySelector(`.sw-chan-tab[data-kod="${kod}"][data-kanal="${kanal}"]`);
+    if(tab) tab.innerHTML=(_SW_KANAL_LABEL[kanal]||kanal)+' ✓';
+    _SW.stats.onaylanan++;
+    swUpdateStats();
+  }catch(e){alert('Onaylama hatası: '+e.message);}
+}
+
+async function swRegenerate(kod,kanal){
+  const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
+  const cc=document.getElementById(`sw-cc-${kod}-${kanal}`);
+  if(cc) cc.innerHTML=`<div style="color:var(--t3);font-size:11px;padding:8px 0;font-style:italic">⏳ Yeniden üretiliyor...</div>`;
+  try{
+    const res=await fetch(`${API}/enrichment/story/generate`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({urun_kodlari:[kod],ton:_SW.ton,karakter_limit:karakter,kanallar:[kanal]})
     });
     const results=await res.json();
-    const r=results[0]||{urun_kodu:kod,story:'',karakter_sayisi:0};
-    _SW.stories[kod]={story:r.story,approved:false};
-    const newCard=document.getElementById(`sw-card-${kod}`);
-    if(newCard) newCard.outerHTML=swCardHtml(p,'uretildi',r.story,r.karakter_sayisi);
-    _SW.stats.yeniden++;
-    swUpdateStats();
-  } catch(e){ console.error('swRegenerate',e); }
+    const r=results[0];
+    if(r){
+      if(!_SW.storyData[kod]) _SW.storyData[kod]={};
+      _SW.storyData[kod][kanal]={id:r.id,story:r.story,karakter_sayisi:r.karakter_sayisi,durum:r.durum};
+      if(cc) cc.innerHTML=swChanContent(kod,kanal,_SW.storyData[kod][kanal]);
+      _SW.stats.yeniden++;
+      swUpdateStats();
+    }
+  }catch(e){alert('Hata: '+e.message);}
 }
 
-function swApprove(kod,btn){
-  if(_SW.stories[kod]) _SW.stories[kod].approved=true;
-  const card=document.getElementById(`sw-card-${kod}`);
-  const p=_SW.products.find(x=>x.urun_kodu===kod)||{urun_kodu:kod};
-  const ta=document.getElementById(`sw-ta-${kod}`);
-  const story=ta?ta.value:(_SW.stories[kod]?.story||'');
-  if(card) card.outerHTML=swCardHtml(p,'onaylandi',story,story.length);
-  _SW.stats.onaylanan++;
-  swUpdateStats();
+function swCopy(kod,kanal){
+  const ta=document.getElementById(`sw-ta-${kod}-${kanal}`);
+  const text=ta?ta.value:(_SW.storyData[kod]?.[kanal]?.story||'');
+  if(text) navigator.clipboard.writeText(text).catch(()=>{});
 }
 
-function swCopyStory(kod){
-  const ta=document.getElementById(`sw-ta-${kod}`);
-  const text=ta?ta.value:(_SW.stories[kod]?.story||'');
-  if(text){ navigator.clipboard.writeText(text).catch(()=>{}); }
+function swUpdateCharCount(kod,kanal){
+  const ta=document.getElementById(`sw-ta-${kod}-${kanal}`);
+  const span=document.getElementById(`sw-kar-${kod}-${kanal}`);
+  if(ta&&span) span.textContent=`${ta.value.length} karakter`;
 }
 
 function swUpdateStats(){
   document.getElementById('sw-stat-uretilen').textContent=_SW.stats.uretilen;
   document.getElementById('sw-stat-onaylanan').textContent=_SW.stats.onaylanan;
-  document.getElementById('sw-stat-bekleyen').textContent=_SW.stats.bekleyen;
   document.getElementById('sw-stat-yeniden').textContent=_SW.stats.yeniden;
+}
+
+// ── STORY ARŞİVİ (swa*) ───────────────────────────────────────────────────────
+
+async function swaLoad(page){
+  page=page||1;
+  const q=document.getElementById('swa-q')?.value||'';
+  const kanal=document.getElementById('swa-kanal')?.value||'';
+  const durum=document.getElementById('swa-durum')?.value||'';
+  const params=new URLSearchParams({page,limit:30});
+  if(q) params.set('q',q);
+  if(kanal) params.set('kanal',kanal);
+  if(durum) params.set('durum',durum);
+  const wrap=document.getElementById('swa-wrap');
+  wrap.innerHTML='<div style="color:var(--t4);font-size:12px;text-align:center;padding:40px">Yükleniyor...</div>';
+  try{
+    const d=await fetch(`${API}/enrichment/story/saved?${params}`).then(r=>r.json());
+    document.getElementById('swa-total').textContent=`${d.total||0} kayıt`;
+    if(!d.items?.length){
+      wrap.innerHTML='<div style="color:var(--t4);font-size:12px;text-align:center;padding:40px">Kayıtlı hikaye yok</div>';
+      document.getElementById('swa-pagination').innerHTML='';
+      return;
+    }
+    wrap.innerHTML=d.items.map(s=>{
+      const dc=s.durum==='onaylandi'?'var(--green)':'var(--yellow)';
+      const dl=s.durum==='onaylandi'?'✓ Onaylı':'Taslak';
+      const kc=_SW_KANAL_COLOR[s.kanal]||'var(--t3)';
+      const dt=s.created_at?new Date(s.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:${kc};background:${kc}22;padding:2px 8px;border-radius:4px">${_SW_KANAL_LABEL[s.kanal]||s.kanal}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--t1)">${s.urun_adi||s.urun_kodu}</span>
+          <span style="font-size:10px;color:var(--t3)">${s.urun_kodu}</span>
+          <span style="flex:1"></span>
+          <span style="font-size:10px;color:${dc};font-weight:600">${dl}</span>
+          <span style="font-size:10px;color:var(--t4)">${dt}</span>
+        </div>
+        <div style="font-size:12px;color:var(--t1);line-height:1.6;background:var(--bg3);border-radius:6px;padding:8px 10px;margin-bottom:8px">${s.story}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} karakter · ${s.ton}</span>
+          <div style="display:flex;gap:5px">
+            ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this)"
+              style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
+            <button onclick="swaDelete(${s.id},this)"
+              style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Sil</button>
+            <button onclick="navigator.clipboard.writeText(${JSON.stringify(s.story)})"
+              style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopya</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Sayfalama
+    const pages=Math.ceil(d.total/30);
+    const pag=document.getElementById('swa-pagination');
+    pag.innerHTML=pages<=1?'':`
+      <button onclick="swaLoad(${page-1})" ${page<=1?'disabled':''}
+        style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px">‹ Önceki</button>
+      <span style="font-size:11px;color:var(--t3);padding:0 8px">${page}/${pages}</span>
+      <button onclick="swaLoad(${page+1})" ${page>=pages?'disabled':''}
+        style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px">Sonraki ›</button>`;
+  }catch(e){
+    wrap.innerHTML=`<div style="color:var(--red);font-size:12px;text-align:center;padding:40px">Hata: ${e.message}</div>`;
+  }
+}
+
+async function swaApprove(id,btn){
+  try{
+    await fetch(`${API}/enrichment/story/${id}/approve`,{method:'POST'});
+    btn.textContent='✓ Onaylandı'; btn.style.color='var(--green)'; btn.disabled=true;
+    swaLoad();
+  }catch(e){alert('Hata: '+e.message);}
+}
+
+async function swaDelete(id,btn){
+  if(!confirm('Bu hikayeyi silmek istediğinizden emin misiniz?')) return;
+  try{
+    await fetch(`${API}/enrichment/story/${id}`,{method:'DELETE'});
+    btn.closest('[style*="bg2"]')?.remove();
+  }catch(e){alert('Hata: '+e.message);}
+}
+
+function swaSearchDebounce(){
+  clearTimeout(_SW.swaTimer);
+  _SW.swaTimer=setTimeout(()=>swaLoad(1),350);
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────

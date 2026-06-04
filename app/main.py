@@ -29,6 +29,28 @@ async def lifespan(app: FastAPI):
     log.info("app.startup", env=settings.app_env, bedrock_model=settings.bedrock_model_id)
     registry.load()
     scheduler.start()
+    # Hikaye yazıcı tablosunu oluştur (idempotent)
+    from app.db.session import engine
+    from sqlalchemy import text as _text
+    async with engine.begin() as conn:
+        await conn.execute(_text("""
+            CREATE TABLE IF NOT EXISTS product_stories (
+                id SERIAL PRIMARY KEY,
+                urun_kodu TEXT NOT NULL,
+                urun_adi  TEXT,
+                marka_adi TEXT,
+                kanal     TEXT NOT NULL,
+                ton       TEXT NOT NULL DEFAULT 'sade_net',
+                story     TEXT NOT NULL,
+                karakter_sayisi INTEGER,
+                durum     TEXT NOT NULL DEFAULT 'taslak',
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                approved_at TIMESTAMPTZ
+            )
+        """))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_urun_kod ON product_stories(urun_kodu)"))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_kanal    ON product_stories(kanal)"))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_durum    ON product_stories(durum)"))
     yield
     scheduler.stop()
     log.info("app.shutdown")

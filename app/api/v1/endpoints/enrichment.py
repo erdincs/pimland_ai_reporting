@@ -567,6 +567,15 @@ async def get_overview(
 
 # ── Story Writer endpoints ─────────────────────────────────────────────────────
 
+_TON_PROMPTS = {
+    "lüks_zarif":   "Lüks, zarif ve sofistike bir ton kullan. Kaliteyi ve şıklığı ön plana çıkar.",
+    "genç_enerjik": "Genç, enerjik ve dinamik bir ton kullan. Trendy, canlı ve heyecan verici bir dil seç.",
+    "sade_net":     "Sade, net ve anlaşılır bir ton kullan. Doğrudan özellik odaklı ol, gereksiz süsleme yapma.",
+    "profesyonel":  "Profesyonel, güvenilir ve otoriter bir ton kullan. Ürünün işlevselliğini ve kalitesini vurgula.",
+}
+_KANAL_LIMITS = {"trendyol": 200, "hepsiburada": 180, "amazon": 200, "web_sitesi": 500, "magaza": 500}
+
+
 @router.get("/story/products")
 async def get_story_products(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
@@ -576,18 +585,12 @@ async def get_story_products(
     page: int = Query(1, ge=1),
     limit: int = Query(40, ge=1, le=100),
 ) -> Dict[str, Any]:
-    """Hikaye yazıcı için ürün listesi — enrichment grade ile birlikte."""
+    """Hikaye yazıcı için ürün listesi."""
     conditions = ["p.internet_aktif = true"]
     params: Dict[str, Any] = {"offset": (page - 1) * limit, "limit": limit}
-    if sezon:
-        conditions.append("p.sezon_kodu = :sezon")
-        params["sezon"] = sezon
-    if marka:
-        conditions.append("p.marka_adi ILIKE :marka")
-        params["marka"] = f"%{marka}%"
-    if q:
-        conditions.append("(p.urun_adi ILIKE :q OR p.urun_kodu ILIKE :q)")
-        params["q"] = f"%{q}%"
+    if sezon:   conditions.append("p.sezon_kodu = :sezon");  params["sezon"] = sezon
+    if marka:   conditions.append("p.marka_adi ILIKE :marka"); params["marka"] = f"%{marka}%"
+    if q:       conditions.append("(p.urun_adi ILIKE :q OR p.urun_kodu ILIKE :q)"); params["q"] = f"%{q}%"
     where = " AND ".join(conditions)
 
     total = (await session.execute(text(
@@ -597,8 +600,7 @@ async def get_story_products(
     rows = (await session.execute(text(f"""
         SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_kodu, p.sezon_adi,
                p.ana_grup_adi, p.urun_grubu_adi, p.fabricmaterialname,
-               p.color_codes, p.first_color_code, p.tema_adi,
-               p.default_image_url,
+               p.color_codes, p.first_color_code, p.tema_adi, p.default_image_url,
                eq.quality_grade, eq.quality_score
         FROM pim_products p
         LEFT JOIN enrichment_quality eq ON eq.urun_kodu = p.urun_kodu
@@ -607,71 +609,61 @@ async def get_story_products(
         LIMIT :limit OFFSET :offset
     """), params)).mappings().all()
 
-    return {
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "items": [dict(r) for r in rows],
-    }
+    return {"total": total, "page": page, "limit": limit, "items": [dict(r) for r in rows]}
 
 
-_TON_PROMPTS = {
-    "lüks_zarif": "Lüks, zarif ve sofistike bir ton kullan. Kaliteyi ve şıklığı ön plana çıkar.",
-    "genç_enerjik": "Genç, enerjik ve dinamik bir ton kullan. Trendy, canlı ve heyecan verici bir dil seç.",
-    "sade_net": "Sade, net ve anlaşılır bir ton kullan. Doğrudan özellik odaklı ol, gereksiz süsleme yapma.",
-    "profesyonel": "Profesyonel, güvenilir ve otoriter bir ton kullan. Ürünün işlevselliğini ve kalitesini vurgula.",
-}
-
-_KANAL_LIMITS = {
-    "trendyol": 200,
-    "hepsiburada": 180,
-    "amazon": 200,
-    "web_sitesi": 500,
-    "magaza": 500,
-}
+@router.get("/story/for-product/{urun_kodu}")
+async def get_product_stories(
+    urun_kodu: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Bir ürünün tüm kayıtlı hikayelerini getirir (kanal bazlı)."""
+    rows = (await session.execute(text("""
+        SELECT id, urun_kodu, kanal, ton, story, karakter_sayisi, durum,
+               created_at, approved_at
+        FROM product_stories
+        WHERE urun_kodu = :uk
+        ORDER BY kanal, created_at DESC
+    """), {"uk": urun_kodu})).mappings().all()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["created_at"]  = d["created_at"].isoformat() if d.get("created_at") else None
+        d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
+        result.append(d)
+    return result
 
 
 @router.post("/story/generate")
 async def generate_story(
     body: Dict[str, Any],
-    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    session: Annotated[AsyncSession, Depends(get_session)],
 ) -> List[Dict[str, Any]]:
-    """Seçili ürünler için satış hikayesi üret (Bedrock)."""
+    """Her ürün × kanal çifti için hikaye üret, DB'e taslak olarak kaydet."""
     from app.agent.llm_client import LLMClient
 
     urun_kodlari: List[str] = body.get("urun_kodlari", [])
-    ton: str = body.get("ton", "sade_net")
-    karakter_limit: int = int(body.get("karakter_limit", 150))
-    kanallar: List[str] = body.get("kanallar", [])
-    karakter_min = max(80, karakter_limit - 30)
+    kanallar:     List[str] = body.get("kanallar", []) or ["trendyol"]
+    ton:          str       = body.get("ton", "sade_net")
+    karakter_limit: int     = int(body.get("karakter_limit", 150))
+    karakter_min            = max(80, karakter_limit - 30)
 
     if not urun_kodlari:
         return []
 
-    rows = (await session.execute(text("""
-        SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_adi,
-               p.ana_grup_adi, p.urun_grubu_adi, p.fabricmaterialname,
-               p.color_codes, p.tema_adi
-        FROM pim_products p
-        WHERE p.urun_kodu = ANY(:kodlar)
+    prod_rows = (await session.execute(text("""
+        SELECT urun_kodu, urun_adi, marka_adi, sezon_adi,
+               ana_grup_adi, urun_grubu_adi, fabricmaterialname, color_codes, tema_adi
+        FROM pim_products WHERE urun_kodu = ANY(:kodlar)
     """), {"kodlar": urun_kodlari})).mappings().all()
 
     ton_str = _TON_PROMPTS.get(ton, _TON_PROMPTS["sade_net"])
-    kanal_str = ", ".join(kanallar) if kanallar else "e-ticaret"
-
-    effective_limit = karakter_limit
-    if kanallar:
-        effective_limit = min(karakter_limit, min(
-            _KANAL_LIMITS.get(k, 500) for k in kanallar
-        ))
-
     llm = LLMClient()
     results = []
 
-    for row in rows:
+    for row in prod_rows:
         p = dict(row)
         renk_sayisi = len([c for c in (p.get("color_codes") or "").split(",") if c.strip()])
-
         urun_bilgi = (
             f"Ürün Adı: {p['urun_adi']}\n"
             f"Kategori: {p.get('ana_grup_adi','')} / {p.get('urun_grubu_adi','')}\n"
@@ -681,37 +673,137 @@ async def generate_story(
         if renk_sayisi > 0:
             urun_bilgi += f"Renk Seçeneği: {renk_sayisi} farklı renk\n"
 
-        system_prompt = (
-            "Sen deneyimli bir e-ticaret satış temsilcisin. "
-            "Görevin ürün özellikleri verildiğinde, müşterilerin satın alma kararını "
-            "destekleyecek, kısa ve etkili bir Türkçe ürün açıklaması yazmak. "
-            f"{ton_str} "
-            "Açıklama yalnızca ürün için yazılmalı — başlık, madde işareti veya "
-            "açıklama dışı metin OLMAMALI. Sadece açıklama metnini döndür."
-        )
+        for kanal in kanallar:
+            eff_limit = min(karakter_limit, _KANAL_LIMITS.get(kanal, 500))
+            user_prompt = (
+                f"Aşağıdaki ürün için satış artırıcı bir açıklama yaz.\n\n"
+                f"{urun_bilgi}\n"
+                f"Hedef kanal: {kanal}\n"
+                f"Karakter limiti: {karakter_min}–{eff_limit} karakter arası olmalı.\n"
+                "Sadece açıklama metnini döndür, başka hiçbir şey yazma."
+            )
+            system_prompt = (
+                "Sen deneyimli bir e-ticaret satış temsilcisin. "
+                "Görevin ürün özellikleri verildiğinde, müşterilerin satın alma kararını "
+                f"destekleyecek kısa, etkili Türkçe açıklama yazmak. {ton_str} "
+                "Sadece açıklama metni — başlık, madde işareti yok."
+            )
+            try:
+                story = await llm.complete(
+                    system=system_prompt, user=user_prompt, max_tokens=300, temperature=0.8
+                )
+                story = story.strip().strip('"').strip()
+            except Exception as e:
+                log.error("story.generate_error", urun_kodu=p["urun_kodu"], kanal=kanal, error=str(e))
+                story = ""
 
-        user_prompt = (
-            f"Aşağıdaki ürün için satış artırıcı bir açıklama yaz.\n\n"
-            f"{urun_bilgi}\n"
-            f"Hedef kanal: {kanal_str}\n"
-            f"Karakter limiti: {karakter_min}–{effective_limit} karakter arası olmalı.\n"
-            "Sadece açıklama metnini döndür, başka hiçbir şey yazma."
-        )
+            # DB'e kaydet — varsa güncelle, yoksa ekle
+            existing = (await session.execute(text("""
+                SELECT id FROM product_stories
+                WHERE urun_kodu=:uk AND kanal=:kanal AND durum='taslak'
+                ORDER BY created_at DESC LIMIT 1
+            """), {"uk": p["urun_kodu"], "kanal": kanal})).scalar()
 
-        try:
-            story = await llm.complete(system=system_prompt, user=user_prompt, max_tokens=300, temperature=0.8)
-            story = story.strip().strip('"').strip()
-        except Exception as e:
-            log.error("story.generate_error", urun_kodu=p["urun_kodu"], error=str(e))
-            story = ""
+            if existing:
+                await session.execute(text("""
+                    UPDATE product_stories
+                    SET story=:story, karakter_sayisi=:ks, ton=:ton, created_at=NOW()
+                    WHERE id=:id
+                """), {"story": story, "ks": len(story), "ton": ton, "id": existing})
+                story_id = existing
+            else:
+                story_id = (await session.execute(text("""
+                    INSERT INTO product_stories
+                        (urun_kodu, urun_adi, marka_adi, kanal, ton, story, karakter_sayisi, durum)
+                    VALUES (:uk, :ua, :ma, :kanal, :ton, :story, :ks, 'taslak')
+                    RETURNING id
+                """), {
+                    "uk": p["urun_kodu"], "ua": p["urun_adi"], "ma": p["marka_adi"],
+                    "kanal": kanal, "ton": ton, "story": story, "ks": len(story),
+                })).scalar()
 
-        results.append({
-            "urun_kodu": p["urun_kodu"],
-            "story": story,
-            "karakter_sayisi": len(story),
-        })
+            results.append({
+                "id": story_id, "urun_kodu": p["urun_kodu"],
+                "kanal": kanal, "story": story, "karakter_sayisi": len(story),
+                "durum": "taslak",
+            })
 
+    await session.commit()
     return results
+
+
+@router.post("/story/{story_id}/approve")
+async def approve_story(
+    story_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Hikayeyi onayla — durum → onaylandi."""
+    result = await session.execute(text("""
+        UPDATE product_stories
+        SET durum='onaylandi', approved_at=NOW()
+        WHERE id=:id
+        RETURNING id, urun_kodu, kanal, story, durum, approved_at
+    """), {"id": story_id})
+    row = result.mappings().first()
+    await session.commit()
+    if not row:
+        from fastapi import HTTPException
+        raise HTTPException(404, f"Story #{story_id} bulunamadı")
+    d = dict(row)
+    d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
+    return d
+
+
+@router.delete("/story/{story_id}")
+async def delete_story(
+    story_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Hikayeyi sil."""
+    await session.execute(text("DELETE FROM product_stories WHERE id=:id"), {"id": story_id})
+    await session.commit()
+    return {"deleted": story_id}
+
+
+@router.get("/story/saved")
+async def get_saved_stories(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    kanal: Optional[str] = Query(None),
+    durum: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(30, ge=1, le=100),
+) -> Dict[str, Any]:
+    """DB'deki tüm hikayeler — arşiv sayfası için."""
+    conditions: List[str] = []
+    params: Dict[str, Any] = {"offset": (page - 1) * limit, "limit": limit}
+    if kanal: conditions.append("ps.kanal=:kanal");  params["kanal"] = kanal
+    if durum: conditions.append("ps.durum=:durum");  params["durum"] = durum
+    if q:     conditions.append("(ps.urun_adi ILIKE :q OR ps.urun_kodu ILIKE :q OR ps.story ILIKE :q)"); params["q"] = f"%{q}%"
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    total = (await session.execute(text(
+        f"SELECT COUNT(*) FROM product_stories ps {where}"
+    ), params)).scalar() or 0
+
+    rows = (await session.execute(text(f"""
+        SELECT ps.id, ps.urun_kodu, ps.urun_adi, ps.marka_adi,
+               ps.kanal, ps.ton, ps.story, ps.karakter_sayisi,
+               ps.durum, ps.created_at, ps.approved_at
+        FROM product_stories ps
+        {where}
+        ORDER BY ps.created_at DESC
+        LIMIT :limit OFFSET :offset
+    """), params)).mappings().all()
+
+    items = []
+    for r in rows:
+        d = dict(r)
+        d["created_at"]  = d["created_at"].isoformat() if d.get("created_at") else None
+        d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
+        items.append(d)
+
+    return {"total": total, "page": page, "limit": limit, "items": items}
 
 
 @router.get("/overview/by-field")
