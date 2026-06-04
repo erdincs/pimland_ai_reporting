@@ -660,7 +660,8 @@ async def generate_story(
     body: Dict[str, Any],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> List[Dict[str, Any]]:
-    """Her ürün × kanal çifti için hikaye üret, DB'e taslak olarak kaydet."""
+    """Her ürün × kanal çifti için hikaye üret — paralel Bedrock çağrıları."""
+    import asyncio
     from app.agent.llm_client import LLMClient
 
     urun_kodlari: List[str] = body.get("urun_kodlari", [])
@@ -680,8 +681,9 @@ async def generate_story(
 
     ton_str = _TON_PROMPTS.get(ton, _TON_PROMPTS["sade_net"])
     llm = LLMClient()
-    results = []
 
+    # Her ürün × kanal kombinasyonu için görev listesi hazırla
+    tasks = []
     for row in prod_rows:
         p = dict(row)
         renk_sayisi = len([c for c in (p.get("color_codes") or "").split(",") if c.strip()])
@@ -696,6 +698,12 @@ async def generate_story(
 
         for kanal in kanallar:
             eff_limit = min(karakter_limit, _KANAL_LIMITS.get(kanal, 500))
+            system_prompt = (
+                "Sen deneyimli bir e-ticaret satış temsilcisin. "
+                "Görevin ürün özellikleri verildiğinde, müşterilerin satın alma kararını "
+                f"destekleyecek kısa, etkili Türkçe açıklama yazmak. {ton_str} "
+                "Sadece açıklama metni — başlık, madde işareti yok."
+            )
             user_prompt = (
                 f"Aşağıdaki ürün için satış artırıcı bir açıklama yaz.\n\n"
                 f"{urun_bilgi}\n"
@@ -703,51 +711,54 @@ async def generate_story(
                 f"Karakter limiti: {karakter_min}–{eff_limit} karakter arası olmalı.\n"
                 "Sadece açıklama metnini döndür, başka hiçbir şey yazma."
             )
-            system_prompt = (
-                "Sen deneyimli bir e-ticaret satış temsilcisin. "
-                "Görevin ürün özellikleri verildiğinde, müşterilerin satın alma kararını "
-                f"destekleyecek kısa, etkili Türkçe açıklama yazmak. {ton_str} "
-                "Sadece açıklama metni — başlık, madde işareti yok."
-            )
+            tasks.append((p, kanal, system_prompt, user_prompt))
+
+    # Tüm Bedrock çağrılarını paralel yap (max 8 eşzamanlı)
+    sem = asyncio.Semaphore(8)
+
+    async def _generate_one(p, kanal, sys_p, usr_p):
+        async with sem:
             try:
-                story = await llm.complete(
-                    system=system_prompt, user=user_prompt, max_tokens=300, temperature=0.8
-                )
-                story = story.strip().strip('"').strip()
+                story = await llm.complete(system=sys_p, user=usr_p, max_tokens=300, temperature=0.8)
+                return story.strip().strip('"').strip()
             except Exception as e:
                 log.error("story.generate_error", urun_kodu=p["urun_kodu"], kanal=kanal, error=str(e))
-                story = ""
+                return ""
 
-            # DB'e kaydet — varsa güncelle, yoksa ekle
-            existing = (await session.execute(text("""
-                SELECT id FROM product_stories
-                WHERE urun_kodu=:uk AND kanal=:kanal AND durum='taslak'
-                ORDER BY created_at DESC LIMIT 1
-            """), {"uk": p["urun_kodu"], "kanal": kanal})).scalar()
+    stories = await asyncio.gather(*[_generate_one(p, k, s, u) for p, k, s, u in tasks])
 
-            if existing:
-                await session.execute(text("""
-                    UPDATE product_stories
-                    SET story=:story, karakter_sayisi=:ks, ton=:ton, created_at=NOW()
-                    WHERE id=:id
-                """), {"story": story, "ks": len(story), "ton": ton, "id": existing})
-                story_id = existing
-            else:
-                story_id = (await session.execute(text("""
-                    INSERT INTO product_stories
-                        (urun_kodu, urun_adi, marka_adi, kanal, ton, story, karakter_sayisi, durum)
-                    VALUES (:uk, :ua, :ma, :kanal, :ton, :story, :ks, 'taslak')
-                    RETURNING id
-                """), {
-                    "uk": p["urun_kodu"], "ua": p["urun_adi"], "ma": p["marka_adi"],
-                    "kanal": kanal, "ton": ton, "story": story, "ks": len(story),
-                })).scalar()
+    # DB'e toplu kaydet
+    results = []
+    for (p, kanal, _, _), story in zip(tasks, stories):
+        existing = (await session.execute(text("""
+            SELECT id FROM product_stories
+            WHERE urun_kodu=:uk AND kanal=:kanal AND durum='taslak'
+            ORDER BY created_at DESC LIMIT 1
+        """), {"uk": p["urun_kodu"], "kanal": kanal})).scalar()
 
-            results.append({
-                "id": story_id, "urun_kodu": p["urun_kodu"],
-                "kanal": kanal, "story": story, "karakter_sayisi": len(story),
-                "durum": "taslak",
-            })
+        if existing:
+            await session.execute(text("""
+                UPDATE product_stories
+                SET story=:story, karakter_sayisi=:ks, ton=:ton, created_at=NOW()
+                WHERE id=:id
+            """), {"story": story, "ks": len(story), "ton": ton, "id": existing})
+            story_id = existing
+        else:
+            story_id = (await session.execute(text("""
+                INSERT INTO product_stories
+                    (urun_kodu, urun_adi, marka_adi, kanal, ton, story, karakter_sayisi, durum)
+                VALUES (:uk, :ua, :ma, :kanal, :ton, :story, :ks, 'taslak')
+                RETURNING id
+            """), {
+                "uk": p["urun_kodu"], "ua": p["urun_adi"], "ma": p["marka_adi"],
+                "kanal": kanal, "ton": ton, "story": story, "ks": len(story),
+            })).scalar()
+
+        results.append({
+            "id": story_id, "urun_kodu": p["urun_kodu"],
+            "kanal": kanal, "story": story, "karakter_sayisi": len(story),
+            "durum": "taslak",
+        })
 
     await session.commit()
     return results
