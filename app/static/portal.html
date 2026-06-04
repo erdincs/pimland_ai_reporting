@@ -95,6 +95,13 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .nav-ai-top:hover{background:rgba(255,107,43,.13) !important}
 .nav-ai-top.active{background:rgba(255,107,43,.15) !important;border-left-color:var(--orange)}
 .nav-ai-top .nav-text{font-size:13px;font-weight:600;color:var(--t1)}
+/* Agent pinned styles */
+#nav-ai:hover{background:rgba(255,107,43,.14) !important}
+#nav-ai.active{background:rgba(255,107,43,.16) !important;border-left-color:var(--orange) !important}
+#nav-callcenter:hover{background:rgba(0,194,168,.1) !important}
+#nav-callcenter.active{background:rgba(0,194,168,.14) !important;border-left-color:var(--teal) !important}
+#nav-sizewin:hover{background:rgba(168,85,247,.1) !important}
+#nav-sizewin.active{background:rgba(168,85,247,.14) !important;border-left-color:var(--purple) !important}
 
 /* MAIN */
 .main{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:24px}
@@ -599,27 +606,43 @@ body,
 <div class="layout">
   <!-- SIDEBAR -->
   <nav class="sidebar">
+    <!-- ── AI AGENTS — sabit üst bölüm ──────────────────────────────── -->
+    <div style="border-bottom:2px solid var(--border)">
+      <div class="nav-item active" onclick="showSection('ai')" id="nav-ai"
+           style="background:rgba(255,107,43,.08);border-left:3px solid var(--orange);padding:11px 14px">
+        <span class="nav-icon" style="font-size:16px">🤖</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text" style="font-weight:600">Pimland AI Agent</div>
+          <div style="font-size:9px;color:var(--t3)">Veri analiz asistanı</div>
+        </div>
+        <span style="font-size:8px;background:var(--orange);color:#fff;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0">AI</span>
+      </div>
+      <div class="nav-item" onclick="showSection('callcenter')" id="nav-callcenter"
+           style="background:rgba(0,194,168,.06);border-left:3px solid transparent;padding:11px 14px">
+        <span class="nav-icon" style="font-size:16px">📞</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text" style="font-weight:600">Call Center Agent</div>
+          <div style="font-size:9px;color:var(--t3)">Ürün bilgi asistanı</div>
+        </div>
+        <span style="font-size:8px;background:var(--teal);color:#000;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0">CC</span>
+      </div>
+      <div class="nav-item" onclick="showSection('sizewin')" id="nav-sizewin"
+           style="background:rgba(168,85,247,.06);border-left:3px solid transparent;padding:11px 14px">
+        <span class="nav-icon" style="font-size:16px">📏</span>
+        <div style="flex:1;min-width:0">
+          <div class="nav-text" style="font-weight:600">Sizewin Agent</div>
+          <div style="font-size:9px;color:var(--t3)">Beden öneri sistemi</div>
+        </div>
+        <span style="font-size:8px;background:var(--purple);color:#fff;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0">SW</span>
+      </div>
+    </div>
+
     <!-- ── E-TİCARET ──────────────────────────────────────────────────── -->
     <div class="nav-group-hdr open" id="grp-eticaret" onclick="toggleNavGroup('eticaret')">
       <span>🛒 E-TİCARET</span>
       <span class="g-arrow">▶</span>
     </div>
     <div class="nav-group-body open" id="grpb-eticaret">
-      <div class="nav-item nav-sub active" onclick="showSection('ai')" id="nav-ai">
-        <span class="nav-icon">🤖</span>
-        <div style="flex:1;min-width:0"><div class="nav-text">Pimland AI Agent</div></div>
-        <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 5px;border-radius:3px">AI</span>
-      </div>
-      <div class="nav-item nav-sub" onclick="showSection('callcenter')" id="nav-callcenter">
-        <span class="nav-icon">📞</span>
-        <div style="flex:1;min-width:0"><div class="nav-text">Call Center Agent</div></div>
-        <span style="font-size:8px;background:rgba(0,194,168,.15);color:var(--teal);font-weight:700;padding:2px 5px;border-radius:3px">CC</span>
-      </div>
-      <div class="nav-item nav-sub" onclick="showSection('sizewin')" id="nav-sizewin">
-        <span class="nav-icon">📏</span>
-        <div style="flex:1;min-width:0"><div class="nav-text">Sizewin Agent</div></div>
-        <span style="font-size:8px;background:rgba(168,85,247,.15);color:var(--purple);font-weight:700;padding:2px 5px;border-radius:3px">SW</span>
-      </div>
       <div class="nav-item nav-sub" onclick="showSection('exec')" id="nav-exec">
         <span class="nav-icon">🎯</span><span class="nav-text">Executive Özet</span>
       </div>
@@ -4208,7 +4231,7 @@ function _openNavGroup(id){
 }
 // showSection: ilgili grubu otomatik aç
 const _SECTION_GROUP = {
-  ai:'eticaret',callcenter:'eticaret',sizewin:'eticaret',
+  // ai/callcenter/sizewin pinned — grup yok
   exec:'eticaret',kpi:'eticaret',overview:'eticaret',
   kategori:'eticaret',urunler:'eticaret',iade:'eticaret',
   risk:'eticaret',karlilik:'eticaret',colors:'eticaret',
