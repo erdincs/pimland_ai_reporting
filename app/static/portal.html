@@ -4782,18 +4782,19 @@ function swRenderListPagination(total,page,limit){
 }
 
 function swToggleProduct(kod){
-  const p=_SW.products.find(x=>x.urun_kodu===kod);
-  if(!p) return;
   if(_SW.selectedCodes.has(kod)){
+    // Seçimi kaldır — p'ye gerek yok (kart × butonundan da çağrılabilir)
     _SW.selectedCodes.delete(kod);
     delete _SW.productMap[kod];
-    // Kartı orta panelden kaldır
+    delete _SW.cardChannels[kod];
     const card=document.getElementById(`sw-card-${kod}`);
     if(card) card.remove();
   } else {
+    // Seç — ürün verisini bul
+    const p=_SW.products.find(x=>x.urun_kodu===kod)||_SW.productMap[kod];
+    if(!p) return;
     _SW.selectedCodes.add(kod);
     _SW.productMap[kod]=p;
-    // Kartı orta panele ekle
     swAddCard(p);
   }
   // Sol listedeki checkbox güncelle
@@ -5134,41 +5135,52 @@ async function swaLoad(page){
     });
     wrap.innerHTML=groupOrder.map(uk=>{
       const g=groups[uk];
-      const chanRows=g.channels.map(s=>{
+      const firstKanal=g.channels[0]?.kanal||'trendyol';
+      // Kanal tab butonları
+      const tabBtns=g.channels.map((s,i)=>{
+        const kc=_SW_KANAL_COLOR[s.kanal]||'var(--t3)';
+        const badge=s.durum==='onaylandi'?' ✓':'';
+        return `<button class="swa-tab" data-uk="${uk}" data-kanal="${s.kanal}"
+          onclick="swaSwitchTab('${uk}','${s.kanal}')"
+          style="background:${i===0?kc+'22':'var(--bg3)'};border:1px solid ${i===0?kc:'var(--border)'};
+                 color:${i===0?kc:'var(--t2)'};padding:4px 11px;border-radius:5px;cursor:pointer;
+                 font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap">
+          ${_SW_KANAL_LABEL[s.kanal]||s.kanal}${badge}
+        </button>`;
+      }).join('');
+      // Her kanal için içerik paneli
+      const chanPanels=g.channels.map((s,i)=>{
         const dc=s.durum==='onaylandi'?'var(--green)':'var(--yellow)';
         const dl=s.durum==='onaylandi'?'✓ Onaylı':'Taslak';
-        const kc=_SW_KANAL_COLOR[s.kanal]||'var(--t3)';
         const dt=s.created_at?new Date(s.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-        return `<div style="border-top:1px solid var(--border);padding:10px 12px">
-          <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
-            <span style="font-size:11px;font-weight:700;color:${kc};background:${kc}22;padding:2px 8px;border-radius:4px;flex-shrink:0">${_SW_KANAL_LABEL[s.kanal]||s.kanal}</span>
-            <span style="font-size:10px;color:${dc};font-weight:600;flex-shrink:0">${dl}</span>
-            <span style="flex:1"></span>
+        return `<div id="swa-panel-${uk}-${s.kanal}" style="display:${i===0?'block':'none'}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:10px;color:${dc};font-weight:600">${dl}</span>
             <span style="font-size:10px;color:var(--t4)">${dt}</span>
           </div>
-          <div style="font-size:12px;color:var(--t1);line-height:1.6;background:var(--bg3);border-radius:6px;padding:8px 10px;margin-bottom:6px">${s.story}</div>
+          <div style="font-size:12px;color:var(--t1);line-height:1.7;background:var(--bg3);border-radius:6px;padding:10px 12px;margin-bottom:8px">${s.story}</div>
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} kar. · ${s.ton}</span>
+            <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} karakter · ${s.ton}</span>
             <div style="display:flex;gap:5px">
-              ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this)"
+              ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this,'${uk}','${s.kanal}')"
                 style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
               <button onclick="swaDelete(${s.id},this)"
                 style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Sil</button>
               <button onclick="navigator.clipboard.writeText(${JSON.stringify(s.story)})"
-                style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopya</button>
+                style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>
             </div>
           </div>
         </div>`;
       }).join('');
-      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <div style="padding:10px 12px;display:flex;align-items:center;gap:8px;background:var(--bg3)">
-          <span style="font-size:13px;font-weight:700;color:var(--t1)">${g.urun_adi||g.urun_kodu}</span>
-          <span style="font-size:10px;color:var(--t3)">${g.urun_kodu}</span>
-          ${g.marka_adi?`<span style="font-size:10px;color:var(--t2)">${g.marka_adi}</span>`:''}
-          <span style="flex:1"></span>
-          <span style="font-size:10px;color:var(--t3)">${g.channels.length} kanal</span>
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="padding:10px 14px;background:var(--bg3);display:flex;align-items:center;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--t1)">${g.urun_adi||g.urun_kodu}</div>
+            <div style="font-size:10px;color:var(--t3)">${g.urun_kodu}${g.marka_adi?' · <span style="color:var(--t2)">'+g.marka_adi+'</span>':''}</div>
+          </div>
         </div>
-        ${chanRows}
+        <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap">${tabBtns}</div>
+        <div style="padding:12px 14px">${chanPanels}</div>
       </div>`;
     }).join('');
     // Sayfalama
@@ -5185,11 +5197,29 @@ async function swaLoad(page){
   }
 }
 
-async function swaApprove(id,btn){
+function swaSwitchTab(uk,kanal){
+  // Tab butonlarını güncelle
+  document.querySelectorAll(`.swa-tab[data-uk="${uk}"]`).forEach(btn=>{
+    const k=btn.dataset.kanal;
+    const kc=_SW_KANAL_COLOR[k]||'var(--t3)';
+    const active=k===kanal;
+    btn.style.background=active?kc+'22':'var(--bg3)';
+    btn.style.borderColor=active?kc:'var(--border)';
+    btn.style.color=active?kc:'var(--t2)';
+  });
+  // Panel'leri göster/gizle
+  document.querySelectorAll(`[id^="swa-panel-${uk}-"]`).forEach(panel=>{
+    panel.style.display=panel.id===`swa-panel-${uk}-${kanal}`?'block':'none';
+  });
+}
+
+async function swaApprove(id,btn,uk,kanal){
   try{
     await fetch(`${API}/enrichment/story/${id}/approve`,{method:'POST'});
-    btn.textContent='✓ Onaylandı'; btn.style.color='var(--green)'; btn.disabled=true;
-    swaLoad();
+    btn.remove();
+    // Tab badge güncelle
+    const tab=document.querySelector(`.swa-tab[data-uk="${uk}"][data-kanal="${kanal}"]`);
+    if(tab) tab.innerHTML=(_SW_KANAL_LABEL[kanal]||kanal)+' ✓';
   }catch(e){alert('Hata: '+e.message);}
 }
 
