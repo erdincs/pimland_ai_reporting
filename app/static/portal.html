@@ -6360,55 +6360,122 @@ function renderMagazaPerformans(d) {
   const sortBtns = ['hedef_oran','net_ciro','mdo','ziyaretci'].map(k=>{
     const labels = {hedef_oran:'Hedef Oranı',net_ciro:'Net Ciro',mdo:'MDO',ziyaretci:'Ziyaretçi'};
     const active = _mpSortKey===k;
-    return `<button onclick="mpSort('${k}')" style="background:${active?'var(--orange)':'var(--bg3)'};border:1px solid ${active?'var(--orange)':'var(--border)'};color:${active?'#fff':'var(--t2)'};padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:${active?'700':'400'}">${labels[k]}</button>`;
+    return `<button onclick="mpSort('${k}')" style="background:${active?'var(--orange)':'var(--bg3)'};border:1px solid ${active?'var(--orange)':'var(--border)'};color:${active?'#fff':'var(--t2)'};padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:${active?'700':'400'}">${labels[k]}</button>`;
   }).join('');
 
-  const maxCiro = Math.max(...mlist.map(m=>m.net_ciro),1);
-  const sorted  = [...mlist].sort((a,b)=>b[_mpSortKey]-a[_mpSortKey]);
-  const tableRows = sorted.map(m=>{
-    const oc = m.hedef_oran>=90?'var(--green)':m.hedef_oran>=80?'var(--yellow)':'var(--red)';
-    const mc = m.mdo>=16?'var(--green)':m.mdo>=13?'var(--teal)':'var(--orange)';
-    const bw = Math.min(m.hedef_oran,100);
-    return `<tr style="border-bottom:1px solid rgba(42,42,58,.25)">
-      <td style="padding:9px 10px;font-size:12px;font-weight:600;color:var(--t1)">${m.magaza}</td>
-      <td style="padding:9px 10px;font-size:11px;color:var(--t2)">${m.bolge_muduru}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(m.hedef,'tl')}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;font-weight:600;color:var(--teal)">${_myFmt(m.net_ciro,'tl')}</td>
-      <td style="padding:9px 10px;min-width:100px">
-        <div style="display:flex;align-items:center;gap:6px">
+  // Gruplama butonu
+  const grpBtns = `
+    <button onclick="mpSetGroup('magaza')" id="mp-grp-magaza"
+      style="background:${_mpGroupMode==='magaza'?'var(--bg4)':'var(--bg3)'};border:1px solid ${_mpGroupMode==='magaza'?'var(--border2)':'var(--border)'};color:${_mpGroupMode==='magaza'?'var(--t1)':'var(--t3)'};padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px">
+      Mağaza Bazında
+    </button>
+    <button onclick="mpSetGroup('bolge')" id="mp-grp-bolge"
+      style="background:${_mpGroupMode==='bolge'?'var(--bg4)':'var(--bg3)'};border:1px solid ${_mpGroupMode==='bolge'?'var(--border2)':'var(--border)'};color:${_mpGroupMode==='bolge'?'var(--t1)':'var(--t3)'};padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px">
+      Bölge Müdürü Gruplu
+    </button>`;
+
+  // Tablo içeriği — gruplu veya düz
+  const THEAD = `<thead style="position:sticky;top:0;z-index:1"><tr style="background:var(--bg3)">
+    <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px;letter-spacing:.5px">MAĞAZA</th>
+    ${_mpGroupMode==='magaza'?'<th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px">BÖLGE MÜDÜRÜ</th>':''}
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">NET CİRO</th>
+    <th style="padding:7px 10px;color:var(--t3);font-size:9px">HEDEF ORANI</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">ZİYARETÇİ</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">MDO</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">SEPET</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">OBF</th>
+    <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">NET ADET</th>
+  </tr></thead>`;
+
+  const _mpMagRow = (m,indent=false)=>{
+    const oc=m.hedef_oran>=90?'var(--green)':m.hedef_oran>=80?'var(--yellow)':'var(--red)';
+    const mc=m.mdo>=16?'var(--green)':m.mdo>=13?'var(--teal)':'var(--orange)';
+    const bw=Math.min(m.hedef_oran,100);
+    const pad=indent?'padding:8px 10px 8px 24px':'padding:9px 10px';
+    const bg=indent?'background:rgba(0,0,0,.04)':'';
+    return `<tr style="border-bottom:1px solid rgba(42,42,58,.2);${bg}">
+      <td style="${pad};font-size:${indent?11:12}px;font-weight:${indent?400:600};color:var(--t1)">${indent?'↳ ':''} ${m.magaza}</td>
+      ${_mpGroupMode==='magaza'?`<td style="padding:9px 10px;font-size:11px;color:var(--t2)">${m.bolge_muduru}</td>`:''}
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(m.hedef,'tl')}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:600;color:var(--teal)">${_myFmt(m.net_ciro,'tl')}</td>
+      <td style="padding:8px 10px;min-width:90px">
+        <div style="display:flex;align-items:center;gap:5px">
           <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px">
             <div style="width:${bw}%;height:100%;background:${oc};border-radius:2px"></div>
           </div>
           <span style="font-size:11px;font-weight:700;color:${oc};white-space:nowrap">%${m.hedef_oran}</span>
         </div>
       </td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(m.ziyaretci,'sayi')}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:${mc}">%${(m.mdo||0).toFixed(1)}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${(m.sepet||0).toFixed(1)}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--orange)">${_myFmt(m.obf,'tl')}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${m.net_adet.toLocaleString('tr-TR')}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(m.ziyaretci,'sayi')}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:${mc}">%${(m.mdo||0).toFixed(1)}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${(m.sepet||0).toFixed(1)}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--orange)">${_myFmt(m.obf,'tl')}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${m.net_adet.toLocaleString('tr-TR')}</td>
     </tr>`;
-  }).join('');
+  };
+
+  let tableRows = '';
+  const sorted = [...mlist].sort((a,b)=>b[_mpSortKey]-a[_mpSortKey]);
+  if(_mpGroupMode==='bolge'){
+    // Bölge bazında grupla
+    const groups={};
+    sorted.forEach(m=>{
+      const b=m.bolge_muduru||'Diğer';
+      if(!groups[b]) groups[b]=[];
+      groups[b].push(m);
+    });
+    Object.entries(groups).sort((a,b)=>{
+      const sa=a[1].reduce((s,m)=>s+m.net_ciro,0);
+      const sb=b[1].reduce((s,m)=>s+m.net_ciro,0);
+      return sb-sa;
+    }).forEach(([bolge,mags])=>{
+      // Bölge özet satırı
+      const tot={hedef:0,ciro:0,ziy:0,mdo_w:0,adet:0,obf_w:0,sepet_w:0};
+      mags.forEach(m=>{tot.hedef+=m.hedef;tot.ciro+=m.net_ciro;tot.ziy+=m.ziyaretci;tot.mdo_w+=(m.mdo||0)*m.ziyaretci;tot.adet+=m.net_adet;tot.obf_w+=(m.obf||0)*m.net_adet;tot.sepet_w+=(m.sepet||0)*m.net_adet;});
+      const oran=tot.ciro/tot.hedef*100||0;
+      const mdo=tot.mdo_w/tot.ziy||0;
+      const obf=tot.obf_w/tot.adet||0;
+      const sep=tot.sepet_w/tot.adet||0;
+      const oc=oran>=90?'var(--green)':oran>=80?'var(--yellow)':'var(--red)';
+      const mc2=mdo>=16?'var(--green)':mdo>=13?'var(--teal)':'var(--orange)';
+      const bw2=Math.min(oran,100);
+      tableRows+=`<tr style="background:var(--bg3);border-bottom:2px solid var(--border);cursor:pointer" onclick="mpToggleBolge('${bolge.replace(/'/g,"\\'")}',this)">
+        <td colspan="${_mpGroupMode==='bolge'?1:2}" style="padding:9px 12px;font-size:12px;font-weight:700;color:var(--t1)">
+          <span id="mp-arrow-${btoa(bolge).substring(0,8)}" style="margin-right:6px;display:inline-block;transition:transform .2s">▶</span>${bolge}
+          <span style="font-size:10px;font-weight:400;color:var(--t3);margin-left:8px">${mags.length} mağaza</span>
+        </td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(tot.hedef,'tl')}</td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--teal)">${_myFmt(tot.ciro,'tl')}</td>
+        <td style="padding:9px 10px;min-width:90px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px"><div style="width:${bw2}%;height:100%;background:${oc};border-radius:2px"></div></div>
+            <span style="font-size:11px;font-weight:700;color:${oc}">%${oran.toFixed(1)}</span>
+          </div>
+        </td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(tot.ziy,'sayi')}</td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:${mc2}">%${mdo.toFixed(1)}</td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${sep.toFixed(2)}</td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--orange)">${_myFmt(obf,'tl')}</td>
+        <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${tot.adet.toLocaleString('tr-TR')}</td>
+      </tr>`;
+      // Mağaza satırları (gizli, tıklayınca açılır)
+      tableRows+=`<tbody class="mp-bolge-rows" id="mp-bolge-${btoa(bolge).substring(0,8)}" style="display:none">`;
+      mags.forEach(m=>{ tableRows+=_mpMagRow(m,true); });
+      tableRows+='</tbody>';
+    });
+  } else {
+    tableRows = sorted.map(m=>_mpMagRow(m,false)).join('');
+  }
 
   const tableHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">MAĞAZA BAZINDA DETAY · ${d.donem||d['donem']||''}</span>
-      <div style="display:flex;gap:6px">${sortBtns}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:5px">${grpBtns}</div>
+      <div style="display:flex;gap:5px">${sortBtns}</div>
     </div>
     <div style="overflow-x:auto;overflow-y:auto;max-height:760px">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead style="position:sticky;top:0;z-index:1"><tr style="background:var(--bg3)">
-          <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px;letter-spacing:.5px">MAĞAZA</th>
-          <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px">BÖLGE MÜDÜRÜ</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">NET CİRO</th>
-          <th style="padding:7px 10px;color:var(--t3);font-size:9px">HEDEF ORANI</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">ZİYARETÇİ</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">MDO</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">SEPET</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">OBF</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">NET ADET</th>
-        </tr></thead>
+        ${THEAD}
         <tbody>${tableRows}</tbody>
       </table>
     </div>
@@ -6505,10 +6572,27 @@ function renderMagazaPerformans(d) {
   `;
 }
 
+let _mpGroupMode = 'magaza';  // 'magaza' | 'bolge'
+
 function mpSort(key) {
   _mpSortKey = key;
   if(window._mpLastData) renderMagazaPerformans(window._mpLastData);
   else loadMagazaPerformans();
+}
+
+function mpSetGroup(mode) {
+  _mpGroupMode = mode;
+  if(window._mpLastData) renderMagazaPerformans(window._mpLastData);
+}
+
+function mpToggleBolge(bolge, headerRow) {
+  const key = btoa(bolge).substring(0,8);
+  const tbody = document.getElementById('mp-bolge-'+key);
+  const arrow = document.getElementById('mp-arrow-'+key);
+  if(!tbody) return;
+  const open = tbody.style.display !== 'none';
+  tbody.style.display = open ? 'none' : '';
+  if(arrow) arrow.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 
