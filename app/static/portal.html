@@ -6173,7 +6173,7 @@ function renderMagaza(d) {
     <div style="display:grid;grid-template-columns:32px 1fr 80px 80px 70px 70px 70px;gap:4px;font-size:9px;color:var(--t3);font-weight:700;padding:0 4px 6px;border-bottom:1px solid var(--border);letter-spacing:.4px">
       <div></div><div>BÖLGE MÜDÜRÜ</div><div style="text-align:right">HEDEF</div><div style="text-align:right">NET CİRO</div><div style="text-align:right">ORAN</div><div style="text-align:right">ZİYARETÇİ</div><div style="text-align:right">MDO</div>
     </div>
-    ${d.bolgeler.slice(0,8).map((b,i)=>{
+    ${(d.bolgeler||[]).map((b,i)=>{
       const rc = b.hedef_oran>=90?'var(--green)':b.hedef_oran>=80?'var(--yellow)':'var(--red)';
       const rb = i===0?'var(--orange)':i===1?'var(--teal)':i===2?'var(--blue)':'var(--t3)';
       return `<div style="display:grid;grid-template-columns:32px 1fr 80px 80px 70px 70px 70px;gap:4px;align-items:center;padding:7px 4px;border-bottom:1px solid rgba(42,42,58,.3)">
