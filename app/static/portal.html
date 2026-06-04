@@ -6281,14 +6281,17 @@ async function loadMagazaPerformans() {
     const d = await fetch(`${API}/magaza-satis/magaza-performans?${params}`).then(r=>r.json());
     if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
 
-    // Bölge dropdown doldur
-    if(!_mpFiltersLoaded && d.bolge_listesi?.length) {
+    // Bölge dropdown - her yüklemede güncelle
+    if(d.bolge_listesi?.length) {
       const sel = document.getElementById('mp-bolge');
-      d.bolge_listesi.forEach(b=>{
-        if(sel && !sel.querySelector(`option[value="${b}"]`))
+      if(sel) {
+        const curVal = sel.value;
+        sel.innerHTML = '<option value="">Tüm Bölgeler</option>';
+        d.bolge_listesi.forEach(b=>{
           sel.insertAdjacentHTML('beforeend',`<option value="${b}">${b}</option>`);
-      });
-      _mpFiltersLoaded = true;
+        });
+        if(curVal) sel.value = curVal;
+      }
     }
 
     console.log('[MP] Data received:', JSON.stringify({donem:d.donem, mag:d.magaza_sayisi, keys:Object.keys(d)}));
@@ -6303,10 +6306,12 @@ function renderMagazaPerformans(d) {
   if(!d||typeof d!=='object'){console.error('[MP] Invalid data:',d);return;}
   window._mpLastData = d;
   const content = document.getElementById('mp-content');
-  const mlist = d['mağazalar'] || d.magaza_list || [];
+  const mlist = d['mağazalar'] || d['magaza_list'] || [];
+  const bolgeList = d['bolgeler'] || [];
+  console.log('[MP Render] mlist:', mlist.length, 'bolgeler:', bolgeList.length, 'donem:', d['donem']);
 
   // ── Bölge Müdürü Kartları ─────────────────────────────────────────────────
-  const bolgeCards = (d.bolgeler||[]).slice(0,3).map(b=>{
+  const bolgeCards = bolgeList.slice(0,3).map(b=>{
     const c = b.hedef_oran>=90?'var(--green)':b.hedef_oran>=80?'var(--yellow)':'var(--red)';
     const barW = Math.min(b.hedef_oran, 100);
     return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;flex:1">
@@ -6323,7 +6328,7 @@ function renderMagazaPerformans(d) {
         <div><div style="font-size:9px;color:var(--t3);font-weight:700">ZİYARETÇİ</div>
           <div style="font-size:14px;font-weight:700;color:var(--t1)">${_myFmt(b.ziyaretci,'sayi')}</div></div>
         <div><div style="font-size:9px;color:var(--t3);font-weight:700">MDO</div>
-          <div style="font-size:14px;font-weight:700;color:var(--teal)">%${b.mdo.toFixed(1)}</div></div>
+          <div style="font-size:14px;font-weight:700;color:var(--teal)">%${(b.mdo||0).toFixed(1)}</div></div>
       </div>
       <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Hedef Gerçekleşme</div>
       <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
