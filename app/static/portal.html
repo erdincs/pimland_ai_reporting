@@ -3985,6 +3985,35 @@ async function loadEnrichmentDashboard(){
 
 const _COL = 'grid-template-columns:1fr 90px 200px 80px 80px';
 
+function _gradeBar(a,b,cc,d,f){
+  const total=(a||0)+(b||0)+(cc||0)+(d||0)+(f||0);
+  if(!total) return '<span style="color:var(--t4);font-size:11px">—</span>';
+  const parts=[['A',a,'var(--green)'],['B',b,'var(--teal)'],['C',cc,'var(--yellow)'],['D',d,'var(--orange)'],['F',f,'var(--red)']];
+  return `<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">
+    <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg4)">
+      ${parts.filter(p=>p[1]).map(p=>`<div style="flex:${p[1]};background:${p[2]}"></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:4px;justify-content:center">
+      ${parts.filter(p=>p[1]).map(p=>`<span style="font-size:9px;color:${p[2]}">${p[0]}:${p[1]}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function _avgScore(v){
+  if(v==null) return '<span style="color:var(--t4)">—</span>';
+  const c=v>=75?'var(--green)':v>=60?'var(--yellow)':'var(--red)';
+  return `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+    <div style="font-size:16px;font-weight:700;color:${c};line-height:1">${typeof v==='number'?v.toFixed(1):v}</div>
+    <div style="height:4px;width:60px;background:var(--bg4);border-radius:2px">
+      <div style="height:100%;width:${v}%;background:${c};border-radius:2px"></div>
+    </div>
+  </div>`;
+}
+
+function _scoreBar(v){
+  return _avgScore(v);
+}
+
 async function loadScoreList(){
   const wrap=document.getElementById('enr-scorelist-wrap');
   wrap.innerHTML='<div class="loading" style="padding:20px"><div class="spinner"></div></div>';
@@ -4011,6 +4040,36 @@ async function loadScoreList(){
       <!-- Sezonlar (lazy) -->
       <div id="enrb-children-${idx}" style="display:none;background:var(--bg2)"></div>
     </div>`).join('');
+}
+
+function _renderUrunTable(items){
+  if(!items.length)return'<div style="padding:12px 20px 12px 96px;color:var(--t4);font-size:11px">Ürün bulunamadı</div>';
+  const rows=items.map(r=>{
+    const gc=GRADE_COLOR[r.quality_grade]||'var(--t4)';
+    const img=r.default_image_url?`<img src="${r.default_image_url}" style="width:28px;height:28px;object-fit:cover;border-radius:3px;flex-shrink:0" onerror="this.style.display='none'">`:
+      '<div style="width:28px;height:28px;background:var(--bg4);border-radius:3px;flex-shrink:0"></div>';
+    const miniPBar=(v)=>v!=null?`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+      <span style="font-size:11px;color:var(--t2)">${v}</span>
+      <div style="height:3px;width:40px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${Math.round((v||0)/25*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>
+    </div>`:'<span style="color:var(--t4)">—</span>';
+    return `<div style="display:grid;${_COL};align-items:center;padding:8px 20px 8px 96px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+      onclick="openEnrModal('${r.urun_kodu}')" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px">
+        ${img}
+        <div>
+          <div style="font-size:11px;color:var(--t1)">${r.urun_adi||'—'}</div>
+          <div style="font-size:9px;font-family:monospace;color:var(--t3)">${r.urun_kodu}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--t3)">—</div>
+      <div style="display:flex;justify-content:center;gap:8px;align-items:center">
+        ${miniPBar(r.score_temel_bilgi)}${miniPBar(r.score_kumas_bilgi)}${miniPBar(r.score_gorsel)}${miniPBar(r.score_satis_icerik)}
+      </div>
+      <div style="text-align:right">${_avgScore(r.quality_score)}</div>
+      <div style="text-align:right"><span class="grade-badge" style="background:${gc}">${r.quality_grade||'—'}</span></div>
+    </div>`;
+  }).join('');
+  return rows;
 }
 
 async function toggleEnrBrand(idx,markaPrm){
