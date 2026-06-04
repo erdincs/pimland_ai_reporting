@@ -263,9 +263,14 @@ async def get_product_detail(
 ) -> Dict[str, Any]:
     row = (await session.execute(text("""
         SELECT
-            eq.*,
+            eq.urun_kodu, eq.sezon_kodu, eq.sezon_adi,
+            eq.quality_score, eq.quality_grade,
+            eq.score_temel_bilgi, eq.score_kumas_bilgi,
+            eq.score_gorsel, eq.score_satis_icerik,
+            eq.eksik_alanlar, eq.hatali_alanlar, eq.uyarilar,
+            eq.last_scored_at, eq.detail_json,
             p.urun_adi, p.default_image_url,
-            p.marka_adi, p.sezon_adi, p.sezon_kodu,
+            p.marka_adi, p.sezon_adi AS p_sezon_adi, p.sezon_kodu AS p_sezon_kodu,
             p.ana_grup_adi, p.urun_grubu_adi, p.tema_adi,
             p.fabricmaterialname, p.color_codes, p.internet_aktif, p.bloke
         FROM enrichment_quality eq

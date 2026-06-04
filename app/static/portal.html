@@ -4062,6 +4062,71 @@ async function openEnrModal(urunKodu){
       Puanlandı: ${d.last_scored_at?new Date(d.last_scored_at).toLocaleString('tr-TR'):'-'}
     </div>`;
 }
+function openEnrCatDetail(catLabel, catData){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;display:flex;align-items:center;justify-content:center';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  const box=document.createElement('div');
+  box.style.cssText='background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:500px;max-height:80vh;overflow-y:auto;padding:22px;color:var(--t1)';
+
+  const rows=Object.entries(catData).map(([alan,info])=>{
+    const v=info.deger;
+    const s=info.skor??0;
+    const m=info.maks??0;
+    const pct=m>0?Math.round(s/m*100):0;
+    const barColor=s===m?'var(--green)':s>0?'var(--yellow)':'var(--red)';
+    const icon=s===m?'✅':s>0?'⚠️':'❌';
+
+    // Renk görselleri özel layout
+    if(alan==='Renk Görselleri'&&info.renkler){
+      const renkRows=Object.entries(info.renkler).map(([rc,ri])=>
+        `<span style="display:inline-flex;align-items:center;gap:4px;margin:2px 4px;background:${ri.var?'rgba(0,194,168,.1)':'rgba(239,68,68,.1)'};border:1px solid ${ri.var?'var(--teal)':'var(--red)'};border-radius:4px;padding:2px 8px;font-size:11px">
+          ${ri.var?'✅':'❌'} Renk ${rc} ${ri.var?'('+ri.sayi+' görsel)':'(görsel yok)'}
+        </span>`).join('');
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600">${icon} ${alan}</span>
+          <span style="font-size:11px;color:var(--t3)">${s}/${m}</span>
+        </div>
+        <div style="flex-wrap:wrap;display:flex">${renkRows}</div>
+      </div>`;
+    }
+
+    // Bakım talimatları listesi
+    let degerHtml='';
+    if(Array.isArray(v)){
+      degerHtml=v.map(x=>`<div style="font-size:11px;color:var(--t2);padding:2px 0">• ${x}</div>`).join('');
+    } else if(v){
+      const karakter=info.karakter?` <span style="font-size:10px;color:var(--t4)">(${info.karakter} karakter)</span>`:'';
+      degerHtml=`<span style="font-size:11px;color:var(--t1)">${String(v).substring(0,150)}</span>${karakter}`;
+    } else {
+      degerHtml=`<span style="font-size:11px;color:var(--t4)">—</span>`;
+    }
+
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:600">${icon} ${alan}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="height:4px;width:60px;background:var(--bg4);border-radius:2px">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--t3);white-space:nowrap">${s}/${m}</span>
+        </div>
+      </div>
+      <div>${degerHtml}</div>
+    </div>`;
+  }).join('');
+
+  box.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <strong style="font-size:14px">${catLabel} Detayı</strong>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    ${rows}`;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 function closeEnrModal(){document.getElementById('enr-modal').style.display='none';}
 
 // ─ Puanlama ─

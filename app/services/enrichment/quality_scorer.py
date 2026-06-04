@@ -23,6 +23,18 @@ from app.core.logging import get_logger
 log = get_logger(__name__)
 
 
+def _extract_color_from_name_static(name: str, stock_code: str) -> str:
+    """Dosya adından renk kodu çıkar. Format: {stockCode}_{colorCode}_{num}.jpg"""
+    if not name or not stock_code:
+        return ""
+    if name.startswith(stock_code):
+        rest = name[len(stock_code):].lstrip("_")
+        code = rest.split("_")[0]
+        if code.isdigit():
+            return code
+    return ""
+
+
 def calc_grade(score: int) -> str:
     if score >= 90: return "A"
     if score >= 75: return "B"
@@ -166,19 +178,7 @@ def score_product(stock_code: str, product_data: dict) -> dict:
 
     # colorCode alanı boşsa dosya adından çıkar: {stockCode}_{colorCode}_{num}.jpg
     def _extract_color_from_name(name: str, stock_code: str) -> str:
-        if not name:
-            return ""
-        # Format: 103L9860000_010_1.jpg → ['103L9860000', '010', '1.jpg']
-        parts = name.replace(stock_code + "_", "", 1).split("_")
-        if parts and parts[0].isdigit() and len(parts[0]) == 3:
-            return parts[0]
-        # Ürün kodu ile başlıyorsa ayır
-        if name.startswith(stock_code):
-            rest = name[len(stock_code):].lstrip("_")
-            code = rest.split("_")[0]
-            if code.isdigit():
-                return code
-        return ""
+        return _extract_color_from_name_static(name, stock_code)
 
     sku = product_data.get("stockCode", "")
     gorsel_renkleri = set()
@@ -266,6 +266,51 @@ def score_product(stock_code: str, product_data: dict) -> dict:
     total = min(t, 25) + min(k, 25) + min(g, 25) + min(s, 25)
     grade = calc_grade(total)
 
+    # ── Detay JSON — kategori bazlı gerçek değerler ──────────────────────────
+    # Renk bazlı görsel haritası
+    sku = product_data.get("stockCode", stock_code)
+    renk_kodlari_list = sorted(set(b.get("colorCode", "") for b in barcodes if b.get("colorCode")))
+    gorsel_renk_map = {}
+    for rc in renk_kodlari_list:
+        renk_imgs = [img for img in images if (img.get("colorCode") or
+                     _extract_color_from_name_static(img.get("name",""), sku)) == rc]
+        gorsel_renk_map[rc] = {"sayi": len(renk_imgs), "var": len(renk_imgs) > 0}
+
+    detail = {
+        "temel": {
+            "Ürün Açıklaması": {"deger": desc[:80] if desc else None, "skor": t if t > 0 else 0, "maks": 5},
+            "Marka":           {"deger": product_data.get("brandName") or product_data.get("brandCode"), "skor": 4 if product_data.get("brandCode") else 0, "maks": 4},
+            "Sezon":           {"deger": f"{product_data.get('seasonName','')} ({product_data.get('seasonCode','')})", "skor": 3 if product_data.get("seasonCode") else 0, "maks": 3},
+            "Ürün Grubu":      {"deger": product_data.get("productGroupName") or product_data.get("productGroupCode"), "skor": 5 if product_data.get("productGroupCode") else 0, "maks": 5},
+            "Ana Kategori":    {"deger": product_data.get("productMainGroupName") or product_data.get("productMainGroupCode"), "skor": 4 if product_data.get("productMainGroupCode") else 0, "maks": 4},
+            "Kumaş Tipi":      {"deger": product_data.get("productTypeName") or product_data.get("productTypeCode"), "skor": 2 if product_data.get("productTypeCode") else 0, "maks": 2},
+            "KDV Oranı":       {"deger": f"%{product_data.get('vatRate','')}" if product_data.get("vatRate") is not None else None, "skor": 2 if product_data.get("vatRate") is not None else 0, "maks": 2},
+        },
+        "kumas": {
+            "Kumaş Adı":       {"deger": product_data.get("fabricMaterialName"), "skor": 5 if product_data.get("fabricMaterialName") else 0, "maks": 5},
+            "Kumaş Kodu":      {"deger": product_data.get("fabricMaterialCode"), "skor": 3 if product_data.get("fabricMaterialCode") else 0, "maks": 3},
+            "Kumaş İçerik %":  {"deger": (mat_contents[0][:100] if mat_contents else None), "skor": (7 if (mat_contents and any("%" in m for m in mat_contents) and any(len(m)>20 for m in mat_contents)) else 5 if (mat_contents and any("%" in m for m in mat_contents)) else 2 if mat_contents else 0), "maks": 7},
+            "Bakım Talimatları": {"deger": list(care[:5]) if care else None, "sayi": care_count, "skor": (7 if care_count >= 3 else 4 if care_count >= 1 else 0), "maks": 7},
+            "Kalıp Tipi":      {"deger": product_data.get("fitName") or product_data.get("fitCode"), "skor": 3 if product_data.get("fitCode") else 0, "maks": 3},
+        },
+        "gorsel": {
+            "Görsel Sayısı":   {"deger": img_count, "skor": (12 if img_count >= 5 else 9 if img_count >= 3 else 6 if img_count == 2 else 3 if img_count == 1 else 0), "maks": 12},
+            "Renk Görselleri": {"renkler": gorsel_renk_map, "skor": (8 if not (renk_kodlari - gorsel_renkleri) and renk_kodlari else 4 if len(renk_kodlari - gorsel_renkleri) <= len(renk_kodlari)//2 else 1 if renk_kodlari else 4), "maks": 8},
+            "Renk Hex Kodu":   {"deger": "Var" if any(b.get("colorHexCode") for b in barcodes) else None, "skor": 3 if any(b.get("colorHexCode") for b in barcodes) else 0, "maks": 3},
+            "Görsel Tipi":     {"deger": sorted(set(img.get("type","") for img in images if img.get("type"))) or None, "skor": 2 if len(set(img.get("type","") for img in images if img.get("type"))) >= 2 else 0, "maks": 2},
+        },
+        "satis": {
+            "Ürün Açıklaması": {"deger": desc[:120] if desc else None, "karakter": len(desc), "skor": (8 if len(desc) >= 80 else 6 if len(desc) >= 50 else 3 if len(desc) >= 20 else 1 if desc else 0), "maks": 8},
+            "E-Ticaret Etiketi 1": {"deger": product_data.get("ecomTag1Name") or product_data.get("ecomTag1Code"), "skor": 2 if product_data.get("ecomTag1Code") else 0, "maks": 2},
+            "E-Ticaret Etiketi 2": {"deger": product_data.get("ecomTag2Name") or product_data.get("ecomTag2Code"), "skor": 2 if product_data.get("ecomTag2Code") else 0, "maks": 2},
+            "E-Ticaret Etiketi 3": {"deger": product_data.get("ecomTag3Name") or product_data.get("ecomTag3Code"), "skor": 2 if product_data.get("ecomTag3Code") else 0, "maks": 2},
+            "E-Ticaret Etiketi 4": {"deger": product_data.get("ecomTag4Name") or product_data.get("ecomTag4Code"), "skor": 2 if product_data.get("ecomTag4Code") else 0, "maks": 2},
+            "Koleksiyon Teması":   {"deger": product_data.get("productThemeName") or product_data.get("productThemeCode"), "skor": 4 if product_data.get("productThemeCode") else 0, "maks": 4},
+            "Ürün Notu":      {"deger": notes[:100] if notes else None, "karakter": len(notes), "skor": (3 if len(notes) >= 30 else 1 if notes else 0), "maks": 3},
+            "İlişkili Ürün":  {"deger": f"{len(relations)} ürün" if relations else ("hikaye var" if stories else None), "skor": 2 if (relations or stories) else 0, "maks": 2},
+        }
+    }
+
     return {
         "urun_kodu":          stock_code,
         "sezon_kodu":         product_data.get("seasonCode"),
@@ -279,6 +324,7 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         "eksik_alanlar":      eksik,
         "hatali_alanlar":     hatali,
         "uyarilar":           uyarilar,
+        "detail_json":        detail,
     }
 
 
@@ -452,7 +498,7 @@ async def score_season(
                 quality_score, quality_grade,
                 score_temel_bilgi, score_kumas_bilgi,
                 score_gorsel, score_satis_icerik,
-                eksik_alanlar, hatali_alanlar, uyarilar
+                eksik_alanlar, hatali_alanlar, uyarilar, detail_json
             ) VALUES %s
             ON CONFLICT (urun_kodu) DO UPDATE SET
                 sezon_kodu=EXCLUDED.sezon_kodu, sezon_adi=EXCLUDED.sezon_adi,
@@ -464,6 +510,7 @@ async def score_season(
                 eksik_alanlar=EXCLUDED.eksik_alanlar,
                 hatali_alanlar=EXCLUDED.hatali_alanlar,
                 uyarilar=EXCLUDED.uyarilar,
+                detail_json=EXCLUDED.detail_json,
                 last_scored_at=NOW()
             """,
             [(
@@ -474,6 +521,7 @@ async def score_season(
                 json.dumps(r["eksik_alanlar"], ensure_ascii=False),
                 json.dumps(r["hatali_alanlar"], ensure_ascii=False),
                 json.dumps(r["uyarilar"], ensure_ascii=False),
+                json.dumps(r.get("detail_json", {}), ensure_ascii=False),
             ) for r in results],
             page_size=200,
         )
