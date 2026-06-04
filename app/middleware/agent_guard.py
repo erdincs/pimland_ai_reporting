@@ -18,6 +18,11 @@ from starlette.types import ASGIApp
 
 logger = logging.getLogger("agent_guard")
 
+try:
+    from app.core.cloudwatch import log_guard_event as _cw_guard
+except ImportError:
+    _cw_guard = None
+
 # ══════════════════════════════════════════════════
 # KATMAN 1 — INPUT GUARD
 # ══════════════════════════════════════════════════
@@ -287,8 +292,8 @@ def konusma_logla(
     output_neden: str,
     yanit_uzunlugu: int,
 ):
-    """Her konuşmayı yapılandırılmış log olarak yaz."""
-    logger.info(json.dumps({
+    """Her konuşmayı yapılandırılmış log olarak yaz + CloudWatch."""
+    payload = {
         "ts": datetime.utcnow().isoformat(),
         "oturum": oturum_id,
         "agent": agent,
@@ -297,7 +302,14 @@ def konusma_logla(
         "output_mudahale": output_mudahale,
         "output_neden": output_neden,
         "yanit_uzunlugu": yanit_uzunlugu,
-    }, ensure_ascii=False))
+    }
+    logger.info(json.dumps(payload, ensure_ascii=False))
+
+    # CloudWatch'a da gönder (input guard tetiklendiyse veya output müdahale varsa)
+    if _cw_guard and (input_sonuc != "ok" or output_mudahale):
+        katman = "input" if input_sonuc != "ok" else "output"
+        neden  = input_sonuc if input_sonuc != "ok" else output_neden
+        _cw_guard(katman=katman, neden=neden, oturum_id=oturum_id, agent=agent)
 
 
 # ══════════════════════════════════════════════════

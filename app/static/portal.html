@@ -638,6 +638,9 @@ body,
     <div class="nav-item" onclick="showSection('urun-satis')" id="nav-urun-satis">
       <span class="nav-icon">🔍</span><span class="nav-text">Satış Detay Analizi</span>
     </div>
+    <div class="nav-item" onclick="showSection('monitoring')" id="nav-monitoring" style="border-top:1px solid var(--border);margin-top:8px">
+      <span class="nav-icon">📊</span><span class="nav-text">Sistem Sağlığı</span>
+    </div>
   </nav>
 
   <!-- MAIN -->
@@ -1231,6 +1234,46 @@ body,
       </div>
     </div><!-- /section-urun-satis -->
 
+    <!-- SİSTEM SAĞLIĞI -->
+    <div class="section" id="section-monitoring" style="padding:20px">
+      <div class="sec-hdr" style="margin-bottom:16px">
+        <span class="sec-title">📊 Sistem Sağlığı</span>
+        <button class="btn-sm" onclick="loadMonitoring()" style="margin-left:auto">↻ Yenile</button>
+      </div>
+
+      <!-- Üst satır: job durumları -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px" id="mon-jobs">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Orta: trend + guard yan yana -->
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;margin-bottom:20px">
+        <!-- 7 günlük trend -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Son 7 Gün Trend</div>
+          <div id="mon-trend" style="display:flex;align-items:flex-end;gap:6px;height:80px">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        <!-- Guard istatistikleri -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Guard — Son 24 Saat</div>
+          <div id="mon-guard"></div>
+        </div>
+      </div>
+
+      <!-- Alt: log akışı -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">Son 20 Log Satırı</div>
+          <span id="mon-auto-badge" style="font-size:10px;color:var(--teal)">● otomatik yenileme aktif</span>
+        </div>
+        <div id="mon-logs" style="font-size:11px;font-family:monospace">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div><!-- /section-monitoring -->
+
   </main>
 </div>
 
@@ -1407,6 +1450,9 @@ function loadSection(id){
   else if(id==='plm-katalog')loadPlmKatalog();
   else if(id==='urun-yonetimi')loadUrunYonetimi();
   else if(id==='urun-satis')loadUrunSatisAnaliz();
+  else if(id==='monitoring'){initMonitoring();}
+  // Monitoring dışı sekmeye geçince otomatik yenilemeyi durdur
+  if(id!=='monitoring') stopMonitoring();
 }
 
 // ── EXECUTIVE ÖZET ────────────────────────────────────────────────────────────
@@ -3138,6 +3184,123 @@ function toggleTheme(){
 }
 function applyThemeBtn(){
   updateHamburgerTheme();
+}
+
+// ── MONİTORİNG ────────────────────────────────────────────────────────────────
+let _monTimer = null;
+const STATUS_ICON  = {success:'✅',partial:'⚠️',failed:'❌',running:'🔄'};
+const STATUS_COLOR = {success:'var(--teal)',partial:'var(--yellow)',failed:'var(--red)',running:'var(--blue)'};
+
+async function loadMonitoring() {
+  try {
+    const [summary, logs] = await Promise.all([
+      fetch(`${API}/monitoring/summary`).then(r=>r.json()),
+      fetch(`${API}/monitoring/logs?limit=20`).then(r=>r.json()),
+    ]);
+    renderMonJobs(summary.son_durum || []);
+    renderMonTrend(summary.trend_7_gun || []);
+    renderMonGuard(summary.ozet || {});
+    renderMonLogs(logs || []);
+  } catch(e) {
+    document.getElementById('mon-logs').innerHTML=`<div style="color:var(--red)">Veri yüklenemedi: ${e.message}</div>`;
+  }
+}
+
+function renderMonJobs(jobs) {
+  if(!jobs.length){document.getElementById('mon-jobs').innerHTML='<div style="color:var(--t3)">Henüz job çalışmadı</div>';return;}
+  document.getElementById('mon-jobs').innerHTML = jobs.map(j=>{
+    const icon  = STATUS_ICON[j.status]  || '❓';
+    const color = STATUS_COLOR[j.status] || 'var(--t3)';
+    const zaman = j.started_at ? new Date(j.started_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const sure  = j.sure_sn ? `${j.sure_sn}s` : '—';
+    const kayit = j.kayit_sayisi != null ? fmtAdet(j.kayit_sayisi) : '—';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid ${color};border-radius:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;color:var(--t2)">${j.job_name}</span>
+        <span>${icon}</span>
+      </div>
+      <div style="font-size:10px;color:var(--t3)">${zaman}</div>
+      <div style="display:flex;gap:12px;margin-top:6px">
+        <span style="font-size:11px;color:var(--t1)">${kayit} kayıt</span>
+        <span style="font-size:11px;color:var(--t3)">${sure}</span>
+      </div>
+      ${j.hata_mesaji?`<div style="font-size:10px;color:var(--red);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.hata_mesaji}">${j.hata_mesaji}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderMonTrend(trend) {
+  if(!trend.length){document.getElementById('mon-trend').innerHTML='<div style="color:var(--t3);font-size:11px">Veri yok</div>';return;}
+  const maxVal = Math.max(...trend.map(t=>(t.basarili||0)+(t.hatali||0)), 1);
+  document.getElementById('mon-trend').innerHTML = trend.map(t=>{
+    const total = (t.basarili||0)+(t.hatali||0);
+    const pct   = Math.round(total/maxVal*100);
+    const gun   = t.gun ? new Date(t.gun+'T00:00:00').toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'}) : '';
+    const barColor = t.hatali > 0 ? 'var(--red)' : 'var(--teal)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:9px;color:var(--t3)">${total}</div>
+      <div style="width:100%;background:var(--bg4);border-radius:3px;overflow:hidden;height:${Math.max(pct,4)}%">
+        <div style="height:100%;background:${barColor};border-radius:3px"></div>
+      </div>
+      <div style="font-size:9px;color:var(--t3);writing-mode:vertical-rl;transform:rotate(180deg)">${gun}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMonGuard(ozet) {
+  const items = [
+    {label:'Başarılı', val: ozet.toplam_basarili||0, color:'var(--teal)'},
+    {label:'Hatalı',   val: ozet.toplam_hatali||0,   color:'var(--red)'},
+    {label:'Ort. Süre',val: ozet.ort_sure_sn ? `${ozet.ort_sure_sn}s` : '—', color:'var(--t1)'},
+  ];
+  document.getElementById('mon-guard').innerHTML = items.map(i=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--t2)">${i.label}</span>
+      <span style="font-size:14px;font-weight:700;color:${i.color}">${i.val}</span>
+    </div>`
+  ).join('');
+}
+
+function renderMonLogs(logs) {
+  if(!logs.length){document.getElementById('mon-logs').innerHTML='<div style="color:var(--t3)">Log yok</div>';return;}
+  document.getElementById('mon-logs').innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="color:var(--t3);font-size:10px;text-transform:uppercase">
+          <th style="text-align:left;padding:4px 8px">Zaman</th>
+          <th style="text-align:left;padding:4px 8px">Job</th>
+          <th style="text-align:center;padding:4px 8px">Durum</th>
+          <th style="text-align:right;padding:4px 8px">Kayıt</th>
+          <th style="text-align:right;padding:4px 8px">Süre</th>
+          <th style="text-align:left;padding:4px 8px">Hata</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${logs.map(r=>{
+          const icon  = STATUS_ICON[r.status]  || '❓';
+          const color = STATUS_COLOR[r.status] || 'var(--t3)';
+          const zaman = r.started_at ? new Date(r.started_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 8px;color:var(--t3)">${zaman}</td>
+            <td style="padding:5px 8px;color:var(--t1)">${r.job_name}</td>
+            <td style="padding:5px 8px;text-align:center;color:${color}">${icon}</td>
+            <td style="padding:5px 8px;text-align:right;color:var(--t2)">${r.kayit_sayisi!=null?fmtAdet(r.kayit_sayisi):'—'}</td>
+            <td style="padding:5px 8px;text-align:right;color:var(--t3)">${r.sure_sn?r.sure_sn+'s':'—'}</td>
+            <td style="padding:5px 8px;color:var(--red);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.hata_mesaji||''}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function initMonitoring() {
+  loadMonitoring();
+  if(_monTimer) clearInterval(_monTimer);
+  _monTimer = setInterval(loadMonitoring, 30000);
+}
+
+function stopMonitoring() {
+  if(_monTimer){clearInterval(_monTimer);_monTimer=null;}
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────

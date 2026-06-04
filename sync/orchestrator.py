@@ -29,6 +29,7 @@ from sync.sources.incorta_sync import generic_incorta_sync
 from sync.sources.pimland_sync import sync_master_table, sync_products
 from sync.jobs.refresh_views import refresh_all_views
 from sync.jobs.validate import run_validation
+from sync.jobs.daily_report import send_daily_report
 
 log = logging.getLogger(__name__)
 
@@ -145,11 +146,12 @@ def _run_validation(conn) -> Dict[str, Any]:
 
 
 _JOBS = {
-    "incorta_sync": _run_incorta_sync,
-    "pimland_sync": _run_pimland_sync,
-    "master_data":  _run_master_data,
-    "view_refresh": _run_view_refresh,
-    "validation":   _run_validation,
+    "incorta_sync":  _run_incorta_sync,
+    "pimland_sync":  _run_pimland_sync,
+    "master_data":   _run_master_data,
+    "view_refresh":  _run_view_refresh,
+    "validation":    _run_validation,
+    "daily_report":  lambda conn: send_daily_report(conn),
 }
 
 

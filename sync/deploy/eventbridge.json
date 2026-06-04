@@ -29,6 +29,12 @@
       "schedule": "cron(0 2 * * ? *)",
       "description": "Veri bütünlüğü kontrolü — her gece 05:00 TR (UTC+3)",
       "input": {"job": "validation"}
+    },
+    {
+      "name": "pimland-daily-report",
+      "schedule": "cron(0 5 * * ? *)",
+      "description": "Günlük özet email — her sabah 08:00 TR (UTC+3)",
+      "input": {"job": "daily_report"}
     }
   ],
   "target": {
