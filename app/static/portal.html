@@ -1335,11 +1335,11 @@ body,
     </div><!-- /section-monitoring -->
 
     <!-- ✨ ÜRÜN ZENGİNLEŞTİRME -->
-    <div class="section" id="section-enrichment" style="padding:20px;flex-direction:column;gap:16px">
+    <div class="section" id="section-enrichment" style="padding:0;flex-direction:column;overflow:hidden">
 
-      <!-- Ortak üst bar: sezon seçici + puanlama -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex-shrink:0">
-        <span style="font-size:12px;font-weight:600;color:var(--t2)">✨ Ürün Zenginleştirme</span>
+      <!-- Üst bar — her alt sayfada sabit -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+        <span id="enr-page-title" style="font-size:13px;font-weight:700;color:var(--t1)">✨ Ürün Zenginleştirme</span>
         <select id="enr-season-sel" onchange="onEnrSeasonChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
           <option value="">Sezon Seç...</option>
         </select>
@@ -1347,13 +1347,12 @@ body,
         <span id="enr-progress" style="font-size:11px;color:var(--t3)"></span>
       </div>
 
-      <!-- ── DASHBOARD SAYFASI ────────────────────────────────── -->
-      <div id="enr-page-dashboard">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Dashboard</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px" id="enr-kpis">
+      <!-- ── DASHBOARD ── -->
+      <div id="enr-page-dashboard" style="padding:20px;flex-direction:column;gap:16px;overflow-y:auto;flex:1">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden" id="enr-kpis">
           <div class="loading" style="grid-column:1/-1;padding:20px"><div class="spinner"></div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Grade Dağılımı</div>
             <div style="display:flex;align-items:center;gap:20px">
@@ -1372,15 +1371,25 @@ body,
         </div>
       </div>
 
-      <!-- ── SKOR LİSTE SAYFASI — Marka>Sezon>Kategori>Ürün ──── -->
-      <div id="enr-page-scorelist" style="display:none">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Ürün Skor Listesi</div>
-        <div id="enr-scorelist-wrap"><div class="loading"><div class="spinner"></div></div></div>
+      <!-- ── SKOR LİSTESİ ── -->
+      <div id="enr-page-scorelist" style="display:none;flex-direction:column;overflow:hidden;flex:1">
+        <!-- Tablo başlığı -->
+        <div style="display:grid;grid-template-columns:1fr 90px 200px 80px 80px;gap:0;padding:8px 20px;border-bottom:2px solid var(--border);background:var(--bg2);flex-shrink:0">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">AD</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">SKU</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:center">PUAN DAĞILIMI</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">ORT. PUAN</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">GRADE</div>
+        </div>
+        <!-- Tablo gövdesi — scroll -->
+        <div id="enr-scorelist-wrap" style="overflow-y:auto;flex:1">
+          <div class="loading" style="padding:20px"><div class="spinner"></div></div>
+        </div>
       </div>
 
-      <!-- ── ÜRÜN LİSTESİ SAYFASI ──────────────────────────────── -->
-      <div id="enr-page-products" style="display:none">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <!-- ── ÜRÜN LİSTESİ ── -->
+      <div id="enr-page-products" style="display:none;flex-direction:column;padding:20px;gap:12px;overflow-y:auto;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span style="font-size:11px;color:var(--t3)">Grade:</span>
           <div style="display:flex;gap:4px">
             <button onclick="enrToggleGrade('all')" id="enr-g-all" class="enr-gbtn active">Tümü</button>
@@ -1402,11 +1411,11 @@ body,
             <option value="score_desc">En Yüksek Puan ↓</option>
           </select>
         </div>
-        <div id="enr-table-wrap"><div class="loading"><div class="spinner"></div></div></div>
-        <div id="enr-pagination" style="display:flex;gap:8px;margin-top:12px;justify-content:center"></div>
+        <div id="enr-table-wrap"></div>
+        <div id="enr-pagination" style="display:flex;gap:8px;justify-content:center"></div>
       </div>
 
-      <!-- Ürün detay modalı -->
+      <!-- Modal -->
       <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
         <div class="enr-modal-box" id="enr-modal-box"></div>
       </div>
@@ -3621,77 +3630,111 @@ async function downloadAnswer(msgId, fmt) {
 
 // ── ENRICHMENT ────────────────────────────────────────────────────────────────
 const GRADE_COLOR = {A:'var(--green)',B:'var(--teal)',C:'var(--yellow)',D:'var(--orange)',F:'var(--red)'};
-let _enrPage=1, _enrGrade='', _enrJobId=null, _enrJobTimer=null, _enrActivePage='dashboard';
+let _enrPage=1, _enrGrade='', _enrJobId=null, _enrJobTimer=null, _enrActivePage='scorelist';
 
-// ─ Menü yönetimi ─
+// ─ Menü ─
 function toggleEnrMenu(){
   const sub=document.getElementById('enr-submenu');
   const arrow=document.getElementById('enr-menu-arrow');
   const open=sub.style.display==='block';
   sub.style.display=open?'none':'block';
   arrow.style.transform=open?'':'rotate(90deg)';
-  if(!open) showEnrPage('dashboard');
+  if(!open) { showEnrPage('scorelist'); loadEnrichmentSeasons(); }
 }
+
 function showEnrPage(page){
   _enrActivePage=page;
+  // Tüm section'ları gizle, enrichment'ı göster
+  document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('section-enrichment');
+  sec.classList.add('active'); sec.style.display='flex';
+  document.getElementById('nav-enrichment-parent').classList.add('active');
+  // Sayfalar
   ['dashboard','scorelist','products'].forEach(p=>{
-    document.getElementById('enr-page-'+p).style.display=p===page?'flex':'none';
+    const el=document.getElementById('enr-page-'+p);
+    if(el) el.style.display = p===page?'flex':'none';
     const nb=document.getElementById('nav-enr-'+p);
     if(nb){ nb.classList.toggle('active',p===page); }
   });
-  // Sadece enrichment section'ı göster
-  document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
-  document.getElementById('section-enrichment').classList.add('active');
-  document.getElementById('section-enrichment').style.display='flex';
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('nav-enrichment-parent').classList.add('active');
-  if(page==='dashboard') loadEnrichmentDashboard();
-  if(page==='scorelist') loadScoreList();
-  if(page==='products') loadEnrichmentList(1);
-}
-async function onEnrSeasonChange(){
-  if(_enrActivePage==='dashboard') loadEnrichmentDashboard();
-  if(_enrActivePage==='scorelist') loadScoreList();
-  if(_enrActivePage==='products') loadEnrichmentList(1);
+  document.getElementById('enr-page-title').textContent = {
+    dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi', products:'🔍 Ürün Listesi'
+  }[page]||'✨ Ürün Zenginleştirme';
+  if(page==='dashboard') { loadEnrichmentSeasons().then(()=>loadEnrichmentDashboard()); }
+  if(page==='scorelist') { loadEnrichmentSeasons().then(()=>loadScoreList()); }
+  if(page==='products')  { loadEnrichmentSeasons().then(()=>loadEnrichmentList(1)); }
 }
 
-// ─ Sezon yükle ─
+async function onEnrSeasonChange(){
+  if(_enrActivePage==='dashboard') loadEnrichmentDashboard();
+  if(_enrActivePage==='products')  loadEnrichmentList(1);
+  // scorelist sezon bağımsız — tüm markalar gösterir
+}
+
+// ─ Sezon listesi ─
 async function loadEnrichmentSeasons(){
   const sel=document.getElementById('enr-season-sel');
-  const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
   const cur=sel.value;
+  const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
   sel.innerHTML='<option value="">Sezon Seç...</option>';
   (seasons||[]).forEach(s=>{
-    const sc=s.scored?` ✓ ${s.ortalama_puan||'?'}`:'';
-    sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}"${s.sezon_kodu===cur?' selected':''}>${s.sezon_kodu} ${s.sezon_adi||''}${sc}</option>`);
+    const badge=s.scored?` ✓${s.ortalama_puan?` ${s.ortalama_puan}`:''}` : ' —';
+    sel.insertAdjacentHTML('beforeend',
+      `<option value="${s.sezon_kodu}"${s.sezon_kodu===cur?' selected':''}>${s.sezon_kodu} ${s.sezon_adi||''}${badge}</option>`);
   });
+  if(!sel.value && seasons.length){
+    // Puanlanmış ilk sezonu seç
+    const scored=seasons.find(s=>s.scored);
+    if(scored) sel.value=scored.sezon_kodu;
+  }
 }
 
 // ─ Dashboard ─
 async function loadEnrichmentDashboard(){
   const sc=document.getElementById('enr-season-sel').value;
-  if(!sc){document.getElementById('enr-kpis').innerHTML='<div style="grid-column:1/-1;padding:20px;color:var(--t3)">Sezon seçin</div>';return;}
+  const kpis=document.getElementById('enr-kpis');
+  if(!sc){
+    kpis.innerHTML='<div style="grid-column:1/-1;padding:20px;color:var(--t3)">Sezon seçin veya puanlamayı başlatın</div>';
+    return;
+  }
+  kpis.innerHTML='<div class="loading" style="grid-column:1/-1;padding:20px"><div class="spinner"></div></div>';
   const d=await fetch(`${API}/enrichment/dashboard/${sc}`).then(r=>r.json()).catch(()=>null);
-  if(!d||d.error){document.getElementById('enr-kpis').innerHTML=`<div style="grid-column:1/-1;padding:20px;color:var(--t3)">${d?.error||'Veri yok — puanlamayı başlatın'}</div>`;return;}
+  if(!d||d.error){
+    kpis.innerHTML=`<div style="grid-column:1/-1;padding:20px;color:var(--t3)">${d?.error||'Veri yok — önce Puanla butonuna basın'}</div>`;
+    return;
+  }
   const kpiColor=d.ortalama_puan>=75?'var(--green)':d.ortalama_puan>=60?'var(--yellow)':'var(--red)';
-  const iyi=(d.grade_dist.A||0)+(d.grade_dist.B||0);
-  document.getElementById('enr-kpis').innerHTML=[
-    {l:'Ortalama Puan',v:d.ortalama_puan?.toFixed(1)||'—',c:kpiColor},
-    {l:'Toplam Ürün',v:fmtAdet(d.toplam_urun),c:'var(--t1)'},
-    {l:'İyi (A+B)',v:fmtAdet(iyi),c:'var(--green)'},
-    {l:'En Yaygın Sorun',v:d.top_sorunlar?.[0]?.sorun||'—',c:'var(--red)'},
-  ].map(k=>`<div style="background:var(--bg3);padding:14px 16px"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:6px">${k.l}</div><div style="font-size:18px;font-weight:700;color:${k.c}">${k.v}</div></div>`).join('');
-  _renderDonut(d.grade_dist, d.ortalama_puan);
+  const iyi=(d.grade_dist?.A||0)+(d.grade_dist?.B||0);
+  kpis.innerHTML=[
+    {l:'Ortalama Puan',  v:d.ortalama_puan?.toFixed(1)||'—', c:kpiColor},
+    {l:'Toplam Ürün',    v:fmtAdet(d.toplam_urun||0),        c:'var(--t1)'},
+    {l:'İyi Ürün (A+B)', v:fmtAdet(iyi),                     c:'var(--green)'},
+    {l:'En Sık Sorun',   v:(d.top_sorunlar?.[0]?.sorun||'—').substring(0,18), c:'var(--red)'},
+  ].map(k=>`<div style="background:var(--bg3);padding:16px 18px">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:8px">${k.l}</div>
+    <div style="font-size:20px;font-weight:700;color:${k.c};line-height:1.2">${k.v}</div>
+  </div>`).join('');
+  _renderDonut(d.grade_dist||{},d.ortalama_puan);
   document.getElementById('enr-top-sorunlar').innerHTML=(d.top_sorunlar||[]).slice(0,5).map(s=>`
-    <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--t2)">${s.sorun}</span><span style="color:var(--t1);font-weight:600">${s.sayi} <span style="color:var(--t3)">(${s.pct}%)</span></span></div>
-    <div style="height:3px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${s.pct}%;background:var(--red);border-radius:2px"></div></div></div>`).join('')||'<div style="color:var(--t3);font-size:11px">Sorun yok</div>';
-  const maxBar=Math.max(...(d.puan_dagilimi||[]).map(x=>x.sayi),1);
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+        <span style="color:var(--t2)">${s.sorun}</span>
+        <span style="color:var(--t1);font-weight:600">${s.sayi} <span style="color:var(--t3)">(${s.pct}%)</span></span>
+      </div>
+      <div style="height:3px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${s.pct}%;background:var(--red);border-radius:2px"></div></div>
+    </div>`).join('')||'<div style="color:var(--t3);font-size:11px">Sorun yok</div>';
+  const maxB=Math.max(...(d.puan_dagilimi||[]).map(x=>x.sayi),1);
   document.getElementById('enr-puan-dist').innerHTML=(d.puan_dagilimi||[]).map((b,i)=>{
-    const h=Math.max(Math.round(b.sayi/maxBar*100),2);
+    const h=Math.max(Math.round(b.sayi/maxB*100),2);
     const c=i<4?'var(--red)':i<6?'var(--orange)':i<7?'var(--yellow)':i<8?'var(--teal)':'var(--green)';
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:9px;color:var(--t3)">${b.sayi||''}</div><div style="width:100%;height:${h}%;background:${c};border-radius:2px;min-height:2px"></div><div style="font-size:8px;color:var(--t4);writing-mode:vertical-rl;transform:rotate(180deg)">${b.aralik}</div></div>`;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:9px;color:var(--t3)">${b.sayi||''}</div>
+      <div style="width:100%;height:${h}%;background:${c};border-radius:2px;min-height:2px"></div>
+      <div style="font-size:8px;color:var(--t4);writing-mode:vertical-rl;transform:rotate(180deg)">${b.aralik}</div>
+    </div>`;
   }).join('');
 }
+
 function _renderDonut(grades,avg){
   const data=['A','B','C','D','F'].map(g=>({g,n:grades[g]||0,c:GRADE_COLOR[g]}));
   const total=data.reduce((s,x)=>s+x.n,0)||1;
@@ -3703,163 +3746,212 @@ function _renderDonut(grades,avg){
     paths+=`<path d="M ${cx+r*Math.sin(a1)} ${cy-r*Math.cos(a1)} A ${r} ${r} 0 ${sw>180?1:0} 1 ${cx+r*Math.sin(a2)} ${cy-r*Math.cos(a2)}" fill="none" stroke="${x.c}" stroke-width="${th}"/>`;
     angle+=sw;
   });
-  document.getElementById('enr-donut-svg').innerHTML=paths+`<text x="60" y="65" text-anchor="middle" font-size="14" font-weight="700" fill="var(--t1)">${avg?.toFixed(0)||'?'}</text>`;
-  document.getElementById('enr-donut-legend').innerHTML=data.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="width:8px;height:8px;border-radius:2px;background:${x.c};display:inline-block"></span><span style="color:var(--t2)">${x.g}</span><span style="color:var(--t1);font-weight:600">${x.n}</span></div>`).join('');
+  const svg=document.getElementById('enr-donut-svg');
+  if(svg) svg.innerHTML=paths+`<text x="60" y="65" text-anchor="middle" font-size="14" font-weight="700" fill="var(--t1)">${avg?.toFixed(0)||'?'}</text>`;
+  const leg=document.getElementById('enr-donut-legend');
+  if(leg) leg.innerHTML=data.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px">
+    <span style="width:8px;height:8px;border-radius:2px;background:${x.c};display:inline-block"></span>
+    <span style="color:var(--t2)">${x.g}</span><span style="color:var(--t1);font-weight:600">${x.n}</span>
+  </div>`).join('');
 }
 
-// ─ Skor Listesi — Accordion Marka>Sezon>Kategori>Ürün ─
+// ─ Skor Listesi — tam sayfa tablo tasarımı ─
+function _gradeBar(a,b,c,d,f){
+  const total=(a||0)+(b||0)+(c||0)+(d||0)+(f||0); if(!total) return '<span style="color:var(--t4);font-size:11px">—</span>';
+  const parts=[['A',a,'var(--green)'],['B',b,'var(--teal)'],['C',c,'var(--yellow)'],['D',d,'var(--orange)'],['F',f,'var(--red)']];
+  return `<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">
+    <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg4)">
+      ${parts.filter(p=>p[1]).map(p=>`<div style="flex:${p[1]};background:${p[2]}"></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:4px;justify-content:center">
+      ${parts.filter(p=>p[1]).map(p=>`<span style="font-size:9px;color:${p[2]}">${p[0]}:${p[1]}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function _avgScore(v){
+  if(v==null) return '<span style="color:var(--t4)">—</span>';
+  const c=v>=75?'var(--green)':v>=60?'var(--yellow)':'var(--red)';
+  return `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+    <div style="font-size:16px;font-weight:700;color:${c};line-height:1">${v}</div>
+    <div style="height:4px;width:60px;background:var(--bg4);border-radius:2px">
+      <div style="height:100%;width:${v}%;background:${c};border-radius:2px"></div>
+    </div>
+  </div>`;
+}
+
+const _COL = 'grid-template-columns:1fr 90px 200px 80px 80px';
+
 async function loadScoreList(){
   const wrap=document.getElementById('enr-scorelist-wrap');
-  wrap.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+  wrap.innerHTML='<div class="loading" style="padding:20px"><div class="spinner"></div></div>';
   const brands=await fetch(`${API}/enrichment/scorelist`).then(r=>r.json()).catch(()=>[]);
-  if(!brands.length){wrap.innerHTML='<div style="color:var(--t3);padding:20px">Veri yok — önce puanlama yapın</div>';return;}
-  wrap.innerHTML=brands.map(b=>_accBrand(b)).join('');
-}
-function _gradeMini(a,b,c,d,f){
-  return ['A','B','C','D','F'].map((g,i)=>{const v=[a,b,c,d,f][i];return v?`<span class="grade-badge" style="background:${GRADE_COLOR[g]}">${g}:${v}</span>`:''}).filter(Boolean).join(' ');
-}
-function _scoreBar(v){
-  const c=v>=75?'var(--green)':v>=60?'var(--yellow)':v!=null?'var(--red)':'var(--t4)';
-  return v!=null?`<span style="font-size:13px;font-weight:700;color:${c};margin-left:6px">${v}</span>`:'<span style="font-size:11px;color:var(--t4)">—</span>';
-}
-function _accBrand(b){
-  const id='acc-b-'+b.marka_adi.replace(/\s/g,'_');
-  return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
-    <div class="acc-row" onclick="toggleAcc('${id}','brand','${encodeURIComponent(b.marka_adi)}')">
-      <div style="font-size:13px;font-weight:700;color:var(--t1)">${b.marka_adi}</div>
-      <div style="font-size:11px;color:var(--t3);margin-left:8px">${b.toplam_urun} ürün · ${b.sezon_sayisi} sezon · ${b.puanlanan} puanlanan</div>
-      ${_scoreBar(b.ort_skor)}
-      <div style="margin-left:8px">${_gradeMini(b.grade_a,b.grade_b,b.grade_c,b.grade_d,b.grade_f)}</div>
-      <span class="acc-arrow">▶</span>
-    </div>
-    <div class="acc-children" id="${id}"></div>
-  </div>`;
-}
-async function toggleAcc(id,level,param,param2,param3){
-  const el=document.getElementById(id);
-  const arrow=el.previousElementSibling?.querySelector('.acc-arrow');
-  if(el.classList.contains('open')){el.classList.remove('open');if(arrow)arrow.classList.remove('open');return;}
-  el.classList.add('open'); if(arrow)arrow.classList.add('open');
-  if(el.innerHTML.trim()){return;} // zaten yüklü
-  el.innerHTML='<div class="loading" style="padding:10px"><div class="spinner"></div></div>';
-  let url,data;
-  if(level==='brand'){
-    url=`${API}/enrichment/scorelist/${decodeURIComponent(param)}`;
-    data=await fetch(url).then(r=>r.json()).catch(()=>[]);
-    el.innerHTML=data.map(s=>_accSeason(s,param)).join('');
-  } else if(level==='season'){
-    url=`${API}/enrichment/scorelist/${decodeURIComponent(param)}/${decodeURIComponent(param2)}`;
-    data=await fetch(url).then(r=>r.json()).catch(()=>[]);
-    el.innerHTML=data.map(k=>_accKategori(k,param,param2)).join('');
-  } else if(level==='kategori'){
-    url=`${API}/enrichment/scorelist/${decodeURIComponent(param)}/${decodeURIComponent(param2)}/${decodeURIComponent(param3)}`;
-    data=await fetch(url).then(r=>r.json()).catch(()=>[]);
-    el.innerHTML=_renderUrunTable(data);
-  }
-}
-function _accSeason(s,markaPrm){
-  const id='acc-s-'+s.sezon_kodu+'_'+decodeURIComponent(markaPrm).replace(/\s/g,'_');
-  return `<div style="border-top:1px solid var(--border)">
-    <div class="acc-row" style="padding-left:28px" onclick="toggleAcc('${id}','season','${markaPrm}','${encodeURIComponent(s.sezon_kodu)}')">
-      <div style="font-size:12px;font-weight:600;color:var(--t1)">${s.sezon_kodu}</div>
-      <div style="font-size:11px;color:var(--t3);margin-left:8px">${s.sezon_adi||''} · ${s.toplam_urun} ürün</div>
-      ${_scoreBar(s.ort_skor)}
-      <div style="margin-left:8px">${_gradeMini(s.grade_a,s.grade_b,s.grade_c,s.grade_d,s.grade_f)}</div>
-      <span class="acc-arrow">▶</span>
-    </div>
-    <div class="acc-children" id="${id}"></div>
-  </div>`;
-}
-function _accKategori(k,markaPrm,sezonPrm){
-  const id='acc-k-'+encodeURIComponent(k.kategori)+'_'+sezonPrm+'_'+decodeURIComponent(markaPrm).replace(/\s/g,'_');
-  return `<div style="border-top:1px solid var(--border)">
-    <div class="acc-row" style="padding-left:44px;background:var(--bg3)" onclick="toggleAcc('${id}','kategori','${markaPrm}','${sezonPrm}','${encodeURIComponent(k.kategori)}')">
-      <div style="font-size:11px;font-weight:600;color:var(--t2)">${k.kategori}</div>
-      <div style="font-size:10px;color:var(--t3);margin-left:8px">${k.toplam_urun} ürün</div>
-      ${_scoreBar(k.ort_skor)}
-      <div style="margin-left:8px">${_gradeMini(k.grade_a,k.grade_b,k.grade_c,k.grade_d,k.grade_f)}</div>
-      <span class="acc-arrow">▶</span>
-    </div>
-    <div class="acc-children" id="${id}"></div>
-  </div>`;
-}
-function _renderUrunTable(items){
-  if(!items.length)return'<div style="padding:12px;color:var(--t3);font-size:11px">Ürün bulunamadı</div>';
-  const rows=items.map(r=>{
-    const gc=GRADE_COLOR[r.quality_grade]||'var(--t4)';
-    const img=r.default_image_url?`<img src="${r.default_image_url}" style="width:28px;height:28px;object-fit:cover;border-radius:3px" onerror="this.style.display='none'">`:
-      '<div style="width:28px;height:28px;background:var(--bg4);border-radius:3px"></div>';
-    const miniBar=(v)=>v!=null?`<div style="display:inline-block;width:30px;height:4px;background:var(--bg4);border-radius:2px;vertical-align:middle;margin-left:3px"><div style="height:100%;width:${Math.round(v/25*100)}%;background:${v>=20?'var(--green)':v>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>`:'';
-    return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openEnrModal('${r.urun_kodu}')">
-      <td style="padding:6px 8px">${img}</td>
-      <td style="padding:6px 8px;font-family:monospace;font-size:10px;color:var(--t3)">${r.urun_kodu}</td>
-      <td style="padding:6px 8px;font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||'—'}</td>
-      <td style="padding:6px 8px;font-size:10px;text-align:right">${r.score_temel_bilgi??'—'}${miniBar(r.score_temel_bilgi)}</td>
-      <td style="padding:6px 8px;font-size:10px;text-align:right">${r.score_kumas_bilgi??'—'}${miniBar(r.score_kumas_bilgi)}</td>
-      <td style="padding:6px 8px;font-size:10px;text-align:right">${r.score_gorsel??'—'}${miniBar(r.score_gorsel)}</td>
-      <td style="padding:6px 8px;font-size:10px;text-align:right">${r.score_satis_icerik??'—'}${miniBar(r.score_satis_icerik)}</td>
-      <td style="padding:6px 8px;font-size:14px;font-weight:700;text-align:right;color:${gc}">${r.quality_score??'—'}</td>
-      <td style="padding:6px 8px"><span class="grade-badge" style="background:${gc}">${r.quality_grade||'—'}</span></td>
-      <td style="padding:6px 8px;font-size:10px;color:var(--red)">${r.eksik_sayisi||0}</td>
-    </tr>`;
-  }).join('');
-  return `<table style="width:100%;border-collapse:collapse;font-size:11px">
-    <thead style="background:var(--bg4)"><tr>
-      <th style="padding:5px 8px;width:36px"></th>
-      <th style="padding:5px 8px;text-align:left;color:var(--t3);font-size:9px;text-transform:uppercase">Kod</th>
-      <th style="padding:5px 8px;text-align:left;color:var(--t3);font-size:9px;text-transform:uppercase">Ürün</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Temel</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Kumaş</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Görsel</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Satış</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Puan</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Grade</th>
-      <th style="padding:5px 8px;color:var(--t3);font-size:9px">Eksik</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  if(!brands.length){wrap.innerHTML='<div style="color:var(--t3);padding:20px">Veri yok — önce bir sezon puanlayın</div>';return;}
+  wrap.innerHTML=brands.map((b,idx)=>`
+    <div class="enr-brand-row" id="enrb-${idx}">
+      <!-- Marka satırı -->
+      <div style="display:grid;${_COL};align-items:center;padding:12px 20px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s" 
+           onclick="toggleEnrBrand(${idx},'${encodeURIComponent(b.marka_adi)}')" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:22px;height:22px;background:var(--orange);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${idx+1}</span>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--t1)">${b.marka_adi}</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:1px">${b.sezon_sayisi} sezon · ${b.puanlanan} puanlandı</div>
+          </div>
+          <span id="enrb-arrow-${idx}" style="font-size:10px;color:var(--t3);margin-left:4px;transition:transform .15s">▶</span>
+        </div>
+        <div style="text-align:right;font-size:16px;font-weight:700;color:var(--orange)">${(b.toplam_urun||0).toLocaleString('tr-TR')}</div>
+        <div style="text-align:center">${_gradeBar(b.grade_a,b.grade_b,b.grade_c,b.grade_d,b.grade_f)}</div>
+        <div style="text-align:right">${_avgScore(b.ort_skor)}</div>
+        <div style="text-align:right"></div>
+      </div>
+      <!-- Sezonlar (lazy) -->
+      <div id="enrb-children-${idx}" style="display:none;background:var(--bg2)"></div>
+    </div>`).join('');
 }
 
-// ─ Ürün Listesi sayfası ─
+async function toggleEnrBrand(idx,markaPrm){
+  const children=document.getElementById(`enrb-children-${idx}`);
+  const arrow=document.getElementById(`enrb-arrow-${idx}`);
+  if(children.style.display==='block'){
+    children.style.display='none'; arrow.style.transform=''; return;
+  }
+  children.style.display='block'; arrow.style.transform='rotate(90deg)';
+  if(children.innerHTML.trim())return;
+  children.innerHTML='<div class="loading" style="padding:12px"><div class="spinner"></div></div>';
+  const seasons=await fetch(`${API}/enrichment/scorelist/${decodeURIComponent(markaPrm)}`).then(r=>r.json()).catch(()=>[]);
+  children.innerHTML=seasons.map((s,si)=>`
+    <div class="enr-season-row" id="enrs-${idx}-${si}">
+      <div style="display:grid;${_COL};align-items:center;padding:10px 20px 10px 48px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+           onclick="toggleEnrSeason(${idx},${si},'${markaPrm}','${encodeURIComponent(s.sezon_kodu)}')" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:20px;height:20px;background:var(--teal);color:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">S</span>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--t1)">${s.sezon_adi||s.sezon_kodu}</div>
+            <div style="font-size:10px;color:var(--t3)">${s.sezon_kodu}</div>
+          </div>
+          <span id="enrs-arrow-${idx}-${si}" style="font-size:10px;color:var(--t3);margin-left:4px;transition:transform .15s">▶</span>
+        </div>
+        <div style="text-align:right;font-size:14px;font-weight:600;color:${(s.toplam_urun||0)>0?'var(--t1)':'var(--t4)'}">${(s.toplam_urun||0).toLocaleString('tr-TR')}</div>
+        <div style="text-align:center">${_gradeBar(s.grade_a,s.grade_b,s.grade_c,s.grade_d,s.grade_f)}</div>
+        <div style="text-align:right">${_avgScore(s.ort_skor)}</div>
+        <div style="text-align:right"></div>
+      </div>
+      <div id="enrs-children-${idx}-${si}" style="display:none;background:var(--bg3)"></div>
+    </div>`).join('');
+}
+
+async function toggleEnrSeason(bidx,sidx,markaPrm,sezonPrm){
+  const children=document.getElementById(`enrs-children-${bidx}-${sidx}`);
+  const arrow=document.getElementById(`enrs-arrow-${bidx}-${sidx}`);
+  if(children.style.display==='block'){children.style.display='none';arrow.style.transform='';return;}
+  children.style.display='block'; arrow.style.transform='rotate(90deg)';
+  if(children.innerHTML.trim())return;
+  children.innerHTML='<div class="loading" style="padding:12px"><div class="spinner"></div></div>';
+  const cats=await fetch(`${API}/enrichment/scorelist/${decodeURIComponent(markaPrm)}/${decodeURIComponent(sezonPrm)}`).then(r=>r.json()).catch(()=>[]);
+  children.innerHTML=cats.map((k,ki)=>`
+    <div class="enr-kat-row" id="enrk-${bidx}-${sidx}-${ki}">
+      <div style="display:grid;${_COL};align-items:center;padding:9px 20px 9px 76px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+           onclick="toggleEnrKat(${bidx},${sidx},${ki},'${markaPrm}','${sezonPrm}','${encodeURIComponent(k.kategori)}')" onmouseenter="this.style.background='rgba(255,255,255,.04)'" onmouseleave="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:16px;height:16px;background:var(--bg4);border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--t3);flex-shrink:0">K</span>
+          <div style="font-size:11px;font-weight:600;color:var(--t2)">${k.kategori}</div>
+          <span id="enrk-arrow-${bidx}-${sidx}-${ki}" style="font-size:10px;color:var(--t3);margin-left:4px;transition:transform .15s">▶</span>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--t2)">${(k.toplam_urun||0).toLocaleString('tr-TR')}</div>
+        <div style="text-align:center">${_gradeBar(k.grade_a,k.grade_b,k.grade_c,k.grade_d,k.grade_f)}</div>
+        <div style="text-align:right">${_avgScore(k.ort_skor)}</div>
+        <div style="text-align:right"></div>
+      </div>
+      <div id="enrk-children-${bidx}-${sidx}-${ki}" style="display:none"></div>
+    </div>`).join('');
+}
+
+async function toggleEnrKat(bidx,sidx,kidx,markaPrm,sezonPrm,katPrm){
+  const children=document.getElementById(`enrk-children-${bidx}-${sidx}-${kidx}`);
+  const arrow=document.getElementById(`enrk-arrow-${bidx}-${sidx}-${kidx}`);
+  if(children.style.display==='block'){children.style.display='none';arrow.style.transform='';return;}
+  children.style.display='block'; arrow.style.transform='rotate(90deg)';
+  if(children.innerHTML.trim())return;
+  children.innerHTML='<div class="loading" style="padding:12px"><div class="spinner"></div></div>';
+  const items=await fetch(`${API}/enrichment/scorelist/${decodeURIComponent(markaPrm)}/${decodeURIComponent(sezonPrm)}/${decodeURIComponent(katPrm)}`).then(r=>r.json()).catch(()=>[]);
+  if(!items.length){children.innerHTML='<div style="padding:10px 20px 10px 96px;color:var(--t4);font-size:11px">Ürün bulunamadı</div>';return;}
+  const rows=items.map(r=>{
+    const gc=GRADE_COLOR[r.quality_grade]||'var(--t4)';
+    const img=r.default_image_url?`<img src="${r.default_image_url}" style="width:28px;height:28px;object-fit:cover;border-radius:3px;flex-shrink:0" onerror="this.style.display='none'">`:
+      '<div style="width:28px;height:28px;background:var(--bg4);border-radius:3px;flex-shrink:0"></div>';
+    const miniPBar=(v)=>v!=null?`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+      <span style="font-size:11px;color:var(--t2)">${v}</span>
+      <div style="height:3px;width:40px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${Math.round((v||0)/25*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>
+    </div>`:'<span style="color:var(--t4)">—</span>';
+    return `<div style="display:grid;${_COL};align-items:center;padding:8px 20px 8px 96px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+      onclick="openEnrModal('${r.urun_kodu}')" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px">
+        ${img}
+        <div>
+          <div style="font-size:11px;color:var(--t1)">${r.urun_adi||'—'}</div>
+          <div style="font-size:9px;font-family:monospace;color:var(--t3)">${r.urun_kodu}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--t3)">—</div>
+      <div style="display:flex;justify-content:center;gap:8px;align-items:center">
+        ${miniPBar(r.score_temel_bilgi)}
+        ${miniPBar(r.score_kumas_bilgi)}
+        ${miniPBar(r.score_gorsel)}
+        ${miniPBar(r.score_satis_icerik)}
+      </div>
+      <div style="text-align:right">${_avgScore(r.quality_score)}</div>
+      <div style="text-align:right"><span class="grade-badge" style="background:${gc}">${r.quality_grade||'—'}</span></div>
+    </div>`;
+  }).join('');
+  children.innerHTML=rows;
+}
+
+// ─ Ürün Listesi ─
 async function loadEnrichmentList(page=1){
   _enrPage=page;
-  const sc=document.getElementById('enr-season-sel').value; if(!sc)return;
-  const sorun=document.getElementById('enr-sorun-sel').value;
-  const sort=document.getElementById('enr-sort-sel').value;
-  const gParam=_enrGrade&&_enrGrade!=='all'?`&grade=${_enrGrade}`:'';
-  const d=await fetch(`${API}/enrichment/products/${sc}?page=${page}&limit=50${gParam}${sorun?'&sorun='+sorun:''}&sort=${sort}`).then(r=>r.json()).catch(()=>({total:0,items:[]}));
-  if(!d.items?.length){document.getElementById('enr-table-wrap').innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Ürün bulunamadı</div>';return;}
-  document.getElementById('enr-table-wrap').innerHTML=`<table style="width:100%;border-collapse:collapse">
+  const sc=document.getElementById('enr-season-sel').value;
+  const wrap=document.getElementById('enr-table-wrap');
+  if(!sc){wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Sezon seçin</div>';return;}
+  const sorun=document.getElementById('enr-sorun-sel')?.value;
+  const sort=document.getElementById('enr-sort-sel')?.value||'score_asc';
+  const gP=_enrGrade&&_enrGrade!=='all'?`&grade=${_enrGrade}`:'';
+  wrap.innerHTML='<div class="loading" style="padding:20px"><div class="spinner"></div></div>';
+  const d=await fetch(`${API}/enrichment/products/${sc}?page=${page}&limit=50${gP}${sorun?'&sorun='+sorun:''}&sort=${sort}`).then(r=>r.json()).catch(()=>({total:0,items:[]}));
+  if(!d.items?.length){wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Ürün bulunamadı</div>';return;}
+  const bar=(v)=>`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+    <span style="font-size:11px">${v||0}</span>
+    <div style="height:4px;width:50px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${Math.round((v||0)/25*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>
+  </div>`;
+  wrap.innerHTML=`<table style="width:100%;border-collapse:collapse">
     <thead style="background:var(--bg3)"><tr>
-      <th style="padding:8px;font-size:10px;color:var(--t3);width:40px"></th>
-      <th style="padding:8px;font-size:10px;color:var(--t3);text-align:left">Kod</th>
+      <th style="padding:8px;width:40px"></th>
       <th style="padding:8px;font-size:10px;color:var(--t3);text-align:left">Ürün</th>
-      <th style="padding:8px;font-size:10px;color:var(--t3)">Temel</th>
-      <th style="padding:8px;font-size:10px;color:var(--t3)">Kumaş</th>
-      <th style="padding:8px;font-size:10px;color:var(--t3)">Görsel</th>
-      <th style="padding:8px;font-size:10px;color:var(--t3)">Satış</th>
+      <th style="padding:8px;font-size:10px;color:var(--t3)">Temel /25</th>
+      <th style="padding:8px;font-size:10px;color:var(--t3)">Kumaş /25</th>
+      <th style="padding:8px;font-size:10px;color:var(--t3)">Görsel /25</th>
+      <th style="padding:8px;font-size:10px;color:var(--t3)">Satış /25</th>
       <th style="padding:8px;font-size:10px;color:var(--t3)">Puan</th>
       <th style="padding:8px;font-size:10px;color:var(--t3)">Grade</th>
     </tr></thead>
     <tbody>${d.items.map(r=>{
-      const gc=GRADE_COLOR[r.quality_grade]||'var(--t3)';
-      const bar=(v)=>`<div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:2px"><div style="height:100%;width:${Math.round((v||0)/25*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>`;
+      const gc=GRADE_COLOR[r.quality_grade]||'var(--t4)';
       const img=r.gorsel_url?`<img src="${r.gorsel_url}" style="width:32px;height:32px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'">`:
         '<div style="width:32px;height:32px;background:var(--bg4);border-radius:4px"></div>';
-      return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openEnrModal('${r.urun_kodu}')">
+      return `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openEnrModal('${r.urun_kodu}')" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
         <td style="padding:8px">${img}</td>
-        <td style="padding:8px;font-family:monospace;font-size:11px;color:var(--t3)">${r.urun_kodu}</td>
-        <td style="padding:8px;font-size:12px">${r.urun_adi||'—'}</td>
-        <td style="padding:8px;font-size:11px">${r.score_temel_bilgi||0}/25${bar(r.score_temel_bilgi)}</td>
-        <td style="padding:8px;font-size:11px">${r.score_kumas_bilgi||0}/25${bar(r.score_kumas_bilgi)}</td>
-        <td style="padding:8px;font-size:11px">${r.score_gorsel||0}/25${bar(r.score_gorsel)}</td>
-        <td style="padding:8px;font-size:11px">${r.score_satis_icerik||0}/25${bar(r.score_satis_icerik)}</td>
-        <td style="padding:8px;font-size:16px;font-weight:700;color:${gc}">${r.quality_score||0}</td>
-        <td style="padding:8px"><span class="grade-badge" style="background:${gc}">${r.quality_grade||'—'}</span></td>
+        <td style="padding:8px"><div style="font-size:12px">${r.urun_adi||'—'}</div><div style="font-size:10px;font-family:monospace;color:var(--t3)">${r.urun_kodu}</div></td>
+        <td style="padding:8px;text-align:right">${bar(r.score_temel_bilgi)}</td>
+        <td style="padding:8px;text-align:right">${bar(r.score_kumas_bilgi)}</td>
+        <td style="padding:8px;text-align:right">${bar(r.score_gorsel)}</td>
+        <td style="padding:8px;text-align:right">${bar(r.score_satis_icerik)}</td>
+        <td style="padding:8px;text-align:right;font-size:16px;font-weight:700;color:${gc}">${r.quality_score||0}</td>
+        <td style="padding:8px;text-align:right"><span class="grade-badge" style="background:${gc}">${r.quality_grade||'—'}</span></td>
       </tr>`;
     }).join('')}</tbody></table>`;
   const pages=Math.ceil(d.total/50);
-  document.getElementById('enr-pagination').innerHTML=pages>1?Array.from({length:Math.min(pages,10)},(_,i)=>i+1).map(p=>`<button onclick="loadEnrichmentList(${p})" style="background:${p===page?'var(--orange)':'var(--bg3)'};border:1px solid var(--border);color:${p===page?'#fff':'var(--t2)'};padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px">${p}</button>`).join(''):'';
+  document.getElementById('enr-pagination').innerHTML=pages>1?Array.from({length:Math.min(pages,10)},(_,i)=>i+1)
+    .map(p=>`<button onclick="loadEnrichmentList(${p})" style="background:${p===page?'var(--orange)':'var(--bg3)'};border:1px solid var(--border);color:${p===page?'#fff':'var(--t2)'};padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px">${p}</button>`).join(''):'';
 }
 function enrToggleGrade(g){
   _enrGrade=g;
@@ -3869,19 +3961,22 @@ function enrToggleGrade(g){
   loadEnrichmentList(1);
 }
 
-// ─ Ürün Detay Modalı ─
+// ─ Ürün Modal ─
 async function openEnrModal(urunKodu){
   const modal=document.getElementById('enr-modal');
   const box=document.getElementById('enr-modal-box');
   modal.style.display='flex';
   box.innerHTML='<div class="loading"><div class="spinner"></div></div>';
   const d=await fetch(`${API}/enrichment/product/${urunKodu}`).then(r=>r.json()).catch(()=>null);
-  if(!d||d.detail){box.innerHTML=`<div style="color:var(--red)">${d?.detail||'Yüklenemedi'}</div>`;return;}
+  if(!d||d.detail){box.innerHTML=`<div style="color:var(--red);padding:20px">${d?.detail||'Yüklenemedi'}</div>`;return;}
   const gc=GRADE_COLOR[d.quality_grade]||'var(--t4)';
   const bar=(label,v,max=25)=>`<div style="margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
-      <span style="color:var(--t2)">${label}</span><span style="font-weight:600;color:var(--t1)">${v??'—'}/${max}</span></div>
-    <div style="height:6px;background:var(--bg4);border-radius:3px"><div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:3px;transition:width .6s"></div></div>
+      <span style="color:var(--t2)">${label}</span><span style="font-weight:600">${v??'—'}/${max}</span>
+    </div>
+    <div style="height:6px;background:var(--bg4);border-radius:3px">
+      <div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:3px"></div>
+    </div>
   </div>`;
   const eksik=JSON.parse(d.eksik_alanlar||'[]');
   const hatali=JSON.parse(d.hatali_alanlar||'[]');
@@ -3890,45 +3985,47 @@ async function openEnrModal(urunKodu){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div><div style="font-size:10px;color:var(--t3);font-family:monospace">${d.urun_kodu}</div>
       <div style="font-size:14px;font-weight:700;color:var(--t1);margin-top:2px">${d.urun_adi||'—'}</div></div>
-      <button onclick="closeEnrModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px;padding:0">×</button>
+      <button onclick="closeEnrModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:22px;padding:0;line-height:1">×</button>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:16px">
-      ${d.default_image_url?`<img src="${d.default_image_url}" style="width:64px;height:64px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">` :''}
-      <div><div style="font-size:32px;font-weight:700;color:${gc}">${d.quality_score??'—'}</div>
-        <span class="grade-badge" style="background:${gc};font-size:13px">${d.quality_grade||'—'}</span>
+    <div style="display:flex;align-items:center;gap:16px;background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:20px">
+      ${d.default_image_url?`<img src="${d.default_image_url}" style="width:64px;height:64px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` :''}
+      <div>
+        <div style="font-size:36px;font-weight:700;color:${gc};line-height:1">${d.quality_score??'—'}</div>
+        <span class="grade-badge" style="background:${gc};font-size:13px;margin-top:4px;display:inline-block">${d.quality_grade||'—'}</span>
       </div>
     </div>
     ${bar('Temel Bilgi',d.score_temel_bilgi)}
     ${bar('Kumaş Bilgisi',d.score_kumas_bilgi)}
     ${bar('Görsel',d.score_gorsel)}
     ${bar('Satış İçerik',d.score_satis_icerik)}
-    ${eksik.length?`<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 Eksik Alanlar (${eksik.length})</div>${eksik.map(e=>`<div style="font-size:11px;color:var(--t2);padding:3px 0;border-bottom:1px solid var(--border)">${e}</div>`).join('')}</div>`:''}
-    ${hatali.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Hatalı Alanlar</div>${hatali.map(h=>`<div style="font-size:11px;color:var(--t2);padding:3px 0;border-bottom:1px solid var(--border)"><strong>${h.alan}</strong>: ${h.sorun}</div>`).join('')}</div>`:''}
+    ${eksik.length?`<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 Eksik (${eksik.length})</div>${eksik.map(e=>`<div style="font-size:11px;color:var(--t2);padding:4px 0;border-bottom:1px solid var(--border)">${e}</div>`).join('')}</div>`:''}
+    ${hatali.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Hatalı</div>${hatali.map(h=>`<div style="font-size:11px;color:var(--t2);padding:4px 0;border-bottom:1px solid var(--border)"><strong>${h.alan}</strong>: ${h.sorun}</div>`).join('')}</div>`:''}
     ${uyari.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px">⚪ Uyarılar</div>${uyari.map(u=>`<div style="font-size:11px;color:var(--t3);padding:3px 0">${u}</div>`).join('')}</div>`:''}
-    <div style="margin-top:14px;font-size:10px;color:var(--t4)">Puanlandı: ${d.last_scored_at?new Date(d.last_scored_at).toLocaleString('tr-TR'):'-'}</div>`;
+    <div style="margin-top:16px;font-size:10px;color:var(--t4)">Puanlandı: ${d.last_scored_at?new Date(d.last_scored_at).toLocaleString('tr-TR'):'-'}</div>`;
 }
 function closeEnrModal(){document.getElementById('enr-modal').style.display='none';}
 
-// ─ Puanlama başlat ─
+// ─ Puanlama ─
 async function startEnrichmentScoring(){
   const sc=document.getElementById('enr-season-sel').value;
   if(!sc){alert('Önce sezon seçin');return;}
   const prog=document.getElementById('enr-progress');
   prog.textContent='Başlatılıyor...';
   const r=await fetch(`${API}/enrichment/score/${sc}`,{method:'POST'}).then(r=>r.json()).catch(()=>null);
-  if(!r){prog.textContent='Hata';return;}
+  if(!r){prog.textContent='❌ Hata';return;}
   _enrJobId=r.job_id;
   if(_enrJobTimer)clearInterval(_enrJobTimer);
   _enrJobTimer=setInterval(async()=>{
     const s=await fetch(`${API}/enrichment/score/status/${_enrJobId}`).then(r=>r.json()).catch(()=>null);
     if(!s)return;
-    if(s.status==='running')prog.textContent=`⏳ ${s.current||0}/${s.total||'?'} ürün`;
+    if(s.status==='running') prog.textContent=`⏳ ${s.current||0}/${s.total||'?'} ürün`;
     else if(s.status==='done'){
       prog.textContent=`✅ ${s.toplam_urun||'?'} ürün · ort. ${s.ortalama_puan||'?'}`;
       clearInterval(_enrJobTimer);
-      loadEnrichmentSeasons();
-      if(_enrActivePage==='dashboard')loadEnrichmentDashboard();
-      if(_enrActivePage==='scorelist')loadScoreList();
+      loadEnrichmentSeasons().then(()=>{
+        if(_enrActivePage==='dashboard') loadEnrichmentDashboard();
+        if(_enrActivePage==='scorelist') loadScoreList();
+      });
     }else if(s.status==='failed'){prog.textContent=`❌ ${s.error||'?'}`;clearInterval(_enrJobTimer);}
   },2000);
 }
