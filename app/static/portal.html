@@ -3999,27 +3999,67 @@ async function openEnrModal(urunKodu){
   const eksik=Array.isArray(d.eksik_alanlar)?d.eksik_alanlar:(d.eksik_alanlar?JSON.parse(d.eksik_alanlar):[]);
   const hatali=Array.isArray(d.hatali_alanlar)?d.hatali_alanlar:(d.hatali_alanlar?JSON.parse(d.hatali_alanlar):[]);
   const uyari=Array.isArray(d.uyarilar)?d.uyarilar:(d.uyarilar?JSON.parse(d.uyarilar):[]);
+  const dolu=d.dolu_alanlar||{};
+
+  // Dolu alanlar listesi
+  const doluHtml=Object.entries(dolu).length?`
+    <div style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">✅ Mevcut Bilgiler</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        ${Object.entries(dolu).map(([k,v])=>`
+          <div style="background:var(--bg3);border-radius:6px;padding:6px 10px">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);margin-bottom:2px">${k}</div>
+            <div style="font-size:12px;font-weight:600;color:var(--t1)">${v}</div>
+          </div>`).join('')}
+      </div>
+    </div>`:''
+
   box.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div><div style="font-size:10px;color:var(--t3);font-family:monospace">${d.urun_kodu}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--t1);margin-top:2px">${d.urun_adi||'—'}</div></div>
-      <button onclick="closeEnrModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:22px;padding:0;line-height:1">×</button>
+      <div>
+        <div style="font-size:10px;color:var(--t3);font-family:monospace;margin-bottom:2px">${d.urun_kodu}</div>
+        <div style="font-size:15px;font-weight:700;color:var(--t1)">${d.urun_adi||'—'}</div>
+      </div>
+      <button onclick="closeEnrModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:22px;padding:0;line-height:1;flex-shrink:0">×</button>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:16px;background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:16px">
       ${d.default_image_url?`<img src="${d.default_image_url}" style="width:64px;height:64px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">` :''}
       <div>
-        <div style="font-size:36px;font-weight:700;color:${gc};line-height:1">${d.quality_score??'—'}</div>
-        <span class="grade-badge" style="background:${gc};font-size:13px;margin-top:4px;display:inline-block">${d.quality_grade||'—'}</span>
+        <div style="font-size:40px;font-weight:700;color:${gc};line-height:1">${d.quality_score??'—'}</div>
+        <span class="grade-badge" style="background:${gc};font-size:14px;margin-top:6px;display:inline-block">${d.quality_grade||'—'}</span>
       </div>
     </div>
-    ${bar('Temel Bilgi',d.score_temel_bilgi)}
-    ${bar('Kumaş Bilgisi',d.score_kumas_bilgi)}
-    ${bar('Görsel',d.score_gorsel)}
-    ${bar('Satış İçerik',d.score_satis_icerik)}
-    ${eksik.length?`<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 Eksik (${eksik.length})</div>${eksik.map(e=>`<div style="font-size:11px;color:var(--t2);padding:4px 0;border-bottom:1px solid var(--border)">${e}</div>`).join('')}</div>`:''}
-    ${hatali.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Hatalı</div>${hatali.map(h=>`<div style="font-size:11px;color:var(--t2);padding:4px 0;border-bottom:1px solid var(--border)"><strong>${h.alan}</strong>: ${h.sorun}</div>`).join('')}</div>`:''}
-    ${uyari.length?`<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px">⚪ Uyarılar</div>${uyari.map(u=>`<div style="font-size:11px;color:var(--t3);padding:3px 0">${u}</div>`).join('')}</div>`:''}
-    <div style="margin-top:16px;font-size:10px;color:var(--t4)">Puanlandı: ${d.last_scored_at?new Date(d.last_scored_at).toLocaleString('tr-TR'):'-'}</div>`;
+    <div style="margin-bottom:16px">
+      ${bar('Temel Bilgi',d.score_temel_bilgi)}
+      ${bar('Kumaş Bilgisi',d.score_kumas_bilgi)}
+      ${bar('Görsel',d.score_gorsel)}
+      ${bar('Satış İçerik',d.score_satis_icerik)}
+    </div>
+    ${doluHtml}
+    ${eksik.length?`<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 Eksik Alanlar (${eksik.length})</div>
+      ${eksik.map(e=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="width:6px;height:6px;background:var(--red);border-radius:50%;flex-shrink:0"></span>
+        <span style="font-size:12px;color:var(--t1)">${e}</span>
+      </div>`).join('')}
+    </div>`:''}
+    ${hatali.length?`<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px">🟡 Düzeltilmesi Gerekenler (${hatali.length})</div>
+      ${hatali.map(h=>`<div style="padding:5px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:600;color:var(--t1)">${h.alan}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px">${h.sorun}</div>
+      </div>`).join('')}
+    </div>`:''}
+    ${uyari.length?`<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px">💡 Öneriler (${uyari.length})</div>
+      ${uyari.map(u=>`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 0">
+        <span style="color:var(--t4);font-size:10px;margin-top:2px">•</span>
+        <span style="font-size:11px;color:var(--t3)">${u}</span>
+      </div>`).join('')}
+    </div>`:''}
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--t4)">
+      Puanlandı: ${d.last_scored_at?new Date(d.last_scored_at).toLocaleString('tr-TR'):'-'}
+    </div>`;
 }
 function closeEnrModal(){document.getElementById('enr-modal').style.display='none';}
 

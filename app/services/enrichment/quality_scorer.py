@@ -57,40 +57,40 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         t += 5
     elif desc:
         t += 2
-        hatali.append({"alan": "description", "sorun": f"çok kısa ({len(desc)} karakter, min 10)"})
+        hatali.append({"alan": "Ürün Açıklaması", "sorun": f"çok kısa ({len(desc)} karakter, min 10)"})
     else:
-        eksik.append("description (ürün adı/açıklama)")
+        eksik.append("Ürün Açıklaması")
 
     if product_data.get("brandCode"):
         t += 4
     else:
-        eksik.append("brandCode (marka kodu)")
+        eksik.append("Marka")
 
     if product_data.get("seasonCode"):
         t += 3
     else:
-        eksik.append("seasonCode (sezon kodu)")
+        eksik.append("Sezon")
 
     if product_data.get("productGroupCode"):
         t += 5
     else:
-        eksik.append("productGroupCode (ürün grubu)")
+        eksik.append("Ürün Grubu")
 
     if product_data.get("productMainGroupCode"):
         t += 4
     else:
-        eksik.append("productMainGroupCode (ana grup)")
+        eksik.append("Ana Kategori")
 
     if product_data.get("productTypeCode"):
         t += 2
     else:
-        uyarilar.append("productTypeCode (dokuma/örme tipi) atanmamış")
+        uyarilar.append("Kumaş Tipi (Dokuma/Örme) belirtilmemiş")
 
     vat = product_data.get("vatRate")
     if vat is not None and vat >= 0:
         t += 2
     else:
-        uyarilar.append("vatRate (KDV oranı) tanımlanmamış")
+        uyarilar.append("KDV Oranı tanımlanmamış")
 
     # ── Kumaş Bilgisi (25 puan) ──────────────────────────────────────────────
     # fabricMaterialName: 5p, mainMaterialContent+%: 7p,
@@ -100,12 +100,12 @@ def score_product(stock_code: str, product_data: dict) -> dict:
     if product_data.get("fabricMaterialName"):
         k += 5
     else:
-        eksik.append("fabricMaterialName (kumaş adı)")
+        eksik.append("Kumaş Adı")
 
     if product_data.get("fabricMaterialCode"):
         k += 3
     else:
-        uyarilar.append("fabricMaterialCode (kumaş kodu) atanmamış")
+        uyarilar.append("Kumaş Kodu girilmemiş")
 
     # mainMaterialContent: barcodes içinde herhangi birinde olmalı, % içermeli
     mat_contents = [
@@ -120,12 +120,12 @@ def score_product(stock_code: str, product_data: dict) -> dict:
             k += 7
         elif has_pct:
             k += 5
-            hatali.append({"alan": "mainMaterialContent", "sorun": "% var ama detay az (ör. 'Pamuk %95, Elastan %5 | Astar: Pamuk %100')"})
+            hatali.append({"alan": "Kumaş İçerik %", "sorun": "% var ama detay az (ör. 'Pamuk %95, Elastan %5 | Astar: Pamuk %100')"})
         else:
             k += 2
-            hatali.append({"alan": "mainMaterialContent", "sorun": "% içeriği bulunamadı — oranları ekleyin"})
+            hatali.append({"alan": "Kumaş İçerik %", "sorun": "% içeriği bulunamadı — oranları ekleyin"})
     else:
-        eksik.append("mainMaterialContent (kumaş içerik %)")
+        eksik.append("Kumaş İçerik % (ör: Pamuk %95, Elastan %5)")
 
     # Bakım talimatları
     care_count = len(care) if care else 0
@@ -133,14 +133,14 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         k += 7
     elif care_count >= 1:
         k += 4
-        hatali.append({"alan": "washingAndCareInstructions", "sorun": f"sadece {care_count} bakım talimatı var, en az 3 olmalı"})
+        hatali.append({"alan": "Bakım Talimatları", "sorun": f"sadece {care_count} bakım talimatı var, en az 3 olmalı"})
     else:
-        eksik.append("washingAndCareInstructions (bakım talimatları)")
+        eksik.append("Bakım Talimatları")
 
     if product_data.get("fitCode"):
         k += 3
     else:
-        eksik.append("fitCode (kalıp tipi: slim/regular/oversize)")
+        eksik.append("Kalıp Tipi (Slim/Regular/Oversize)")
 
     # ── Görsel (25 puan) ─────────────────────────────────────────────────────
     # Görsel sayısı: ≥5=12p, 3-4=9p, 2=6p, 1=3p, 0=0p
@@ -159,7 +159,7 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         g += 3
         uyarilar.append("Sadece 1 görsel var — en az 3 görsel önerilir")
     else:
-        eksik.append("productImages (ürün görselleri)")
+        eksik.append("Ürün Görseli")
 
     # Renk başına görsel
     renk_kodlari = set(b.get("colorCode", "") for b in barcodes if b.get("colorCode"))
@@ -174,7 +174,7 @@ def score_product(stock_code: str, product_data: dict) -> dict:
             uyarilar.append(f"{len(eksik_renk)}/{len(renk_kodlari)} renk için görsel eksik: {', '.join(list(eksik_renk)[:3])}")
         else:
             g += 1
-            hatali.append({"alan": "productImages (renk çeşitliliği)", "sorun": f"{len(eksik_renk)} rengin görseli yok"})
+            hatali.append({"alan": "Ürün Görseli (renk çeşitliliği)", "sorun": f"{len(eksik_renk)} rengin görseli yok"})
     elif img_count > 0:
         g += 4
 
@@ -182,14 +182,14 @@ def score_product(stock_code: str, product_data: dict) -> dict:
     if any(b.get("colorHexCode") for b in barcodes):
         g += 3
     else:
-        uyarilar.append("colorHexCode (renk hex kodu) tanımlanmamış")
+        uyarilar.append("Renk Hex Kodu girilmemiş")
 
     # Görsel tip çeşitliliği (manken/ürün/detay)
     img_types = set(img.get("type", "") for img in images if img.get("type"))
     if len(img_types) >= 2:
         g += 2
     elif img_count > 0:
-        uyarilar.append("Görsel tip çeşitliliği yok (manken + ürün + detay önerilir)")
+        uyarilar.append("Görsel çeşidi az — manken, ürün ve detay fotoğrafı önerilir")
 
     # ── Satış İçerik (25 puan) ───────────────────────────────────────────────
     # description uzunluğu (≥80: 8p, ≥50: 6p, ≥20: 3p): 8p
@@ -204,10 +204,10 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         uyarilar.append(f"Açıklama {len(desc)} karakter — 80+ önerilir")
     elif len(desc) >= 20:
         s += 3
-        hatali.append({"alan": "description (içerik)", "sorun": f"kısa ({len(desc)} karakter, ideal ≥80 — e-ticaret arama için)"})
+        hatali.append({"alan": "Ürün Açıklaması (kısa)", "sorun": f"kısa ({len(desc)} karakter, ideal ≥80 — e-ticaret arama için)"})
     elif desc:
         s += 1
-        hatali.append({"alan": "description (içerik)", "sorun": f"çok kısa ({len(desc)} karakter)"})
+        hatali.append({"alan": "Ürün Açıklaması (kısa)", "sorun": f"çok kısa ({len(desc)} karakter)"})
 
     # ecomTags
     for tag_n in range(1, 5):
@@ -215,14 +215,14 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         if product_data.get(tag_key):
             s += 2
         elif tag_n == 1:
-            eksik.append(f"ecomTag1Code (birincil e-ticaret etiketi — zorunlu)")
+            eksik.append(f"1. E-Ticaret Etiketi (Zorunlu)")
         else:
             uyarilar.append(f"ecomTag{tag_n}Code atanmamış")
 
     if product_data.get("productThemeCode"):
         s += 4
     else:
-        eksik.append("productThemeCode (koleksiyon teması)")
+        eksik.append("Koleksiyon Teması")
 
     if len(notes) >= 30:
         s += 3
@@ -230,13 +230,13 @@ def score_product(stock_code: str, product_data: dict) -> dict:
         s += 1
         uyarilar.append(f"Notlar kısa ({len(notes)} kar.) — daha açıklayıcı olabilir")
     else:
-        eksik.append("notes (iç notlar/stil önerisi)")
+        eksik.append("Ürün Notu / Stil Önerisi")
 
     # İlişkili ürün veya hikaye
     if relations or stories:
         s += 2
     else:
-        uyarilar.append("İlişkili ürün/hikaye tanımlanmamış (kombinasyon önerileri)")
+        uyarilar.append("İlişkili ürün veya koleksiyon hikayesi eklenmemiş")
 
     # ── Toplam ───────────────────────────────────────────────────────────────
     total = min(t, 25) + min(k, 25) + min(g, 25) + min(s, 25)

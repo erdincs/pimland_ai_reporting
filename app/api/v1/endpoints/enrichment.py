@@ -240,7 +240,12 @@ async def get_product_detail(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
 ) -> Dict[str, Any]:
     row = (await session.execute(text("""
-        SELECT eq.*, p.urun_adi, p.default_image_url
+        SELECT
+            eq.*,
+            p.urun_adi, p.default_image_url,
+            p.marka_adi, p.sezon_adi, p.sezon_kodu,
+            p.ana_grup_adi, p.urun_grubu_adi, p.tema_adi,
+            p.fabricmaterialname, p.color_codes, p.internet_aktif, p.bloke
         FROM enrichment_quality eq
         LEFT JOIN pim_products p ON p.urun_kodu = eq.urun_kodu
         WHERE eq.urun_kodu = :uk
@@ -250,7 +255,24 @@ async def get_product_detail(
         from fastapi import HTTPException
         raise HTTPException(404, f"'{urun_kodu}' henüz puanlanmamış")
 
-    return dict(row)
+    d = dict(row)
+
+    # Dolu alanların değerlerini ayrı bir dict olarak sun
+    dolu = {}
+    if d.get("marka_adi"):          dolu["Marka"]           = d["marka_adi"]
+    if d.get("sezon_adi"):          dolu["Sezon"]           = f"{d['sezon_adi']} ({d.get('sezon_kodu','')})"
+    if d.get("ana_grup_adi"):       dolu["Ana Kategori"]    = d["ana_grup_adi"]
+    if d.get("urun_grubu_adi"):     dolu["Ürün Grubu"]      = d["urun_grubu_adi"]
+    if d.get("tema_adi"):           dolu["Tema"]            = d["tema_adi"]
+    if d.get("fabricmaterialname"): dolu["Kumaş"]           = d["fabricmaterialname"]
+    if d.get("color_codes"):
+        renk_sayisi = len([c for c in d["color_codes"].split(",") if c.strip()])
+        dolu["Renk Sayısı"] = f"{renk_sayisi} renk"
+    dolu["İnternet"] = "Aktif" if d.get("internet_aktif") else "Pasif"
+    if d.get("bloke"):              dolu["Durum"] = "Bloke"
+
+    d["dolu_alanlar"] = dolu
+    return d
 
 
 # ── GET /scorelist — Marka > Sezon > Kategori hiyerarşisi ────────────────────
