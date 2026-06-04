@@ -6846,6 +6846,7 @@ function renderDonemseel(d) {
   }).join('');
 
   // ── Render ────────────────────────────────────────────────────────────────
+  _dpRenderBolge(d.bolgeler||[]);
   content.innerHTML = `
     <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -6853,10 +6854,7 @@ function renderDonemseel(d) {
       ${isiHtml}
     </div>
     ${karsiHtml}
-    ${bolgeCards ? `
-    <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-top:4px">BÖLGE MÜDÜRÜ PERFORMANSI — TOP 3</div>
-    <div style="display:flex;gap:14px">${bolgeCards}</div>` : ''}
-    ${_dpAllBolgeTable(d.bolgeler||[])}
+    <div id="dp-bolge-wrap"><!-- bölge render buraya --></div>
   `;
 }
 
@@ -7172,6 +7170,136 @@ function renderDK(d) {
     content.innerHTML=`
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${yillikHtml}${buyumeHtml}</div>`;
   }
+}
+
+
+let _dpBolgeSort = 'net_ciro';
+let _dpBolgeData  = [];
+
+function dpSortBolge(key) {
+  _dpBolgeSort = key;
+  // buton stillerini güncelle
+  ['net_ciro','hedef_oran','ziyaretci','mdo'].forEach(k=>{
+    const btn=document.getElementById('dp-bs-'+k);
+    if(!btn) return;
+    const a=k===key;
+    btn.style.background=a?'var(--orange)':'var(--bg3)';
+    btn.style.borderColor=a?'var(--orange)':'var(--border)';
+    btn.style.color=a?'#fff':'var(--t2)';
+    btn.style.fontWeight=a?'700':'400';
+  });
+  _dpRenderBolge(_dpBolgeData);
+}
+
+function _dpRenderBolge(bolgeler) {
+  _dpBolgeData = bolgeler;
+  const wrap = document.getElementById('dp-bolge-wrap');
+  if(!wrap || !bolgeler.length) return;
+
+  // Sırala
+  const sorted = [...bolgeler].sort((a,b)=>{
+    if(_dpBolgeSort==='hedef_oran') return b.hedef_oran-a.hedef_oran;
+    if(_dpBolgeSort==='ziyaretci')  return b.ziyaretci-a.ziyaretci;
+    if(_dpBolgeSort==='mdo')        return b.mdo-a.mdo;
+    return b.net_ciro-a.net_ciro; // default
+  });
+
+  const sortLabels={net_ciro:'Net Ciro',hedef_oran:'Hedef Oranı',ziyaretci:'Ziyaretçi',mdo:'MDO'};
+  const sortBtns=['net_ciro','hedef_oran','ziyaretci','mdo'].map(k=>{
+    const a=k===_dpBolgeSort;
+    return `<button id="dp-bs-${k}" onclick="dpSortBolge('${k}')"
+      style="background:${a?'var(--orange)':'var(--bg3)'};border:1px solid ${a?'var(--orange)':'var(--border)'};color:${a?'#fff':'var(--t2)'};
+             padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:${a?'700':'400'}">
+      ${sortLabels[k]}
+    </button>`;
+  }).join('');
+
+  // Top 4 kart
+  const top4 = sorted.slice(0,4).map(b=>{
+    const bc=b.hedef_oran>=90?'var(--green)':b.hedef_oran>=80?'var(--yellow)':'var(--red)';
+    const bw=Math.min(b.hedef_oran||0,100);
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;flex:1;min-width:180px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--t1)">${b.bolge_muduru}</div>
+          <div style="font-size:9px;color:var(--t3)">${b.magaza_sayisi} mağaza · 2026 YTD</div>
+        </div>
+        <span style="font-size:16px;font-weight:700;color:${bc}">%${b.hedef_oran}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div><div style="font-size:8px;color:var(--t3);font-weight:700">NET CİRO</div>
+          <div style="font-size:12px;font-weight:700;color:var(--teal)">${_myFmt(b.net_ciro,'tl')}</div></div>
+        <div><div style="font-size:8px;color:var(--t3);font-weight:700">ZİYARETÇİ</div>
+          <div style="font-size:12px;font-weight:700;color:var(--t1)">${_myFmt(b.ziyaretci,'sayi')}</div></div>
+        <div><div style="font-size:8px;color:var(--t3);font-weight:700">MDO</div>
+          <div style="font-size:12px;font-weight:700;color:var(--teal)">%${(b.mdo||0).toFixed(1)}</div></div>
+      </div>
+      <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
+        <div style="width:${bw}%;height:100%;background:${bc};border-radius:3px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:2px">
+        <span style="font-size:9px;color:var(--t3)">Hedef Gerçekleşme</span>
+        <span style="font-size:9px;color:${bc};font-weight:600">%${b.hedef_oran}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Tam liste
+  const maxCiro=Math.max(...sorted.map(b=>b.net_ciro||0),1);
+  const tableRows=sorted.map((b,i)=>{
+    const oc=b.hedef_oran>=90?'var(--green)':b.hedef_oran>=80?'var(--yellow)':'var(--red)';
+    const mc=b.mdo>=16?'var(--green)':b.mdo>=13?'var(--teal)':'var(--orange)';
+    const bw2=Math.min(b.hedef_oran||0,100);
+    const cw=Math.round((b.net_ciro||0)/maxCiro*100);
+    const rb=i===0?'var(--orange)':i===1?'var(--teal)':i===2?'var(--blue)':'var(--t4)';
+    return `<tr style="border-bottom:1px solid rgba(42,42,58,.2)">
+      <td style="padding:8px 10px"><div style="width:22px;height:22px;border-radius:50%;background:${rb}22;color:${rb};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div></td>
+      <td style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--t1)">${b.bolge_muduru}</td>
+      <td style="padding:8px 10px;text-align:center;font-size:10px;color:var(--t3)">${b.magaza_sayisi} mğz</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.hedef||0,'tl')}</td>
+      <td style="padding:8px 10px;min-width:140px">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:${cw}%;height:100%;background:var(--teal)"></div></div>
+          <span style="font-size:11px;font-weight:600;color:var(--teal);min-width:50px;text-align:right">${_myFmt(b.net_ciro||0,'tl')}</span>
+        </div>
+      </td>
+      <td style="padding:8px 10px;min-width:110px">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:${bw2}%;height:100%;background:${oc}"></div></div>
+          <span style="font-size:11px;font-weight:700;color:${oc}">%${b.hedef_oran}</span>
+        </div>
+      </td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.ziyaretci||0,'sayi')}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:${mc}">%${(b.mdo||0).toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">BÖLGE MÜDÜRÜ PERFORMANSI</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;color:var(--t3)">Sırala:</span>
+        <div style="display:flex;gap:4px">${sortBtns}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">${top4}</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="padding:7px 10px;width:36px"></th>
+            <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px">BÖLGE MÜDÜRÜ</th>
+            <th style="padding:7px 10px;text-align:center;color:var(--t3);font-size:9px">MĞZA</th>
+            <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
+            <th style="padding:7px 10px;color:var(--t3);font-size:9px">NET CİRO</th>
+            <th style="padding:7px 10px;color:var(--t3);font-size:9px">HEDEF ORANI</th>
+            <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">ZİYARETÇİ</th>
+            <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">MDO</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
