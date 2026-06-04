@@ -6846,7 +6846,6 @@ function renderDonemseel(d) {
   }).join('');
 
   // ── Render ────────────────────────────────────────────────────────────────
-  _dpRenderBolge(d.bolgeler||[]);
   content.innerHTML = `
     <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -6856,6 +6855,8 @@ function renderDonemseel(d) {
     ${karsiHtml}
     <div id="dp-bolge-wrap"><!-- bölge render buraya --></div>
   `;
+  // DOM hazır olduktan sonra bölge bölümünü render et
+  requestAnimationFrame(()=>_dpRenderBolge(d.bolgeler||[]));
 }
 
 
