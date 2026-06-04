@@ -251,3 +251,108 @@ async def get_product_detail(
         raise HTTPException(404, f"'{urun_kodu}' henüz puanlanmamış")
 
     return dict(row)
+
+
+# ── GET /scorelist — Marka > Sezon > Kategori hiyerarşisi ────────────────────
+
+@router.get("/scorelist")
+async def get_scorelist(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Marka bazlı özet — Sezon/Kategori detayları lazy load."""
+    rows = (await session.execute(text("""
+        SELECT
+            p.marka_adi,
+            COUNT(DISTINCT p.urun_kodu)            AS toplam_urun,
+            COUNT(DISTINCT p.sezon_kodu)           AS sezon_sayisi,
+            ROUND(AVG(e.quality_score)::numeric,1) AS ort_skor,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='A') AS grade_a,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='B') AS grade_b,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='C') AS grade_c,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='D') AS grade_d,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='F') AS grade_f,
+            COUNT(e.urun_kodu) AS puanlanan
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.marka_adi IS NOT NULL
+        GROUP BY p.marka_adi
+        ORDER BY toplam_urun DESC
+    """))).mappings().all()
+    return [dict(r) for r in rows]
+
+
+@router.get("/scorelist/{marka}")
+async def get_scorelist_brand(
+    marka: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Marka bazlı sezonlar."""
+    rows = (await session.execute(text("""
+        SELECT
+            p.sezon_kodu, p.sezon_adi,
+            COUNT(DISTINCT p.urun_kodu)            AS toplam_urun,
+            ROUND(AVG(e.quality_score)::numeric,1) AS ort_skor,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='A') AS grade_a,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='B') AS grade_b,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='C') AS grade_c,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='D') AS grade_d,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='F') AS grade_f
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.marka_adi = :marka
+        GROUP BY p.sezon_kodu, p.sezon_adi
+        ORDER BY p.sezon_kodu DESC
+    """), {"marka": marka})).mappings().all()
+    return [dict(r) for r in rows]
+
+
+@router.get("/scorelist/{marka}/{sezon}")
+async def get_scorelist_season(
+    marka: str,
+    sezon: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Sezon > Kategori (ana_grup_adi)."""
+    rows = (await session.execute(text("""
+        SELECT
+            COALESCE(p.ana_grup_adi, 'Diğer')      AS kategori,
+            COUNT(DISTINCT p.urun_kodu)            AS toplam_urun,
+            ROUND(AVG(e.quality_score)::numeric,1) AS ort_skor,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='A') AS grade_a,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='B') AS grade_b,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='C') AS grade_c,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='D') AS grade_d,
+            COUNT(e.urun_kodu) FILTER (WHERE e.quality_grade='F') AS grade_f
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.marka_adi = :marka AND p.sezon_kodu = :sezon
+        GROUP BY p.ana_grup_adi
+        ORDER BY toplam_urun DESC
+    """), {"marka": marka, "sezon": sezon})).mappings().all()
+    return [dict(r) for r in rows]
+
+
+@router.get("/scorelist/{marka}/{sezon}/{kategori}")
+async def get_scorelist_category(
+    marka: str,
+    sezon: str,
+    kategori: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Kategori > Ürünler."""
+    rows = (await session.execute(text("""
+        SELECT
+            p.urun_kodu, p.urun_adi, p.default_image_url,
+            e.quality_score, e.quality_grade,
+            e.score_temel_bilgi, e.score_kumas_bilgi,
+            e.score_gorsel, e.score_satis_icerik,
+            jsonb_array_length(COALESCE(e.eksik_alanlar,'[]'::jsonb)) AS eksik_sayisi
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.marka_adi = :marka
+          AND p.sezon_kodu = :sezon
+          AND COALESCE(p.ana_grup_adi, 'Diğer') = :kat
+        ORDER BY e.quality_score ASC NULLS LAST
+        LIMIT 200
+    """), {"marka": marka, "sezon": sezon, "kat": kategori})).mappings().all()
+    return [dict(r) for r in rows]

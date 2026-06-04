@@ -273,8 +273,7 @@ async def score_season(
                 quality_score, quality_grade,
                 score_temel_bilgi, score_kumas_bilgi,
                 score_gorsel, score_satis_icerik,
-                eksik_alanlar, hatali_alanlar, uyarilar,
-                last_scored_at
+                eksik_alanlar, hatali_alanlar, uyarilar
             ) VALUES %s
             ON CONFLICT (urun_kodu) DO UPDATE SET
                 sezon_kodu        = EXCLUDED.sezon_kodu,
