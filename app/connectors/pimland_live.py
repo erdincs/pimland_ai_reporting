@@ -114,13 +114,13 @@ async def fetch_product_full(stock_code: str) -> Dict[str, Any]:
             token = None
 
         # Paralel çağrılar
+        # get_products_with_squ kaldırıldı → get_products_by_filter kullan
         task_keys = ["details", "stocks", "sales_prices", "erp_prices",
                      "relations", "size_values", "sizes"]
         task_coros = [
             _call_tool(client, token,
-                "post_api_Product_get_products_with_squ",
-                {"stockCode": stock_code, "updatedDate": "2020-01-01T00:00:00",
-                 "pageSize": 5, "pageNumber": 1}),
+                "post_api_Product_get_products_by_filter",
+                {"stockCode": stock_code, "pageSize": 5, "pageNumber": 1}),
             _call_tool(client, token,
                 "post_api_Product_get_product_stocks",
                 {"stockCode": stock_code}),
@@ -142,16 +142,21 @@ async def fetch_product_full(stock_code: str) -> Dict[str, Any]:
         ]
         results = dict(zip(task_keys, await asyncio.gather(*task_coros)))
 
-    # details: öğeyi stockCode ile bul (pagination içinde gelebilir)
+    # details: get_products_by_filter → result.products[] içinden stockCode ile bul
     det_raw = results.get("details")
     det_items: List[Dict] = []
     if isinstance(det_raw, dict):
-        for path in ("items", "data", "products", "result"):
-            if isinstance(det_raw.get(path), list):
-                det_items = _filter_by_stock(det_raw[path], stock_code)
-                break
-        if not det_items and isinstance(det_raw.get("items"), list):
-            det_items = det_raw["items"][:1]
+        # get_products_by_filter: result.products
+        result_obj = det_raw.get("result") or {}
+        if isinstance(result_obj, dict) and isinstance(result_obj.get("products"), list):
+            det_items = _filter_by_stock(result_obj["products"], stock_code)
+        # fallback: diğer yolları dene
+        if not det_items:
+            for path in ("products", "items", "data"):
+                if isinstance(det_raw.get(path), list):
+                    det_items = _filter_by_stock(det_raw[path], stock_code)
+                    if det_items:
+                        break
     elif isinstance(det_raw, list):
         det_items = _filter_by_stock(det_raw, stock_code)
 
@@ -174,6 +179,61 @@ async def fetch_product_full(stock_code: str) -> Dict[str, Any]:
         "size_values":  _listify(results.get("size_values")),
         "sizes":        _listify(results.get("sizes")),
     }
+
+
+async def fetch_season_products(season_code: str) -> Dict[str, Dict]:
+    """
+    Bir sezonun tüm ürünlerini MCP'den çeker.
+    get_products_by_filter ile season filtresi kullanır.
+    Döner: {stockCode: product_dict}
+    """
+    result_map: Dict[str, Dict] = {}
+    page = 1
+
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        try:
+            token = await _get_token(client)
+        except Exception as exc:
+            log.warning("pimland_live.token_failed", error=str(exc))
+            return result_map
+
+        while True:
+            raw = await _call_tool(client, token,
+                "post_api_Product_get_products_by_filter",
+                {"season": season_code, "pageSize": 100, "pageNumber": page}
+            )
+            if not raw:
+                break
+
+            # Response: result.products veya result direkt liste
+            if isinstance(raw, dict):
+                result_obj = raw.get("result") or raw
+                if isinstance(result_obj, dict):
+                    products = result_obj.get("products") or []
+                    total_pages = result_obj.get("totalPageCount", 1)
+                else:
+                    products = []
+                    total_pages = 1
+            elif isinstance(raw, list):
+                products = raw
+                total_pages = 1
+            else:
+                break
+
+            for p in products:
+                if isinstance(p, dict) and p.get("stockCode"):
+                    result_map[p["stockCode"]] = p
+
+            log.debug("pimland_live.season_page",
+                      season=season_code, page=page,
+                      fetched=len(products), total=len(result_map))
+
+            if page >= total_pages:
+                break
+            page += 1
+
+    log.info("pimland_live.season_done", season=season_code, total=len(result_map))
+    return result_map
 
 
 async def search_products(

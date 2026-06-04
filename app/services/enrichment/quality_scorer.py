@@ -348,29 +348,20 @@ async def score_season(
 
     log.info("quality_scorer.season_start", season=season_code, total=total, use_mcp=use_mcp)
 
-    # MCP'den toplu veri çek (20'şerli batch)
+    # MCP'den sezon bazlı toplu veri çek
+    # get_products_by_filter(season=X) tüm ürünleri sayfalı döndürür
     mcp_map: Dict[str, Any] = {}
     if use_mcp:
         try:
-            from app.services.batch_mcp_service import fetch_batch
-            all_skus = [r["urun_kodu"] for r in db_rows]
-            MCP_CHUNK = 20
-            for i in range(0, len(all_skus), MCP_CHUNK):
-                chunk = all_skus[i:i + MCP_CHUNK]
-                chunk_data = await fetch_batch(chunk, limit=MCP_CHUNK)
-                # details alanını al
-                for sku, data in chunk_data.items():
-                    det = data.get("details")
-                    if det:
-                        mcp_map[sku] = det
-                done_so_far = min(i + MCP_CHUNK, total)
-                log.info("quality_scorer.mcp_chunk",
-                         done=done_so_far, total=total, fetched=len(mcp_map))
-                if progress_callback:
-                    progress_callback(done_so_far, total)
+            from app.connectors.pimland_live import fetch_season_products
+            if progress_callback:
+                progress_callback(0, total)
+            mcp_map = await fetch_season_products(season_code)
             log.info("quality_scorer.mcp_done",
                      mcp_fetched=len(mcp_map), total=total,
                      coverage_pct=round(len(mcp_map) / total * 100, 1))
+            if progress_callback:
+                progress_callback(len(mcp_map), total)
         except Exception as e:
             log.warning("quality_scorer.mcp_failed", error=str(e))
 
