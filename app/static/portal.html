@@ -6442,7 +6442,7 @@ function renderMagazaPerformans(d) {
       const bw2=Math.min(oran,100);
       tableRows+=`<tr style="background:var(--bg3);border-bottom:2px solid var(--border);cursor:pointer" onclick="mpToggleBolge('${bolge.replace(/'/g,"\\'")}',this)">
         <td colspan="${_mpGroupMode==='bolge'?1:2}" style="padding:9px 12px;font-size:12px;font-weight:700;color:var(--t1)">
-          <span id="mp-arrow-${btoa(bolge).substring(0,8)}" style="margin-right:6px;display:inline-block;transition:transform .2s">▶</span>${bolge}
+          <span id="mp-arrow-${encodeURIComponent(bolge).replace(/[^a-zA-Z0-9]/g,'').substring(0,12)||(bolge.length+'x'+bolge.charCodeAt(0))}" style="margin-right:6px;display:inline-block;transition:transform .2s">▶</span>${bolge}
           <span style="font-size:10px;font-weight:400;color:var(--t3);margin-left:8px">${mags.length} mağaza</span>
         </td>
         <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(tot.hedef,'tl')}</td>
@@ -6460,7 +6460,7 @@ function renderMagazaPerformans(d) {
         <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${tot.adet.toLocaleString('tr-TR')}</td>
       </tr>`;
       // Mağaza satırları (gizli, tıklayınca açılır)
-      tableRows+=`<tbody class="mp-bolge-rows" id="mp-bolge-${btoa(bolge).substring(0,8)}" style="display:none">`;
+      tableRows+=`<tbody class="mp-bolge-rows" id="mp-bolge-${encodeURIComponent(bolge).replace(/[^a-zA-Z0-9]/g,'').substring(0,12)||(bolge.length+'x'+bolge.charCodeAt(0))}" style="display:none">`;
       mags.forEach(m=>{ tableRows+=_mpMagRow(m,true); });
       tableRows+='</tbody>';
     });
@@ -6586,7 +6586,7 @@ function mpSetGroup(mode) {
 }
 
 function mpToggleBolge(bolge, headerRow) {
-  const key = btoa(bolge).substring(0,8);
+  const key = encodeURIComponent(bolge).replace(/[^a-zA-Z0-9]/g,'').substring(0,12) || (bolge.length+'x'+bolge.charCodeAt(0));
   const tbody = document.getElementById('mp-bolge-'+key);
   const arrow = document.getElementById('mp-arrow-'+key);
   if(!tbody) return;
