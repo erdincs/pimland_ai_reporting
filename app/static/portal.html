@@ -6299,6 +6299,7 @@ async function loadMagazaPerformans() {
 }
 
 function renderMagazaPerformans(d) {
+  window._mpLastData = d;  // sort için sakla
   const content = document.getElementById('mp-content');
   const mlist = d.mağazalar || [];
 
@@ -6481,15 +6482,8 @@ function renderMagazaPerformans(d) {
 
 function mpSort(key) {
   _mpSortKey = key;
-  const d = window._mpLastData;
-  if(d) renderMagazaPerformans(d);
+  if(window._mpLastData) renderMagazaPerformans(window._mpLastData);
   else loadMagazaPerformans();
-}
-
-// loadMagazaPerformans'ı cache için wrap et
-const _origLoadMP = loadMagazaPerformans;
-async function loadMagazaPerformans() {
-  await _origLoadMP();
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
