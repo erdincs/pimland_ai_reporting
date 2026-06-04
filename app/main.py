@@ -51,6 +51,25 @@ async def lifespan(app: FastAPI):
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_urun_kod ON product_stories(urun_kodu)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_kanal    ON product_stories(kanal)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_durum    ON product_stories(durum)"))
+        # Sıralama yönetimi tablosu
+        await conn.execute(_text("""
+            CREATE TABLE IF NOT EXISTS siralama_gecmisi (
+                id          SERIAL PRIMARY KEY,
+                job_id      TEXT NOT NULL UNIQUE,
+                sezon_kodu  TEXT NOT NULL,
+                marka_adi   TEXT NOT NULL,
+                kategori    TEXT NOT NULL,
+                toplam_urun INTEGER NOT NULL DEFAULT 0,
+                onayli      BOOLEAN NOT NULL DEFAULT FALSE,
+                onay_tarihi TIMESTAMPTZ,
+                onaylayan   TEXT,
+                siralama_json JSONB NOT NULL DEFAULT '[]',
+                ozet_json     JSONB,
+                created_at  TIMESTAMPTZ DEFAULT NOW()
+            )
+        """))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_job    ON siralama_gecmisi(job_id)"))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_sezon  ON siralama_gecmisi(sezon_kodu, marka_adi, kategori)"))
     yield
     scheduler.stop()
     log.info("app.shutdown")

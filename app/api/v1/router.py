@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import agents, connectors, enrichment, export, files, health, ingestion, monitoring, portal, query, reports
+from app.api.v1.endpoints import agents, connectors, enrichment, export, files, health, ingestion, monitoring, portal, query, reports, siralama
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -18,3 +18,4 @@ api_router.include_router(files.router)
 api_router.include_router(enrichment.router)
 api_router.include_router(export.router)
 api_router.include_router(monitoring.router)
+api_router.include_router(siralama.router)

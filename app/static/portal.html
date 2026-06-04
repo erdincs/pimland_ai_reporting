@@ -695,6 +695,18 @@ body,
       </div>
     </div>
 
+    <!-- ── E-TİCARET KATEGORİ PLANLAMA ──────────────────────────────── -->
+    <div class="nav-group-hdr" id="grp-ekat" onclick="toggleNavGroup('ekat')">
+      <span>🏪 KATEGORİ PLANLAMA</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body" id="grpb-ekat">
+      <div class="nav-item nav-sub" onclick="showSection('siralama')" id="nav-siralama">
+        <span class="nav-icon" style="font-size:12px">🔢</span><span class="nav-text">Sıralama Yönetimi</span>
+        <span style="font-size:9px;font-weight:700;background:var(--orange);color:#fff;padding:1px 5px;border-radius:3px;margin-left:auto">AI</span>
+      </div>
+    </div>
+
     <!-- ── ÜRÜN ZENGİNLEŞTİRME ─────────────────────────────────────── -->
     <div class="nav-group-hdr" id="grp-enrichment" onclick="toggleNavGroup('enrichment')">
       <span>✨ ÜRÜN ZENGİNLEŞTİRME</span>
@@ -1343,6 +1355,57 @@ body,
     </div><!-- /section-urun-satis -->
 
     <!-- SİSTEM SAĞLIĞI -->
+    <!-- ── SIRALAMA YÖNETİMİ ──────────────────────────────────────────────── -->
+    <div class="section" id="section-siralama" style="padding:0;flex-direction:column;overflow:hidden">
+      <div class="sec-hdr" style="padding:14px 20px;flex-shrink:0;border-bottom:1px solid var(--border)">
+        <span class="sec-title">🔢 Sıralama Yönetimi</span>
+        <span class="sec-sub">Sezon · Marka · Kategori — AI destekli dinamik ürün sıralama</span>
+      </div>
+
+      <!-- Filtre satırı -->
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+        <div class="filter-group"><span class="filter-label">Sezon</span>
+          <select class="filter-select" id="sir-f-sezon" style="min-width:140px"><option value="">Sezon Seç...</option></select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Marka</span>
+          <select class="filter-select" id="sir-f-marka"><option value="">Marka Seç...</option></select>
+        </div>
+        <div class="filter-group"><span class="filter-label">Kategori</span>
+          <select class="filter-select" id="sir-f-kategori" style="min-width:130px"><option value="">Kategori Seç...</option></select>
+        </div>
+        <button class="btn-apply" onclick="runSiralama()" id="sir-run-btn">▶ Sıralamayı Hesapla</button>
+        <span id="sir-status" style="font-size:11px;color:var(--t3);margin-left:8px"></span>
+        <button id="sir-onay-btn" onclick="onaylaSiralama()" style="display:none;margin-left:auto;background:var(--green);border:none;color:#fff;padding:7px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700">✓ Sıralamayı Onayla ve Kaydet</button>
+      </div>
+
+      <!-- Ana içerik alanı -->
+      <div id="sir-content" style="flex:1;overflow-y:auto;padding:16px 20px">
+        <div id="sir-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:var(--t4);gap:8px">
+          <div style="font-size:36px">🔢</div>
+          <div style="font-size:13px">Sezon, marka ve kategori seçerek sıralama hesaplayın</div>
+        </div>
+        <div id="sir-result" style="display:none">
+          <!-- Özet bar -->
+          <div id="sir-summary" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--t2)"></div>
+          <!-- Ürün grid -->
+          <div id="sir-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:16px"></div>
+          <!-- Kural log -->
+          <div id="sir-kural-log" style="font-size:11px;color:var(--t3);margin-bottom:16px"></div>
+          <!-- Detay tablo toggle -->
+          <div style="margin-bottom:8px">
+            <button onclick="toggleSirDetay()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px">📊 Kriter Skoru Tablosunu Göster/Gizle</button>
+          </div>
+          <div id="sir-detay-table" style="display:none;overflow-x:auto;margin-bottom:16px"></div>
+        </div>
+      </div>
+
+      <!-- Geçmiş -->
+      <div style="border-top:1px solid var(--border);padding:10px 20px;flex-shrink:0;background:var(--bg2)">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.6px;margin-bottom:6px">SON ONAYLANAN SIRALAMALAR</div>
+        <div id="sir-gecmis" style="font-size:11px;color:var(--t3)">Henüz kayıt yok</div>
+      </div>
+    </div><!-- /section-siralama -->
+
     <div class="section" id="section-monitoring" style="padding:20px">
       <div class="sec-hdr" style="margin-bottom:16px">
         <span class="sec-title">📊 Sistem Sağlığı</span>
@@ -1971,6 +2034,7 @@ function loadSection(id){
   else if(id==='plm-katalog')loadPlmKatalog();
   else if(id==='urun-yonetimi')loadUrunYonetimi();
   else if(id==='urun-satis')loadUrunSatisAnaliz();
+  else if(id==='siralama')initSiralama();
   else if(id==='monitoring'){initMonitoring();}
   else if(id==='enrichment'){toggleEnrMenu();return;}
   if(id!=='monitoring') stopMonitoring();
@@ -4728,6 +4792,7 @@ const _SECTION_GROUP = {
   risk:'eticaret',karlilik:'eticaret',colors:'eticaret',
   products:'urunmgmt','plm-katalog':'urunmgmt',
   'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
+  siralama:'ekat',
   monitoring:'other'
 };
 
@@ -5594,6 +5659,211 @@ function _renderPerfPotential(d){
       <div style="font-size:28px;font-weight:700;color:${c.color};line-height:1.1;margin-bottom:4px">${c.val}</div>
       <div style="font-size:11px;color:var(--t3)">${c.sub}</div>
     </div>`).join('');
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SIRALAMA YÖNETİMİ (sir*)
+// ══════════════════════════════════════════════════════════════════════════════
+
+let _sirState = {sezon:null, marka:null, kategori:null, jobId:null, result:null, filtersLoaded:false};
+
+const _SIR_GRADE_COLOR = s => s>=75?'var(--green)':s>=50?'var(--yellow)':'var(--red)';
+const _SIR_KRITER_LABEL = {
+  momentum:'Momentum',gorsel:'Görsel/İçerik',donusum:'Dönüşüm',
+  stok:'Stok',iade:'İade',yenilik:'Yenilik',marj:'Marj/Fiyat'
+};
+
+async function initSiralama(){
+  if(!_sirState.filtersLoaded){
+    try{
+      const d=await fetch(`${API}/siralama/filters`).then(r=>r.json());
+      const ss=document.getElementById('sir-f-sezon');
+      const ms=document.getElementById('sir-f-marka');
+      const ks=document.getElementById('sir-f-kategori');
+      ss.innerHTML='<option value="">Sezon Seç...</option>';
+      (d.sezonlar||[]).forEach(s=>ss.insertAdjacentHTML('beforeend',`<option value="${s.kod}">${s.kod} ${s.adi||''}</option>`));
+      ms.innerHTML='<option value="">Marka Seç...</option>';
+      (d.markalar||[]).forEach(m=>ms.insertAdjacentHTML('beforeend',`<option value="${m}">${m}</option>`));
+      ks.innerHTML='<option value="">Kategori Seç...</option>';
+      (d.kategoriler||[]).forEach(k=>ks.insertAdjacentHTML('beforeend',`<option value="${k}">${k}</option>`));
+      _sirState.filtersLoaded=true;
+    }catch(e){document.getElementById('sir-status').textContent='Filtreler yüklenemedi: '+e.message;}
+  }
+  loadSirGecmis();
+}
+
+async function runSiralama(){
+  const sezon    = document.getElementById('sir-f-sezon').value;
+  const marka    = document.getElementById('sir-f-marka').value;
+  const kategori = document.getElementById('sir-f-kategori').value;
+  if(!sezon||!marka||!kategori){
+    document.getElementById('sir-status').textContent='⚠ Sezon, marka ve kategori seçin';
+    return;
+  }
+  _sirState={..._sirState, sezon, marka, kategori, jobId:null, result:null};
+  document.getElementById('sir-placeholder').style.display='none';
+  document.getElementById('sir-result').style.display='none';
+  document.getElementById('sir-onay-btn').style.display='none';
+  document.getElementById('sir-status').textContent='⏳ Ürünler analiz ediliyor...';
+  document.getElementById('sir-run-btn').disabled=true;
+
+  try{
+    const res=await fetch(`${API}/siralama/hesapla`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sezon_kodu:sezon,marka_adi:marka,kategori})
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d=await res.json();
+    if(d.error){document.getElementById('sir-status').textContent='✗ '+d.error;return;}
+    _sirState.jobId=d.job_id;
+    _sirState.result=d;
+    renderSiraGrid(d);
+    document.getElementById('sir-status').textContent=`✓ ${d.toplam_urun} ürün sıralandı`;
+    document.getElementById('sir-onay-btn').style.display='block';
+  }catch(e){
+    document.getElementById('sir-status').textContent='✗ Hata: '+e.message;
+  }finally{
+    document.getElementById('sir-run-btn').disabled=false;
+  }
+}
+
+function renderSiraGrid(d){
+  const result=document.getElementById('sir-result');
+  const summary=document.getElementById('sir-summary');
+  const grid=document.getElementById('sir-grid');
+  const kuralLog=document.getElementById('sir-kural-log');
+
+  // Özet
+  const stoklu=d.urunler.filter(u=>!u.uyari_flags.includes('sifir_stok'));
+  const stoksuz=d.urunler.filter(u=>u.uyari_flags.includes('sifir_stok'));
+  summary.innerHTML=`
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <span><strong>${d.toplam_urun}</strong> ürün · <span style="color:var(--teal)">${stoklu.length} stoklu</span> · <span style="color:var(--t4)">${stoksuz.length} stoksuz</span></span>
+      <span>Sezon: <strong>${d.sezon_kodu}</strong> · Marka: <strong>${d.marka_adi}</strong> · Kategori: <strong>${d.kategori}</strong></span>
+    </div>`;
+
+  // Kural log
+  if(d.kural_uygulamalari?.length){
+    kuralLog.innerHTML=d.kural_uygulamalari.map(k=>`<span style="margin-right:12px">🔄 ${k}</span>`).join('');
+  }
+
+  // Ürün kartları
+  const IMG_BASE='https://img-adl.sm.mncdn.com/cdnimages/products';
+  grid.innerHTML=d.urunler.map(u=>{
+    const sc=_SIR_GRADE_COLOR(u.toplam_puan);
+    const badges=[];
+    if(u.is_new)                              badges.push('<span style="background:var(--teal);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">YENİ</span>');
+    if(u.uyari_flags.includes('hizlaniyor'))  badges.push('<span style="background:var(--green);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">↑ Hızlanıyor</span>');
+    if(u.uyari_flags.includes('yuksek_iade')) badges.push('<span style="background:var(--red);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">⚠ Yüksek İade</span>');
+    if(u.uyari_flags.includes('az_gorsel'))   badges.push('<span style="background:var(--yellow);color:#000;font-size:9px;padding:1px 4px;border-radius:3px">📷 Az Görsel</span>');
+    if(u.uyari_flags.includes('sifir_stok'))  badges.push('<span style="background:var(--t4);color:var(--t2);font-size:9px;padding:1px 4px;border-radius:3px">Stok Yok</span>');
+
+    const opacity=u.uyari_flags.includes('sifir_stok')?'opacity:.4;pointer-events:none':'';
+    const siraLabel=u.uyari_flags.includes('sifir_stok')?'—':u.sira;
+
+    // Mini kriter barları (tooltip)
+    const kriterBars=Object.entries(u.kriter_puanlari||{}).map(([k,v])=>{
+      const c=v>=70?'var(--green)':v>=40?'var(--yellow)':'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:4px;font-size:9px">
+        <span style="width:52px;color:var(--t3)">${_SIR_KRITER_LABEL[k]||k}</span>
+        <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px">
+          <div style="width:${v}%;height:100%;background:${c};border-radius:2px"></div>
+        </div>
+        <span style="color:${c};width:25px;text-align:right">${Math.round(v)}</span>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;${opacity}">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 7px;background:var(--bg3)">
+        <span style="font-size:13px;font-weight:700;color:var(--orange)">#${siraLabel}</span>
+        <span style="font-size:13px;font-weight:700;color:${sc}">${u.toplam_puan}</span>
+      </div>
+      <div style="position:relative;padding-top:133%;background:var(--bg3);overflow:hidden">
+        <img src="${u.image_url||''}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+          onerror="this.style.display='none'">
+      </div>
+      <div style="padding:7px 8px">
+        <div style="font-size:11px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${u.urun_adi}</div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:4px">${u.stock_code}</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px">${badges.join('')}</div>
+        <div style="font-size:10px;color:var(--t3)">30g: <strong>${u.adet_30g}</strong> · 7g: <strong>${u.adet_7g}</strong> · İade: <strong>${u.iade_adet_90g}</strong></div>
+        <details style="margin-top:5px">
+          <summary style="font-size:9px;color:var(--t3);cursor:pointer">Kriter detayı</summary>
+          <div style="margin-top:5px;display:flex;flex-direction:column;gap:2px">${kriterBars}</div>
+        </details>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Detay tablo
+  renderSirDetayTable(d.urunler);
+
+  result.style.display='block';
+  document.getElementById('sir-placeholder').style.display='none';
+}
+
+function renderSirDetayTable(urunler){
+  const wrap=document.getElementById('sir-detay-table');
+  const kriterler=['momentum','gorsel','donusum','stok','iade','yenilik','marj'];
+  const header=`<table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="background:var(--bg3)">
+      <th style="padding:5px 8px;text-align:left;color:var(--t3)">Sıra</th>
+      <th style="padding:5px 8px;text-align:left;color:var(--t3)">Ürün</th>
+      ${kriterler.map(k=>`<th style="padding:5px 8px;text-align:right;color:var(--t3)">${_SIR_KRITER_LABEL[k]||k}</th>`).join('')}
+      <th style="padding:5px 8px;text-align:right;color:var(--orange)">TOPLAM</th>
+    </tr></thead><tbody>`;
+  const rows=urunler.map(u=>{
+    const kc=c=>`<td style="padding:4px 8px;text-align:right;color:${_SIR_GRADE_COLOR(c)}">${Math.round(c)}</td>`;
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:4px 8px;color:var(--t3)">#${u.sira}</td>
+      <td style="padding:4px 8px;color:var(--t1)">${u.urun_adi.substring(0,25)}</td>
+      ${kriterler.map(k=>kc(u.kriter_puanlari?.[k]||0)).join('')}
+      <td style="padding:4px 8px;text-align:right;font-weight:700;color:var(--orange)">${u.toplam_puan}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=header+rows+'</tbody></table>';
+}
+
+function toggleSirDetay(){
+  const el=document.getElementById('sir-detay-table');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+async function onaylaSiralama(){
+  if(!_sirState.jobId||!_sirState.result){return;}
+  const d=_sirState.result;
+  try{
+    const res=await fetch(`${API}/siralama/onay`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        job_id:d.job_id, sezon_kodu:d.sezon_kodu,
+        marka_adi:d.marka_adi, kategori:d.kategori,
+        toplam_urun:d.toplam_urun, _raw_for_save:d._raw_for_save||{}
+      })
+    });
+    if(res.ok){
+      document.getElementById('sir-status').textContent='✓ Sıralama kaydedildi!';
+      document.getElementById('sir-onay-btn').style.display='none';
+      loadSirGecmis();
+    }
+  }catch(e){document.getElementById('sir-status').textContent='Kayıt hatası: '+e.message;}
+}
+
+async function loadSirGecmis(){
+  try{
+    const d=await fetch(`${API}/siralama/gecmis?limit=5`).then(r=>r.json());
+    const wrap=document.getElementById('sir-gecmis');
+    if(!d.items?.length){wrap.innerHTML='Henüz kayıt yok';return;}
+    wrap.innerHTML=d.items.map(r=>`
+      <span style="margin-right:16px">
+        <span style="color:var(--t2)">${(r.created_at||'').substring(0,10)}</span>
+        <span style="color:var(--orange);margin:0 4px">${r.sezon_kodu}</span>
+        <span style="color:var(--t2)">${r.marka_adi} · ${r.kategori}</span>
+        <span style="color:var(--t3);margin-left:4px">${r.toplam_urun} ürün</span>
+        ${r.onayli?'<span style="color:var(--green);margin-left:4px">✓</span>':''}
+      </span>`).join('');
+  }catch(e){}
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
