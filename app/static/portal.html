@@ -3754,7 +3754,12 @@ function showEnrPage(page){
   }[page]||'✨ Ürün Zenginleştirme';
   if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
-  if(page==='products')  { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentList(1)); }
+  if(page==='products')  { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>{
+    // Sezon hâlâ seçili değilse dropdown'dan al
+    const sel=document.getElementById('enr-season-sel');
+    if(sel&&!sel.value&&sel.options.length>1) sel.value=sel.options[1].value;
+    loadEnrichmentList(1);
+  }); }
 }
 
 async function onEnrFilterChange(){
@@ -3810,8 +3815,10 @@ const _ALAN_TR={
 function _aTr(k){return _ALAN_TR[k]||(k.length>32?k.substring(0,32)+'…':k);}
 
 async function loadEnrichmentDashboard(){
-  const sc=document.getElementById('enr-season-sel').value;
+  let sc=document.getElementById('enr-season-sel').value;
   const marka=document.getElementById('enr-marka-sel')?.value||'';
+  // Sezon seçili değilse ilk seçeneği al
+  if(!sc){const opts=document.getElementById('enr-season-sel')?.options;if(opts&&opts.length>1){sc=opts[1].value;document.getElementById('enr-season-sel').value=sc;}}
   const kpis=document.getElementById('enr-kpis');
   kpis.innerHTML='<div class="loading" style="grid-column:1/-1;padding:24px"><div class="spinner"></div></div>';
 
@@ -4100,9 +4107,17 @@ async function toggleEnrKat(bidx,sidx,kidx,markaPrm,sezonPrm,katPrm){
 // ─ Ürün Listesi ─
 async function loadEnrichmentList(page=1){
   _enrPage=page;
-  const sc=document.getElementById('enr-season-sel').value;
+  let sc=document.getElementById('enr-season-sel').value;
   const wrap=document.getElementById('enr-table-wrap');
-  if(!sc){wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Sezon seçin</div>';return;}
+  // Sezon seçili değilse dropdown'daki ilk seçeneği al
+  if(!sc){
+    const opts=document.getElementById('enr-season-sel')?.options;
+    if(opts&&opts.length>1){ sc=opts[1].value; document.getElementById('enr-season-sel').value=sc; }
+  }
+  if(!sc){
+    wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Sezon bulunamadı. Önce puanlama başlatın.</div>';
+    return;
+  }
   const sorun=document.getElementById('enr-sorun-sel')?.value;
   const sort=document.getElementById('enr-sort-sel')?.value||'score_asc';
   const gP=_enrGrade&&_enrGrade!=='all'?`&grade=${_enrGrade}`:'';
