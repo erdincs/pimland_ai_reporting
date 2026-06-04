@@ -6597,7 +6597,7 @@ function renderDonemseel(d) {
           <td style="padding:8px 10px;color:var(--t1)">TOPLAM</td>
           <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(ytd.hedef,'tl')}</td>
           <td style="padding:8px 10px;text-align:right;color:var(--teal)">${_myFmt(ytd.ciro,'tl')}</td>
-          <td style="padding:8px 10px;text-align:right;color:${ytdOran>=90?'var(--green)':ytdOran>=80?'var(--yellow)':'var(--red)'}">%${ytdOran.toFixed(1)}</td>
+          <td style="padding:8px 10px;text-align:right;color:${ytdOran>=90?'var(--green)':ytdOran>=80?'var(--yellow)':'var(--red)'}">%${(ytdOran||0).toFixed(1)}</td>
           <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(ytd.ziy,'sayi')}</td>
           <td style="padding:8px 10px;text-align:right;color:var(--t2)">—</td>
           <td style="padding:8px 10px;text-align:right;color:var(--t2)">—</td>
