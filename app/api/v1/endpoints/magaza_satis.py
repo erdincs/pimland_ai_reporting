@@ -591,6 +591,6 @@ async def get_donemseel_performans(
         "aylik":       aylik_liste,
         "isi_harita":  isi_harita,
         "karsilastirma": karsilastirma,
-        "bolgeler":    bolgeler[:3],
+        "bolgeler":    bolgeler,
         "bolge_listesi": bolge_listesi,
     }
