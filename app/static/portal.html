@@ -710,6 +710,9 @@ body,
       <div class="nav-item nav-sub" onclick="showEnrPage('products')" id="nav-enr-products">
         <span class="nav-icon" style="font-size:12px">🔍</span><span class="nav-text">Ürün Listesi</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('story')" id="nav-enr-story">
+        <span class="nav-icon" style="font-size:12px">✍️</span><span class="nav-text">Hikaye Yazıcı</span>
+      </div>
     </div>
 
     <!-- ── DİĞER ────────────────────────────────────────────────────── -->
@@ -1506,6 +1509,202 @@ body,
         <div id="enr-table-wrap"></div>
         <div id="enr-pagination" style="display:flex;gap:8px;justify-content:center"></div>
       </div>
+
+      <!-- ── HİKAYE YAZICI ──────────────────────────────────────────── -->
+      <div id="enr-page-story" style="display:none;flex:1;overflow:hidden">
+        <div style="display:grid;grid-template-columns:230px 1fr 272px;height:100%;overflow:hidden">
+
+          <!-- LEFT: Ürün Seçimi -->
+          <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
+            <div style="padding:12px 12px 10px;border-bottom:1px solid var(--border);flex-shrink:0">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">ÜRÜN SEÇİMİ</div>
+              <input id="sw-search" placeholder="Ürün adı veya kodu ara..."
+                oninput="swSearchDebounce()"
+                style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:7px 10px;border-radius:6px;font-family:inherit;font-size:12px;outline:none;margin-bottom:8px">
+              <select id="sw-season-sel" onchange="swLoadProducts()" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px;margin-bottom:5px">
+                <option value="">Tüm Sezonlar</option>
+              </select>
+              <div style="display:flex;gap:5px">
+                <select id="sw-marka-sel" onchange="swLoadProducts()" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
+                  <option value="">Tüm Markalar</option>
+                  <option value="adL">adL</option>
+                  <option value="Love My Body">Love My Body</option>
+                </select>
+                <select id="sw-grade-sel" onchange="swLoadProducts()" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
+                  <option value="">Tüm Grade'ler</option>
+                  <option value="A">A</option><option value="B">B</option>
+                  <option value="C">C</option><option value="D">D</option><option value="F">F</option>
+                </select>
+              </div>
+            </div>
+            <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <span id="sw-sel-count" style="font-size:11px;color:var(--t2)">0 ürün seçildi</span>
+              <div style="display:flex;gap:6px">
+                <button onclick="swSelectAll()" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 7px;border-radius:4px;cursor:pointer;font-family:inherit">Tümünü Seç</button>
+                <button onclick="swClearAll()" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 7px;border-radius:4px;cursor:pointer;font-family:inherit">Temizle</button>
+              </div>
+            </div>
+            <div id="sw-product-list" style="overflow-y:auto;flex:1;padding:4px 0"></div>
+            <div id="sw-list-pagination" style="padding:8px 12px;border-top:1px solid var(--border);display:flex;gap:4px;justify-content:center;flex-shrink:0"></div>
+          </div>
+
+          <!-- CENTER: Hikaye Üretim Alanı -->
+          <div style="display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)">
+              <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">HİKAYE ÜRETİM ALANI</span>
+              <button id="sw-gen-btn" onclick="swGenerateStories()"
+                style="background:var(--orange);border:none;color:#fff;font-size:12px;font-weight:700;padding:7px 18px;border-radius:7px;cursor:pointer;font-family:inherit;transition:opacity .15s">
+                + Hikaye Oluştur (<span id="sw-gen-count">0</span>)
+              </button>
+            </div>
+            <div id="sw-cards-wrap" style="overflow-y:auto;flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4);gap:8px">
+                <div style="font-size:32px">✍️</div>
+                <div style="font-size:12px">Sol panelden ürün seçin, ardından "Hikaye Oluştur" butonuna tıklayın</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Ayarlar -->
+          <div style="border-left:1px solid var(--border);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;background:var(--bg)">
+            <!-- YAZIM TONU -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">YAZIM TONU</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+                <button class="sw-ton-btn active" data-ton="lüks_zarif" onclick="swSetTon(this)"
+                  style="background:var(--bg3);border:1px solid var(--orange);color:var(--t1);padding:8px 6px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;transition:all .15s">Lüks &amp; Zarif</button>
+                <button class="sw-ton-btn" data-ton="genç_enerjik" onclick="swSetTon(this)"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:8px 6px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">Genç &amp; Enerjik</button>
+                <button class="sw-ton-btn" data-ton="sade_net" onclick="swSetTon(this)"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:8px 6px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">Sade &amp; Net</button>
+                <button class="sw-ton-btn" data-ton="profesyonel" onclick="swSetTon(this)"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:8px 6px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">Profesyonel</button>
+              </div>
+            </div>
+
+            <!-- KARAKTER LİMİTİ -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">KARAKTER LİMİTİ</div>
+              <input type="range" id="sw-char-slider" min="100" max="200" value="150"
+                oninput="document.getElementById('sw-char-val').textContent=this.value"
+                style="width:100%;accent-color:var(--orange);cursor:pointer">
+              <div style="text-align:center;margin-top:4px">
+                <span id="sw-char-val" style="font-size:28px;font-weight:700;color:var(--t1)">150</span>
+                <div style="font-size:10px;color:var(--t3)">hedef karakter sayısı</div>
+              </div>
+            </div>
+
+            <!-- OTURUM İSTATİSTİKLERİ -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">OTURUM İSTATİSTİKLERİ</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:7px;overflow:hidden">
+                <div style="background:var(--bg2);padding:10px 8px;text-align:center">
+                  <div id="sw-stat-uretilen" style="font-size:20px;font-weight:700;color:var(--teal)">0</div>
+                  <div style="font-size:9px;color:var(--t3);margin-top:2px">ÜRETİLEN</div>
+                </div>
+                <div style="background:var(--bg2);padding:10px 8px;text-align:center">
+                  <div id="sw-stat-onaylanan" style="font-size:20px;font-weight:700;color:var(--green)">0</div>
+                  <div style="font-size:9px;color:var(--t3);margin-top:2px">ONAYLANAN</div>
+                </div>
+                <div style="background:var(--bg2);padding:10px 8px;text-align:center">
+                  <div id="sw-stat-bekleyen" style="font-size:20px;font-weight:700;color:var(--yellow)">0</div>
+                  <div style="font-size:9px;color:var(--t3);margin-top:2px">BEKLEYEN</div>
+                </div>
+                <div style="background:var(--bg2);padding:10px 8px;text-align:center">
+                  <div id="sw-stat-yeniden" style="font-size:20px;font-weight:700;color:var(--t2)">0</div>
+                  <div style="font-size:9px;color:var(--t3);margin-top:2px">YENİDEN ÜRETİLEN</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KULLANILAN ÖZELLİKLER -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">KULLANILAN ÖZELLİKLER</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t1)">• Materyal içeriği</span>
+                  <span style="font-size:10px;color:var(--green)">✓ Zorunlu</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t1)">• Kalıp / fit bilgisi</span>
+                  <span style="font-size:10px;color:var(--green)">✓ Zorunlu</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t2)">• Yaka / kol tipi</span>
+                  <span style="font-size:10px;color:var(--t3)">✓ Varsa</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t2)">• Uzunluk / siluet</span>
+                  <span style="font-size:10px;color:var(--t3)">✓ Varsa</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t2)">• Renk açıklaması</span>
+                  <span style="font-size:10px;color:var(--t3)">✓ Varsa</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:11px;color:var(--t2)">• Sezon teması</span>
+                  <span style="font-size:10px;color:var(--t3)">✓ Varsa</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- HEDEF KANAL -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">HEDEF KANAL</div>
+              <div style="display:flex;flex-direction:column;gap:4px" id="sw-kanallar">
+                <label class="sw-kanal-row" data-limit="200" style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--orange);background:var(--bg3)">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <input type="checkbox" class="sw-kanal-cb" value="trendyol" checked style="accent-color:var(--orange);cursor:pointer">
+                    <span style="font-size:12px;color:var(--t1);font-weight:600">Trendyol</span>
+                  </div>
+                  <span style="font-size:10px;color:var(--t3)">maks 200 kar.</span>
+                </label>
+                <label class="sw-kanal-row" data-limit="180" style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--blue);background:var(--bg3)">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <input type="checkbox" class="sw-kanal-cb" value="hepsiburada" checked style="accent-color:var(--blue);cursor:pointer">
+                    <span style="font-size:12px;color:var(--t1);font-weight:600">Hepsiburada</span>
+                  </div>
+                  <span style="font-size:10px;color:var(--t3)">maks 180 kar.</span>
+                </label>
+                <label class="sw-kanal-row" style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg2)">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <input type="checkbox" class="sw-kanal-cb" value="amazon" style="cursor:pointer">
+                    <span style="font-size:12px;color:var(--t2)">Amazon</span>
+                  </div>
+                  <span style="font-size:10px;color:var(--t3)">maks 200 kar.</span>
+                </label>
+                <label class="sw-kanal-row" style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg2)">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <input type="checkbox" class="sw-kanal-cb" value="web_sitesi" style="cursor:pointer">
+                    <span style="font-size:12px;color:var(--t2)">Web Sitesi</span>
+                  </div>
+                  <span style="font-size:10px;color:var(--t3)">serbest</span>
+                </label>
+                <label class="sw-kanal-row" style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg2)">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <input type="checkbox" class="sw-kanal-cb" value="magaza" style="cursor:pointer">
+                    <span style="font-size:12px;color:var(--t2)">Mağaza</span>
+                  </div>
+                  <span style="font-size:10px;color:var(--t3)">serbest</span>
+                </label>
+              </div>
+              <div style="font-size:10px;color:var(--t4);margin-top:6px">Seçili kanallar hikaye tonunu ve uzunluğunu etkiler</div>
+            </div>
+
+            <!-- YAZIM KURALLARI -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">YAZIM KURALLARI</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:11px;color:var(--t2)">• Deneyimli satış temsilcisi tonu</div>
+                <div style="font-size:11px;color:var(--t2)">• Türkçe, doğal ve akıcı</div>
+                <div style="font-size:11px;color:var(--t2)">• Ürün özelliklerini ön plana çıkar</div>
+                <div style="font-size:11px;color:var(--t2)">• Müşteri satın alma kararını destekle</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /enr-page-story -->
 
     </div><!-- /section-enrichment -->
 
@@ -3743,19 +3942,19 @@ function showEnrPage(page){
   // Enrichment grubunu aç
   _openNavGroup('enrichment');
   // Sayfalar
-  ['dashboard','scorelist','products'].forEach(p=>{
+  ['dashboard','scorelist','products','story'].forEach(p=>{
     const el=document.getElementById('enr-page-'+p);
     if(el) el.style.display = p===page?'flex':'none';
     const nb=document.getElementById('nav-enr-'+p);
     if(nb){ nb.classList.toggle('active',p===page); }
   });
   document.getElementById('enr-page-title').textContent = {
-    dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi', products:'🔍 Ürün Listesi'
+    dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi',
+    products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı'
   }[page]||'✨ Ürün Zenginleştirme';
   if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
   if(page==='products'){
-    // Bağımsız yükle — async zincir kesilse bile çalışsın
     (async()=>{
       try{ await loadEnrMarkas(); } catch(e){}
       try{ await loadEnrichmentSeasons(); } catch(e){}
@@ -3764,6 +3963,7 @@ function showEnrPage(page){
       loadEnrichmentList(1);
     })();
   }
+  if(page==='story') swInit();
 }
 
 async function onEnrFilterChange(){
@@ -4444,6 +4644,313 @@ const _SECTION_GROUP = {
   'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
   monitoring:'other'
 };
+
+// ══════════════════════════════════════════════════════════════════════════════
+// STORY WRITER (sw*)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _SW = {
+  selectedCodes: new Set(),   // seçili ürün kodları
+  products: [],               // sayfadaki ürün listesi
+  stories: {},                // { urun_kodu: { story, approved } }
+  page: 1,
+  total: 0,
+  ton: 'lüks_zarif',
+  stats: { uretilen:0, onaylanan:0, yeniden:0 },
+  searchTimer: null,
+};
+
+// Tüm urun emojileri
+const _SW_EMOJI = { 'ELBISE':'👗','UST GRUP':'👚','ALT GRUP':'👖','DIŞ GİYİM':'🧥',
+  'Gömlek':'👔','Elbise':'👗','Pantolon':'👖','Ceket':'🧥','Kazak':'🧶',
+  'Etek':'👗','Atlet':'👕','Yelek':'🦺','Triko':'🧶' };
+function _swEmoji(g,a){ return _SW_EMOJI[a]||_SW_EMOJI[g]||'👕'; }
+function _swGradeColor(g){ return {A:'var(--green)',B:'var(--teal)',C:'var(--yellow)',D:'var(--orange)',F:'var(--red)'}[g]||'var(--t3)'; }
+
+async function swInit(){
+  // Sezon dropdown'ı doldur
+  const sel=document.getElementById('sw-season-sel');
+  const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
+  sel.innerHTML='<option value="">Tüm Sezonlar</option>';
+  (seasons||[]).forEach(s=>{
+    sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}">${s.sezon_kodu} ${s.sezon_adi||''}</option>`);
+  });
+  if(seasons&&seasons.length>0) sel.value=seasons[0].sezon_kodu;
+  swLoadProducts();
+}
+
+async function swLoadProducts(page){
+  page=page||1; _SW.page=page;
+  const q=document.getElementById('sw-search')?.value||'';
+  const sezon=document.getElementById('sw-season-sel')?.value||'';
+  const marka=document.getElementById('sw-marka-sel')?.value||'';
+  const grade=document.getElementById('sw-grade-sel')?.value||'';
+  const params=new URLSearchParams({page,limit:30});
+  if(q) params.set('q',q);
+  if(sezon) params.set('sezon',sezon);
+  if(marka) params.set('marka',marka);
+  const wrap=document.getElementById('sw-product-list');
+  wrap.innerHTML='<div style="padding:20px;text-align:center;color:var(--t3);font-size:11px">Yükleniyor...</div>';
+  try{
+    const d=await fetch(`${API}/enrichment/story/products?${params}`).then(r=>r.json());
+    _SW.total=d.total||0;
+    let items=d.items||[];
+    if(grade) items=items.filter(p=>p.quality_grade===grade);
+    _SW.products=items;
+    swRenderList(items);
+    swRenderListPagination(d.total, page, 30);
+  } catch(e){
+    wrap.innerHTML=`<div style="padding:20px;text-align:center;color:var(--red);font-size:11px">Hata: ${e.message}</div>`;
+  }
+}
+
+function swRenderList(items){
+  const wrap=document.getElementById('sw-product-list');
+  if(!items.length){ wrap.innerHTML='<div style="padding:20px;text-align:center;color:var(--t3);font-size:11px">Ürün bulunamadı</div>'; return; }
+  wrap.innerHTML=items.map(p=>{
+    const sel=_SW.selectedCodes.has(p.urun_kodu);
+    const gc=_swGradeColor(p.quality_grade);
+    const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
+    return `<div class="sw-prow${sel?' sw-prow-sel':''}" data-kod="${p.urun_kodu}"
+      onclick="swToggleProduct('${p.urun_kodu}')"
+      style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);${sel?'background:rgba(255,107,43,.08)':''}">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();swToggleProduct('${p.urun_kodu}')"
+        style="accent-color:var(--orange);cursor:pointer;flex-shrink:0">
+      <div style="width:32px;height:32px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.urun_adi}</div>
+        <div style="font-size:10px;color:var(--t3)">${p.urun_kodu} · <span style="color:var(--t2)">${p.marka_adi||''}</span></div>
+      </div>
+      ${p.quality_grade?`<span style="font-size:10px;font-weight:700;color:${gc};background:${gc}22;border-radius:4px;padding:2px 5px;flex-shrink:0">${p.quality_grade}</span>`:''}
+    </div>`;
+  }).join('');
+  swUpdateSelCount();
+}
+
+function swRenderListPagination(total,page,limit){
+  const pages=Math.ceil(total/limit);
+  const wrap=document.getElementById('sw-list-pagination');
+  if(pages<=1){wrap.innerHTML='';return;}
+  wrap.innerHTML=`
+    <button onclick="swLoadProducts(${page-1})" ${page<=1?'disabled':''}
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">‹</button>
+    <span style="font-size:11px;color:var(--t3);padding:0 4px">${page}/${pages}</span>
+    <button onclick="swLoadProducts(${page+1})" ${page>=pages?'disabled':''}
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">›</button>`;
+}
+
+function swToggleProduct(kod){
+  if(_SW.selectedCodes.has(kod)) _SW.selectedCodes.delete(kod);
+  else _SW.selectedCodes.add(kod);
+  // DOM güncelle
+  const row=document.querySelector(`.sw-prow[data-kod="${kod}"]`);
+  if(row){
+    const sel=_SW.selectedCodes.has(kod);
+    row.classList.toggle('sw-prow-sel',sel);
+    row.style.background=sel?'rgba(255,107,43,.08)':'';
+    const cb=row.querySelector('input[type=checkbox]');
+    if(cb) cb.checked=sel;
+  }
+  swUpdateSelCount();
+}
+
+function swSelectAll(){
+  _SW.products.forEach(p=>_SW.selectedCodes.add(p.urun_kodu));
+  swRenderList(_SW.products);
+}
+
+function swClearAll(){
+  _SW.selectedCodes.clear();
+  swRenderList(_SW.products);
+}
+
+function swUpdateSelCount(){
+  const n=_SW.selectedCodes.size;
+  document.getElementById('sw-sel-count').textContent=`${n} ürün seçildi`;
+  document.getElementById('sw-gen-count').textContent=n;
+  document.getElementById('sw-gen-btn').style.opacity=n?'1':'0.5';
+}
+
+function swSearchDebounce(){
+  clearTimeout(_SW.searchTimer);
+  _SW.searchTimer=setTimeout(()=>swLoadProducts(1),350);
+}
+
+function swSetTon(btn){
+  document.querySelectorAll('.sw-ton-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.borderColor='var(--border)';
+    b.style.color='var(--t2)';
+  });
+  btn.classList.add('active');
+  btn.style.borderColor='var(--orange)';
+  btn.style.color='var(--t1)';
+  _SW.ton=btn.dataset.ton;
+}
+
+// Kanal checkbox border güncellemesi
+document.querySelectorAll('.sw-kanal-cb').forEach(cb=>{
+  cb.addEventListener('change',()=>{
+    const row=cb.closest('.sw-kanal-row');
+    if(row) row.style.borderColor=cb.checked?'var(--orange)':'var(--border)';
+  });
+});
+
+async function swGenerateStories(){
+  const kodlar=[..._SW.selectedCodes];
+  if(!kodlar.length) return;
+  const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
+  const kanallar=[...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
+
+  // Seçili ürün bilgilerini bul
+  const allProds={};
+  _SW.products.forEach(p=>{ allProds[p.urun_kodu]=p; });
+  // Sayfalarda olmayan seçili ürünler için de devam et
+
+  const wrap=document.getElementById('sw-cards-wrap');
+  // İlk render — Bekliyor kartları
+  wrap.innerHTML='';
+  kodlar.forEach(kod=>{
+    const p=allProds[kod]||{urun_kodu:kod,urun_adi:kod};
+    wrap.insertAdjacentHTML('beforeend',swCardHtml(p,'bekliyor',''));
+  });
+  _SW.stats.bekleyen=kodlar.length;
+  swUpdateStats();
+
+  // API çağrısı
+  document.getElementById('sw-gen-btn').disabled=true;
+  try{
+    const res=await fetch(`${API}/enrichment/story/generate`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({urun_kodlari:kodlar,ton:_SW.ton,karakter_limit:karakter,kanallar})
+    });
+    if(!res.ok){
+      const err=await res.text();
+      wrap.innerHTML=`<div style="padding:20px;color:var(--red);font-size:12px">Hata: ${err}</div>`;
+      return;
+    }
+    const results=await res.json();
+    // Kartları güncelle
+    results.forEach(r=>{
+      _SW.stories[r.urun_kodu]={story:r.story,approved:false};
+      const card=document.getElementById(`sw-card-${r.urun_kodu}`);
+      if(card){
+        const p=allProds[r.urun_kodu]||{urun_kodu:r.urun_kodu,urun_adi:r.urun_kodu};
+        card.outerHTML=swCardHtml(p,'uretildi',r.story,r.karakter_sayisi);
+      }
+    });
+    _SW.stats.uretilen+=results.length;
+    _SW.stats.bekleyen=0;
+    swUpdateStats();
+  } catch(e){
+    wrap.innerHTML=`<div style="padding:20px;color:var(--red);font-size:12px">Bağlantı hatası: ${e.message}</div>`;
+  } finally{
+    document.getElementById('sw-gen-btn').disabled=false;
+  }
+}
+
+function swCardHtml(p, durum, story, karSayisi){
+  const gc=_swGradeColor(p.quality_grade);
+  const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
+  const durumBadge={
+    bekliyor:`<span style="font-size:10px;color:var(--t3);background:var(--bg3);padding:3px 8px;border-radius:5px">Bekliyor</span>`,
+    uretildi:`<span style="font-size:10px;color:var(--teal);background:rgba(0,194,168,.12);padding:3px 8px;border-radius:5px">Oluşturuldu</span>`,
+    onaylandi:`<span style="font-size:10px;color:var(--green);background:rgba(34,197,94,.12);padding:3px 8px;border-radius:5px">✓ Onaylandı</span>`,
+  }[durum]||'';
+
+  const tags=[p.fabricmaterialname,p.urun_grubu_adi,p.ana_grup_adi].filter(Boolean);
+  const tagsHtml=tags.map(t=>`<span style="font-size:10px;background:var(--bg3);color:var(--t2);padding:2px 7px;border-radius:4px;border:1px solid var(--border)">${t}</span>`).join('');
+
+  const storyArea=durum==='bekliyor'
+    ?`<div style="min-height:64px;display:flex;align-items:center;justify-content:center;color:var(--t4);font-size:11px">Hikaye üretilmeyi bekliyor...</div>`
+    :`<textarea id="sw-ta-${p.urun_kodu}" style="width:100%;box-sizing:border-box;background:transparent;border:none;color:var(--t1);font-size:13px;font-family:inherit;line-height:1.6;resize:none;outline:none;min-height:72px"
+        oninput="swUpdateCharCount('${p.urun_kodu}')">${story||''}</textarea>`;
+
+  const karHtml=durum!=='bekliyor'
+    ?`<span id="sw-kar-${p.urun_kodu}" style="font-size:11px;color:var(--t3)">${karSayisi||story?.length||0} karakter</span>`
+    :`<span style="font-size:11px;color:var(--t3)">— karakter</span>`;
+
+  const actions=durum!=='bekliyor'?`
+    <button onclick="swRegenerate('${p.urun_kodu}')" style="background:none;border:1px solid var(--border);color:var(--t2);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">↺ Yeniden Üret</button>
+    <button onclick="swApprove('${p.urun_kodu}',this)" style="background:none;border:1px solid var(--teal);color:var(--teal);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">✓ Onayla</button>
+    <button onclick="swCopyStory('${p.urun_kodu}')" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:11px;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>`:''
+
+  return `<div id="sw-card-${p.urun_kodu}" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="width:36px;height:36px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">${p.urun_adi||p.urun_kodu}</div>
+        <div style="font-size:10px;color:var(--t3)">${p.urun_kodu} · <span style="color:var(--t2)">${p.marka_adi||''}</span></div>
+      </div>
+      ${durumBadge}
+    </div>
+    ${tagsHtml?`<div style="padding:8px 14px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border)">${tagsHtml}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--border)">
+      <div style="background:var(--bg2);padding:8px 14px"><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:2px">MATERYAL</div><div style="font-size:12px;color:var(--t1)">${p.fabricmaterialname||'—'}</div></div>
+      <div style="background:var(--bg2);padding:8px 14px;border-left:1px solid var(--border)"><div style="font-size:9px;color:var(--t3);font-weight:700;margin-bottom:2px">TEMA</div><div style="font-size:12px;color:var(--t1)">${p.tema_adi||'—'}</div></div>
+    </div>
+    <div style="padding:12px 14px">
+      <div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.6px;margin-bottom:8px">OLUŞTURULAN HİKAYE</div>
+      ${storyArea}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;flex-wrap:wrap">
+        ${karHtml}
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${actions}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function swUpdateCharCount(kod){
+  const ta=document.getElementById(`sw-ta-${kod}`);
+  const span=document.getElementById(`sw-kar-${kod}`);
+  if(ta&&span) span.textContent=`${ta.value.length} karakter`;
+}
+
+async function swRegenerate(kod){
+  const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
+  const kanallar=[...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
+  const card=document.getElementById(`sw-card-${kod}`);
+  const p=_SW.products.find(x=>x.urun_kodu===kod)||{urun_kodu:kod,urun_adi:kod};
+  if(card) card.outerHTML=swCardHtml(p,'bekliyor','');
+  try{
+    const res=await fetch(`${API}/enrichment/story/generate`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({urun_kodlari:[kod],ton:_SW.ton,karakter_limit:karakter,kanallar})
+    });
+    const results=await res.json();
+    const r=results[0]||{urun_kodu:kod,story:'',karakter_sayisi:0};
+    _SW.stories[kod]={story:r.story,approved:false};
+    const newCard=document.getElementById(`sw-card-${kod}`);
+    if(newCard) newCard.outerHTML=swCardHtml(p,'uretildi',r.story,r.karakter_sayisi);
+    _SW.stats.yeniden++;
+    swUpdateStats();
+  } catch(e){ console.error('swRegenerate',e); }
+}
+
+function swApprove(kod,btn){
+  if(_SW.stories[kod]) _SW.stories[kod].approved=true;
+  const card=document.getElementById(`sw-card-${kod}`);
+  const p=_SW.products.find(x=>x.urun_kodu===kod)||{urun_kodu:kod};
+  const ta=document.getElementById(`sw-ta-${kod}`);
+  const story=ta?ta.value:(_SW.stories[kod]?.story||'');
+  if(card) card.outerHTML=swCardHtml(p,'onaylandi',story,story.length);
+  _SW.stats.onaylanan++;
+  swUpdateStats();
+}
+
+function swCopyStory(kod){
+  const ta=document.getElementById(`sw-ta-${kod}`);
+  const text=ta?ta.value:(_SW.stories[kod]?.story||'');
+  if(text){ navigator.clipboard.writeText(text).catch(()=>{}); }
+}
+
+function swUpdateStats(){
+  document.getElementById('sw-stat-uretilen').textContent=_SW.stats.uretilen;
+  document.getElementById('sw-stat-onaylanan').textContent=_SW.stats.onaylanan;
+  document.getElementById('sw-stat-bekleyen').textContent=_SW.stats.bekleyen;
+  document.getElementById('sw-stat-yeniden').textContent=_SW.stats.yeniden;
+}
 
 // ── START ─────────────────────────────────────────────────────────────────────
 if(checkAuth()) init();

@@ -565,6 +565,155 @@ async def get_overview(
     }
 
 
+# ── Story Writer endpoints ─────────────────────────────────────────────────────
+
+@router.get("/story/products")
+async def get_story_products(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    sezon: Optional[str] = Query(None),
+    marka: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(40, ge=1, le=100),
+) -> Dict[str, Any]:
+    """Hikaye yazıcı için ürün listesi — enrichment grade ile birlikte."""
+    conditions = ["p.internet_aktif = true"]
+    params: Dict[str, Any] = {"offset": (page - 1) * limit, "limit": limit}
+    if sezon:
+        conditions.append("p.sezon_kodu = :sezon")
+        params["sezon"] = sezon
+    if marka:
+        conditions.append("p.marka_adi ILIKE :marka")
+        params["marka"] = f"%{marka}%"
+    if q:
+        conditions.append("(p.urun_adi ILIKE :q OR p.urun_kodu ILIKE :q)")
+        params["q"] = f"%{q}%"
+    where = " AND ".join(conditions)
+
+    total = (await session.execute(text(
+        f"SELECT COUNT(*) FROM pim_products p WHERE {where}"
+    ), params)).scalar() or 0
+
+    rows = (await session.execute(text(f"""
+        SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_kodu, p.sezon_adi,
+               p.ana_grup_adi, p.urun_grubu_adi, p.fabricmaterialname,
+               p.color_codes, p.first_color_code, p.tema_adi,
+               p.default_image_url,
+               eq.quality_grade, eq.quality_score
+        FROM pim_products p
+        LEFT JOIN enrichment_quality eq ON eq.urun_kodu = p.urun_kodu
+        WHERE {where}
+        ORDER BY p.sezon_kodu DESC, p.urun_adi
+        LIMIT :limit OFFSET :offset
+    """), params)).mappings().all()
+
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "items": [dict(r) for r in rows],
+    }
+
+
+_TON_PROMPTS = {
+    "lüks_zarif": "Lüks, zarif ve sofistike bir ton kullan. Kaliteyi ve şıklığı ön plana çıkar.",
+    "genç_enerjik": "Genç, enerjik ve dinamik bir ton kullan. Trendy, canlı ve heyecan verici bir dil seç.",
+    "sade_net": "Sade, net ve anlaşılır bir ton kullan. Doğrudan özellik odaklı ol, gereksiz süsleme yapma.",
+    "profesyonel": "Profesyonel, güvenilir ve otoriter bir ton kullan. Ürünün işlevselliğini ve kalitesini vurgula.",
+}
+
+_KANAL_LIMITS = {
+    "trendyol": 200,
+    "hepsiburada": 180,
+    "amazon": 200,
+    "web_sitesi": 500,
+    "magaza": 500,
+}
+
+
+@router.post("/story/generate")
+async def generate_story(
+    body: Dict[str, Any],
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Seçili ürünler için satış hikayesi üret (Bedrock)."""
+    from app.agent.llm_client import LLMClient
+
+    urun_kodlari: List[str] = body.get("urun_kodlari", [])
+    ton: str = body.get("ton", "sade_net")
+    karakter_limit: int = int(body.get("karakter_limit", 150))
+    kanallar: List[str] = body.get("kanallar", [])
+    karakter_min = max(80, karakter_limit - 30)
+
+    if not urun_kodlari:
+        return []
+
+    rows = (await session.execute(text("""
+        SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_adi,
+               p.ana_grup_adi, p.urun_grubu_adi, p.fabricmaterialname,
+               p.color_codes, p.tema_adi
+        FROM pim_products p
+        WHERE p.urun_kodu = ANY(:kodlar)
+    """), {"kodlar": urun_kodlari})).mappings().all()
+
+    ton_str = _TON_PROMPTS.get(ton, _TON_PROMPTS["sade_net"])
+    kanal_str = ", ".join(kanallar) if kanallar else "e-ticaret"
+
+    effective_limit = karakter_limit
+    if kanallar:
+        effective_limit = min(karakter_limit, min(
+            _KANAL_LIMITS.get(k, 500) for k in kanallar
+        ))
+
+    llm = LLMClient()
+    results = []
+
+    for row in rows:
+        p = dict(row)
+        renk_sayisi = len([c for c in (p.get("color_codes") or "").split(",") if c.strip()])
+
+        urun_bilgi = (
+            f"Ürün Adı: {p['urun_adi']}\n"
+            f"Kategori: {p.get('ana_grup_adi','')} / {p.get('urun_grubu_adi','')}\n"
+            f"Materyal: {p.get('fabricmaterialname','')}\n"
+            f"Tema: {p.get('tema_adi','')}\n"
+        )
+        if renk_sayisi > 0:
+            urun_bilgi += f"Renk Seçeneği: {renk_sayisi} farklı renk\n"
+
+        system_prompt = (
+            "Sen deneyimli bir e-ticaret satış temsilcisin. "
+            "Görevin ürün özellikleri verildiğinde, müşterilerin satın alma kararını "
+            "destekleyecek, kısa ve etkili bir Türkçe ürün açıklaması yazmak. "
+            f"{ton_str} "
+            "Açıklama yalnızca ürün için yazılmalı — başlık, madde işareti veya "
+            "açıklama dışı metin OLMAMALI. Sadece açıklama metnini döndür."
+        )
+
+        user_prompt = (
+            f"Aşağıdaki ürün için satış artırıcı bir açıklama yaz.\n\n"
+            f"{urun_bilgi}\n"
+            f"Hedef kanal: {kanal_str}\n"
+            f"Karakter limiti: {karakter_min}–{effective_limit} karakter arası olmalı.\n"
+            "Sadece açıklama metnini döndür, başka hiçbir şey yazma."
+        )
+
+        try:
+            story = await llm.complete(system=system_prompt, user=user_prompt, max_tokens=300, temperature=0.8)
+            story = story.strip().strip('"').strip()
+        except Exception as e:
+            log.error("story.generate_error", urun_kodu=p["urun_kodu"], error=str(e))
+            story = ""
+
+        results.append({
+            "urun_kodu": p["urun_kodu"],
+            "story": story,
+            "karakter_sayisi": len(story),
+        })
+
+    return results
+
+
 @router.get("/overview/by-field")
 async def get_overview_by_field(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
