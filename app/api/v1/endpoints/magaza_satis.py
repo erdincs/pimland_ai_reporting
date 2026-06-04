@@ -307,3 +307,125 @@ async def get_yonetici_ozeti(
         "sepet_dist":     sepet_dist,
         "insights":       insights[:6],
     }
+
+
+# ── GET /magaza-performans ────────────────────────────────────────────────────
+
+@router.get("/magaza-performans")
+async def get_magaza_performans(
+    yil:   int           = Query(2026),
+    ay:    Optional[int] = Query(None),
+    bolge: Optional[str] = Query(None),
+) -> Dict[str, Any]:
+    """Mağaza bazlı detay performans raporu."""
+
+    all_rows = await _fetch_mcp_data()
+
+    # Yıl + ay filtresi
+    rows = [r for r in all_rows if _fv(r[0]) == yil]
+    if ay:
+        rows = [r for r in rows if _fv(r[1]) == ay]
+
+    # Bölge filtresi
+    if bolge and bolge != "tum":
+        rows = [r for r in rows if str(r[2] or "").strip() == bolge]
+
+    if not rows:
+        return {"error": "Veri bulunamadı"}
+
+    # ── Mağaza bazlı aggregation ──────────────────────────────────────────────
+    mag_map: Dict[str, Dict] = {}
+    mag_bolge: Dict[str, str] = {}
+
+    for r in rows:
+        mag  = str(r[3] or "").strip()
+        bol  = str(r[2] or "").strip() or None
+        if not mag:
+            continue
+        if mag not in mag_map:
+            mag_map[mag] = {"magaza": mag, "hedef": 0.0, "ciro": 0.0, "ziy": 0.0,
+                            "adet": 0.0, "mdo_w": 0.0, "obf_w": 0.0, "sepet_w": 0.0}
+        d = mag_map[mag]
+        d["hedef"]   += _fv(r[4]);  d["ciro"]    += _fv(r[5])
+        d["ziy"]     += _fv(r[7]);  d["adet"]    += _fv(r[11])
+        d["mdo_w"]   += _fv(r[8])  * _fv(r[7])
+        d["obf_w"]   += _fv(r[10]) * _fv(r[11])
+        d["sepet_w"] += _fv(r[9])  * _fv(r[11])
+        if bol:
+            mag_bolge[mag] = bol
+
+    # Türetilmiş alanlar
+    mağazalar = []
+    for mag, d in mag_map.items():
+        oran  = d["ciro"] / d["hedef"] * 100  if d["hedef"] else 0
+        mdo   = d["mdo_w"]   / d["ziy"]   * 100 if d["ziy"]  else 0
+        obf   = d["obf_w"]   / d["adet"]        if d["adet"] else 0
+        sepet = d["sepet_w"] / d["adet"]         if d["adet"] else 0
+        mağazalar.append({
+            "magaza":       mag,
+            "bolge_muduru": mag_bolge.get(mag, ""),
+            "hedef":        round(d["hedef"]),
+            "net_ciro":     round(d["ciro"]),
+            "hedef_oran":   round(oran, 1),
+            "ziyaretci":    round(d["ziy"]),
+            "mdo":          round(mdo, 1),
+            "sepet":        round(sepet, 2),
+            "obf":          round(obf, 0),
+            "net_adet":     round(d["adet"]),
+        })
+
+    mağazalar.sort(key=lambda x: -x["hedef_oran"])
+
+    # ── Bölge müdürü kartları ─────────────────────────────────────────────────
+    bolge_map: Dict[str, Dict] = {}
+    for r in rows:
+        b = str(r[2] or "").strip()
+        if not b:
+            continue
+        if b not in bolge_map:
+            bolge_map[b] = {"bolge_muduru": b, "hedef": 0.0, "ciro": 0.0,
+                            "ziy": 0.0, "mdo_w": 0.0, "mag_set": set()}
+        d2 = bolge_map[b]
+        mag = str(r[3] or "").strip()
+        d2["hedef"] += _fv(r[4]); d2["ciro"] += _fv(r[5])
+        d2["ziy"]   += _fv(r[7]); d2["mdo_w"] += _fv(r[8]) * _fv(r[7])
+        if mag: d2["mag_set"].add(mag)
+
+    bolgeler = []
+    for b, d2 in bolge_map.items():
+        oran = d2["ciro"] / d2["hedef"] * 100 if d2["hedef"] else 0
+        mdo  = d2["mdo_w"] / d2["ziy"] * 100  if d2["ziy"]  else 0
+        bolgeler.append({
+            "bolge_muduru":  b,
+            "magaza_sayisi": len(d2["mag_set"]),
+            "hedef":         round(d2["hedef"]),
+            "net_ciro":      round(d2["ciro"]),
+            "hedef_oran":    round(oran, 1),
+            "ziyaretci":     round(d2["ziy"]),
+            "mdo":           round(mdo, 1),
+        })
+    bolgeler.sort(key=lambda x: -x["net_ciro"])
+
+    # ── Performans sıralaması ─────────────────────────────────────────────────
+    ranked = sorted(mağazalar, key=lambda x: -x["hedef_oran"])
+    en_basarili = ranked[:3]
+    aksiyon = [m for m in ranked if m["hedef_oran"] < 80]
+    aksiyon.sort(key=lambda x: x["hedef_oran"])
+
+    # Bölge listesi (dropdown için)
+    bolge_listesi = sorted(bolge_map.keys())
+
+    donem = f"{yil}{' · Ay ' + str(ay) if ay else ' YTD'}"
+
+    return {
+        "donem":          donem,
+        "yil":            yil,
+        "ay":             ay,
+        "bolge":          bolge,
+        "magaza_sayisi":  len(mağazalar),
+        "bolgeler":       bolgeler[:10],
+        "bolge_listesi":  bolge_listesi,
+        "mağazalar":      mağazalar,
+        "en_basarili":    en_basarili,
+        "aksiyon":        aksiyon[:5],
+    }
