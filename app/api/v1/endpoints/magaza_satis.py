@@ -56,6 +56,8 @@ async def _fetch_mcp_data() -> List[List]:
                 log.warning("magaza_satis.fetch_error", start=start, error=str(e))
                 break
 
+    # Mağaza adı boş olan satırlar MCP aggregate (toplam) satırları — çift sayımı önle
+    rows = [r for r in rows if r[3] and str(r[3]).strip()]
     _CACHE.update({"data": rows, "ts": now})
     log.info("magaza_satis.fetched", rows=len(rows))
     return rows
