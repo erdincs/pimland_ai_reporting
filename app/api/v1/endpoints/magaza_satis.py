@@ -594,3 +594,145 @@ async def get_donemseel_performans(
         "bolgeler":    bolgeler,
         "bolge_listesi": bolge_listesi,
     }
+
+
+# ── GET /donemseel-karsilastirma ──────────────────────────────────────────────
+
+@router.get("/donemseel-karsilastirma")
+async def get_donemseel_karsilastirma() -> Dict[str, Any]:
+    """2024-2025-2026 yılları arası dönemsel karşılaştırma raporu."""
+
+    all_rows = await _fetch_mcp_data()
+
+    def year_data(yil: int, max_ay: Optional[int] = None):
+        rows = [r for r in all_rows if _fv(r[0]) == yil]
+        if max_ay:
+            rows = [r for r in rows if _fv(r[1]) <= max_ay]
+        monthly: Dict[int, Dict] = {}
+        for r in rows:
+            m = int(_fv(r[1])) or 0
+            if m == 0: continue
+            if m not in monthly:
+                monthly[m] = {"hedef": 0.0, "ciro": 0.0, "ziy": 0.0,
+                              "adet": 0.0, "mdo_w": 0.0, "obf_w": 0.0, "sepet_w": 0.0}
+            d = monthly[m]
+            d["hedef"]   += _fv(r[4]); d["ciro"]  += _fv(r[5])
+            d["ziy"]     += _fv(r[7]); d["adet"]  += _fv(r[11])
+            d["mdo_w"]   += _fv(r[8])  * _fv(r[7])
+            d["obf_w"]   += _fv(r[10]) * _fv(r[11])
+            d["sepet_w"] += _fv(r[9])  * _fv(r[11])
+        tot_ciro  = sum(d["ciro"]  for d in monthly.values())
+        tot_hedef = sum(d["hedef"] for d in monthly.values())
+        tot_ziy   = sum(d["ziy"]   for d in monthly.values())
+        tot_adet  = sum(d["adet"]  for d in monthly.values())
+        mdo_w     = sum(d["mdo_w"] for d in monthly.values())
+        obf_w     = sum(d["obf_w"] for d in monthly.values())
+        sep_w     = sum(d["sepet_w"] for d in monthly.values())
+        return {
+            "ciro":      round(tot_ciro),
+            "hedef":     round(tot_hedef),
+            "oran":      round(tot_ciro / tot_hedef * 100, 1) if tot_hedef else 0,
+            "ziy":       round(tot_ziy),
+            "adet":      round(tot_adet),
+            "mdo":       round(mdo_w / tot_ziy * 100, 1) if tot_ziy else 0,
+            "obf":       round(obf_w / tot_adet, 0) if tot_adet else 0,
+            "sepet":     round(sep_w / tot_adet, 2) if tot_adet else 0,
+            "monthly":   monthly,
+            "aylar":     sorted(monthly.keys()),
+        }
+
+    d24 = year_data(2024)
+    d25 = year_data(2025)
+    # 2026 YTD: kaç ay var?
+    d26_full = year_data(2026)
+    ytd_aylar = d26_full["aylar"]
+    ytd_ay_sayisi = len([a for a in ytd_aylar if d26_full["monthly"][a]["ciro"] > 0]) or 1
+
+    # 2026 projection (full year estimate)
+    pace = d26_full["ciro"] / ytd_ay_sayisi
+    proj_ciro = round(pace * 12)
+    proj_oran_delta = round(d26_full["oran"] - d25["oran"], 1)
+
+    # YoY büyüme (karşılaştırılabilir dönem)
+    def yoy(new_val, old_val):
+        return round((new_val - old_val) / old_val * 100, 1) if old_val else 0
+
+    # 2025 vs 2024 (aynı ay sayısı)
+    common_ay_24_25 = [a for a in d25["aylar"] if a in d24["monthly"]]
+    d24c = year_data(2024, max(common_ay_24_25) if common_ay_24_25 else 12)
+    d25c = year_data(2025, max(common_ay_24_25) if common_ay_24_25 else 12)
+
+    # 2026 vs 2025 (aynı YTD)
+    d25_ytd = year_data(2025, ytd_ay_sayisi)
+
+    yoy_data = {
+        "net_ciro":  [yoy(d25c["ciro"], d24c["ciro"]),    yoy(d26_full["ciro"], d25_ytd["ciro"])],
+        "ziyaretci": [yoy(d25c["ziy"],  d24c["ziy"]),     yoy(d26_full["ziy"],  d25_ytd["ziy"])],
+        "mdo":       [round(d25c["mdo"]-d24c["mdo"],1),   round(d26_full["mdo"]-d25_ytd["mdo"],1)],
+        "obf":       [yoy(d25c["obf"],  d24c["obf"]),     yoy(d26_full["obf"],  d25_ytd["obf"])],
+        "sepet":     [yoy(d25c["sepet"],d24c["sepet"]),   yoy(d26_full["sepet"],d25_ytd["sepet"])],
+        "net_adet":  [yoy(d25c["adet"], d24c["adet"]),    yoy(d26_full["adet"], d25_ytd["adet"])],
+    }
+
+    # Çeyreklik
+    def quarter_sum(monthly, q_aylar):
+        s = {"ciro": 0.0, "ziy": 0.0}
+        for a in q_aylar:
+            d = monthly.get(a, {})
+            s["ciro"] += d.get("ciro", 0); s["ziy"] += d.get("ziy", 0)
+        return round(s["ciro"]) if s["ciro"] > 0 else None
+
+    QUARTERS = [(1,[1,2,3]),(2,[4,5,6]),(3,[7,8,9]),(4,[10,11,12])]
+    Q_LABELS  = ["OCA-MAR","NİS-HAZ","TEM-EYL","EKİ-ARA"]
+    ceyreklik = []
+    for i,(qn,aylar) in enumerate(QUARTERS):
+        c24 = quarter_sum(d24["monthly"], aylar)
+        c25 = quarter_sum(d25["monthly"], aylar)
+        c26 = quarter_sum(d26_full["monthly"], aylar)
+        delta = yoy(c25, c24) if (c25 and c24) else None
+        ceyreklik.append({
+            "q": f"Q{qn}", "label": Q_LABELS[i],
+            "y2024": c24, "y2025": c25, "y2026": c26,
+            "delta_pct": delta,
+            "bekliyor": c26 is None,
+            "kismi": c26 is not None and len([a for a in aylar if a in d26_full["aylar"] and d26_full["monthly"].get(a,{}).get("ciro",0)>0]) < 3,
+        })
+
+    # Aylık karşılaştırma
+    AY_ADLARI = {1:"Oca",2:"Şub",3:"Mar",4:"Nis",5:"May",6:"Haz",7:"Tem",8:"Ağu",9:"Eyl",10:"Eki",11:"Kas",12:"Ara"}
+    aylik_trend = []
+    for a in range(1, 13):
+        aylik_trend.append({
+            "ay": a, "ay_adi": AY_ADLARI[a],
+            "y2024": round(d24["monthly"].get(a, {}).get("ciro", 0)) or None,
+            "y2025": round(d25["monthly"].get(a, {}).get("ciro", 0)) or None,
+            "y2026": round(d26_full["monthly"].get(a, {}).get("ciro", 0)) or None,
+        })
+
+    # Büyüme katkısı (2026 vs 2025 waterfall)
+    obf_katki   = round(d26_full["ciro"] - d25_ytd["ciro"])
+    ziy_katki   = round((d26_full["ziy"] - d25_ytd["ziy"]) * d25_ytd["obf"] / 1000 * d25_ytd["sepet"]) if d25_ytd["obf"] else 0
+    mdo_katki   = round((d26_full["mdo"] - d25_ytd["mdo"]) / 100 * d25_ytd["ziy"] * d25_ytd["obf"] / 1000) if d25_ytd["ziy"] else 0
+    sepet_katki = round((d26_full["sepet"] - d25_ytd["sepet"]) * d25_ytd["ziy"] * d26_full["mdo"] / 100) if d25_ytd["ziy"] else 0
+
+    return {
+        "y2024":     d24,
+        "y2025":     d25,
+        "y2026_ytd": d26_full,
+        "y2026_proj": {
+            "ciro": proj_ciro,
+            "oran_delta": proj_oran_delta,
+            "aylar": ytd_ay_sayisi,
+        },
+        "yoy":       yoy_data,
+        "ceyreklik": ceyreklik,
+        "aylik_trend": aylik_trend,
+        "buyume_katkisi": {
+            "baz_2025":  d25_ytd["ciro"],
+            "proj_2026": proj_ciro,
+            "obf":    round(d26_full["obf"]*d26_full["adet"]/1e6 - d25_ytd["obf"]*d25_ytd["adet"]/1e6)*1e6 if d25_ytd["adet"] else 0,
+            "ziyaretci": round((d26_full["ziy"]-d25_ytd["ziy"])*d25_ytd["obf"]*d25_ytd["mdo"]/100) if d25_ytd["ziy"] else 0,
+            "mdo":    mdo_katki,
+            "sepet":  sepet_katki,
+        },
+    }

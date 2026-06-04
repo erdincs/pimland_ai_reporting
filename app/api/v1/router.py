@@ -19,4 +19,4 @@ api_router.include_router(enrichment.router)
 api_router.include_router(export.router)
 api_router.include_router(monitoring.router)
 api_router.include_router(siralama.router)
-api_router.include_router(magaza_satis.router)
+api_router.include_router(magaza_satis.router)  # yonetici-ozeti, magaza-performans, donemseel-performans, donemseel-karsilastirma

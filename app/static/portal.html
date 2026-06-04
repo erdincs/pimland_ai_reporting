@@ -607,6 +607,9 @@ body,
       <div class="nav-item nav-sub" onclick="showSection('magaza-donemseel')" id="nav-magaza-donemseel">
         <span class="nav-icon" style="font-size:12px">📅</span><span class="nav-text">Dönemsel Performans</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showSection('magaza-karsilastirma')" id="nav-magaza-karsilastirma">
+        <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">Dönemsel Karşılaştırma</span>
+      </div>
     </div>
 
     <!-- ── E-TİCARET ──────────────────────────────────────────────────── -->
@@ -1377,6 +1380,25 @@ body,
       </div>
     </div><!-- /section-magaza-donemseel -->
 
+
+    <!-- ── DÖNEMSEL KARŞILAŞTIRMA ─────────────────────────────────── -->
+    <div class="section" id="section-magaza-karsilastirma" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">Dönemsel Karşılaştırma</div>
+          <div style="font-size:10px;color:var(--t3)">2024 · 2025 · 2026 yılları arası mağaza satış performansı</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="dkSetTab('aylik')" id="dk-tab-aylik" style="background:var(--bg4);border:1px solid var(--border2);color:var(--t1);padding:6px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">Aylık</button>
+          <button onclick="dkSetTab('ceyreklik')" id="dk-tab-ceyreklik" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">Çeyreklik</button>
+          <button onclick="dkSetTab('yillik')" id="dk-tab-yillik" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">Yıllık</button>
+        </div>
+      </div>
+      <div id="dk-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
+      </div>
+    </div><!-- /section-magaza-karsilastirma -->
+
     <!-- ── MAĞAZA YÖNETİCİ ÖZETİ ──────────────────────────────────────────── -->
     <div class="section" id="section-magaza-yonetici" style="padding:0;flex-direction:column;overflow-y:auto">
       <!-- Filtre bar -->
@@ -2141,6 +2163,7 @@ function loadSection(id){
   else if(id==='magaza-yonetici')loadMagaza();
   else if(id==='magaza-performans')loadMagazaPerformans();
   else if(id==='magaza-donemseel')loadDonemseel();
+  else if(id==='magaza-karsilastirma')loadDKarsilastirma();
   else if(id==='monitoring'){initMonitoring();}
   else if(id==='enrichment'){toggleEnrMenu();return;}
   if(id!=='monitoring') stopMonitoring();
@@ -4902,6 +4925,7 @@ const _SECTION_GROUP = {
   'magaza-yonetici':'satis',
   'magaza-performans':'satis',
   'magaza-donemseel':'satis',
+  'magaza-karsilastirma':'satis',
   monitoring:'other'
 };
 
@@ -6893,6 +6917,261 @@ function _dpAllBolgeTable(bolgeler) {
       </table>
     </div>
   </div>`;
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DÖNEMSEL KARŞILAŞTIRMA (dk*)
+// ══════════════════════════════════════════════════════════════════════════════
+let _dkTab = 'aylik';
+let _dkData = null;
+
+function dkSetTab(tab) {
+  _dkTab = tab;
+  ['aylik','ceyreklik','yillik'].forEach(t=>{
+    const btn=document.getElementById('dk-tab-'+t);
+    if(!btn) return;
+    const active=t===tab;
+    btn.style.background=active?'var(--bg4)':'var(--bg3)';
+    btn.style.borderColor=active?'var(--border2)':'var(--border)';
+    btn.style.color=active?'var(--t1)':'var(--t2)';
+    btn.style.fontWeight=active?'600':'400';
+  });
+  if(_dkData) renderDK(_dkData);
+}
+
+async function loadDKarsilastirma() {
+  const content=document.getElementById('dk-content');
+  content.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>';
+  try {
+    const d=await fetch(`${API}/magaza-satis/donemseel-karsilastirma`).then(r=>r.json());
+    if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
+    _dkData=d; renderDK(d);
+  } catch(e) {
+    content.innerHTML=`<div style="padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+function renderDK(d) {
+  const content=document.getElementById('dk-content');
+  const y24=d.y2024||{}, y25=d.y2025||{}, y26=d.y2026_ytd||{}, proj=d.y2026_proj||{};
+  const maxC=Math.max(y24.ciro||0,y25.ciro||0,y26.ciro||0,1);
+
+  // ── 4 KPI Kartı ──────────────────────────────────────────────────────────
+  const kpiDefs=[
+    {label:'NET CİRO (YILLIK)', k:'ciro', fmt:'tl', d24:y24.ciro,d25:y25.ciro,d26:y26.ciro,
+     delta1:_dkYoy(y25.ciro,y24.ciro), delta2:_dkYoy(y26.ciro,y25.ciro)},
+    {label:'HEDEF ORANI', k:'oran', fmt:'pct', d24:y24.oran,d25:y25.oran,d26:y26.oran,
+     delta1:round1(y25.oran-y24.oran)+' puan', delta2:round1(y26.oran-y25.oran)+' puan'},
+    {label:'MDO', k:'mdo', fmt:'pct', d24:y24.mdo,d25:y25.mdo,d26:y26.mdo,
+     delta1:round1(y25.mdo-y24.mdo)+' puan', delta2:round1(y26.mdo-y25.mdo)+' puan'},
+    {label:'OBF', k:'obf', fmt:'tl', d24:y24.obf,d25:y25.obf,d26:y26.obf,
+     delta1:_dkYoy(y25.obf,y24.obf), delta2:_dkYoy(y26.obf,y25.obf)},
+  ];
+  function round1(v){return isNaN(v)?'—':((v>=0?'+':'')+v.toFixed(1));}
+  function _dkYoy(n,o){if(!o) return '—'; const p=(n-o)/Math.abs(o)*100; return (p>=0?'↑ %':' ↓ %')+Math.abs(p).toFixed(1);}
+  function _dkFmt(v,fmt){ if(!v&&v!==0) return '—'; return fmt==='tl'?_myFmt(v,'tl'):fmt==='pct'?'%'+(+v).toFixed(1):v; }
+
+  const kpiCards=kpiDefs.map(kp=>{
+    const maxV=Math.max(kp.d24||0,kp.d25||0,kp.d26||0,1);
+    const barRow=(yr,v,color,label)=>{
+      if(!v&&v!==0) return '';
+      const bw=Math.round(v/maxV*80);
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span style="font-size:10px;color:var(--t3);width:54px">${yr}</span>
+        <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
+          <div style="width:${bw}%;height:100%;background:${color};border-radius:3px"></div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:${color};min-width:52px;text-align:right">${_dkFmt(v,kp.fmt)}</span>
+      </div>`;
+    };
+    const c25=(kp.delta1+'').includes('↑')||parseFloat(kp.delta1)>0?'var(--green)':'var(--red)';
+    const c26=(kp.delta2+'').includes('↑')||parseFloat(kp.delta2)>0?'var(--green)':'var(--red)';
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;flex:1;min-width:180px">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:10px">${kp.label}</div>
+      ${barRow('2024',kp.d24,'var(--t4)','')}
+      ${barRow('2025',kp.d25,'var(--teal)','')}
+      ${barRow('2026 YTD',kp.d26,'var(--orange)','')}
+      <div style="display:flex;gap:12px;margin-top:6px;border-top:1px solid var(--border);padding-top:6px">
+        <span style="font-size:9px;color:var(--t3)">24→25: <span style="color:${c25}">${kp.delta1}</span></span>
+        <span style="font-size:9px;color:var(--t3)">25→26: <span style="color:${c26}">${kp.delta2} proj.</span></span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Aylık Trend ───────────────────────────────────────────────────────────
+  const trend=d.aylik_trend||[];
+  const maxT=Math.max(...trend.map(t=>Math.max(t.y2024||0,t.y2025||0,t.y2026||0)),1);
+  const trendBars=trend.map(t=>{
+    const b24=Math.round((t.y2024||0)/maxT*64); const b25=Math.round((t.y2025||0)/maxT*64); const b26=Math.round((t.y2026||0)/maxT*64);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
+      <div style="width:100%;display:flex;gap:1px;align-items:flex-end;height:64px">
+        <div style="flex:1;background:var(--t4);border-radius:2px 2px 0 0;height:${b24}px"></div>
+        <div style="flex:1;background:var(--teal);border-radius:2px 2px 0 0;height:${b25}px"></div>
+        <div style="flex:1;background:var(--orange);border-radius:2px 2px 0 0;height:${b26}px;opacity:${t.y2026?1:0.2}"></div>
+      </div>
+      <div style="font-size:8px;color:var(--t3);margin-top:3px">${t.ay_adi}</div>
+    </div>`;
+  }).join('');
+
+  const aylikHtml=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">AYLIK NET CİRO</span>
+      <span style="font-size:10px;color:var(--t3)">2024 · 2025 · 2026</span>
+    </div>
+    <div style="display:flex;gap:3px;align-items:flex-end">${trendBars}</div>
+    <div style="display:flex;gap:14px;margin-top:10px">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;background:var(--t4);border-radius:2px"></div><span style="font-size:10px;color:var(--t3)">2024</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;background:var(--teal);border-radius:2px"></div><span style="font-size:10px;color:var(--t3)">2025</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;background:var(--orange);border-radius:2px"></div><span style="font-size:10px;color:var(--t3)">2026</span></div>
+    </div>
+  </div>`;
+
+  // ── YoY Büyüme Analizi ───────────────────────────────────────────────────
+  const yoy=d.yoy||{};
+  const yoyLabels={net_ciro:'Net Ciro',ziyaretci:'Ziyaretçi',mdo:'MDO',obf:'OBF',sepet:'Sepet',net_adet:'Net Adet'};
+  const maxYoy=Math.max(...Object.values(yoy).flatMap(v=>v.map(Math.abs)),1);
+  const yoyRows=Object.entries(yoyLabels).map(([k,label])=>{
+    const vals=yoy[k]||[0,0];
+    const w25=Math.round(Math.abs(vals[0])/maxYoy*80); const w26=Math.round(Math.abs(vals[1])/maxYoy*80);
+    const c25=vals[0]>=0?'var(--teal)':'var(--red)'; const c26=vals[1]>=0?'var(--green)':'var(--red)';
+    const sign=(v)=>v>=0?'+':'';
+    return `<div style="display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center;margin-bottom:8px">
+      <span style="font-size:11px;color:var(--t2);text-align:right">${label}</span>
+      <div>
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+          <div style="width:${w25}%;height:12px;background:${c25};border-radius:2px;min-width:4px;display:flex;align-items:center;padding:0 4px;box-sizing:border-box">
+            <span style="font-size:9px;color:#fff;white-space:nowrap">2025: ${sign(vals[0])}${vals[0].toFixed(1)}%</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="width:${w26}%;height:12px;background:${c26};border-radius:2px;min-width:4px;display:flex;align-items:center;padding:0 4px;box-sizing:border-box">
+            <span style="font-size:9px;color:#fff;white-space:nowrap">2026: ${sign(vals[1])}${vals[1].toFixed(1)}%</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const yoyHtml=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">YOY BÜYÜME ANALİZİ</span>
+      <span style="font-size:10px;color:var(--t3)">2025 vs 2024 · 2026 vs 2025</span>
+    </div>
+    ${yoyRows}
+  </div>`;
+
+  // ── Çeyreklik ─────────────────────────────────────────────────────────────
+  const ceyrek=d.ceyreklik||[];
+  const maxCq=Math.max(...ceyrek.flatMap(q=>[q.y2024||0,q.y2025||0,q.y2026||0]),1);
+  const qCards=ceyrek.map(q=>{
+    const bRow=(yr,v,color)=>{
+      if(!v) return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:9px;color:var(--t3);width:32px">${yr}</span><div style="flex:1;height:4px;background:var(--bg3);border-radius:2px"></div><span style="font-size:10px;color:var(--t4)">—</span></div>`;
+      const bw=Math.round(v/maxCq*80);
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-size:9px;color:var(--t3);width:32px">${yr}</span>
+        <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:${bw}%;height:100%;background:${color}"></div></div>
+        <span style="font-size:10px;font-weight:600;color:${color}">${_myFmt(v,'tl')}</span>
+      </div>`;
+    };
+    const deltaStr=q.bekliyor?'Bekleniyor':q.kismi?`+%${q.delta_pct||'?'} (kısmi)`:q.delta_pct!=null?`+%${q.delta_pct}`:'';
+    const dc=deltaStr.includes('-')?'var(--red)':'var(--green)';
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;flex:1">
+      <div style="font-size:10px;font-weight:700;color:var(--t3);margin-bottom:8px">${q.q} · ${q.label}</div>
+      ${bRow('2024',q.y2024,'var(--t4)')}
+      ${bRow('2025',q.y2025,'var(--teal)')}
+      ${bRow('2026',q.y2026,'var(--orange)')}
+      ${deltaStr?`<div style="font-size:11px;font-weight:700;color:${dc};margin-top:6px">${deltaStr}</div>`:''}
+    </div>`;
+  }).join('');
+  const ceyrekHtml=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">ÇEYREKLİK PERFORMANS</span>
+      <span style="font-size:10px;color:var(--t3)">2024 · 2025 · 2026 YTD</span>
+    </div>
+    <div style="display:flex;gap:10px">${qCards}</div>
+  </div>`;
+
+  // ── Yıllık Özet Tablosu ───────────────────────────────────────────────────
+  const yillikRows=[
+    {label:'Net Ciro',   f:'tl',  v24:y24.ciro,  v25:y25.ciro,  v26:y26.ciro,  vp:proj.ciro,  d:_dkYoy(y26.ciro,y25.ciro)},
+    {label:'Hedef Oranı',f:'pct', v24:y24.oran,  v25:y25.oran,  v26:y26.oran,  vp:y24.oran,   d:round1(y26.oran-y25.oran)+'p'},
+    {label:'Ziyaretçi',  f:'sayi',v24:y24.ziy,   v25:y25.ziy,   v26:y26.ziy,   vp:null,        d:_dkYoy(y26.ziy,y25.ziy)},
+    {label:'MDO',        f:'pct', v24:y24.mdo,   v25:y25.mdo,   v26:y26.mdo,   vp:null,        d:round1(y26.mdo-y25.mdo)+'p'},
+    {label:'OBF',        f:'tl',  v24:y24.obf,   v25:y25.obf,   v26:y26.obf,   vp:null,        d:_dkYoy(y26.obf,y25.obf)},
+    {label:'Sepet',      f:'num', v24:y24.sepet, v25:y25.sepet, v26:y26.sepet, vp:null,        d:_dkYoy(y26.sepet,y25.sepet)},
+  ].map(r=>{
+    const dc=(r.d+'').includes('↑')||parseFloat(r.d)>0?'var(--green)':'var(--red)';
+    return `<tr style="border-bottom:1px solid rgba(42,42,58,.2)">
+      <td style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--t1)">${r.label}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t3)">${_dkFmt(r.v24,r.f)}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--teal);font-weight:600">${_dkFmt(r.v25,r.f)}</td>
+      <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--orange);font-weight:600">${_dkFmt(r.v26,r.f)}</td>
+      ${r.vp?`<td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_dkFmt(r.vp,r.f)}</td>`:'<td style="padding:8px 10px;text-align:right;color:var(--t4)">—</td>'}
+      <td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:700;color:${dc}">${r.d}</td>
+    </tr>`;
+  }).join('');
+  const yillikHtml=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">YILLIK ÖZET</span>
+      <span style="font-size:10px;color:var(--t3)">Ana KPI'lar · 3 yıl</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:var(--bg3)">
+        <th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px">METRİK</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">2024</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--teal);font-size:9px">2025</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--orange);font-size:9px">2026 YTD</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">2026 PROJ.</th>
+        <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">Δ 25→26</th>
+      </tr></thead>
+      <tbody>${yillikRows}</tbody>
+      <tfoot><tr style="background:var(--bg3)"><td colspan="6" style="padding:8px 10px;font-size:11px;color:var(--green);font-weight:600">✓ 3 yıllık tüm KPI'larda pozitif büyüme</td></tr></tfoot>
+    </table>
+  </div>`;
+
+  // Büyüme katkısı waterfall (basit)
+  const bk=d.buyume_katkisi||{};
+  const wItems=[
+    {label:'2025 Baz', v:bk.baz_2025||0, color:'var(--teal)', base:true},
+    {label:'OBF', v:bk.obf||0, color:'var(--green)'},
+    {label:'Ziyaretçi', v:bk.ziyaretci||0, color:'var(--blue)'},
+    {label:'MDO', v:bk.mdo||0, color:'var(--purple)'},
+    {label:'Sepet', v:bk.sepet||0, color:'var(--yellow)'},
+    {label:'2026 Proj.', v:bk.proj_2026||0, color:'var(--orange)', base:true},
+  ];
+  const maxW=Math.max(...wItems.map(x=>Math.abs(x.v)),1);
+  const waterfallBars=wItems.map(w=>{
+    const h=Math.round(Math.abs(w.v)/maxW*80);
+    const isneg=w.v<0;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+      <div style="font-size:9px;color:${w.v>=0?'var(--green)':'var(--red)'};font-weight:600">${w.base?'':((w.v>=0?'+':'')+_myFmt(Math.abs(w.v),'tl'))}</div>
+      <div style="width:90%;height:${h}px;background:${isneg?'var(--red)':w.color};border-radius:3px 3px 0 0;opacity:.85"></div>
+      <div style="font-size:8px;color:var(--t3);text-align:center;white-space:nowrap">${w.label}</div>
+      <div style="font-size:9px;color:var(--t2);font-weight:600">${_myFmt(w.v,'tl')}</div>
+    </div>`;
+  }).join('');
+  const buyumeHtml=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">BÜYÜME KATKISI</span>
+      <span style="font-size:10px;color:var(--t3)">2025→2026</span>
+    </div>
+    <div style="display:flex;gap:5px;align-items:flex-end;height:120px">${waterfallBars}</div>
+  </div>`;
+
+  // Render by tab
+  if(_dkTab==='aylik') {
+    content.innerHTML=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${aylikHtml}${yoyHtml}</div>`;
+  } else if(_dkTab==='ceyreklik') {
+    content.innerHTML=`
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
+      ${ceyrekHtml}`;
+  } else {
+    content.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${yillikHtml}${buyumeHtml}</div>`;
+  }
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
