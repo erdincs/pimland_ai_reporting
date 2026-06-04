@@ -4840,7 +4840,9 @@ async function swAddCard(p){
             : (tab.innerHTML=(_SW_KANAL_LABEL[s.kanal]||s.kanal)+badge);
         }
       });
-      // İlk tab'ı aktif yap (hikayesi olan)
+      // Hikayeleri yükledikten sonra tab renklerini yenile
+      swRefreshTabStyles(p.urun_kodu);
+      // İlk hikayesi olan kanala geç
       const firstWithStory=stories[0]?.kanal;
       if(firstWithStory) swSwitchTab(p.urun_kodu,firstWithStory);
     }
@@ -4854,20 +4856,17 @@ function swCardHtml(p){
   const allChans=_SW_ALL_CHANNELS;
   const firstChan=allChans[0];
 
-  const tabsHtml=allChans.map((k,i)=>{
-    const sd=(_SW.storyData[p.urun_kodu]||{})[k];
-    const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
-    const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
-    const active=activeChanSet.has(k);
-    return `<div style="display:flex;align-items:center;gap:0;position:relative">
+  // Başlangıçta tüm tablar gri — hikaye yüklendikçe renklenecek
+    const tabsHtml=allChans.map((k,i)=>{
+    return `<div id="sw-tab-wrap-${p.urun_kodu}-${k}" style="display:flex;align-items:center;gap:0;position:relative">
       <button class="sw-chan-tab${i===0?' sw-tab-active':''}" data-kod="${p.urun_kodu}" data-kanal="${k}"
         onclick="swSwitchTab('${p.urun_kodu}','${k}')"
-        style="background:${active?cc+'22':'var(--bg3)'};border:1px solid ${active?cc:'var(--border)'};color:${active?cc:'var(--t2)'};
-               padding:4px 10px 4px 10px;border-radius:5px 0 0 5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;border-right:none">
-        ${_SW_KANAL_LABEL[k]||k}${badge}
+        style="background:var(--bg3);border:1px solid var(--border);color:var(--t3);
+               padding:4px 10px;border-radius:5px 0 0 5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;border-right:none">
+        ${_SW_KANAL_LABEL[k]||k}
       </button>
       <button onclick="swRemoveCardChannel('${p.urun_kodu}','${k}')" title="Kaldır"
-        style="background:${active?cc+'22':'var(--bg3)'};border:1px solid ${active?cc:'var(--border)'};border-left:none;color:${active?cc:'var(--t3)'};
+        style="background:var(--bg3);border:1px solid var(--border);border-left:none;color:var(--t4);
                padding:4px 5px;border-radius:0 5px 5px 0;cursor:pointer;font-size:10px;line-height:1;flex-shrink:0">×</button>
     </div>`;
   }).join('');
@@ -4946,20 +4945,47 @@ function swRemoveCardChannel(kod,kanal){
 }
 
 function swSwitchTab(kod,kanal){
-  // Tab butonları
   document.querySelectorAll(`.sw-chan-tab[data-kod="${kod}"]`).forEach(btn=>{
     const k=btn.dataset.kanal;
     const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
-    const active=k===kanal;
-    btn.style.background=active?cc+'22':'var(--bg3)';
-    btn.style.borderColor=active?cc:'var(--border)';
-    btn.style.color=active?cc:'var(--t2)';
-    btn.classList.toggle('sw-tab-active',active);
+    const hasStory=!!(_SW.storyData[kod]?.[k]);
+    const isActive=k===kanal;
+    const xBtn=btn.nextElementSibling; // × butonu
+    if(isActive){
+      // Aktif tab: hikayesi varsa tam renkli, yoksa soluk vurgu
+      btn.style.background=hasStory?cc+'28':'var(--bg4)';
+      btn.style.borderColor=hasStory?cc:'var(--border2)';
+      btn.style.color=hasStory?cc:'var(--t1)';
+      if(xBtn){xBtn.style.background=hasStory?cc+'28':'var(--bg4)';xBtn.style.borderColor=hasStory?cc:'var(--border2)';xBtn.style.color=hasStory?cc:'var(--t2)';}
+    } else {
+      // Pasif tab: hikayesi varsa renk tonu, yoksa gri
+      btn.style.background=hasStory?cc+'0e':'var(--bg3)';
+      btn.style.borderColor=hasStory?cc+'77':'var(--border)';
+      btn.style.color=hasStory?cc+'bb':'var(--t3)';
+      if(xBtn){xBtn.style.background=hasStory?cc+'0e':'var(--bg3)';xBtn.style.borderColor=hasStory?cc+'77':'var(--border)';xBtn.style.color=hasStory?cc+'77':'var(--t4)';}
+    }
+    btn.classList.toggle('sw-tab-active',isActive);
   });
-  // İçerik panel'ları
   const wrap=document.getElementById(`sw-chan-wrap-${kod}`);
   if(wrap) wrap.querySelectorAll('[id^="sw-cc-"]').forEach(div=>{
     div.style.display=div.id===`sw-cc-${kod}-${kanal}`?'flex':'none';
+  });
+}
+
+function swRefreshTabStyles(kod){
+  // Hikaye yüklendikten / üretildikten sonra tüm tabları güncelle
+  const activeTab=document.querySelector(`.sw-tab-active[data-kod="${kod}"]`);
+  const activeKanal=activeTab?.dataset.kanal||_SW_ALL_CHANNELS[0];
+  swSwitchTab(kod,activeKanal);
+  // Tab badge (✓ Onaylı) güncelle
+  _SW_ALL_CHANNELS.forEach(k=>{
+    const sd=_SW.storyData[kod]?.[k];
+    const btn=document.querySelector(`.sw-chan-tab[data-kod="${kod}"][data-kanal="${k}"]`);
+    if(btn){
+      const label=_SW_KANAL_LABEL[k]||k;
+      const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
+      btn.textContent=label+badge;
+    }
   });
 }
 
@@ -5055,16 +5081,16 @@ async function swGenerateStories(){
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const results=await res.json();
 
-    results.forEach(r=>{
-      if(!_SW.storyData[r.urun_kodu]) _SW.storyData[r.urun_kodu]={};
-      _SW.storyData[r.urun_kodu][r.kanal]={id:r.id,story:r.story,karakter_sayisi:r.karakter_sayisi,durum:r.durum};
-      // Kart içeriğini güncelle
-      const cc=document.getElementById(`sw-cc-${r.urun_kodu}-${r.kanal}`);
-      if(cc) cc.innerHTML=swChanContent(r.urun_kodu,r.kanal,_SW.storyData[r.urun_kodu][r.kanal]);
-      // Tab badge güncelle
-      const tab=document.querySelector(`.sw-chan-tab[data-kod="${r.urun_kodu}"][data-kanal="${r.kanal}"]`);
-      if(tab) tab.innerHTML=(_SW_KANAL_LABEL[r.kanal]||r.kanal)+(r.durum==='onaylandi'?' ✓':'');
-    });
+    const updatedProds=new Set();
+      results.forEach(r=>{
+        if(!_SW.storyData[r.urun_kodu]) _SW.storyData[r.urun_kodu]={};
+        _SW.storyData[r.urun_kodu][r.kanal]={id:r.id,story:r.story,karakter_sayisi:r.karakter_sayisi,durum:r.durum};
+        const cc=document.getElementById(`sw-cc-${r.urun_kodu}-${r.kanal}`);
+        if(cc) cc.innerHTML=swChanContent(r.urun_kodu,r.kanal,_SW.storyData[r.urun_kodu][r.kanal]);
+        updatedProds.add(r.urun_kodu);
+      });
+      // Tab renklerini yenile — hikayesi olan kanallar renklensin
+      updatedProds.forEach(kod=>swRefreshTabStyles(kod));
     _SW.stats.uretilen+=results.length;
     swUpdateStats();
   }catch(e){
@@ -5091,8 +5117,8 @@ async function swApproveAll(kod){
     if(approvedKanallar.length){
       _SW.stats.onaylanan+=approvedKanallar.length;
       swUpdateStats();
+      swRefreshTabStyles(kod);  // ✓ badge + renkler güncelle
     }
-    // Başlık butonunu güncelle
     const btn=document.querySelector(`[onclick="swApproveAll('${kod}')"]`);
     if(btn){btn.textContent='✓ Onaylandı';btn.style.opacity='0.5';btn.disabled=true;}
   }catch(e){alert('Onaylama hatası: '+e.message);}
