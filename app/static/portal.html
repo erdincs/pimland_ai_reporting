@@ -3996,9 +3996,9 @@ async function openEnrModal(urunKodu){
       <div style="height:100%;width:${Math.round((v||0)/max*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:3px"></div>
     </div>
   </div>`;
-  const eksik=JSON.parse(d.eksik_alanlar||'[]');
-  const hatali=JSON.parse(d.hatali_alanlar||'[]');
-  const uyari=JSON.parse(d.uyarilar||'[]');
+  const eksik=Array.isArray(d.eksik_alanlar)?d.eksik_alanlar:(d.eksik_alanlar?JSON.parse(d.eksik_alanlar):[]);
+  const hatali=Array.isArray(d.hatali_alanlar)?d.hatali_alanlar:(d.hatali_alanlar?JSON.parse(d.hatali_alanlar):[]);
+  const uyari=Array.isArray(d.uyarilar)?d.uyarilar:(d.uyarilar?JSON.parse(d.uyarilar):[]);
   box.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div><div style="font-size:10px;color:var(--t3);font-family:monospace">${d.urun_kodu}</div>
