@@ -637,6 +637,17 @@ body,
       </div>
     </div>
 
+    <!-- ── SATIŞ ANALİZ ─────────────────────────────────────────────── -->
+    <div class="nav-group-hdr" id="grp-satis" onclick="toggleNavGroup('satis')">
+      <span>📊 SATIŞ ANALİZ</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body" id="grpb-satis">
+      <div class="nav-item nav-sub" onclick="showSection('magaza-yonetici')" id="nav-magaza-yonetici">
+        <span class="nav-icon" style="font-size:12px">🏪</span><span class="nav-text">Yönetici Özeti</span>
+      </div>
+    </div>
+
     <!-- ── E-TİCARET ──────────────────────────────────────────────────── -->
     <div class="nav-group-hdr" id="grp-eticaret" onclick="toggleNavGroup('eticaret')">
       <span>🛒 E-TİCARET</span>
@@ -1313,6 +1324,36 @@ body,
     </div><!-- /section-urun-yonetimi -->
 
     <!-- ÜRÜN SATIŞ DETAY ANALİZİ -->
+    <!-- ── MAĞAZA YÖNETİCİ ÖZETİ ──────────────────────────────────────────── -->
+    <div class="section" id="section-magaza-yonetici" style="padding:0;flex-direction:column;overflow-y:auto">
+      <!-- Filtre bar -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+        <span style="font-size:13px;font-weight:700;color:var(--t1)">🏪 Yönetici Özeti</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <select id="my-yil" onchange="loadMagaza()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+          <select id="my-ay" onchange="loadMagaza()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
+            <option value="">YTD</option>
+            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+          </select>
+          <button onclick="loadMagaza()" class="btn-apply">↻ Yenile</button>
+          <span id="my-status" style="font-size:11px;color:var(--t3)"></span>
+        </div>
+      </div>
+      <!-- Ana içerik -->
+      <div id="my-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t4);font-size:12px">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div><!-- /section-magaza-yonetici -->
+
     <div class="section" id="section-urun-satis">
       <div class="sec-hdr">
         <span class="sec-title">Satış Detay Analizi</span>
@@ -2035,6 +2076,7 @@ function loadSection(id){
   else if(id==='urun-yonetimi')loadUrunYonetimi();
   else if(id==='urun-satis')loadUrunSatisAnaliz();
   else if(id==='siralama')initSiralama();
+  else if(id==='magaza-yonetici')loadMagaza();
   else if(id==='monitoring'){initMonitoring();}
   else if(id==='enrichment'){toggleEnrMenu();return;}
   if(id!=='monitoring') stopMonitoring();
@@ -4793,6 +4835,7 @@ const _SECTION_GROUP = {
   products:'urunmgmt','plm-katalog':'urunmgmt',
   'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
   siralama:'ekat',
+  'magaza-yonetici':'satis',
   monitoring:'other'
 };
 
@@ -5864,6 +5907,317 @@ async function loadSirGecmis(){
         ${r.onayli?'<span style="color:var(--green);margin-left:4px">✓</span>':''}
       </span>`).join('');
   }catch(e){}
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAĞAZA YÖNETİCİ ÖZETİ (my*)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const AY_ADLARI = {1:'Oca',2:'Şub',3:'Mar',4:'Nis',5:'May',6:'Haz',7:'Tem',8:'Ağu',9:'Eyl',10:'Eki',11:'Kas',12:'Ara'};
+const INSIGHT_COLORS = {basari:'var(--green)',risk:'var(--red)',trend:'var(--teal)',firsat:'var(--orange)',dikkat:'var(--yellow)',takip:'var(--blue)'};
+const INSIGHT_ICONS  = {basari:'✓',risk:'⚠',trend:'↑',firsat:'↑',dikkat:'△',takip:'👁'};
+
+function _myFmt(v, tip='tl') {
+  if(tip==='tl'){
+    if(Math.abs(v)>=1e9) return '₺'+(v/1e9).toFixed(1)+'M';
+    if(Math.abs(v)>=1e6) return '₺'+(v/1e6).toFixed(1)+'M';
+    if(Math.abs(v)>=1e3) return '₺'+(v/1e3).toFixed(0)+'K';
+    return '₺'+v.toFixed(0);
+  }
+  if(tip==='sayi'){
+    if(Math.abs(v)>=1e6) return (v/1e6).toFixed(1)+'M';
+    if(Math.abs(v)>=1e3) return (v/1e3).toFixed(1)+'K';
+    return v.toLocaleString('tr-TR');
+  }
+  return v;
+}
+
+function _myYoy(v, ters=false) {
+  if(v===0||v==null) return '';
+  const iyi = ters ? v<0 : v>0;
+  const c = iyi?'var(--green)':'var(--red)';
+  const ok = v>0?'↑':'↓';
+  return `<span style="font-size:10px;color:${c}">${ok}${Math.abs(v).toFixed(1)}% YoY</span>`;
+}
+
+async function loadMagaza() {
+  const yil = document.getElementById('my-yil')?.value || '2026';
+  const ay  = document.getElementById('my-ay')?.value  || '';
+  const status = document.getElementById('my-status');
+  if(status) status.textContent = '⏳ Yükleniyor...';
+  const content = document.getElementById('my-content');
+  content.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>';
+
+  try {
+    const params = new URLSearchParams({yil});
+    if(ay) params.set('ay', ay);
+    const d = await fetch(`${API}/magaza-satis/yonetici-ozeti?${params}`).then(r=>r.json());
+    if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
+    renderMagaza(d);
+    if(status) status.textContent = `${d.donem} · ${d.magaza_sayisi} mağaza`;
+  } catch(e) {
+    content.innerHTML = `<div style="padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+    if(status) status.textContent = '';
+  }
+}
+
+function renderMagaza(d) {
+  const k = d.kpis, y = d.yoy;
+  const content = document.getElementById('my-content');
+
+  // ── KPI Şeridi ──────────────────────────────────────────────────────────
+  const kpiData = [
+    {label:'HEDEF',      val:_myFmt(k.hedef,'tl'),       sub:'Aylık ciro hedefi',       yoy:'', color:'var(--t1)'},
+    {label:'NET CİRO',   val:_myFmt(k.net_ciro,'tl'),     sub:_myYoy(y.net_ciro),        yoy:'', color:'var(--teal)'},
+    {label:'HEDEF ORANI',val:'%'+k.hedef_oran,             sub:_myYoy(y.hedef_oran),      yoy:'', color:k.hedef_oran>=90?'var(--green)':k.hedef_oran>=80?'var(--yellow)':'var(--red)'},
+    {label:'ZİYARETÇİ', val:_myFmt(k.ziyaretci,'sayi'),  sub:_myYoy(y.ziyaretci,true),  yoy:'', color:'var(--t1)'},
+    {label:'MDO',        val:'%'+k.mdo.toFixed(1),         sub:_myYoy(y.mdo),             yoy:'', color:'var(--teal)'},
+    {label:'SEPET',      val:k.sepet.toFixed(1),           sub:'Ort. ürün adedi',          yoy:'', color:'var(--t1)'},
+    {label:'OBF',        val:_myFmt(k.obf,'tl'),           sub:_myYoy(y.obf),              yoy:'', color:'var(--orange)'},
+    {label:'NET ÜRÜN ADET',val:_myFmt(k.net_adet,'sayi'), sub:'Toplam satış',             yoy:'', color:'var(--t1)'},
+  ];
+
+  const kpiHtml = `<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:0;background:var(--border);border-radius:10px;overflow:hidden">
+    ${kpiData.map(kp=>`
+      <div style="background:var(--bg2);padding:12px 14px;border-right:1px solid var(--border)">
+        <div style="font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.5px;margin-bottom:4px">${kp.label}</div>
+        <div style="font-size:20px;font-weight:700;color:${kp.color};line-height:1.1">${kp.val}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:3px">${kp.sub}</div>
+      </div>`).join('')}
+  </div>`;
+
+  // ── Hedef Gerçekleştirme (donut + stats) ──────────────────────────────────
+  const hg_pct = k.hedef_oran;
+  const hg_color = hg_pct>=90?'var(--green)':hg_pct>=80?'var(--yellow)':'var(--red)';
+  // SVG donut
+  const r=45, cx=60, cy=60, circ=2*Math.PI*r;
+  const fill = Math.min(hg_pct/100,1)*circ;
+  const donutSvg = `<svg width="120" height="120" viewBox="0 0 120 120">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${hg_color}" stroke-width="12"
+      stroke-dasharray="${fill} ${circ}" stroke-dashoffset="${circ*0.25}"
+      transform="rotate(-90 ${cx} ${cy})" style="transition:stroke-dasharray .8s"/>
+    <text x="${cx}" y="${cy+3}" text-anchor="middle" font-size="16" font-weight="700" fill="${hg_color}">%${Math.round(hg_pct)}</text>
+    <text x="${cx}" y="${cy+17}" text-anchor="middle" font-size="9" fill="var(--t3)">gerçekleşme</text>
+  </svg>`;
+
+  const hedefBox = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">HEDEF GERÇEKLEŞTİRME</span>
+      <span style="font-size:10px;color:var(--t3)">${d.donem} · Tüm Mağazalar</span>
+    </div>
+    <div style="display:flex;gap:20px;align-items:center">
+      ${donutSvg}
+      <div>
+        <div style="font-size:36px;font-weight:700;color:${hg_color};line-height:1">%${hg_pct}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:4px">Hedef gerçekleştirme oranı</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px">Hedefe kalan: <span style="color:var(--red)">${_myFmt(d.hedef_kalan,'tl')}</span></div>
+        <div style="font-size:11px;color:var(--t3)">Geçen yıl: <span style="color:var(--t2)">%${d.gecen_yil_oran}</span> ${y.hedef_oran>0?'<span style="color:var(--green)">↑</span>':'<span style="color:var(--red)">↓</span>'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+      ${d.en_iyi_bolge?.bolge_muduru?`
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div style="font-size:9px;color:var(--t3);font-weight:700">EN İYİ BÖLGE</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green)">%${d.en_iyi_bolge.hedef_oran}</div>
+        <div style="font-size:11px;color:var(--t2)">${d.en_iyi_bolge.bolge_muduru}</div>
+      </div>`:''}
+      ${d.en_dusuk_bolge?.bolge_muduru?`
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div style="font-size:9px;color:var(--t3);font-weight:700">EN DÜŞÜK</div>
+        <div style="font-size:18px;font-weight:700;color:var(--red)">%${d.en_dusuk_bolge.hedef_oran}</div>
+        <div style="font-size:11px;color:var(--t2)">${d.en_dusuk_bolge.bolge_muduru}</div>
+      </div>`:''}
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div style="font-size:9px;color:var(--t3);font-weight:700">HEDEF AŞAN</div>
+        <div style="font-size:18px;font-weight:700;color:var(--teal)">${d.hedef_asan_sayi} mağaza</div>
+        <div style="font-size:11px;color:var(--t3)">${d.magaza_sayisi} içinde</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:7px;padding:10px">
+        <div style="font-size:9px;color:var(--t3);font-weight:700">KRİTİK (&lt;%80)</div>
+        <div style="font-size:18px;font-weight:700;color:var(--red)">${d.kritik_sayi} mağaza</div>
+        <div style="font-size:11px;color:var(--t3)">Acil aksiyon</div>
+      </div>
+    </div>
+  </div>`;
+
+  // ── Aylık trend bar chart ──────────────────────────────────────────────────
+  const maxCiro = Math.max(...d.trend.map(t=>t.net_ciro), ...d.trend.map(t=>t.hedef||0), 1);
+  const trendHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">AYLIK NET CİRO TRENDİ</span>
+      <span style="font-size:10px;color:var(--t3)">Net Ciro vs Hedef · ${document.getElementById('my-yil')?.value||2026}</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:100px">
+      ${d.trend.map(t=>{
+        const hCiro = Math.round(t.net_ciro/maxCiro*90);
+        const hHedef = Math.round((t.hedef||0)/maxCiro*90);
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:90px">
+            <div style="flex:1;background:var(--orange);border-radius:3px 3px 0 0;height:${hCiro}px;opacity:.85;transition:height .7s"></div>
+            <div style="flex:1;background:var(--bg4);border-radius:3px 3px 0 0;height:${hHedef}px;transition:height .7s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      ${d.trend.map(t=>`
+        <div style="flex:1;text-align:center">
+          <div style="font-size:9px;color:var(--t3)">${t.ay_adi}</div>
+          <div style="font-size:9px;color:var(--t2)">${_myFmt(t.net_ciro,'tl')}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:10px">
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:var(--orange);border-radius:2px"></div><span style="font-size:10px;color:var(--t3)">Net Ciro</span></div>
+      <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;background:var(--bg4);border-radius:2px"></div><span style="font-size:10px;color:var(--t3)">Hedef</span></div>
+    </div>
+  </div>`;
+
+  // ── Bölge Müdürü Performansı tablosu ─────────────────────────────────────
+  const bolgeHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">BÖLGE MÜDÜRÜ PERFORMANSI</span>
+      <span style="font-size:10px;color:var(--t3)">Net Ciro · ${d.donem}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:32px 1fr 80px 80px 70px 70px 70px;gap:4px;font-size:9px;color:var(--t3);font-weight:700;padding:0 4px 6px;border-bottom:1px solid var(--border);letter-spacing:.4px">
+      <div></div><div>BÖLGE MÜDÜRÜ</div><div style="text-align:right">HEDEF</div><div style="text-align:right">NET CİRO</div><div style="text-align:right">ORAN</div><div style="text-align:right">ZİYARETÇİ</div><div style="text-align:right">MDO</div>
+    </div>
+    ${d.bolgeler.slice(0,8).map((b,i)=>{
+      const rc = b.hedef_oran>=90?'var(--green)':b.hedef_oran>=80?'var(--yellow)':'var(--red)';
+      const rb = i===0?'var(--orange)':i===1?'var(--teal)':i===2?'var(--blue)':'var(--t3)';
+      return `<div style="display:grid;grid-template-columns:32px 1fr 80px 80px 70px 70px 70px;gap:4px;align-items:center;padding:7px 4px;border-bottom:1px solid rgba(42,42,58,.3)">
+        <div style="width:22px;height:22px;border-radius:50%;background:${rb}22;color:${rb};font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--t1)">${b.bolge_muduru}</div>
+        <div style="text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.hedef,'tl')}</div>
+        <div style="text-align:right;font-size:11px;color:var(--teal);font-weight:600">${_myFmt(b.net_ciro,'tl')}</div>
+        <div style="text-align:right;font-size:12px;font-weight:700;color:${rc}">%${b.hedef_oran}</div>
+        <div style="text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.ziyaretci,'sayi')}</div>
+        <div style="text-align:right;font-size:11px;color:var(--teal)">%${b.ort_mdo.toFixed(1)}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // ── AI İçgörüleri ─────────────────────────────────────────────────────────
+  const insightHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">AI İÇGÖRÜLERİ</span>
+      <span style="font-size:10px;color:var(--t3)">Bu dönem öne çıkanlar</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${(d.insights||[]).slice(0,6).map(ins=>{
+        const c = INSIGHT_COLORS[ins.tur]||'var(--t2)';
+        const ic = INSIGHT_ICONS[ins.tur]||'•';
+        const label = {basari:'✓ BAŞARI',risk:'⚠ RİSK',trend:'↑ TREND',firsat:'↑ FIRSAT',dikkat:'△ DİKKAT',takip:'👁 TAKİP'}[ins.tur]||ins.tur.toUpperCase();
+        return `<div style="background:${c}18;border:1px solid ${c}44;border-radius:8px;padding:10px">
+          <div style="font-size:9px;font-weight:700;color:${c};margin-bottom:4px">${label}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px">${ins.baslik}</div>
+          <div style="font-size:10px;color:var(--t3);line-height:1.4">${ins.aciklama}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // ── MDO Dağılımı ──────────────────────────────────────────────────────────
+  const md = d.mdo_dagilimi||{};
+  function miniDonut(sayi, toplam, color, label, sublabel) {
+    const pct = toplam>0?sayi/toplam:0;
+    const r=28,cx=36,cy=36,circ=2*Math.PI*r;
+    const fill=pct*circ;
+    return `<div style="text-align:center">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="8"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="8"
+          stroke-dasharray="${fill} ${circ}" stroke-dashoffset="${circ*0.25}"
+          transform="rotate(-90 ${cx} ${cy})"/>
+        <text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${color}">${sayi}</text>
+      </svg>
+      <div style="font-size:13px;font-weight:700;color:${color}">${sayi}</div>
+      <div style="font-size:10px;color:var(--t3)">${sublabel}</div>
+    </div>`;
+  }
+  const toplam_m = (md.mukemmel||0)+(md.iyi||0)+(md.kritik||0);
+  const mdoHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">MDO DAĞILIMI</span>
+      <span style="font-size:10px;color:var(--t3)">Mağaza dönüşüm oranı</span>
+    </div>
+    <div style="display:flex;justify-content:space-around;margin-bottom:12px">
+      ${miniDonut(md.mukemmel||0,toplam_m,'var(--green)','Mükemmel','%16+ MDO')}
+      ${miniDonut(md.iyi||0,toplam_m,'var(--teal)','İyi','%13-16')}
+      ${miniDonut(md.kritik||0,toplam_m,'var(--red)','Kritik','<%13')}
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between">
+      <span style="font-size:11px;color:var(--t2)">Ortalama MDO</span>
+      <span style="font-size:12px;font-weight:700;color:var(--teal)">%${k.mdo.toFixed(1)}</span>
+    </div>
+  </div>`;
+
+  // ── OBF Sıralaması ────────────────────────────────────────────────────────
+  const maxObf = Math.max(...(d.top_obf||[]).map(o=>o.obf),1);
+  const obfHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">OBF SIRALAMASI</span>
+      <span style="font-size:10px;color:var(--t3)">Mağaza bazında</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      ${(d.top_obf||[]).map((o,i)=>{
+        const pct=Math.round(o.obf/maxObf*100);
+        const c=i===0?'var(--green)':i===1?'var(--teal)':'var(--yellow)';
+        return `<div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="color:var(--t1)">${o.magaza}</span>
+            <span style="color:var(--teal);font-weight:600">${_myFmt(o.obf,'tl')}</span>
+          </div>
+          <div style="height:6px;background:var(--bg3);border-radius:3px">
+            <div style="width:${pct}%;height:100%;background:${c};border-radius:3px;transition:width .6s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between">
+      <span style="font-size:11px;color:var(--t2)">Ort. OBF</span>
+      <span style="font-size:12px;font-weight:700;color:var(--orange)">${_myFmt(d.ort_obf,'tl')}</span>
+    </div>
+  </div>`;
+
+  // ── Sepet Analizi ─────────────────────────────────────────────────────────
+  const sepetHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">SEPET ANALİZİ</span>
+      <span style="font-size:10px;color:var(--t3)">Ortalama ürün adedi</span>
+    </div>
+    <div style="font-size:48px;font-weight:700;color:var(--orange);line-height:1;margin-bottom:4px">${k.sepet.toFixed(1)}</div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:14px">Sepet başı ürün · ${d.donem}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.4px;margin-bottom:8px">SEPET DAĞILIMI</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${(d.sepet_dist||[]).map((s,i)=>{
+        const c=['var(--teal)','var(--orange)','var(--green)','var(--red)'][i]||'var(--t2)';
+        return `<div style="text-align:center;background:var(--bg3);border-radius:6px;padding:8px">
+          <div style="font-size:18px;font-weight:700;color:${c}">%${s.pct}</div>
+          <div style="font-size:10px;color:var(--t3)">${s.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  // ── Tümünü birleştir ──────────────────────────────────────────────────────
+  content.innerHTML = `
+    ${kpiHtml}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      ${hedefBox}
+      ${trendHtml}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      ${bolgeHtml}
+      ${insightHtml}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      ${mdoHtml}
+      ${obfHtml}
+      ${sepetHtml}
+    </div>
+  `;
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
