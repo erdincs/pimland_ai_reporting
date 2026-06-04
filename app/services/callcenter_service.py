@@ -389,17 +389,23 @@ async def _run_batch_mcp(
 ## Toplu Dosya İşleme Modu — KESİN KURALLAR
 Kullanıcı birden fazla ürün içeren bir liste dosyası yükledi.
 
-YAPILMASI GEREKENLER:
-- Her satır için kısa, net yanıt üret
-- Sonucu tablo formatında sun (Ürün | Soru Kategorisi | Yanıt)
-- Kapsam dışı soruları (kargo, ödeme vs.) "Kapsam dışı" olarak işaretle
-- İşlemi tamamla, kullanıcıya nasıl devam edeceğini SORMA
+FORMAT:
+- Yanıtını düz Türkçe metin ve markdown tablo olarak yaz
+- Hiçbir şekilde <tool_call>, <tool_response>, JSON, XML veya kod bloğu YAZMA
+- Sonucu tablo formatında sun: | Ürün | Soru | Yanıt |
+- Kapsam dışı soruları "Kapsam dışı" olarak işaretle
 
-YAPILMAMASI GEREKENLER:
-- "Nasıl devam edelim?", "Hangi yöntemi tercih edersiniz?" gibi sorular sorma
-- İzin veya onay isteme
-- Seçenekler sunma
-- Teknik detay, SQL veya sistem bilgisi gösterme"""
+DAVRANIŞ:
+- İşlemi tamamla, kullanıcıya nasıl devam edeceğini SORMA
+- "Nasıl devam edelim?" gibi sorular SORMA
+- İzin, onay veya seçenek isteme
+- Direkt yanıt üret ve bitir
+
+YASAK:
+- <tool_call> veya </tool_call> yazmak
+- Ham JSON/XML göstermek
+- SQL sorgusu göstermek
+- Teknik sistem bilgisi paylaşmak"""
 
     return await llm_client.complete(
         system=batch_system, user=context_text, temperature=0.3, history=history

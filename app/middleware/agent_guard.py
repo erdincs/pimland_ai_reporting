@@ -230,11 +230,18 @@ GUVENLI_YONLENDIRME = (
 
 
 def _strip_sql_blocks(text: str) -> str:
-    """SQL/kod bloklarını yanıttan temizle — kullanıcıya teknik detay gösterilmez."""
-    # ```sql ... ``` ve ``` ... ``` bloklarını kaldır
-    text = re.sub(r"```(?:sql|SQL|python|json)?\n?.*?```", "", text, flags=re.DOTALL)
-    # Satır başında SELECT/UPDATE/INSERT ile başlayan satırları kaldır
+    """Teknik içeriği yanıttan temizle — kullanıcıya hiçbir teknik detay gösterilmez."""
+    # <tool_call>...</tool_call> ve <tool_response>...</tool_response> blokları
+    text = re.sub(r"<tool_call>.*?</tool_call>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    text = re.sub(r"<tool_response>.*?</tool_response>", "", text, flags=re.DOTALL | re.IGNORECASE)
+    # Açık kalan tag parçaları
+    text = re.sub(r"</?tool_\w+>", "", text, flags=re.IGNORECASE)
+    # ```sql / ```json / ``` ... ``` bloklarını kaldır
+    text = re.sub(r"```(?:sql|SQL|python|json|JSON)?\n?.*?```", "", text, flags=re.DOTALL)
+    # Satır başında SQL komutları
     text = re.sub(r"(?im)^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|WITH\s+\w+\s+AS)\b.*$", "", text)
+    # Ham JSON dizisi/nesnesi ([ ile başlayan büyük bloklar)
+    text = re.sub(r"\[\{.*?\}\]", "[veri işlendi]", text, flags=re.DOTALL)
     # Ardışık boş satırları tekli yap
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
