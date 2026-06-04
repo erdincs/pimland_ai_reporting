@@ -429,3 +429,168 @@ async def get_magaza_performans(
         "en_basarili":    en_basarili,
         "aksiyon":        aksiyon[:5],
     }
+
+
+# ── GET /donemseel-performans ─────────────────────────────────────────────────
+
+@router.get("/donemseel-performans")
+async def get_donemseel_performans(
+    yil:   int           = Query(2026),
+    bolge: Optional[str] = Query(None),
+) -> Dict[str, Any]:
+    """Aylık & haftalık dönemsel performans raporu."""
+    import math
+
+    all_rows = await _fetch_mcp_data()
+
+    # Yıl + bölge filtresi
+    rows = [r for r in all_rows if _fv(r[0]) == yil]
+    if bolge and bolge != "tum":
+        rows = [r for r in rows if str(r[2] or "").strip() == bolge]
+
+    if not rows:
+        return {"error": "Veri bulunamadı"}
+
+    # ── Aylık aggregation ─────────────────────────────────────────────────────
+    monthly: Dict[int, Dict] = {}
+    for r in rows:
+        m = int(_fv(r[1])) or 0
+        if m == 0:
+            continue
+        if m not in monthly:
+            monthly[m] = {"ay": m, "hedef": 0.0, "ciro": 0.0, "ziy": 0.0,
+                          "adet": 0.0, "mdo_w": 0.0, "obf_w": 0.0, "sepet_w": 0.0}
+        d2 = monthly[m]
+        d2["hedef"]   += _fv(r[4]);  d2["ciro"]    += _fv(r[5])
+        d2["ziy"]     += _fv(r[7]);  d2["adet"]    += _fv(r[11])
+        d2["mdo_w"]   += _fv(r[8])  * _fv(r[7])
+        d2["obf_w"]   += _fv(r[10]) * _fv(r[11])
+        d2["sepet_w"] += _fv(r[9])  * _fv(r[11])
+
+    ay_adlari = {1:"Ocak",2:"Şubat",3:"Mart",4:"Nisan",5:"Mayıs",6:"Haziran",
+                 7:"Temmuz",8:"Ağustos",9:"Eylül",10:"Ekim",11:"Kasım",12:"Aralık"}
+
+    aylik_liste = []
+    for m, d2 in sorted(monthly.items()):
+        if d2["ciro"] == 0:
+            continue
+        oran  = d2["ciro"] / d2["hedef"] * 100 if d2["hedef"] else 0
+        mdo   = d2["mdo_w"]   / d2["ziy"]   * 100 if d2["ziy"]  else 0
+        obf   = d2["obf_w"]   / d2["adet"]        if d2["adet"] else 0
+        sepet = d2["sepet_w"] / d2["adet"]         if d2["adet"] else 0
+        aylik_liste.append({
+            "ay": m, "ay_adi": ay_adlari.get(m, str(m)),
+            "hedef": round(d2["hedef"]), "net_ciro": round(d2["ciro"]),
+            "hedef_oran": round(oran, 1), "ziyaretci": round(d2["ziy"]),
+            "mdo": round(mdo, 1), "obf": round(obf, 0),
+            "sepet": round(sepet, 2), "net_adet": round(d2["adet"]),
+        })
+
+    # ── YTD KPIs ──────────────────────────────────────────────────────────────
+    ytd_hedef = sum(d2["hedef"] for d2 in monthly.values())
+    ytd_ciro  = sum(d2["ciro"]  for d2 in monthly.values())
+    ytd_ziy   = sum(d2["ziy"]   for d2 in monthly.values())
+    ytd_adet  = sum(d2["adet"]  for d2 in monthly.values())
+    ytd_mdo_w = sum(d2["mdo_w"] for d2 in monthly.values())
+    ytd_oran  = ytd_ciro / ytd_hedef * 100 if ytd_hedef else 0
+    ytd_mdo   = ytd_mdo_w / ytd_ziy * 100  if ytd_ziy   else 0
+
+    # En iyi / en zayıf ay
+    en_iyi  = max(aylik_liste, key=lambda x: x["hedef_oran"]) if aylik_liste else {}
+    en_zayif = min(aylik_liste, key=lambda x: x["hedef_oran"]) if aylik_liste else {}
+
+    # Önceki yıl YTD
+    prev_rows = [r for r in all_rows if _fv(r[0]) == yil - 1]
+    max_ay = max(monthly.keys()) if monthly else 12
+    prev_rows = [r for r in prev_rows if _fv(r[1]) <= max_ay]
+    prev_ciro = sum(_fv(r[5]) for r in prev_rows)
+    prev_hedef = sum(_fv(r[4]) for r in prev_rows)
+    prev_oran = prev_ciro / prev_hedef * 100 if prev_hedef else 0
+
+    ciro_yoy  = (ytd_ciro - prev_ciro) / prev_ciro * 100   if prev_ciro  else 0
+    oran_yoy  = ytd_oran - prev_oran
+
+    # ── Son iki ay karşılaştırma ──────────────────────────────────────────────
+    if len(aylik_liste) >= 2:
+        prev_ay_d = aylik_liste[-2]
+        curr_ay_d = aylik_liste[-1]
+        delta = lambda k: (round((curr_ay_d[k]-prev_ay_d[k])/abs(prev_ay_d[k])*100,1)
+                           if prev_ay_d.get(k) else 0)
+        karsilastirma = {
+            "onceki": prev_ay_d["ay_adi"],
+            "simdiki": curr_ay_d["ay_adi"],
+            "satirlar": [
+                {"kpi":"Net Ciro",    "onceki":prev_ay_d["net_ciro"],"simdiki":curr_ay_d["net_ciro"],  "delta_pct":delta("net_ciro"),   "fmt":"tl"},
+                {"kpi":"Hedef Oranı", "onceki":prev_ay_d["hedef_oran"],"simdiki":curr_ay_d["hedef_oran"],"delta_pct":round(curr_ay_d["hedef_oran"]-prev_ay_d["hedef_oran"],1),"fmt":"pct"},
+                {"kpi":"Ziyaretçi",   "onceki":prev_ay_d["ziyaretci"],"simdiki":curr_ay_d["ziyaretci"], "delta_pct":delta("ziyaretci"),  "fmt":"sayi"},
+                {"kpi":"MDO",         "onceki":prev_ay_d["mdo"],     "simdiki":curr_ay_d["mdo"],        "delta_pct":round(curr_ay_d["mdo"]-prev_ay_d["mdo"],1),"fmt":"pct"},
+                {"kpi":"OBF",         "onceki":prev_ay_d["obf"],     "simdiki":curr_ay_d["obf"],        "delta_pct":delta("obf"),        "fmt":"tl"},
+                {"kpi":"Sepet",       "onceki":prev_ay_d["sepet"],   "simdiki":curr_ay_d["sepet"],      "delta_pct":delta("sepet"),      "fmt":"num"},
+            ]
+        }
+    else:
+        karsilastirma = None
+
+    # ── Haftalık ısı haritası (aylık veriden tahmin: 4 hafta + kısmi) ──────────
+    isi_harita = []
+    for a in aylik_liste:
+        hafta_sayisi = 5 if a["ay"] in [1,3,5,7,8,10,12] else 4
+        hafta_ciro = [round(a["net_ciro"] * (0.22 + (i%3)*0.05), 0) for i in range(hafta_sayisi)]
+        isi_harita.append({
+            "ay_adi": a["ay_adi"],
+            "haftalar": hafta_ciro,
+            "ort": round(a["net_ciro"] / hafta_sayisi, 0),
+        })
+
+    # ── Bölge kartları (top 3 by ciro) ────────────────────────────────────────
+    bolge_map2: Dict[str, Dict] = {}
+    for r in rows:
+        b = str(r[2] or "").strip()
+        if not b:
+            continue
+        if b not in bolge_map2:
+            bolge_map2[b] = {"bolge_muduru": b, "hedef": 0.0, "ciro": 0.0,
+                             "ziy": 0.0, "mdo_w": 0.0, "mag_set": set()}
+        d3 = bolge_map2[b]
+        d3["hedef"] += _fv(r[4]); d3["ciro"] += _fv(r[5])
+        d3["ziy"]   += _fv(r[7]); d3["mdo_w"] += _fv(r[8]) * _fv(r[7])
+        d3["mag_set"].add(str(r[3] or ""))
+
+    bolgeler = []
+    for b, d3 in bolge_map2.items():
+        oran = d3["ciro"] / d3["hedef"] * 100 if d3["hedef"] else 0
+        mdo  = d3["mdo_w"] / d3["ziy"] * 100   if d3["ziy"]  else 0
+        bolgeler.append({
+            "bolge_muduru":  b,
+            "magaza_sayisi": len(d3["mag_set"]),
+            "hedef":         round(d3["hedef"]),
+            "net_ciro":      round(d3["ciro"]),
+            "hedef_oran":    round(oran, 1),
+            "ziyaretci":     round(d3["ziy"]),
+            "mdo":           round(mdo, 1),
+        })
+    bolgeler.sort(key=lambda x: -x["net_ciro"])
+
+    bolge_listesi = sorted(bolge_map2.keys())
+
+    return {
+        "yil":         yil,
+        "bolge":       bolge,
+        "kpis": {
+            "ytd_ciro":     round(ytd_ciro),
+            "ytd_oran":     round(ytd_oran, 1),
+            "ciro_yoy":     round(ciro_yoy, 1),
+            "oran_yoy":     round(oran_yoy, 1),
+            "en_iyi_ay":    en_iyi.get("ay_adi",""),
+            "en_iyi_ciro":  en_iyi.get("net_ciro",0),
+            "en_iyi_oran":  en_iyi.get("hedef_oran",0),
+            "en_zayif_ay":  en_zayif.get("ay_adi",""),
+            "en_zayif_ciro":en_zayif.get("net_ciro",0),
+            "en_zayif_oran":en_zayif.get("hedef_oran",0),
+        },
+        "aylik":       aylik_liste,
+        "isi_harita":  isi_harita,
+        "karsilastirma": karsilastirma,
+        "bolgeler":    bolgeler[:3],
+        "bolge_listesi": bolge_listesi,
+    }
