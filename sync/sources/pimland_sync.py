@@ -289,7 +289,9 @@ def sync_products(
     t0 = time.perf_counter()
 
     if last_sync_date is None:
-        updated_date = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00")
+        # İlk çalışma — tüm kataloğu çek (2018'den itibaren)
+        updated_date = "2018-01-01T00:00:00"
+        log.info("pimland_products ilk sync — full katalog çekiliyor")
     else:
         updated_date = (last_sync_date - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00")
 
