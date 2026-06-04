@@ -536,8 +536,7 @@ body,
   <!-- Filtreler artık sayfa içinde — topbar'da yok -->
   <div style="flex:1"></div>
   <div class="tb-right">
-    <div class="live-dot"></div>
-    <span id="data-source">Incorta · Live</span>
+    <span id="data-source" style="display:none"></span>
     <div class="hb-wrap">
       <button class="hb-btn" id="hb-btn" onclick="toggleHamburger()" title="Menü">☰</button>
       <div class="hb-menu" id="hb-menu">
@@ -550,7 +549,7 @@ body,
         <div class="hb-label">Sistem</div>
         <div class="hb-item no-hover">
           <span style="width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;display:inline-block;flex-shrink:0"></span>
-          <span id="hb-datasource" style="font-size:11px">Incorta · Live</span>
+
         </div>
       </div>
     </div>
@@ -2042,7 +2041,7 @@ async function init(){
     try{
       const lp=await fetch(`${API}/portal/latest-period`).then(r=>r.json());
       state.yil=lp.yil; state.ay=[lp.ay];
-      document.getElementById('data-source').textContent=`${AY_ADI[lp.ay]} ${lp.yil} · Incorta`;
+
     }catch(e){}
   }
 
