@@ -163,7 +163,31 @@ def score_product(stock_code: str, product_data: dict) -> dict:
 
     # Renk başına görsel
     renk_kodlari = set(b.get("colorCode", "") for b in barcodes if b.get("colorCode"))
-    gorsel_renkleri = set(img.get("colorCode", "") for img in images if img.get("colorCode"))
+
+    # colorCode alanı boşsa dosya adından çıkar: {stockCode}_{colorCode}_{num}.jpg
+    def _extract_color_from_name(name: str, stock_code: str) -> str:
+        if not name:
+            return ""
+        # Format: 103L9860000_010_1.jpg → ['103L9860000', '010', '1.jpg']
+        parts = name.replace(stock_code + "_", "", 1).split("_")
+        if parts and parts[0].isdigit() and len(parts[0]) == 3:
+            return parts[0]
+        # Ürün kodu ile başlıyorsa ayır
+        if name.startswith(stock_code):
+            rest = name[len(stock_code):].lstrip("_")
+            code = rest.split("_")[0]
+            if code.isdigit():
+                return code
+        return ""
+
+    sku = product_data.get("stockCode", "")
+    gorsel_renkleri = set()
+    for img in images:
+        cc = img.get("colorCode", "")
+        if not cc and sku:
+            cc = _extract_color_from_name(img.get("name", ""), sku)
+        if cc:
+            gorsel_renkleri.add(cc)
 
     if renk_kodlari:
         eksik_renk = renk_kodlari - gorsel_renkleri
