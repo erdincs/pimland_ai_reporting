@@ -6331,7 +6331,7 @@ function renderMagazaPerformans(d) {
           <div style="font-size:13px;font-weight:700;color:var(--t1)">${b.bolge_muduru}</div>
           <div style="font-size:10px;color:var(--t3)">${b.magaza_sayisi} mağaza · ${d.donem}</div>
         </div>
-        <span style="font-size:18px;font-weight:700;color:${c}">%${b.hedef_oran}</span>
+        <span style="font-size:18px;font-weight:700;color:${c}">%${(b.hedef_oran||0)}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
         <div><div style="font-size:9px;color:var(--t3);font-weight:700">NET CİRO</div>
@@ -6376,8 +6376,8 @@ function renderMagazaPerformans(d) {
         </div>
       </td>
       <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(m.ziyaretci,'sayi')}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:${mc}">%${m.mdo.toFixed(1)}</td>
-      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${m.sepet.toFixed(1)}</td>
+      <td style="padding:9px 10px;text-align:right;font-size:11px;color:${mc}">%${(m.mdo||0).toFixed(1)}</td>
+      <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${(m.sepet||0).toFixed(1)}</td>
       <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--orange)">${_myFmt(m.obf,'tl')}</td>
       <td style="padding:9px 10px;text-align:right;font-size:11px;color:var(--t2)">${m.net_adet.toLocaleString('tr-TR')}</td>
     </tr>`;
@@ -6458,7 +6458,7 @@ function renderMagazaPerformans(d) {
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:9px;color:${mc}">MDO%${m.mdo.toFixed(1)}</div>
+        <div style="font-size:9px;color:${mc}">MDO%${(m.mdo||0).toFixed(1)}</div>
         <div style="font-size:9px;color:${oc}">%${m.hedef_oran}</div>
       </div>
     </div>`;
@@ -6540,9 +6540,9 @@ function renderDonemseel(d) {
   // ── 6 KPI kartı ──────────────────────────────────────────────────────────
   const kpiCards = [
     {label:'YTD NET CİRO',    val:_myFmt(k.ytd_ciro,'tl'),
-     sub:`↑%${Math.abs(k.ciro_yoy||0).toFixed(1)} geçen yıl`, color:'var(--teal)'},
+     sub:`${k.ciro_yoy>=0?'↑':'↓'}%${Math.abs(k.ciro_yoy||0).toFixed(1)} geçen yıl`, color:'var(--teal)'},
     {label:'YTD HEDEF ORANI', val:'%'+(k.ytd_oran||0).toFixed(1),
-     sub:`↑%${Math.abs(k.oran_yoy||0).toFixed(1)} YoY`,       color:k.ytd_oran>=90?'var(--green)':k.ytd_oran>=80?'var(--yellow)':'var(--red)'},
+     sub:`${k.oran_yoy>=0?'↑':'↓'}%${Math.abs(k.oran_yoy||0).toFixed(1)} YoY`,       color:k.ytd_oran>=90?'var(--green)':k.ytd_oran>=80?'var(--yellow)':'var(--red)'},
     {label:'EN İYİ AY',      val:k.en_iyi_ay||'—',
      sub:`${_myFmt(k.en_iyi_ciro||0,'tl')} · %${k.en_iyi_oran||0}`, color:'var(--green)'},
     {label:'EN ZAYIF AY',    val:k.en_zayif_ay||'—',
@@ -6567,9 +6567,9 @@ function renderDonemseel(d) {
       <td style="padding:8px 10px;font-weight:600;color:var(--t1)">${r.ay_adi}</td>
       <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(r.hedef,'tl')}</td>
       <td style="padding:8px 10px;text-align:right;color:var(--teal);font-weight:600">${_myFmt(r.net_ciro,'tl')}</td>
-      <td style="padding:8px 10px;text-align:right;font-weight:700;color:${oc}">%${r.hedef_oran}</td>
+      <td style="padding:8px 10px;text-align:right;font-weight:700;color:${oc}">%${(r.hedef_oran||0)}</td>
       <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(r.ziyaretci,'sayi')}</td>
-      <td style="padding:8px 10px;text-align:right;color:${mc}">%${r.mdo.toFixed(1)}</td>
+      <td style="padding:8px 10px;text-align:right;color:${mc}">%${(r.mdo||0).toFixed(1)}</td>
       <td style="padding:8px 10px;text-align:right;color:var(--orange)">${_myFmt(r.obf,'tl')}</td>
       <td style="padding:8px 10px;text-align:right;color:var(--t2)">${r.net_adet.toLocaleString('tr-TR')}</td>
     </tr>`;
@@ -6617,7 +6617,7 @@ function renderDonemseel(d) {
       const bg = pct>0.8?'#22c55e':pct>0.6?'#00c2a8':pct>0.4?'#f59e0b':pct>0.2?'#ef4444':'#991b1b';
       return `<td style="padding:5px 8px;text-align:center;font-size:10px;font-weight:600;color:#fff;background:${bg};border-radius:4px">${_myFmt(v,'tl')}</td>`;
     }).join('');
-    const ortBg = h.ort/maxIsi>0.6?'var(--teal)':'var(--t2)';
+    const ortBg = (h.ort||0)/maxIsi>0.6?'var(--teal)':'var(--t2)';
     return `<tr>
       <td style="padding:5px 8px;font-size:11px;color:var(--t2);white-space:nowrap">${h.ay_adi}</td>
       ${haftaCells}
@@ -6653,7 +6653,7 @@ function renderDonemseel(d) {
     const ks = d.karsilastirma;
     const maxVal = Math.max(...ks.satirlar.map(s=>Math.max(Math.abs(s.onceki||0),Math.abs(s.simdiki||0))),1);
     const rows = ks.satirlar.map(s=>{
-      const fmt = v => s.fmt==='tl'?_myFmt(v,'tl'):s.fmt==='pct'?'%'+v.toFixed(1):s.fmt==='sayi'?_myFmt(v,'sayi'):v.toFixed(2);
+      const fmt = v => s.fmt==='tl'?_myFmt(v,'tl'):s.fmt==='pct'?'%'+(+(v||0)).toFixed(1):s.fmt==='sayi'?_myFmt(v,'sayi'):v.toFixed(2);
       const dc = s.delta_pct>0?'var(--green)':s.delta_pct<0?'var(--red)':'var(--t3)';
       const sign = s.delta_pct>0?'+':'';
       const wP = Math.round(Math.abs(s.onceki||0)/maxVal*80);
@@ -6666,7 +6666,7 @@ function renderDonemseel(d) {
           <div style="height:6px;background:var(--bg3);border-radius:3px;width:${wP}%"></div>
         </td>
         <td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--teal)">${fmt(s.simdiki)}</td>
-        <td style="padding:8px 10px;text-align:right;font-size:12px;font-weight:700;color:${dc}">${sign}${s.delta_pct}%</td>
+        <td style="padding:8px 10px;text-align:right;font-size:12px;font-weight:700;color:${dc}">${sign}${(s.delta_pct||0)}%</td>
       </tr>`;
     }).join('');
 
@@ -6698,7 +6698,7 @@ function renderDonemseel(d) {
           <div style="font-size:13px;font-weight:700;color:var(--t1)">${b.bolge_muduru}</div>
           <div style="font-size:10px;color:var(--t3)">${b.magaza_sayisi} mağaza · ${d.yil} YTD</div>
         </div>
-        <span style="font-size:18px;font-weight:700;color:${bc}">%${b.hedef_oran}</span>
+        <span style="font-size:18px;font-weight:700;color:${bc}">%${(b.hedef_oran||0)}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
         <div><div style="font-size:9px;color:var(--t3);font-weight:700">NET CİRO</div>
@@ -6713,7 +6713,7 @@ function renderDonemseel(d) {
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:3px">
         <span style="font-size:10px;color:var(--t3)">Hedef Gerçekleşme</span>
-        <span style="font-size:10px;color:${bc};font-weight:600">%${b.hedef_oran}</span>
+        <span style="font-size:10px;color:${bc};font-weight:600">%${(b.hedef_oran||0)}</span>
       </div>
     </div>`;
   }).join('');
