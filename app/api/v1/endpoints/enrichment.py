@@ -847,3 +847,161 @@ async def get_overview_by_field(
         {"alan": r["eksik_alan"], "sayi": r["sayi"], "pct": round(r["sayi"]/total_row*100)}
         for r in rows
     ]
+
+
+# ── GET /performance — Zenginleştirme × Satış Performansı Dashboard ───────────
+
+@router.get("/performance")
+async def get_performance(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    yil: int = Query(2026),
+) -> Dict[str, Any]:
+    """Enrichment kalitesi × satış/iade korelasyonu KPI dashboard."""
+
+    BASE_CTE = """
+    WITH brut AS (
+        SELECT urun_kodu, SUM(tutar) AS brut_ciro, SUM(adet::int) AS brut_adet
+        FROM incorta_satis WHERE yil = :yil GROUP BY urun_kodu
+    ),
+    iade_agg AS (
+        SELECT urun_kodu, ABS(SUM(tutar)) AS iade_ciro
+        FROM incorta_depo_iade WHERE yil = :yil GROUP BY urun_kodu
+    ),
+    sku_net AS (
+        SELECT b.urun_kodu,
+               b.brut_ciro - COALESCE(i.iade_ciro, 0)               AS net_ciro,
+               b.brut_adet                                           AS adet,
+               COALESCE(i.iade_ciro, 0)                             AS iade_ciro,
+               CASE WHEN b.brut_ciro > 0
+                    THEN COALESCE(i.iade_ciro, 0) / b.brut_ciro * 100
+                    ELSE 0 END                                       AS iade_pct
+        FROM brut b
+        LEFT JOIN iade_agg i ON i.urun_kodu = b.urun_kodu
+    ),
+    eq_net AS (
+        SELECT eq.urun_kodu, eq.quality_grade, eq.quality_score,
+               sn.net_ciro, sn.adet, sn.iade_pct
+        FROM enrichment_quality eq
+        JOIN sku_net sn ON sn.urun_kodu = eq.urun_kodu
+        WHERE eq.quality_grade IS NOT NULL AND eq.quality_score IS NOT NULL
+    )
+    """
+
+    p = {"yil": yil}
+
+    # 1. Grade bazlı metrikler
+    grade_rows = (await session.execute(text(BASE_CTE + """
+        SELECT quality_grade AS grade,
+               COUNT(*)                                 AS sku_n,
+               ROUND(AVG(net_ciro)::numeric, 0)         AS ort_ciro,
+               ROUND(AVG(adet)::numeric, 0)             AS ort_adet,
+               ROUND(AVG(iade_pct)::numeric, 1)         AS ort_iade
+        FROM eq_net
+        GROUP BY quality_grade ORDER BY quality_grade
+    """), p)).mappings().all()
+
+    grades = [dict(r) for r in grade_rows]
+    grade_map = {g["grade"]: g for g in grades}
+
+    # F baseline — tüm hesaplamalar için referans
+    f_ciro  = float(grade_map.get("F", {}).get("ort_ciro",  1) or 1)
+    f_iade  = float(grade_map.get("F", {}).get("ort_iade",  20) or 20)
+    a_ciro  = float(grade_map.get("A", {}).get("ort_ciro",  f_ciro) or f_ciro)
+    a_iade  = float(grade_map.get("A", {}).get("ort_iade",  f_iade) or f_iade)
+
+    # F'ye göre % fark ekle
+    for g in grades:
+        g["vs_f_pct"] = round((float(g["ort_ciro"] or 0) - f_ciro) / f_ciro * 100, 0) if f_ciro else 0
+        g["ort_ciro"]  = float(g["ort_ciro"]  or 0)
+        g["ort_adet"]  = float(g["ort_adet"]  or 0)
+        g["ort_iade"]  = float(g["ort_iade"]  or 0)
+        g["sku_n"]     = int(g["sku_n"]       or 0)
+
+    # 2. Puan segmenti (10'ar aralık)
+    seg_rows = (await session.execute(text(BASE_CTE + """
+        SELECT FLOOR(quality_score / 10) * 10 AS puan_alt,
+               COUNT(*)                         AS sku_n,
+               ROUND(AVG(net_ciro)::numeric, 0) AS ort_ciro,
+               ROUND(AVG(iade_pct)::numeric, 1) AS ort_iade
+        FROM eq_net
+        GROUP BY puan_alt ORDER BY puan_alt DESC
+    """), p)).mappings().all()
+
+    segments = []
+    for r in seg_rows:
+        alt = int(r["puan_alt"] or 0)
+        segments.append({
+            "aralik": f"{alt}-{alt+10}",
+            "puan_alt": alt,
+            "sku_n":   int(r["sku_n"]   or 0),
+            "ort_ciro": float(r["ort_ciro"] or 0),
+            "ort_iade": float(r["ort_iade"] or 0),
+        })
+
+    # 3. Korelasyon (Pearson r)
+    corr_row = (await session.execute(text(BASE_CTE + """
+        SELECT ROUND(CORR(quality_score, net_ciro)::numeric, 2)         AS r_ciro,
+               ROUND(CORR(quality_score, -iade_pct)::numeric, 2)        AS r_neg_iade
+        FROM eq_net WHERE net_ciro > 0
+    """), p)).mappings().first()
+
+    r_ciro    = float(corr_row["r_ciro"]     or 0)
+    r_negiade = float(corr_row["r_neg_iade"] or 0)
+
+    # 4. D+F potansiyel: C seviyesine çıkarsa
+    df_row = (await session.execute(text(BASE_CTE + """
+        SELECT COUNT(*) AS df_sku_n,
+               SUM(net_ciro) AS df_toplam_ciro
+        FROM eq_net WHERE quality_grade IN ('D','F')
+    """), p)).mappings().first()
+
+    c_ciro = float(grade_map.get("C", {}).get("ort_ciro", 0) or 0)
+    df_n   = int(df_row["df_sku_n"] or 0)
+    df_ciro_now = float(df_row["df_toplam_ciro"] or 0)
+
+    # Ortalama D+F ciro
+    df_avg_now = df_ciro_now / df_n if df_n else 0
+    potential_per_sku = max(c_ciro - df_avg_now, 0)
+    potential_total   = potential_per_sku * df_n
+
+    # Toplam iade azalması (F→A geçişte iade farkı)
+    iade_fark_pct = round(a_iade - f_iade, 1)  # negatif = azalma
+
+    # 5. KPI özetleri
+    # a) 10 puanlık artışın ciro etkisi — lineer regresyon eğimi tahmin (avg of segments)
+    if len(segments) >= 2:
+        seg_sorted = sorted(segments, key=lambda x: x["puan_alt"])
+        deltas = []
+        for i in range(1, len(seg_sorted)):
+            prev = seg_sorted[i - 1]["ort_ciro"]
+            curr = seg_sorted[i]["ort_ciro"]
+            if prev > 0:
+                deltas.append((curr - prev) / prev * 100)
+        avg_10puan_effect = round(sum(deltas) / len(deltas), 0) if deltas else 0
+    else:
+        avg_10puan_effect = 0
+
+    # b) A grade ciro baz
+    a_ciro_val = float(grade_map.get("A", {}).get("ort_ciro", 0) or
+                       max((g["ort_ciro"] for g in grades), default=0))
+
+    return {
+        "yil": yil,
+        "kpis": {
+            "a_grade_ort_ciro":  round(a_ciro_val),
+            "a_vs_f_pct":        round((a_ciro_val - f_ciro) / f_ciro * 100) if f_ciro else 0,
+            "on_puan_etki_pct":  avg_10puan_effect,
+            "iade_fark_pct":     iade_fark_pct,
+            "potential_total":   round(potential_total),
+        },
+        "grade_metrics":  grades,
+        "score_segments": segments,
+        "correlations":   {"r_ciro": r_ciro, "r_neg_iade": r_negiade},
+        "potential": {
+            "df_sku_n":         df_n,
+            "hedef_grade":      "C",
+            "per_sku_gain":     round(potential_per_sku),
+            "toplam_gain":      round(potential_total),
+            "iade_azalma_pct":  iade_fark_pct,
+        },
+    }
