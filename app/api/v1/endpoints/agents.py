@@ -39,24 +39,21 @@ async def callcenter(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
 ) -> CallCenterResponse:
     """Call Center Agent — ürün bilgisi soruları için."""
-    # Dosyalar varsa soruyu zenginleştir
-    enriched_question = payload.question
-    extra_system = ""
+    # Dosyaları oturumdan çek — soru STRING olarak kalır, dosyalar ayrı geçilir
+    session_files = []
     if payload.session_id and payload.file_ids:
-        files = [
-            f for fid in payload.file_ids
-            if (f := await session_store.get_file(payload.session_id, fid))
-        ]
-        if files:
-            enriched_question, has_df = build_message_with_files(payload.question, files)
-            extra_system = get_system_addendum(has_df)
+        for fid in payload.file_ids:
+            f = await session_store.get_file(payload.session_id, fid)
+            if f:
+                session_files.append(f)
 
     result = await callcenter_service.run_callcenter(
         session=session,
-        question=enriched_question,
+        question=payload.question,       # her zaman string
         urun_kodu=payload.urun_kodu,
-        custom_system=(payload.system_prompt or "") + extra_system or None,
+        custom_system=payload.system_prompt,
         history=payload.history,
+        session_files=session_files,     # dosyalar ayrı parametre
     )
     return CallCenterResponse(**result)
 

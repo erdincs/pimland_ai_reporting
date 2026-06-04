@@ -77,8 +77,12 @@ class LLMClient:
                         "source": {"bytes": __import__("base64").b64decode(block["source"]["data"])},
                     }})
                 elif btype == "document":
+                    import re as _re
+                    raw_name = block.get("title", "document")
+                    # Bedrock: sadece alfanümerik, boşluk, tire, parantez, köşeli parantez
+                    safe_name = _re.sub(r"[^\w\s\-()\[\]]", "", raw_name)[:200] or "document"
                     user_content.append({"document": {
-                        "name":   block.get("title", "document"),
+                        "name":   safe_name,
                         "format": "txt",
                         "source": {"bytes": block["source"]["data"].encode("utf-8")},
                     }})

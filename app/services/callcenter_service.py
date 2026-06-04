@@ -312,10 +312,11 @@ async def run_callcenter(
     urun_kodu: Optional[str] = None,
     custom_system: Optional[str] = None,
     history: Optional[List[Dict[str, Any]]] = None,
+    session_files: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Call Center Agent ana akışı."""
     started = time.perf_counter()
-    skus = _extract_skus(question, urun_kodu)
+    skus = _extract_skus(question, urun_kodu)  # question her zaman string
 
     # DB'den ürünleri çek — SKU yoksa keyword arama yapar
     db_products = await _fetch_db_products(session, skus, question)
@@ -349,11 +350,19 @@ async def run_callcenter(
     }
 
     system = custom_system or CALL_CENTER_SYSTEM
-    user_msg = (
+    base_msg = (
         f"ÜRÜN VERİSİ (otomatik sorgulandı):\n"
         f"{json.dumps(context, default=str, ensure_ascii=False, indent=2)}\n\n"
         f"MÜŞTERİ / ÇAĞRI MERKEZİ SORUSU: {question}"
     )
+
+    # Dosya varsa multi-content mesajı oluştur
+    if session_files:
+        from app.services.file_aware_agent import build_message_with_files, get_system_addendum
+        user_msg, has_df = build_message_with_files(base_msg, session_files)
+        system = system + get_system_addendum(has_df)
+    else:
+        user_msg = base_msg
 
     answer = await llm_client.complete(system=system, user=user_msg, temperature=0.3, history=history)
 
