@@ -3754,12 +3754,16 @@ function showEnrPage(page){
   }[page]||'✨ Ürün Zenginleştirme';
   if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
-  if(page==='products')  { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>{
-    // Sezon hâlâ seçili değilse dropdown'dan al
-    const sel=document.getElementById('enr-season-sel');
-    if(sel&&!sel.value&&sel.options.length>1) sel.value=sel.options[1].value;
-    loadEnrichmentList(1);
-  }); }
+  if(page==='products'){
+    // Bağımsız yükle — async zincir kesilse bile çalışsın
+    (async()=>{
+      try{ await loadEnrMarkas(); } catch(e){}
+      try{ await loadEnrichmentSeasons(); } catch(e){}
+      const sel=document.getElementById('enr-season-sel');
+      if(sel&&!sel.value&&sel.options.length>1) sel.value=sel.options[1].value;
+      loadEnrichmentList(1);
+    })();
+  }
 }
 
 async function onEnrFilterChange(){
@@ -4108,6 +4112,7 @@ async function toggleEnrKat(bidx,sidx,kidx,markaPrm,sezonPrm,katPrm){
 async function loadEnrichmentList(page=1){
   _enrPage=page;
   let sc=document.getElementById('enr-season-sel').value;
+  console.log('[ENR LIST] called, sc=', sc, 'page=', page);
   const wrap=document.getElementById('enr-table-wrap');
   // Sezon seçili değilse dropdown'daki ilk seçeneği al
   if(!sc){
@@ -4122,8 +4127,15 @@ async function loadEnrichmentList(page=1){
   const sort=document.getElementById('enr-sort-sel')?.value||'score_asc';
   const gP=_enrGrade&&_enrGrade!=='all'?`&grade=${_enrGrade}`:'';
   wrap.innerHTML='<div class="loading" style="padding:20px"><div class="spinner"></div></div>';
-  const d=await fetch(`${API}/enrichment/products/${sc}?page=${page}&limit=50${gP}${sorun?'&sorun='+sorun:''}&sort=${sort}`).then(r=>r.json()).catch(()=>({total:0,items:[]}));
-  if(!d.items?.length){wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Ürün bulunamadı</div>';return;}
+  let d={total:0,items:[]};
+  try{
+    const resp=await fetch(`${API}/enrichment/products/${sc}?page=${page}&limit=50${gP}${sorun?'&sorun='+sorun:''}&sort=${sort}`);
+    if(resp.ok) d=await resp.json();
+    else{wrap.innerHTML=`<div style="color:var(--red);padding:20px">HTTP ${resp.status}: Sezon '${sc}' için veri alınamadı</div>`;return;}
+  }catch(e){
+    wrap.innerHTML=`<div style="color:var(--red);padding:20px">Bağlantı hatası: ${e.message}</div>`;return;
+  }
+  if(!d||!d.items||d.items.length===0){wrap.innerHTML='<div style="color:var(--t3);padding:20px;text-align:center">Ürün bulunamadı — Sezon: '+sc+'</div>';return;}
   const bar=(v)=>`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
     <span style="font-size:11px">${v||0}</span>
     <div style="height:4px;width:50px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${Math.round((v||0)/25*100)}%;background:${(v||0)>=20?'var(--green)':(v||0)>=12?'var(--yellow)':'var(--red)'};border-radius:2px"></div></div>
