@@ -49,8 +49,8 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .btn-adv.active{border-color:var(--orange);color:var(--orange)}
 .adv-badge{background:var(--orange);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center}
 /* Advanced filter bar */
-.adv-filterbar{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 calc(var(--sidebar) + 12px);max-height:0;overflow:hidden;transition:max-height .2s ease,padding .2s ease}
-.adv-filterbar.open{max-height:52px;padding:8px 16px 8px calc(var(--sidebar) + 12px)}
+.adv-filterbar{background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:0 20px;max-height:0;overflow:hidden;transition:max-height .2s ease,padding .2s ease}
+.adv-filterbar.open{max-height:52px;padding:8px 20px}
 /* Hamburger */
 .hb-wrap{position:relative}
 .hb-btn{background:var(--bg3);border:1px solid var(--border);color:var(--t2);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;padding:0;transition:background .12s,border-color .12s}
@@ -533,24 +533,8 @@ body,
     <img src="/static/pimland_logo.png" alt="Pimland" style="height:32px;width:auto;object-fit:contain">
     <div><div class="name">Pimland</div><div class="sub">Intelligence</div></div>
   </div>
-  <div class="tb-filters">
-    <div class="filter-group">
-      <span class="filter-label">Yıl</span>
-      <select id="f-yil" class="filter-select"><option value="">Tümü</option></select>
-    </div>
-    <div class="filter-group">
-      <span class="filter-label">Ay</span>
-      <select id="f-ay" class="filter-select"><option value="">Tüm Aylar</option></select>
-    </div>
-    <div class="filter-sep"></div>
-    <div class="filter-group">
-      <span class="filter-label">Kanal</span>
-      <select id="f-kanal" class="filter-select"><option value="">Tüm Kanallar</option></select>
-    </div>
-    <div class="filter-sep"></div>
-    <button class="btn-apply" onclick="applyFilters()">Uygula</button>
-    <button class="btn-adv" id="btn-adv" onclick="toggleAdvFilters()">⊕ Detaylı</button>
-  </div>
+  <!-- Filtreler artık sayfa içinde — topbar'da yok -->
+  <div style="flex:1"></div>
   <div class="tb-right">
     <div class="live-dot"></div>
     <span id="data-source">Incorta · Live</span>
@@ -570,35 +554,6 @@ body,
         </div>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ADVANCED FILTER BAR -->
-<div class="adv-filterbar" id="adv-filterbar">
-  <div class="filter-group">
-    <span class="filter-label">SKU/Ürün</span>
-    <input id="f-sku" class="filter-input" type="text" placeholder="Kod veya isim..." style="width:120px">
-  </div>
-  <div class="filter-group">
-    <span class="filter-label">Renk</span>
-    <select id="f-renk" class="filter-select"><option value="">Tümü</option></select>
-  </div>
-  <div class="filter-group">
-    <span class="filter-label">Beden</span>
-    <select id="f-beden" class="filter-select"><option value="">Tümü</option></select>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group" id="fg-marka">
-    <span class="filter-label">Marka</span>
-    <select id="f-marka" class="filter-select"><option value="">Tümü</option></select>
-  </div>
-  <div class="filter-group" id="fg-sezon">
-    <span class="filter-label">Sezon</span>
-    <select id="f-sezon" class="filter-select" style="max-width:160px"><option value="">Tümü</option></select>
-  </div>
-  <div class="filter-group" id="fg-grup">
-    <span class="filter-label">Ürün Grubu</span>
-    <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
   </div>
 </div>
 
@@ -760,6 +715,44 @@ body,
   <main class="main" id="main-content">
 
     <!-- EXECUTIVE ÖZET -->
+    <!-- ── E-TİCARET SAYFA İÇİ FİLTRE BARI ──────────────────────────────── -->
+    <div id="eticaret-filter-bar" style="display:flex;align-items:center;gap:8px;padding:8px 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap">
+      <div class="filter-group"><span class="filter-label">Yıl</span>
+        <select id="f-yil" class="filter-select"><option value="">Tümü</option></select>
+      </div>
+      <div class="filter-group"><span class="filter-label">Ay</span>
+        <select id="f-ay" class="filter-select"><option value="">Tüm Aylar</option></select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group"><span class="filter-label">Kanal</span>
+        <select id="f-kanal" class="filter-select"><option value="">Tüm Kanallar</option></select>
+      </div>
+      <div class="filter-sep"></div>
+      <button class="btn-apply" onclick="applyFilters()">Uygula</button>
+      <button class="btn-adv" id="btn-adv" onclick="toggleAdvFilters()">⊕ Detaylı</button>
+    </div>
+  <div class="adv-filterbar" id="adv-filterbar">
+      <div class="filter-group"><span class="filter-label">SKU/Ürün</span>
+        <input id="f-sku" class="filter-input" type="text" placeholder="Kod veya isim..." style="width:120px">
+      </div>
+      <div class="filter-group"><span class="filter-label">Renk</span>
+        <select id="f-renk" class="filter-select"><option value="">Tümü</option></select>
+      </div>
+      <div class="filter-group"><span class="filter-label">Beden</span>
+        <select id="f-beden" class="filter-select"><option value="">Tümü</option></select>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group" id="fg-marka"><span class="filter-label">Marka</span>
+        <select id="f-marka" class="filter-select"><option value="">Tümü</option></select>
+      </div>
+      <div class="filter-group" id="fg-sezon"><span class="filter-label">Sezon</span>
+        <select id="f-sezon" class="filter-select" style="max-width:160px"><option value="">Tümü</option></select>
+      </div>
+      <div class="filter-group" id="fg-grup"><span class="filter-label">Ürün Grubu</span>
+        <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
+      </div>
+    </div>
+
     <div class="section active" id="section-exec">
       <div class="sec-hdr">
         <span class="sec-title">Executive Özet</span>
@@ -2059,9 +2052,9 @@ function showSection(id,push=true){
   if(sec){sec.classList.add('active');sec.style.display='flex';}
   document.getElementById('nav-'+id)?.classList.add('active');
   currentSection=id;if(push)pushURL();
-  // Topbar filtre barı: sadece E-Ticaret bölümlerinde göster
-  const tbFilters=document.querySelector('.tb-filters');
-  if(tbFilters) tbFilters.style.display=_ETICARET_SECTIONS.has(id)?'flex':'none';
+  // Sayfa içi E-Ticaret filtre barı: sadece E-Ticaret bölümlerinde göster
+  const etBar=document.getElementById('eticaret-filter-bar');
+  if(etBar) etBar.style.display=_ETICARET_SECTIONS.has(id)?'flex':'none';
   // Grubu otomatik aç
   const g=_SECTION_GROUP&&_SECTION_GROUP[id];
   if(g) _openNavGroup(g);
