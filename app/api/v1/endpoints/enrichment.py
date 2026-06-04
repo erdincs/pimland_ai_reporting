@@ -455,3 +455,137 @@ async def get_scorelist_category(
         LIMIT 200
     """), {"marka": marka, "sezon": sezon, "kat": kategori})).mappings().all()
     return [dict(r) for r in rows]
+
+
+# ── GET /overview — Tüm katalog özeti ────────────────────────────────────────
+
+@router.get("/overview")
+async def get_overview(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """Tüm puanlanmış ürünlerin genel özeti (sadece internet_aktif)."""
+
+    # Genel istatistikler
+    stats = (await session.execute(text("""
+        SELECT
+            COUNT(*)                                          AS toplam_sku,
+            ROUND(AVG(e.quality_score)::numeric, 1)          AS ortalama_puan,
+            COUNT(*) FILTER (WHERE e.quality_grade IN ('A','B')) AS iyi_kalite,
+            COUNT(*) FILTER (WHERE e.quality_grade IN ('D','F')) AS kritik,
+            COUNT(*) FILTER (WHERE e.quality_grade='A')       AS grade_a,
+            COUNT(*) FILTER (WHERE e.quality_grade='B')       AS grade_b,
+            COUNT(*) FILTER (WHERE e.quality_grade='C')       AS grade_c,
+            COUNT(*) FILTER (WHERE e.quality_grade='D')       AS grade_d,
+            COUNT(*) FILTER (WHERE e.quality_grade='F')       AS grade_f
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        WHERE p.internet_aktif = true
+    """))).mappings().first()
+
+    if not stats or not stats["toplam_sku"]:
+        # Mock data — henüz puanlama yok
+        return {
+            "toplam_sku": 0, "ortalama_puan": 0,
+            "iyi_kalite_pct": 0, "kritik_pct": 0,
+            "grade_dagilimi": {"A":0,"B":0,"C":0,"D":0,"F":0},
+            "puan_dagilimi": [{"aralik":f"{i}-{i+10}","sayi":0} for i in range(0,100,10)],
+            "top_eksiklikler": [], "sezon_ozeti": [],
+        }
+
+    total = stats["toplam_sku"] or 1
+
+    # Puan dağılımı
+    dist = (await session.execute(text("""
+        SELECT (e.quality_score / 10) * 10 AS bas, COUNT(*) AS sayi
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        WHERE p.internet_aktif = true
+        GROUP BY bas ORDER BY bas
+    """))).mappings().all()
+    dist_map = {r["bas"]: r["sayi"] for r in dist}
+    puan_dagilimi = [{"aralik":f"{i}-{i+10}", "sayi": dist_map.get(i,0)} for i in range(0,100,10)]
+
+    # Top eksiklikler
+    eksik_rows = (await session.execute(text("""
+        SELECT eksik_alan, COUNT(*) AS sayi
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        CROSS JOIN LATERAL jsonb_array_elements_text(e.eksik_alanlar) AS eksik_alan
+        WHERE p.internet_aktif = true
+        GROUP BY eksik_alan ORDER BY sayi DESC LIMIT 10
+    """))).mappings().all()
+    top_eksiklikler = [
+        {"alan": r["eksik_alan"], "sayi": r["sayi"], "pct": round(r["sayi"]/total*100)}
+        for r in eksik_rows
+    ]
+
+    # Sezon özeti
+    sezon_rows = (await session.execute(text("""
+        SELECT
+            e.sezon_kodu, MAX(e.sezon_adi) AS sezon_adi,
+            ROUND(AVG(e.quality_score)::numeric,1) AS ortalama_puan,
+            COUNT(*) AS toplam_urun
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        WHERE p.internet_aktif = true AND e.sezon_kodu IS NOT NULL
+        GROUP BY e.sezon_kodu
+        ORDER BY e.sezon_kodu DESC
+        LIMIT 8
+    """))).mappings().all()
+
+    def _grade(v): return "A" if v>=90 else "B" if v>=75 else "C" if v>=60 else "D" if v>=40 else "F"
+
+    sezon_ozeti = [
+        {
+            "sezon_kodu": r["sezon_kodu"],
+            "sezon_adi":  r["sezon_adi"] or r["sezon_kodu"],
+            "ortalama_puan": float(r["ortalama_puan"] or 0),
+            "quality_grade": _grade(float(r["ortalama_puan"] or 0)),
+            "toplam_urun": r["toplam_urun"],
+            "scored": True,
+        }
+        for r in sezon_rows
+    ]
+
+    return {
+        "toplam_sku":      total,
+        "ortalama_puan":   float(stats["ortalama_puan"] or 0),
+        "iyi_kalite_pct":  round(stats["iyi_kalite"] / total * 100),
+        "kritik_pct":      round(stats["kritik"] / total * 100),
+        "iyi_kalite_sayi": stats["iyi_kalite"],
+        "kritik_sayi":     stats["kritik"],
+        "grade_dagilimi":  {
+            "A": stats["grade_a"], "B": stats["grade_b"],
+            "C": stats["grade_c"], "D": stats["grade_d"],
+            "F": stats["grade_f"],
+        },
+        "puan_dagilimi":   puan_dagilimi,
+        "top_eksiklikler": top_eksiklikler,
+        "sezon_ozeti":     sezon_ozeti,
+    }
+
+
+@router.get("/overview/by-field")
+async def get_overview_by_field(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> List[Dict[str, Any]]:
+    """Alan bazlı eksiklik detayı."""
+    total_row = (await session.execute(text("""
+        SELECT COUNT(*) FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        WHERE p.internet_aktif = true
+    """))).scalar() or 1
+
+    rows = (await session.execute(text("""
+        SELECT eksik_alan, COUNT(*) AS sayi
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        CROSS JOIN LATERAL jsonb_array_elements_text(e.eksik_alanlar) AS eksik_alan
+        WHERE p.internet_aktif = true
+        GROUP BY eksik_alan ORDER BY sayi DESC
+    """))).mappings().all()
+
+    return [
+        {"alan": r["eksik_alan"], "sayi": r["sayi"], "pct": round(r["sayi"]/total_row*100)}
+        for r in rows
+    ]
