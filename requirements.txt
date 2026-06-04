@@ -43,3 +43,8 @@ sqlglot~=25.30.0                   # dialect-aware parse + validate generated SQ
 
 # --- Observability ---
 structlog~=24.4.0                  # structured JSON logging
+
+# --- Dosya işleme ---
+pymupdf>=1.24.0                    # PDF metin çıkarma
+python-docx>=1.1.0                 # Word dosyası işleme
+# pandas + openpyxl zaten yukarıda Excel/CSV için

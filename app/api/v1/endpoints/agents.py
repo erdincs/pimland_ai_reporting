@@ -9,7 +9,8 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_readonly_session
-from app.services import callcenter_service, sizewin_service
+from app.services import callcenter_service, sizewin_service, session_store
+from app.services.file_aware_agent import build_message_with_files, get_system_addendum
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -21,6 +22,8 @@ class CallCenterRequest(BaseModel):
     urun_kodu: Optional[str] = None
     system_prompt: Optional[str] = None
     history: List[Dict[str, Any]] = []
+    session_id: Optional[str] = None
+    file_ids: List[str] = []
 
 
 class CallCenterResponse(BaseModel):
@@ -36,11 +39,23 @@ async def callcenter(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
 ) -> CallCenterResponse:
     """Call Center Agent — ürün bilgisi soruları için."""
+    # Dosyalar varsa soruyu zenginleştir
+    enriched_question = payload.question
+    extra_system = ""
+    if payload.session_id and payload.file_ids:
+        files = [
+            f for fid in payload.file_ids
+            if (f := await session_store.get_file(payload.session_id, fid))
+        ]
+        if files:
+            enriched_question, has_df = build_message_with_files(payload.question, files)
+            extra_system = get_system_addendum(has_df)
+
     result = await callcenter_service.run_callcenter(
         session=session,
-        question=payload.question,
+        question=enriched_question,
         urun_kodu=payload.urun_kodu,
-        custom_system=payload.system_prompt,
+        custom_system=(payload.system_prompt or "") + extra_system or None,
         history=payload.history,
     )
     return CallCenterResponse(**result)
@@ -63,6 +78,8 @@ class SizewinRequest(BaseModel):
     urun_adi: Optional[str] = None
     system_prompt: Optional[str] = None
     history: List[Dict[str, Any]] = []
+    session_id: Optional[str] = None
+    file_ids: List[str] = []
 
 
 class SizewinResponse(BaseModel):

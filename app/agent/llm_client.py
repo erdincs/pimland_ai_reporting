@@ -57,12 +57,34 @@ class LLMClient:
     ) -> str:
         """Synchronous Converse call — runs inside the thread executor."""
         # Build messages: prior turns + current user message
+        # user may be a plain string OR a list of content blocks (file upload)
         messages: List[Dict] = []
         for turn in (history or []):
             role = turn.get("role", "user")
             content = turn.get("content", "")
             messages.append({"role": role, "content": [{"text": str(content)}]})
-        messages.append({"role": "user", "content": [{"text": user}]})
+
+        if isinstance(user, list):
+            # Multi-content: text + documents + images
+            user_content = []
+            for block in user:
+                btype = block.get("type")
+                if btype == "text":
+                    user_content.append({"text": block["text"]})
+                elif btype == "image":
+                    user_content.append({"image": {
+                        "format": block["source"]["media_type"].split("/")[-1],
+                        "source": {"bytes": __import__("base64").b64decode(block["source"]["data"])},
+                    }})
+                elif btype == "document":
+                    user_content.append({"document": {
+                        "name":   block.get("title", "document"),
+                        "format": "txt",
+                        "source": {"bytes": block["source"]["data"].encode("utf-8")},
+                    }})
+            messages.append({"role": "user", "content": user_content})
+        else:
+            messages.append({"role": "user", "content": [{"text": user}]})
 
         try:
             resp = self._get_client().converse(
