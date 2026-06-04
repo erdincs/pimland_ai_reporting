@@ -23,7 +23,7 @@ log = get_logger(__name__)
 
 _MCP_BASE = "https://agentup-mcp-test.pimland.com/30001"
 _TOKEN_CACHE: Dict[str, Any] = {}
-_TIMEOUT = 8   # saniye — MCP down olduğunda hızlı fail
+_TIMEOUT = 20  # saniye
 
 
 # ── OAuth2 token ─────────────────────────────────────────────────────────────
