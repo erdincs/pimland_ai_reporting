@@ -307,6 +307,120 @@ async def _fetch_db_products(
     return [dict(r) for r in rows]
 
 
+# ── Toplu dosya işleme ────────────────────────────────────────────────────────
+
+async def _run_batch_mcp(
+    session: AsyncSession,
+    question: str,
+    meta: Dict[str, Any],
+    system: str,
+    history: Optional[List],
+) -> str:
+    """Yaklaşım A: Temp tablodan kodları çek → batch MCP → cevap üret."""
+    from sqlalchemy import text as sa_text
+    from app.services.batch_mcp_service import fetch_batch, extract_product_summary
+
+    code_col  = meta["code_column"]
+    pg_tables = meta["pg_tables"]
+    all_tabs  = meta["all_tables"]
+
+    # Kolon adları + kodları çek (ilk tablo yeterli)
+    if not pg_tables:
+        return "Veri tablosu bulunamadı."
+
+    pg_table = pg_tables[0]
+    tab_info = all_tabs[0] if all_tabs else {}
+    columns  = tab_info.get("columns", [])
+
+    # Tüm satırları çek (max 200)
+    rows_result = (await session.execute(
+        sa_text(f'SELECT * FROM "{pg_table}" LIMIT 200')
+    )).mappings().all()
+    rows = [dict(r) for r in rows_result]
+
+    if not rows:
+        return "Yüklenen tabloda veri bulunamadı."
+
+    # Kodları topla
+    skus = [str(r.get(code_col, "")).strip() for r in rows if r.get(code_col)]
+    skus = [s for s in skus if s and s != "nan"]
+
+    log.info("batch_mcp.starting", count=len(skus), code_col=code_col)
+
+    # Paralel MCP çekme
+    mcp_data = await fetch_batch(skus, limit=100)
+
+    # Ürün özetlerini oluştur
+    urun_ozet = []
+    for sku, data in mcp_data.items():
+        urun_ozet.append(extract_product_summary(data, sku))
+
+    # Tüm satırları ve MCP verilerini birleştir
+    birlesik = []
+    for row in rows[:50]:  # ilk 50 satır detaylı, geri kalanı özet
+        sku = str(row.get(code_col, "")).strip()
+        mcp = next((o for o in urun_ozet if o["sku"] == sku), {})
+        birlesik.append({**{k: v for k, v in row.items()}, "mcp": mcp})
+
+    # LLM'e gönder
+    context_text = (
+        f"DOSYA: {tab_info.get('sheet','Sheet1')} — {len(rows)} satır\n"
+        f"KOLON ADLARI: {', '.join(str(c) for c in columns)}\n\n"
+        f"ÜRÜN VERİLERİ (MCP'den çekildi, {len(mcp_data)} ürün):\n"
+        + json.dumps(birlesik[:30], default=str, ensure_ascii=False, indent=1)
+        + (f"\n\n... ve {len(rows)-30} satır daha" if len(rows) > 30 else "")
+        + f"\n\nKULLANICI SORUSU: {question}"
+    )
+
+    batch_system = system + """
+
+## Toplu Dosya İşleme Modu
+Kullanıcı birden fazla ürün içeren bir dosya yükledi.
+- Her ürün için ürün verisi ve MCP canlı data mevcuttur
+- Satırları bir tablo halinde özetle
+- Her ürün için net, kısa yanıt ver
+- Teknik detay gösterme, sadece müşteriye faydalı bilgi"""
+
+    return await llm_client.complete(
+        system=batch_system, user=context_text, temperature=0.3, history=history
+    )
+
+
+async def _run_sql_approach(
+    session: AsyncSession,
+    question: str,
+    meta: Dict[str, Any],
+    system: str,
+    history: Optional[List],
+) -> str:
+    """Yaklaşım B: Temp tabloya SQL sorgusu → istatistik/toplu analiz."""
+    all_tabs = meta["all_tables"]
+    tab_info = all_tabs[0] if all_tabs else {}
+    pg_table = meta["pg_tables"][0] if meta["pg_tables"] else ""
+    columns  = tab_info.get("columns", [])
+    preview  = tab_info.get("preview", "")
+
+    context_text = (
+        f"Kullanıcı '{tab_info.get('sheet','Dosya')}' adlı tabloyu yükledi.\n"
+        f"PostgreSQL tablo adı: {pg_table}\n"
+        f"Kolon adları: {', '.join(str(c) for c in columns)}\n"
+        f"Satır sayısı: {tab_info.get('rows', '?')}\n\n"
+        f"Örnek veri:\n{preview}\n\n"
+        f"KULLANICI SORUSU: {question}"
+    )
+
+    sql_system = system + f"""
+
+## Veri Analizi Modu
+PostgreSQL'de '{pg_table}' geçici tablosunda veri mevcut.
+Bu tabloya sorgu yapabilirsin — sonuçları kullanıcıya raporla.
+Teknik SQL detaylarını gösterme."""
+
+    return await llm_client.complete(
+        system=sql_system, user=context_text, temperature=0.3, history=history
+    )
+
+
 # ── Ana servis ────────────────────────────────────────────────────────────────
 
 async def run_callcenter(
@@ -320,53 +434,98 @@ async def run_callcenter(
 ) -> Dict[str, Any]:
     """Call Center Agent ana akışı."""
     started = time.perf_counter()
-    skus = _extract_skus(question, urun_kodu)  # question her zaman string
+    system  = custom_system or CALL_CENTER_SYSTEM
 
-    # DB'den ürünleri çek — SKU yoksa keyword arama yapar
+    # ── Dosya var mı? Yaklaşım belirle ──────────────────────────────────────
+    if session_files:
+        from app.services.file_router import decide_approach
+        approach, meta = decide_approach(question, session_files)
+        log.info("callcenter.file_approach", approach=approach,
+                 rows=meta.get("total_rows", 0), code_col=meta.get("code_column"))
+
+        if approach == "batch_mcp" and meta.get("code_column"):
+            answer = await _run_batch_mcp(session, question, meta, system, history)
+            return {
+                "question":       question,
+                "answer":         answer,
+                "products_found": meta.get("total_rows", 0),
+                "elapsed_ms":     round((time.perf_counter() - started) * 1000, 1),
+            }
+
+        if approach == "sql":
+            answer = await _run_sql_approach(session, question, meta, system, history)
+            return {
+                "question":       question,
+                "answer":         answer,
+                "products_found": meta.get("total_rows", 0),
+                "elapsed_ms":     round((time.perf_counter() - started) * 1000, 1),
+            }
+
+        # hybrid: batch_mcp + sql sonuçlarını birleştir
+        if approach == "hybrid":
+            ans_a, ans_b = await _asyncio.gather(
+                _run_batch_mcp(session, question, meta, system, history),
+                _run_sql_approach(session, question, meta, system, history),
+            )
+            answer = f"{ans_a}\n\n---\n\n{ans_b}"
+            return {
+                "question":       question,
+                "answer":         answer,
+                "products_found": meta.get("total_rows", 0),
+                "elapsed_ms":     round((time.perf_counter() - started) * 1000, 1),
+            }
+
+        # Yaklaşım C: dosyayı bağlam olarak multi-content mesajında gönder
+        from app.services.file_aware_agent import build_message_with_files, get_system_addendum
+        skus = _extract_skus(question, urun_kodu)
+        db_products = await _fetch_db_products(session, skus, question)
+        live_sku = skus[0] if skus else (db_products[0]["urun_kodu"] if db_products else None)
+        live_data = await fetch_product_full(live_sku) if live_sku else {}
+        base_msg = f"SORU: {question}"
+        user_msg, has_df = build_message_with_files(base_msg, session_files)
+        system = system + get_system_addendum(has_df)
+        answer = await llm_client.complete(system=system, user=user_msg, temperature=0.3, history=history)
+        return {
+            "question": question, "answer": answer,
+            "products_found": 0,
+            "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
+        }
+
+    # ── Dosya yok — standart tek ürün akışı ─────────────────────────────────
+    skus = _extract_skus(question, urun_kodu)
     db_products = await _fetch_db_products(session, skus, question)
 
-    # Live veri için SKU: explicit > regex > DB'den bulunanın kodu
     live_sku = skus[0] if skus else (db_products[0]["urun_kodu"] if db_products else None)
     if live_sku:
         live_data = await fetch_product_full(live_sku)
     else:
         live_data = {}
 
-    # İlk SKU'nun görsel URL'ini ekle
     img_url = None
     if db_products:
         img_url = db_products[0].get("default_image_url")
     if not img_url and live_data.get("details"):
         images = live_data["details"].get("productImages") or live_data["details"].get("images") or []
         if images:
-            img_url = (images[0].get("imageUrl") or images[0].get("url") or "")
+            img_url = images[0].get("imageUrl") or images[0].get("url") or ""
 
     context = {
         "sorgu_stok_kodu": live_sku,
-        "gorsel_url": img_url,
-        "db_product":    db_products[0] if db_products else None,
-        "details":       live_data.get("details"),
-        "stocks":        live_data.get("stocks") or [],
-        "sales_prices":  live_data.get("sales_prices") or [],
-        "erp_prices":    live_data.get("erp_prices") or [],
-        "relations":     live_data.get("relations") or [],
-        "size_values":   live_data.get("size_values") or [],
+        "gorsel_url":      img_url,
+        "db_product":      db_products[0] if db_products else None,
+        "details":         live_data.get("details"),
+        "stocks":          live_data.get("stocks") or [],
+        "sales_prices":    live_data.get("sales_prices") or [],
+        "erp_prices":      live_data.get("erp_prices") or [],
+        "relations":       live_data.get("relations") or [],
+        "size_values":     live_data.get("size_values") or [],
     }
 
-    system = custom_system or CALL_CENTER_SYSTEM
-    base_msg = (
+    user_msg = (
         f"ÜRÜN VERİSİ (otomatik sorgulandı):\n"
         f"{json.dumps(context, default=str, ensure_ascii=False, indent=2)}\n\n"
         f"MÜŞTERİ / ÇAĞRI MERKEZİ SORUSU: {question}"
     )
-
-    # Dosya varsa multi-content mesajı oluştur
-    if session_files:
-        from app.services.file_aware_agent import build_message_with_files, get_system_addendum
-        user_msg, has_df = build_message_with_files(base_msg, session_files)
-        system = system + get_system_addendum(has_df)
-    else:
-        user_msg = base_msg
 
     answer = await llm_client.complete(system=system, user=user_msg, temperature=0.3, history=history)
 
