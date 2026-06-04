@@ -5440,7 +5440,7 @@ function _renderPerfKpis(d){
     {label:'İade oranı farkı (A vs F)',sub:'A vs F grade iade farkı',
      val:_fmtPct(k.iade_fark_pct||0),color:k.iade_fark_pct<0?'var(--green)':'var(--red)',
      desc:'Yüksek kalite düşük iade anlamına gelir'},
-    {label:'D+F ürünler C'ye çıksa potansiyel',sub:'ek yıllık ciro tahmini',
+    {label:'D+F ürünler C seviyesine çıksa potansiyel',sub:'ek yıllık ciro tahmini',
      val:'+'+_fmtTL(k.potential_total),color:'var(--orange)',
      desc:`${(d.potential||{}).df_sku_n||0} D+F grade ürün`},
   ];
@@ -5591,7 +5591,7 @@ function _renderPerfPotential(d){
      val:'+'+_fmtTL(pt.per_sku_gain),color:'var(--yellow)'},
     {label:'Toplam tahmini ciro etkisi',sub:'yıllık ek satış potansiyeli',
      val:'+'+_fmtTL(pt.toplam_gain),color:'var(--teal)'},
-    {label:'İade azalması (tahmini)',sub:'%22'den %18'e düşüş beklentisi',
+    {label:'İade azalması (tahmini)',sub:"%22'den %18'e düşüş beklentisi",
      val:_fmtPct(pt.iade_azalma_pct||0),color:'var(--green)'},
   ];
   document.getElementById('perf-potential').innerHTML=cards.map(c=>`
