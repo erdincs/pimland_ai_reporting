@@ -3720,23 +3720,25 @@ async function loadUrunSatisAnaliz(){
     tree[m].sezonlar[s].ana_gruplar[ag].urun_gruplari[ug]=r;
   });
 
-  // Aggregate L3, L2, L1
-  const aggRows=(rows)=>rows.reduce((a,r)=>({
-    sku_sayisi:(a.sku_sayisi||0)+(r.sku_sayisi||0),
-    satis_adet:(a.satis_adet||0)+(r.satis_adet||0),
-    brut_ciro:(a.brut_ciro||0)+(r.brut_ciro||0),
-    iade_adet:(a.iade_adet||0)+(r.iade_adet||0),
-    iade_ciro:(a.iade_ciro||0)+(r.iade_ciro||0),
-    iptal_ciro:(a.iptal_ciro||0)+(r.iptal_ciro||0),
-    net_ciro:(a.net_ciro||0)+(r.net_ciro||0),
-  },{sku_sayisi:0,satis_adet:0,brut_ciro:0,iade_adet:0,iade_ciro:0,iptal_ciro:0,net_ciro:0}));
-  const calcFin=(agg)=>{
-    const bc=agg.brut_ciro||0;
-    const loss=(agg.iade_ciro||0)+(agg.iptal_ciro||0);
-    agg.deger_kaybi_pct=bc>0?parseFloat((loss/bc*100).toFixed(1)):0;
-    agg.ort_fiyat=agg.satis_adet>0?parseFloat((bc/agg.satis_adet).toFixed(2)):0;
-    return agg;
+  // Aggregate — explicit for loop (reduce + ||0 ile string sorunu önlenir)
+  const sumRows=(rows)=>{
+    let sku=0,sat=0,brut=0,ia=0,ic=0,ipc=0,net=0;
+    for(const r of rows){
+      sku +=Number(r.sku_sayisi)||0;
+      sat +=Number(r.satis_adet)||0;
+      brut+=Number(r.brut_ciro) ||0;
+      ia  +=Number(r.iade_adet) ||0;
+      ic  +=Number(r.iade_ciro) ||0;
+      ipc +=Number(r.iptal_ciro)||0;
+      net +=Number(r.net_ciro)  ||0;
+    }
+    const loss=ic+ipc;
+    return{sku_sayisi:sku,satis_adet:sat,brut_ciro:brut,iade_adet:ia,iade_ciro:ic,iptal_ciro:ipc,net_ciro:net,
+      deger_kaybi_pct:brut>0?parseFloat((loss/brut*100).toFixed(1)):0,
+      ort_fiyat:sat>0?parseFloat((brut/sat).toFixed(2)):0};
   };
+  const aggRows=sumRows;  // backward compat
+  const calcFin=(agg)=>agg;  // sumRows already computes derived fields
 
   // HTML oluştur
   let html='';
