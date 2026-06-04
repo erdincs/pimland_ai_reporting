@@ -3983,6 +3983,8 @@ async function loadEnrichmentDashboard(){
   }).join('')||'<div style="color:var(--t3);font-size:11px">Eksiklik yok</div>';
 }
 
+const _COL = 'grid-template-columns:1fr 90px 200px 80px 80px';
+
 async function loadScoreList(){
   const wrap=document.getElementById('enr-scorelist-wrap');
   wrap.innerHTML='<div class="loading" style="padding:20px"><div class="spinner"></div></div>';
