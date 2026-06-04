@@ -2129,16 +2129,26 @@ async function askAgent(agentKey) {
       <div class="ai-user-bubble">${q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     </div>`);
 
-  // Thinking indicator
+  // Thinking indicator + süre sayacı
   const thinkId = 'think-'+agentKey+'-'+Date.now();
   chat.insertAdjacentHTML('beforeend',`
     <div class="ai-bot-msg" id="${thinkId}">
       <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
       <div class="ai-bot-bubble">
-        <div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">${cfg.thinking}</span></div>
+        <div class="ai-thinking">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span style="margin-left:6px">${cfg.thinking}</span>
+          <span id="${thinkId}-timer" style="margin-left:4px;color:var(--t4);font-size:10px">0s</span>
+        </div>
       </div>
     </div>`);
   chat.scrollTop = chat.scrollHeight;
+
+  const _t0 = Date.now();
+  const _timerInt = setInterval(()=>{
+    const el = document.getElementById(`${thinkId}-timer`);
+    if(el) el.textContent = Math.round((Date.now()-_t0)/1000)+'s';
+  }, 1000);
 
   try {
     const payload = cfg.buildPayload(q);
@@ -2188,6 +2198,8 @@ async function askAgent(agentKey) {
         <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
         <div class="ai-bot-bubble"><p style="color:var(--red)">Bağlantı hatası: ${e.message}</p></div>
       </div>`);
+  } finally {
+    clearInterval(_timerInt);
   }
   chat.scrollTop = chat.scrollHeight;
 }
@@ -2300,22 +2312,37 @@ async function askAI(){
   const chat=document.getElementById('ai-chat');
   document.getElementById('ai-welcome').style.display='none';
 
+  // Gönder butonunu devre dışı bırak
+  const sendBtn=document.getElementById('ai-send-btn');
+  if(sendBtn){sendBtn.disabled=true;sendBtn.style.opacity='0.4';}
+
   // User message
   chat.insertAdjacentHTML('beforeend',`
     <div class="ai-user-msg anim">
       <div class="ai-user-bubble">${q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     </div>`);
 
-  // Thinking indicator
+  // Thinking indicator + geçen süre sayacı
   const thinkId='think-'+Date.now();
   chat.insertAdjacentHTML('beforeend',`
     <div class="ai-bot-msg" id="${thinkId}">
       <div class="ai-bot-avatar">🤖</div>
       <div class="ai-bot-bubble">
-        <div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:4px">Analiz ediliyor...</span></div>
+        <div class="ai-thinking">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <span style="margin-left:6px">Analiz ediliyor</span>
+          <span id="${thinkId}-timer" style="margin-left:4px;color:var(--t4);font-size:10px">0s</span>
+        </div>
       </div>
     </div>`);
   chat.scrollTop=chat.scrollHeight;
+
+  // Geçen süre sayacı
+  const t0=Date.now();
+  const timerInterval=setInterval(()=>{
+    const el=document.getElementById(`${thinkId}-timer`);
+    if(el) el.textContent=Math.round((Date.now()-t0)/1000)+'s';
+  },1000);
 
   try{
     const payload={question:q,use_cache:false};
@@ -2339,7 +2366,8 @@ async function askAI(){
     } else {
       const answerHtml=renderMD(d.answer||'');
       const dataHtml=d.rows&&d.rows.length?renderDataTable(d.rows):'';
-      const sqlHtml=showSQL&&d.sql?`
+      // SQL bloğu sadece "SQL'i göster" checkbox aktifken ve satır verisi varsa görünür
+      const sqlHtml=showSQL&&d.sql&&d.rows?.length?`
         <div class="ai-sql-block" onclick="this.style.display='none'" title="Gizlemek için tıklayın">${d.sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
       const filterTag=useFilters&&(state.yil||state.ay.length)?`<span style="background:rgba(255,107,43,.1);color:var(--orange);padding:1px 7px;border-radius:4px">${state.yil||''} ${state.ay.length?AY_ADI[state.ay[0]]:''}</span>`:'';
       const aiMsgId='msg-ai-'+Date.now();
@@ -2369,6 +2397,9 @@ async function askAI(){
         <div class="ai-bot-avatar">🤖</div>
         <div class="ai-bot-bubble"><p style="color:var(--red)">Bağlantı hatası: ${e.message}</p></div>
       </div>`);
+  }finally{
+    clearInterval(timerInterval);
+    if(sendBtn){sendBtn.disabled=false;sendBtn.style.opacity='1';}
   }
   chat.scrollTop=chat.scrollHeight;
 }

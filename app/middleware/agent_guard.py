@@ -229,17 +229,36 @@ GUVENLI_YONLENDIRME = (
 )
 
 
+def _strip_sql_blocks(text: str) -> str:
+    """SQL/kod bloklarını yanıttan temizle — kullanıcıya teknik detay gösterilmez."""
+    # ```sql ... ``` ve ``` ... ``` bloklarını kaldır
+    text = re.sub(r"```(?:sql|SQL|python|json)?\n?.*?```", "", text, flags=re.DOTALL)
+    # Satır başında SELECT/UPDATE/INSERT ile başlayan satırları kaldır
+    text = re.sub(r"(?im)^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|WITH\s+\w+\s+AS)\b.*$", "", text)
+    # Ardışık boş satırları tekli yap
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def output_guard(yanit: str) -> tuple[str, bool, str]:
     """
     LLM yanıtını çıkış filtresinden geçir.
+    1. SQL/kod bloklarını sil (her zaman)
+    2. Yasak pattern kontrolü
     Döner: (temiz_yanit, mudahale_edildi_mi, neden)
     """
-    for pattern, neden in CIKIS_YASAK_PATTERNS:
-        if re.search(pattern, yanit, re.IGNORECASE):
-            logger.warning(f"[OUTPUT_GUARD] Sızıntı tespit edildi: {neden}")
+    # SQL bloklarını her zaman temizle
+    temiz = _strip_sql_blocks(yanit)
+    sql_stripped = temiz != yanit
 
-            # Tam yanıtı blokla, güvenli mesaj döndür
+    for pattern, neden in CIKIS_YASAK_PATTERNS:
+        if re.search(pattern, temiz, re.IGNORECASE):
+            logger.warning(f"[OUTPUT_GUARD] Sızıntı tespit edildi: {neden}")
             return GUVENLI_YONLENDIRME, True, neden
+
+    if sql_stripped:
+        logger.debug("[OUTPUT_GUARD] SQL bloğu temizlendi")
+        return temiz, True, "sql_stripped"
 
     return yanit, False, "ok"
 
