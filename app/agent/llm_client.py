@@ -79,8 +79,10 @@ class LLMClient:
                 elif btype == "document":
                     import re as _re
                     raw_name = block.get("title", "document")
-                    # Bedrock: sadece alfanümerik, boşluk, tire, parantez, köşeli parantez
-                    safe_name = _re.sub(r"[^\w\s\-()\[\]]", "", raw_name)[:200] or "document"
+                    # Bedrock: SADECE ASCII alfanümerik, boşluk, tire, parantez, köşeli parantez
+                    # \w ve Unicode harfler (ö,ü,ş) + alt çizgi YASAK
+                    safe_name = _re.sub(r"[^a-zA-Z0-9\s\-()\[\]]", " ", raw_name)
+                    safe_name = _re.sub(r"\s{2,}", " ", safe_name).strip()[:200] or "document"
                     user_content.append({"document": {
                         "name":   safe_name,
                         "format": "txt",
