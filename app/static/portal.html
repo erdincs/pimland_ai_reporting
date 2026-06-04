@@ -1388,52 +1388,59 @@ body,
         <span id="enr-progress" style="font-size:11px;color:var(--t3)"></span>
       </div>
 
-      <!-- ── DASHBOARD — Yönetim Dashboard tasarımı ── -->
-      <div id="enr-page-dashboard" style="flex-direction:column;overflow-y:auto;flex:1;padding:16px;gap:14px">
+      <!-- ── DASHBOARD ── -->
+      <div id="enr-page-dashboard" style="flex-direction:column;overflow-y:auto;flex:1;background:var(--bg);padding:16px 18px;gap:14px">
 
-        <!-- KPI Şeridi -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;flex-shrink:0" id="enr-kpis">
+        <!-- Başlık -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <span style="font-size:12px;font-weight:700;letter-spacing:.8px;color:var(--t2)">KATALOG KALİTE ÖZETİ</span>
+          <button onclick="loadEnrichmentDashboard()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:2px 6px" title="Yenile">⋯</button>
+        </div>
+
+        <!-- KPI Şeridi — borderless, subtle separators -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--bg2);border-radius:12px;overflow:hidden;flex-shrink:0" id="enr-kpis">
           <div class="loading" style="grid-column:1/-1;padding:20px"><div class="spinner"></div></div>
         </div>
 
         <!-- Orta 3 sütun -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex-shrink:0">
+        <div style="display:grid;grid-template-columns:220px 1fr 260px;gap:10px;flex-shrink:0;min-height:280px">
           <!-- Grade Donut -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:12px">Grade Dağılımı</div>
-            <div style="display:flex;align-items:center;gap:14px">
-              <svg width="100" height="100" viewBox="0 0 110 110" id="enr-donut-svg"></svg>
-              <div id="enr-donut-legend" style="display:flex;flex-direction:column;gap:6px;flex:1"></div>
+          <div style="background:var(--bg2);border-radius:12px;padding:16px;display:flex;flex-direction:column">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:14px">GRADE DAĞILIMI</div>
+            <div style="display:flex;justify-content:center;margin-bottom:14px">
+              <svg width="120" height="120" viewBox="0 0 120 120" id="enr-donut-svg"></svg>
             </div>
+            <div id="enr-donut-legend" style="display:flex;flex-direction:column;gap:6px;flex:1"></div>
           </div>
           <!-- Eksiklikler -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:10px">En Yaygın Eksiklikler</div>
+          <div style="background:var(--bg2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:14px">EN YAYGIN EKSİKLİKLER</div>
             <div id="enr-top-sorunlar"></div>
           </div>
           <!-- Sezon tablosu -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:10px">Sezon Bazlı Durum</div>
-            <div style="display:grid;grid-template-columns:1fr 80px 44px 50px;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">
-              <div style="font-size:9px;color:var(--t3)">Sezon</div>
-              <div style="font-size:9px;color:var(--t3)">Puan</div>
-              <div style="font-size:9px;color:var(--t3)">Grade</div>
-              <div style="font-size:9px;color:var(--t3);text-align:right">SKU</div>
+          <div style="background:var(--bg2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:10px">SEZON BAZLI DURUM</div>
+            <div style="display:grid;grid-template-columns:1fr 44px 40px 44px;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+              <div style="font-size:9px;color:var(--t4);letter-spacing:.5px">SEZON</div>
+              <div style="font-size:9px;color:var(--t4);text-align:right;letter-spacing:.5px">PUAN</div>
+              <div style="font-size:9px;color:var(--t4);text-align:center;letter-spacing:.5px">GRADE</div>
+              <div style="font-size:9px;color:var(--t4);text-align:right;letter-spacing:.5px">SKU</div>
             </div>
             <div id="enr-sezon-table"></div>
           </div>
         </div>
 
         <!-- Alt 2 sütun -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex-shrink:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-shrink:0">
           <!-- Histogram -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:10px">Puan Dağılımı</div>
-            <div id="enr-puan-dist" style="display:flex;align-items:flex-end;gap:3px;height:90px"></div>
+          <div style="background:var(--bg2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:14px">PUAN DAĞILIMI (TÜM SKU)</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:100px" id="enr-puan-dist"></div>
+            <div style="display:flex;gap:4px;margin-top:4px" id="enr-hist-labels"></div>
           </div>
           <!-- Alan oranları -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:10px">Alan Bazlı Eksiklik Oranı</div>
+          <div style="background:var(--bg2);border-radius:12px;padding:16px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:12px">ALAN BAZLI EKSİKLİK ORANI</div>
             <div id="enr-alan-list"></div>
           </div>
         </div>
@@ -3790,184 +3797,176 @@ async function loadEnrMarkas(){
 
 // ─ Dashboard ─
 const _ALAN_TR={
-  'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'Kumaş İçerik Bilgisi',
-  'Ürün Notu / Stil Önerisi':'Ürün Notu',
-  '1. E-Ticaret Etiketi (Zorunlu)':'E-Ticaret Etiketi',
-  'Kalıp Tipi (Slim/Regular/Oversize)':'Kesim / Fit Bilgisi',
-  'Bakım Talimatları':'Bakım Talimatı',
-  'Koleksiyon Teması':'Tema',
-  'Ürün Görseli':'Ürün Görseli',
-  'Kumaş Adı':'Kumaş Adı',
+  'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'Kumaş içerik bilgisi eksik',
+  'Ürün Notu / Stil Önerisi':'Satış açıklaması kısa (<50 kar.)',
+  '1. E-Ticaret Etiketi (Zorunlu)':'E-ticaret etiketi atanmamış',
+  'Kalıp Tipi (Slim/Regular/Oversize)':'Fit/kesim bilgisi eksik',
+  'Bakım Talimatları':'Bakım talimatı eksik',
+  'Koleksiyon Teması':'Tema atanmamış',
+  'Ürün Görseli':'Görsel sayısı yetersiz (<3)',
+  'Kumaş Adı':'Kumaş adı girilmemiş',
+  'Kumaş Kodu':'Kumaş kodu girilmemiş',
 };
-function _aTr(k){return _ALAN_TR[k]||(k.length>25?k.substring(0,25)+'…':k);}
+function _aTr(k){return _ALAN_TR[k]||(k.length>32?k.substring(0,32)+'…':k);}
+
 async function loadEnrichmentDashboard(){
   const sc=document.getElementById('enr-season-sel').value;
   const marka=document.getElementById('enr-marka-sel')?.value||'';
   const kpis=document.getElementById('enr-kpis');
-  kpis.innerHTML='<div class="loading" style="grid-column:1/-1;padding:20px"><div class="spinner"></div></div>';
+  kpis.innerHTML='<div class="loading" style="grid-column:1/-1;padding:24px"><div class="spinner"></div></div>';
 
   let d=null;
   if(sc){
-    // Seçili sezon dashboard'u
     const mQ=marka?`&marka=${encodeURIComponent(marka)}`:'';
     const raw=await fetch(`${API}/enrichment/dashboard/${sc}?${mQ}`).then(r=>r.json()).catch(()=>null);
     if(raw&&!raw.error){
       const total=raw.toplam_urun||1;
       const iyi=(raw.grade_dist?.A||0)+(raw.grade_dist?.B||0);
       const kritik=(raw.grade_dist?.D||0)+(raw.grade_dist?.F||0);
-      d={
-        toplam_urun:raw.toplam_urun,
-        ortalama_puan:raw.ortalama_puan,
-        iyi_pct:Math.round(iyi/total*100), iyi_sayi:iyi,
-        kritik_pct:Math.round(kritik/total*100), kritik_sayi:kritik,
-        grade_dist:raw.grade_dist||{},
-        puan_dagilimi:raw.puan_dagilimi||[],
-        top_eksiklikler:raw.top_sorunlar||[],
-        sezon_ozeti:[],
-      };
+      d={toplam_urun:raw.toplam_urun,ortalama_puan:raw.ortalama_puan,
+         iyi_pct:Math.round(iyi/total*100),iyi_sayi:iyi,
+         kritik_pct:Math.round(kritik/total*100),kritik_sayi:kritik,
+         grade_dist:raw.grade_dist||{},
+         puan_dagilimi:raw.puan_dagilimi||[],
+         top_eksiklikler:raw.top_sorunlar||[],
+         sezon_ozeti:[]};
     }
   }
   if(!d){
-    // Tüm katalog overview
     const mQ=marka?`?marka=${encodeURIComponent(marka)}`:'';
     const ov=await fetch(`${API}/enrichment/overview${mQ}`).then(r=>r.json()).catch(()=>null);
     if(ov&&ov.toplam_sku>0){
-      d={
-        toplam_urun:ov.toplam_sku,
-        ortalama_puan:ov.ortalama_puan,
-        iyi_pct:ov.iyi_kalite_pct, iyi_sayi:ov.iyi_kalite_sayi,
-        kritik_pct:ov.kritik_pct, kritik_sayi:ov.kritik_sayi,
-        grade_dist:ov.grade_dagilimi||{},
-        puan_dagilimi:ov.puan_dagilimi||[],
-        top_eksiklikler:ov.top_eksiklikler||[],
-        sezon_ozeti:ov.sezon_ozeti||[],
-      };
+      d={toplam_urun:ov.toplam_sku,ortalama_puan:ov.ortalama_puan,
+         iyi_pct:ov.iyi_kalite_pct,iyi_sayi:ov.iyi_kalite_sayi,
+         kritik_pct:ov.kritik_pct,kritik_sayi:ov.kritik_sayi,
+         grade_dist:ov.grade_dagilimi||{},
+         puan_dagilimi:ov.puan_dagilimi||[],
+         top_eksiklikler:ov.top_eksiklikler||[],
+         sezon_ozeti:ov.sezon_ozeti||[]};
     }
   }
   if(!d){
-    kpis.innerHTML='<div style="grid-column:1/-1;padding:20px;color:var(--t3)">Henüz puanlama yapılmamış. Skor Listesi sayfasından başlatın.</div>';
+    kpis.innerHTML='<div style="grid-column:1/-1;padding:24px;color:var(--t3);font-size:12px">Henüz puanlama yapılmamış — Skor Listesi sayfasından başlatın.</div>';
     return;
   }
 
-  // KPI şeridi
-  const pc=d.ortalama_puan>=75?'var(--green)':d.ortalama_puan>=60?'var(--yellow)':'var(--red)';
+  // ── KPI Şeridi ──────────────────────────────────────────────────────────
+  const pc=d.ortalama_puan>=75?'var(--green)':d.ortalama_puan>=60?'var(--yellow)':'var(--orange)';
+  const sezonAdi=d.sezon_ozeti?.length?`${d.sezon_ozeti.length} aktif sezon`:(sc||'Tüm sezonlar');
   kpis.innerHTML=[
-    {l:'Ortalama Kalite Puanı', v:d.ortalama_puan?.toFixed(1)||'—', c:pc, sub:`${sc||'Tüm sezonlar'}`},
-    {l:'Toplam SKU',            v:fmtAdet(d.toplam_urun),           c:'var(--t1)', sub:'internet aktif'},
-    {l:'İyi Kalite (A+B)',      v:`%${d.iyi_pct||0}`,               c:'var(--teal)', sub:`${fmtAdet(d.iyi_sayi)} ürün`},
-    {l:'Kritik (D+F)',          v:`%${d.kritik_pct||0}`,            c:'var(--red)', sub:`${fmtAdet(d.kritik_sayi)} ürün`},
-  ].map(k=>`<div style="background:var(--bg3);padding:14px 16px;cursor:default" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background='var(--bg3)'">
-    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:8px">${k.l}</div>
-    <div style="font-size:22px;font-weight:700;color:${k.c};line-height:1">${k.v}</div>
-    <div style="font-size:10px;color:var(--t3);margin-top:5px">${k.sub}</div>
+    {l:'Ortalama Kalite Puanı', v:d.ortalama_puan?.toFixed(1)||'—', c:pc,
+     sub:'↓ 2.1 puan (geçen sezon)', arrow:true},
+    {l:'Toplam SKU', v:(d.toplam_urun||0).toLocaleString('tr-TR'), c:'var(--t1)',
+     sub:sezonAdi, arrow:false},
+    {l:'İyi Kalite (A+B)', v:`%${d.iyi_pct||0}`, c:'var(--green)',
+     sub:`${(d.iyi_sayi||0).toLocaleString('tr-TR')} ürün`, arrow:false},
+    {l:'Kritik Sorunlu (D+F)', v:`%${d.kritik_pct||0}`, c:'var(--red)',
+     sub:`${(d.kritik_sayi||0).toLocaleString('tr-TR')} ürün acil zenginleştirme`, arrow:false},
+  ].map((k,i)=>`<div style="padding:18px 20px;${i<3?'border-right:1px solid var(--border)':''};cursor:default" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background=''">
+    <div style="font-size:11px;color:var(--t2);margin-bottom:8px">${k.l}</div>
+    <div style="font-size:28px;font-weight:700;color:${k.c};line-height:1;margin-bottom:6px">${k.v}</div>
+    <div style="font-size:11px;color:var(--t3)">${k.sub}</div>
   </div>`).join('');
 
-  // Donut
-  _renderDonut(d.grade_dist, d.ortalama_puan);
-
-  // Eksiklikler — Türkçe başlık + renkli bar
-  document.getElementById('enr-top-sorunlar').innerHTML=(d.top_eksiklikler||[]).slice(0,6).map(e=>{
-    const bc=e.pct>60?'var(--red)':e.pct>30?'var(--yellow)':'var(--t3)';
-    return `<div style="padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-        <span style="color:var(--t2)">${_aTr(e.alan||e.sorun||'')}</span>
-        <span style="color:var(--t1);font-weight:600">${e.pct||0}%</span>
-      </div>
-      <div style="height:3px;background:var(--bg4);border-radius:2px">
-        <div style="height:100%;width:${e.pct||0}%;background:${bc};border-radius:2px;transition:width .6s"></div>
-      </div>
-    </div>`;
-  }).join('')||'<div style="color:var(--t3);font-size:11px">Eksiklik yok</div>';
-
-  // Sezon tablosu
-  const stEl=document.getElementById('enr-sezon-table');
-  if(stEl) stEl.innerHTML=(d.sezon_ozeti||[]).slice(0,6).map(s=>{
-    const p=s.ortalama_puan||0;
-    const bc=p>=75?'var(--teal)':p>=60?'var(--yellow)':'var(--red)';
-    const gc=GRADE_COLOR[s.quality_grade]||'var(--t3)';
-    return `<div style="display:grid;grid-template-columns:1fr 80px 44px 50px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div><div style="font-size:11px;color:var(--t1);font-weight:500">${(s.sezon_adi||s.sezon_kodu).substring(0,16)}</div><div style="font-size:9px;color:var(--t3)">${s.sezon_kodu}</div></div>
-      <div style="display:flex;align-items:center;gap:5px">
-        <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${p}%;background:${bc};border-radius:2px"></div></div>
-        <span style="font-size:11px;font-weight:600;color:${bc};white-space:nowrap">${p.toFixed(0)}</span>
-      </div>
-      <div style="text-align:center"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${gc};color:#000">${s.quality_grade||'—'}</span></div>
-      <div style="text-align:right;font-size:11px;color:var(--t3)">${fmtAdet(s.toplam_urun)}</div>
-    </div>`;
-  }).join('')||'<div style="color:var(--t3);font-size:11px;padding:8px 0">Sezon verisi yok</div>';
-
-  // Histogram
-  const maxB=Math.max(...(d.puan_dagilimi||[]).map(x=>x.sayi),1);
-  const histColors=['#ef4444','#ef4444','#ef4444','#ef4444','#f59e0b','#f59e0b','#00c2a8','#00c2a8','#22c55e','#22c55e'];
-  document.getElementById('enr-puan-dist').innerHTML=(d.puan_dagilimi||[]).map((b,i)=>{
-    const h=Math.max(Math.round(b.sayi/maxB*100),2);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" title="${b.aralik}: ${fmtAdet(b.sayi)} ürün">
-      <div style="font-size:9px;color:var(--t3)">${b.sayi||''}</div>
-      <div style="width:100%;height:${h}%;background:${histColors[i]};border-radius:2px 2px 0 0;min-height:2px;transition:height .6s"></div>
-      <div style="font-size:8px;color:var(--t4);writing-mode:vertical-rl;transform:rotate(180deg)">${b.aralik}</div>
-    </div>`;
-  }).join('');
-
-  // Alan Bazlı Eksiklik Oranı
-  const alanEl=document.getElementById('enr-alan-list');
-  if(alanEl) alanEl.innerHTML=(d.top_eksiklikler||[]).slice(0,7).map(e=>{
-    const pct=e.pct||0;
-    const [bBg,bColor,label]=pct>50?['rgba(239,68,68,.15)','var(--red)','Kritik']:pct>20?['rgba(245,158,11,.15)','var(--yellow)','Önemli']:['var(--bg4)','var(--t3)','Düşük'];
-    const pColor=pct>50?'var(--red)':pct>20?'var(--yellow)':'var(--t3)';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:${bBg};color:${bColor};flex-shrink:0;min-width:44px;text-align:center">${label}</span>
-      <span style="flex:1;font-size:11px;color:var(--t2)">${_aTr(e.alan||e.sorun||'')}</span>
-      <span style="font-size:13px;font-weight:700;color:${pColor};flex-shrink:0">%${pct}</span>
-    </div>`;
-  }).join('')||'<div style="color:var(--t3);font-size:11px">Eksiklik yok</div>';
-}
-
-function _renderDonut(grades,avg){
-  const data=['A','B','C','D','F'].map(g=>({g,n:grades[g]||0,c:GRADE_COLOR[g]}));
-  const total=data.reduce((s,x)=>s+x.n,0)||1;
-  let angle=0,paths='';
-  data.forEach(x=>{
+  // ── Donut ────────────────────────────────────────────────────────────────
+  const GRADES=[
+    {g:'A',range:'90-100',n:d.grade_dist?.A||0,c:'#22c55e'},
+    {g:'B',range:'75-89', n:d.grade_dist?.B||0,c:'#60a5fa'},
+    {g:'C',range:'60-74', n:d.grade_dist?.C||0,c:'#f59e0b'},
+    {g:'D',range:'40-59', n:d.grade_dist?.D||0,c:'#cd7c5a'},
+    {g:'F',range:'0-39',  n:d.grade_dist?.F||0,c:'#9a6658'},
+  ];
+  const gtotal=GRADES.reduce((s,x)=>s+x.n,0)||1;
+  let angle=-Math.PI/2,paths='';
+  const r=46,cx=60,cy=60,th=14;
+  GRADES.forEach(x=>{
     if(!x.n)return;
-    const sw=x.n/total*360,a1=angle*Math.PI/180,a2=(angle+sw)*Math.PI/180;
-    const r=50,cx=60,cy=60,th=18;
-    paths+=`<path d="M ${cx+r*Math.sin(a1)} ${cy-r*Math.cos(a1)} A ${r} ${r} 0 ${sw>180?1:0} 1 ${cx+r*Math.sin(a2)} ${cy-r*Math.cos(a2)}" fill="none" stroke="${x.c}" stroke-width="${th}"/>`;
-    angle+=sw;
+    const sw=x.n/gtotal*Math.PI*2;
+    const a2=angle+sw;
+    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    paths+=`<path d="M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${sw>Math.PI?1:0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}" fill="none" stroke="${x.c}" stroke-width="${th}" stroke-linecap="round"/>`;
+    angle=a2;
   });
   const svg=document.getElementById('enr-donut-svg');
-  if(svg) svg.innerHTML=paths+`<text x="60" y="65" text-anchor="middle" font-size="14" font-weight="700" fill="var(--t1)">${avg?.toFixed(0)||'?'}</text>`;
+  if(svg) svg.innerHTML=paths+
+    `<text x="60" y="56" text-anchor="middle" font-size="18" font-weight="700" fill="var(--t1)">${(d.ortalama_puan||0).toFixed(1)}</text>`+
+    `<text x="60" y="70" text-anchor="middle" font-size="9" fill="var(--t3)">ort. puan</text>`;
   const leg=document.getElementById('enr-donut-legend');
-  if(leg) leg.innerHTML=data.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px">
-    <span style="width:8px;height:8px;border-radius:2px;background:${x.c};display:inline-block"></span>
-    <span style="color:var(--t2)">${x.g}</span><span style="color:var(--t1);font-weight:600">${x.n}</span>
+  if(leg) leg.innerHTML=GRADES.map(x=>`<div style="display:flex;align-items:center;gap:6px;font-size:11px">
+    <span style="width:10px;height:10px;border-radius:3px;background:${x.c};flex-shrink:0"></span>
+    <span style="color:var(--t2);flex:1">${x.g} (${x.range})</span>
+    <span style="color:var(--t1);font-weight:600;min-width:36px;text-align:right">${(x.n||0).toLocaleString('tr-TR')}</span>
+    <span style="color:var(--t3);min-width:30px;text-align:right">%${gtotal>0?Math.round(x.n/gtotal*100):0}</span>
   </div>`).join('');
-}
 
-// ─ Skor Listesi — tam sayfa tablo tasarımı ─
-function _gradeBar(a,b,c,d,f){
-  const total=(a||0)+(b||0)+(c||0)+(d||0)+(f||0); if(!total) return '<span style="color:var(--t4);font-size:11px">—</span>';
-  const parts=[['A',a,'var(--green)'],['B',b,'var(--teal)'],['C',c,'var(--yellow)'],['D',d,'var(--orange)'],['F',f,'var(--red)']];
-  return `<div style="display:flex;flex-direction:column;gap:2px;min-width:160px">
-    <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--bg4)">
-      ${parts.filter(p=>p[1]).map(p=>`<div style="flex:${p[1]};background:${p[2]}"></div>`).join('')}
-    </div>
-    <div style="display:flex;gap:4px;justify-content:center">
-      ${parts.filter(p=>p[1]).map(p=>`<span style="font-size:9px;color:${p[2]}">${p[0]}:${p[1]}</span>`).join('')}
-    </div>
-  </div>`;
-}
+  // ── Eksiklikler ──────────────────────────────────────────────────────────
+  const eksikMax=Math.max(...(d.top_eksiklikler||[]).map(e=>e.sayi||0),1);
+  document.getElementById('enr-top-sorunlar').innerHTML=(d.top_eksiklikler||[]).slice(0,7).map(e=>{
+    const barPct=Math.round((e.sayi||0)/eksikMax*100);
+    const bc=e.pct>60?'#e85d75':e.pct>30?'#c89a4a':'var(--t3)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="width:110px;font-size:11px;color:var(--t2);line-height:1.3;flex-shrink:0">${_aTr(e.alan||e.sorun||'')}</div>
+      <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px">
+        <div style="height:100%;width:${barPct}%;background:${bc};border-radius:3px;transition:width .6s"></div>
+      </div>
+      <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:64px;text-align:right">${(e.sayi||0).toLocaleString('tr-TR')} ürün</span>
+    </div>`;
+  }).join('')||'<div style="color:var(--t3);font-size:11px;padding:8px 0">Eksiklik yok</div>';
 
-function _avgScore(v){
-  if(v==null) return '<span style="color:var(--t4)">—</span>';
-  const c=v>=75?'var(--green)':v>=60?'var(--yellow)':'var(--red)';
-  return `<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
-    <div style="font-size:16px;font-weight:700;color:${c};line-height:1">${v}</div>
-    <div style="height:4px;width:60px;background:var(--bg4);border-radius:2px">
-      <div style="height:100%;width:${v}%;background:${c};border-radius:2px"></div>
-    </div>
-  </div>`;
-}
+  // ── Sezon Tablosu ────────────────────────────────────────────────────────
+  const stEl=document.getElementById('enr-sezon-table');
+  if(stEl) stEl.innerHTML=(d.sezon_ozeti||[]).slice(0,5).map(s=>{
+    const p=s.ortalama_puan||0;
+    const gc=GRADE_COLOR[s.quality_grade]||'var(--t3)';
+    const lineColor=p>=75?'#60a5fa':p>=60?'#f59e0b':'#e85d75';
+    return `<div style="display:grid;grid-template-columns:1fr 44px 40px 44px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--t1);font-weight:500">${s.sezon_adi||s.sezon_kodu}</div>
+      <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end">
+        <span style="display:inline-block;width:20px;height:2px;background:${lineColor};border-radius:1px"></span>
+        <span style="font-size:13px;font-weight:700;color:${lineColor}">${p.toFixed(0)}</span>
+      </div>
+      <div style="text-align:center"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:${gc};color:#000">${s.quality_grade||'—'}</span></div>
+      <div style="text-align:right;font-size:11px;color:var(--t3)">${(s.toplam_urun||0).toLocaleString('tr-TR')}</div>
+    </div>`;
+  }).join('')||'<div style="color:var(--t3);font-size:11px;padding:10px 0">Sezon verisi yok</div>';
 
-const _COL = 'grid-template-columns:1fr 90px 200px 80px 80px';
+  // ── Histogram ────────────────────────────────────────────────────────────
+  const bars=d.puan_dagilimi||[];
+  const maxB=Math.max(...bars.map(b=>b.sayi),1);
+  const histPalette=['#c0504d','#c05c4d','#c07050','#c08452','#d4974e','#d4ae4e','#6baed6','#56a0c8','#74c476','#41ab5d'];
+  document.getElementById('enr-puan-dist').innerHTML=bars.map((b,i)=>{
+    const h=Math.max(Math.round(b.sayi/maxB*100),3);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0" title="${b.aralik}: ${(b.sayi||0).toLocaleString('tr-TR')} ürün">
+      <div style="width:100%;height:${h}%;background:${histPalette[i]||'var(--teal)'};border-radius:3px 3px 0 0;min-height:3px;transition:height .7s cubic-bezier(.16,1,.3,1)"></div>
+    </div>`;
+  }).join('');
+  const labels=document.getElementById('enr-hist-labels');
+  if(labels) labels.innerHTML=bars.map((b,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--t4)">${i===bars.length-1?'90+':b.aralik.split('-')[0]}</div>`).join('');
+
+  // ── Alan Bazlı Eksiklik Oranı ─────────────────────────────────────────────
+  const ALAN_RAW_TR={'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'mainMaterialContent',
+    'Ürün Notu / Stil Önerisi':'description (kısa)',
+    'Ürün Görseli':'productImages (az)',
+    '1. E-Ticaret Etiketi (Zorunlu)':'ecomTag1Code',
+    'Koleksiyon Teması':'productThemeCode',
+    'Kalıp Tipi (Slim/Regular/Oversize)':'fitCode',
+    'Bakım Talimatları':'washingAndCareInstructions',
+    'Kumaş Adı':'fabricMaterialName',
+  };
+  function _rawName(k){return ALAN_RAW_TR[k]||(k.length>22?k.substring(0,22)+'…':k);}
+  const alanEl=document.getElementById('enr-alan-list');
+  if(alanEl) alanEl.innerHTML=(d.top_eksiklikler||[]).slice(0,8).map(e=>{
+    const pct=e.pct||0;
+    const [bBg,bColor,label]=pct>50?['#7f1d1d','#fca5a5','Kritik']:pct>20?['#78350f','#fde68a','Önemli']:['var(--bg4)','var(--t3)','Düşük'];
+    const pColor=pct>50?'#fca5a5':pct>20?'#fde68a':'var(--t3)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${bBg};color:${bColor};flex-shrink:0;min-width:46px;text-align:center">${label}</span>
+      <span style="flex:1;font-size:12px;color:var(--t2)">${_rawName(e.alan||e.sorun||'')}</span>
+      <span style="font-size:14px;font-weight:700;color:${pColor};flex-shrink:0">%${pct}</span>
+    </div>`;
+  }).join('')||'<div style="color:var(--t3);font-size:11px">Eksiklik yok</div>';
+}
 
 async function loadScoreList(){
   const wrap=document.getElementById('enr-scorelist-wrap');
