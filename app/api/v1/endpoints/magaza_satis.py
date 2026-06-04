@@ -31,12 +31,42 @@ def _fv(v) -> float:
         return 0.0
 
 
+async def _fetch_from_db() -> List[List]:
+    """incorta_magaza_performans tablosundan veri çek."""
+    try:
+        from app.db.session import ReadOnlySessionLocal
+        from sqlalchemy import text as _text
+        async with ReadOnlySessionLocal() as session:
+            result = await session.execute(_text("""
+                SELECT yil, ay, bolge_muduru, magaza, hedef, net_ciro,
+                       hedef_orani, ziyaretci, mdo, sepet, obf, net_adet
+                FROM incorta_magaza_performans
+                WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
+                ORDER BY yil, ay, bolge_muduru, magaza
+            """))
+            rows = result.fetchall()
+            if rows:
+                # [yil, ay, bolge, magaza, hedef, ciro, oran, ziy, mdo, sepet, obf, adet]
+                return [list(r) for r in rows]
+    except Exception as e:
+        log.warning("magaza_satis.db_error", error=str(e))
+    return []
+
+
 async def _fetch_mcp_data() -> List[List]:
-    """Tüm mağaza satış verisini MCP'den çek (cache'li)."""
+    """Veriyi çek: DB varsa DB'den, yoksa MCP'den (cache'li)."""
     now = time.time()
     if _CACHE.get("data") and now - _CACHE.get("ts", 0) < _CACHE_TTL:
         return _CACHE["data"]
 
+    # 1. DB'den dene
+    db_rows = await _fetch_from_db()
+    if db_rows:
+        _CACHE.update({"data": db_rows, "ts": now})
+        log.info("magaza_satis.from_db", rows=len(db_rows))
+        return db_rows
+
+    # 2. DB boşsa MCP'den çek (ilk sync veya fallback)
     token = os.environ.get("INCORTA_TOKEN", "")
     rows: List[List] = []
 
@@ -59,7 +89,7 @@ async def _fetch_mcp_data() -> List[List]:
     # Mağaza adı boş olan satırlar MCP aggregate (toplam) satırları — çift sayımı önle
     rows = [r for r in rows if r[3] and str(r[3]).strip()]
     _CACHE.update({"data": rows, "ts": now})
-    log.info("magaza_satis.fetched", rows=len(rows))
+    log.info("magaza_satis.from_mcp", rows=len(rows))
     return rows
 
 

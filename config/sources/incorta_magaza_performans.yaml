@@ -1,0 +1,40 @@
+source_id: incorta_magaza_performans
+enabled: true
+type: mcp
+target_table: incorta_magaza_performans
+description: "Incorta — adL Ecommerce Mağaza Performans (Yıl/Ay/Bölge/Mağaza/KPI)"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30002"
+  timeout_seconds: 120
+
+auth:
+  type: none
+
+tool:
+  name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_d66efa54
+  args:
+    Authorization: "__env:INCORTA_TOKEN"
+  response_format: incorta
+  pagination_start_field: "pagination.startRow"
+  pagination_size_field: "pagination.pageSize"
+  pagination_page_size: 500
+  total_rows_path: "content.data.headers.totalRows"
+
+# MCP kolon adları (Türkçe label) → DB kolon adları
+field_map:
+  "yıl":                          yil
+  "ay":                           ay
+  "bölge_müdürü":                 bolge_muduru
+  "mağaza":                       magaza
+  "hedef":                        hedef
+  "net_ciro":                     net_ciro
+  "hedef_gerçekleştirme_oranı":   hedef_orani
+  "ziyaretçi_sayısı":             ziyaretci
+  "mdo":                          mdo
+  "sepet":                        sepet
+  "obf":                          obf
+  "net_ürün_adet":                net_adet
+
+schedule:
+  cron: "0 3 * * *"   # Her gece 03:00 — diğer Incorta sync'lerinden sonra

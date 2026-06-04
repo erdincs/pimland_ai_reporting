@@ -51,6 +51,29 @@ async def lifespan(app: FastAPI):
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_urun_kod ON product_stories(urun_kodu)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_kanal    ON product_stories(kanal)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_durum    ON product_stories(durum)"))
+        # Mağaza Performans (Incorta) tablosu
+        await conn.execute(_text("""
+            CREATE TABLE IF NOT EXISTS incorta_magaza_performans (
+                id          SERIAL PRIMARY KEY,
+                yil         INTEGER NOT NULL,
+                ay          INTEGER NOT NULL,
+                bolge_muduru TEXT,
+                magaza      TEXT NOT NULL,
+                hedef       DOUBLE PRECISION DEFAULT 0,
+                net_ciro    DOUBLE PRECISION DEFAULT 0,
+                hedef_orani DOUBLE PRECISION DEFAULT 0,
+                ziyaretci   DOUBLE PRECISION DEFAULT 0,
+                mdo         DOUBLE PRECISION DEFAULT 0,
+                sepet       DOUBLE PRECISION DEFAULT 0,
+                obf         DOUBLE PRECISION DEFAULT 0,
+                net_adet    DOUBLE PRECISION DEFAULT 0,
+                sync_updated_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """
+        ))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_yil_ay    ON incorta_magaza_performans(yil, ay)"))
+        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_bolge     ON incorta_magaza_performans(bolge_muduru)"))
+        await conn.execute(_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)"))
         # Sıralama yönetimi tablosu
         await conn.execute(_text("""
             CREATE TABLE IF NOT EXISTS siralama_gecmisi (
