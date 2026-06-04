@@ -4688,11 +4688,13 @@ const _SECTION_GROUP = {
 // STORY WRITER (sw*) — v2: ürün seçince kart çıkar, kanal bazlı hikayeler DB'de
 // ══════════════════════════════════════════════════════════════════════════════
 
+const _SW_ALL_CHANNELS = ['trendyol','hepsiburada','amazon','web_sitesi','magaza'];
 const _SW = {
-  selectedCodes: new Set(),  // seçili ürün kodları
-  productMap: {},            // { urun_kodu: productObj } — seçili ürün verileri
-  storyData: {},             // { urun_kodu: { kanal: { id, story, durum } } }
-  products: [],              // sol listede gösterilen ürünler
+  selectedCodes: new Set(),
+  productMap:    {},    // { urun_kodu: productObj }
+  storyData:     {},    // { urun_kodu: { kanal: { id, story, durum } } }
+  cardChannels:  {},    // { urun_kodu: Set<kanal> } — o karta ait kanallar
+  products: [],
   page: 1, total: 0,
   ton: 'lüks_zarif',
   stats: { uretilen:0, onaylanan:0, yeniden:0 },
@@ -4812,30 +4814,39 @@ function swGetSelectedChannels(){
 function swAddCard(p){
   const emptyMsg=document.getElementById('sw-empty-msg');
   if(emptyMsg) emptyMsg.style.display='none';
+  // Her kart kendi kanal setini taşır — başlangıçta tüm kanallar açık
+  if(!_SW.cardChannels[p.urun_kodu])
+    _SW.cardChannels[p.urun_kodu]=new Set(_SW_ALL_CHANNELS);
   const wrap=document.getElementById('sw-cards-wrap');
-  const channels=swGetSelectedChannels();
-  const html=swCardHtml(p,channels);
-  wrap.insertAdjacentHTML('beforeend',html);
+  wrap.insertAdjacentHTML('beforeend',swCardHtml(p));
 }
 
-function swCardHtml(p,channels){
+function swCardHtml(p){
   const emoji=_swEmoji(p.ana_grup_adi,p.urun_grubu_adi);
   const gc=_swGradeColor(p.quality_grade);
-  const firstChan=channels[0]||'trendyol';
+  const activeChanSet=_SW.cardChannels[p.urun_kodu]||new Set(_SW_ALL_CHANNELS);
+  const allChans=_SW_ALL_CHANNELS;
+  const firstChan=allChans[0];
 
-  const tabsHtml=channels.map((k,i)=>{
+  const tabsHtml=allChans.map((k,i)=>{
     const sd=(_SW.storyData[p.urun_kodu]||{})[k];
     const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
     const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
-    return `<button class="sw-chan-tab${i===0?' sw-tab-active':''}" data-kod="${p.urun_kodu}" data-kanal="${k}"
-      onclick="swSwitchTab('${p.urun_kodu}','${k}')"
-      style="background:${i===0?cc+'22':'var(--bg3)'};border:1px solid ${i===0?cc:'var(--border)'};color:${i===0?cc:'var(--t2)'};
-             padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap">
-      ${_SW_KANAL_LABEL[k]||k}${badge}
-    </button>`;
+    const active=activeChanSet.has(k);
+    return `<div style="display:flex;align-items:center;gap:0;position:relative">
+      <button class="sw-chan-tab${i===0?' sw-tab-active':''}" data-kod="${p.urun_kodu}" data-kanal="${k}"
+        onclick="swSwitchTab('${p.urun_kodu}','${k}')"
+        style="background:${active?cc+'22':'var(--bg3)'};border:1px solid ${active?cc:'var(--border)'};color:${active?cc:'var(--t2)'};
+               padding:4px 10px 4px 10px;border-radius:5px 0 0 5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap;border-right:none">
+        ${_SW_KANAL_LABEL[k]||k}${badge}
+      </button>
+      <button onclick="swRemoveCardChannel('${p.urun_kodu}','${k}')" title="Kaldır"
+        style="background:${active?cc+'22':'var(--bg3)'};border:1px solid ${active?cc:'var(--border)'};border-left:none;color:${active?cc:'var(--t3)'};
+               padding:4px 5px;border-radius:0 5px 5px 0;cursor:pointer;font-size:10px;line-height:1;flex-shrink:0">×</button>
+    </div>`;
   }).join('');
 
-  const chanContents=channels.map((k,i)=>{
+  const chanContents=allChans.map((k,i)=>{
     const sd=(_SW.storyData[p.urun_kodu]||{})[k];
     return `<div id="sw-cc-${p.urun_kodu}-${k}" style="display:${i===0?'flex':'none'};flex-direction:column;gap:6px">
       ${swChanContent(p.urun_kodu,k,sd)}
@@ -4891,6 +4902,19 @@ function swChanContent(kod,kanal,sd){
           style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>
       </div>
     </div>`;
+}
+
+function swRemoveCardChannel(kod,kanal){
+  if(_SW.cardChannels[kod]) _SW.cardChannels[kod].delete(kanal);
+  // Tab wrapper'ı gizle
+  const tab=document.querySelector(`.sw-chan-tab[data-kod="${kod}"][data-kanal="${kanal}"]`);
+  if(tab) tab.closest('div[style*="position:relative"]').style.display='none';
+  // Eğer aktif tab gizlendiyse başka birine geç
+  const activeTab=document.querySelector(`.sw-tab-active[data-kod="${kod}"]`);
+  if(!activeTab||activeTab.dataset.kanal===kanal){
+    const nextChan=[...(_SW.cardChannels[kod]||[])][0];
+    if(nextChan) swSwitchTab(kod,nextChan);
+  }
 }
 
 function swSwitchTab(kod,kanal){
@@ -4968,61 +4992,37 @@ document.addEventListener('change',e=>{
   }
 });
 
-function swRefreshCardTabs(){
-  const channels=swGetSelectedChannels();
-  _SW.selectedCodes.forEach(kod=>{
-    const p=_SW.productMap[kod]; if(!p) return;
-    const card=document.getElementById(`sw-card-${kod}`);
-    if(card){
-      // Tab'ları yenile
-      const tabsEl=document.getElementById(`sw-tabs-${kod}`);
-      if(tabsEl) tabsEl.innerHTML=channels.map((k,i)=>{
-        const sd=(_SW.storyData[kod]||{})[k];
-        const badge=sd?(sd.durum==='onaylandi'?' ✓':''):'';
-        const cc=_SW_KANAL_COLOR[k]||'var(--t3)';
-        const isFirst=document.querySelector(`.sw-tab-active[data-kod="${kod}"]`)?.dataset.kanal===k||i===0;
-        return `<button class="sw-chan-tab${isFirst?' sw-tab-active':''}" data-kod="${kod}" data-kanal="${k}"
-          onclick="swSwitchTab('${kod}','${k}')"
-          style="background:${isFirst?cc+'22':'var(--bg3)'};border:1px solid ${isFirst?cc:'var(--border)'};color:${isFirst?cc:'var(--t2)'};
-                 padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;white-space:nowrap">
-          ${_SW_KANAL_LABEL[k]||k}${badge}
-        </button>`;
-      }).join('');
-      // İçerikleri yenile (yeni kanallar için içerik ekle)
-      const chanWrap=document.getElementById(`sw-chan-wrap-${kod}`);
-      if(chanWrap){
-        channels.forEach((k,i)=>{
-          if(!document.getElementById(`sw-cc-${kod}-${k}`)){
-            chanWrap.insertAdjacentHTML('beforeend',
-              `<div id="sw-cc-${kod}-${k}" style="display:none;flex-direction:column;gap:6px">${swChanContent(kod,k,null)}</div>`);
-          }
-        });
-      }
-    }
-  });
-}
+function swRefreshCardTabs(){ /* kanallar kart bazında, yenilemeye gerek yok */ }
 
 async function swGenerateStories(){
   const kodlar=[..._SW.selectedCodes];
   if(!kodlar.length) return;
-  const channels=swGetSelectedChannels();
-  if(!channels.length){alert('En az bir kanal seçin');return;}
+  // Kanallar artık kart bazında belirleniyor — sağ panel salt görsel
   const karakter=parseInt(document.getElementById('sw-char-slider')?.value||'150');
   const btn=document.getElementById('sw-gen-btn');
   btn.disabled=true; btn.textContent='Üretiliyor...';
 
   // Her kart için "üretiliyor" göster
+  // Her kart için kendi kanal listesini hazırla
+  const perKodChannels={};
   kodlar.forEach(kod=>{
-    channels.forEach(k=>{
+    perKodChannels[kod]=[...(_SW.cardChannels[kod]||new Set(_SW_ALL_CHANNELS))];
+  });
+
+  kodlar.forEach(kod=>{
+    (perKodChannels[kod]||[]).forEach(k=>{
       const cc=document.getElementById(`sw-cc-${kod}-${k}`);
       if(cc) cc.innerHTML=`<div style="color:var(--t3);font-size:11px;padding:8px 0;font-style:italic">⏳ Üretiliyor...</div>`;
     });
   });
 
+  // Tek istek — tüm ürün+kanal kombinasyonlarını birden gönder
+  // (API zaten ürün×kanal döngüsü yapıyor)
+  const allKanallar=[...new Set(kodlar.flatMap(k=>perKodChannels[k]||[]))];
   try{
     const res=await fetch(`${API}/enrichment/story/generate`,{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({urun_kodlari:kodlar,ton:_SW.ton,karakter_limit:karakter,kanallar:channels})
+      body:JSON.stringify({urun_kodlari:kodlar,ton:_SW.ton,karakter_limit:karakter,kanallar:allKanallar})
     });
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     const results=await res.json();
@@ -5125,32 +5125,50 @@ async function swaLoad(page){
       document.getElementById('swa-pagination').innerHTML='';
       return;
     }
-    wrap.innerHTML=d.items.map(s=>{
-      const dc=s.durum==='onaylandi'?'var(--green)':'var(--yellow)';
-      const dl=s.durum==='onaylandi'?'✓ Onaylı':'Taslak';
-      const kc=_SW_KANAL_COLOR[s.kanal]||'var(--t3)';
-      const dt=s.created_at?new Date(s.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:700;color:${kc};background:${kc}22;padding:2px 8px;border-radius:4px">${_SW_KANAL_LABEL[s.kanal]||s.kanal}</span>
-          <span style="font-size:12px;font-weight:600;color:var(--t1)">${s.urun_adi||s.urun_kodu}</span>
-          <span style="font-size:10px;color:var(--t3)">${s.urun_kodu}</span>
-          <span style="flex:1"></span>
-          <span style="font-size:10px;color:${dc};font-weight:600">${dl}</span>
-          <span style="font-size:10px;color:var(--t4)">${dt}</span>
-        </div>
-        <div style="font-size:12px;color:var(--t1);line-height:1.6;background:var(--bg3);border-radius:6px;padding:8px 10px;margin-bottom:8px">${s.story}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} karakter · ${s.ton}</span>
-          <div style="display:flex;gap:5px">
-            ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this)"
-              style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
-            <button onclick="swaDelete(${s.id},this)"
-              style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Sil</button>
-            <button onclick="navigator.clipboard.writeText(${JSON.stringify(s.story)})"
-              style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopya</button>
+    // Ürün bazında grupla
+    const groups={};
+    const groupOrder=[];
+    d.items.forEach(s=>{
+      if(!groups[s.urun_kodu]){groups[s.urun_kodu]={urun_kodu:s.urun_kodu,urun_adi:s.urun_adi,marka_adi:s.marka_adi,channels:[]};groupOrder.push(s.urun_kodu);}
+      groups[s.urun_kodu].channels.push(s);
+    });
+    wrap.innerHTML=groupOrder.map(uk=>{
+      const g=groups[uk];
+      const chanRows=g.channels.map(s=>{
+        const dc=s.durum==='onaylandi'?'var(--green)':'var(--yellow)';
+        const dl=s.durum==='onaylandi'?'✓ Onaylı':'Taslak';
+        const kc=_SW_KANAL_COLOR[s.kanal]||'var(--t3)';
+        const dt=s.created_at?new Date(s.created_at).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        return `<div style="border-top:1px solid var(--border);padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700;color:${kc};background:${kc}22;padding:2px 8px;border-radius:4px;flex-shrink:0">${_SW_KANAL_LABEL[s.kanal]||s.kanal}</span>
+            <span style="font-size:10px;color:${dc};font-weight:600;flex-shrink:0">${dl}</span>
+            <span style="flex:1"></span>
+            <span style="font-size:10px;color:var(--t4)">${dt}</span>
           </div>
+          <div style="font-size:12px;color:var(--t1);line-height:1.6;background:var(--bg3);border-radius:6px;padding:8px 10px;margin-bottom:6px">${s.story}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} kar. · ${s.ton}</span>
+            <div style="display:flex;gap:5px">
+              ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this)"
+                style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
+              <button onclick="swaDelete(${s.id},this)"
+                style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Sil</button>
+              <button onclick="navigator.clipboard.writeText(${JSON.stringify(s.story)})"
+                style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopya</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="padding:10px 12px;display:flex;align-items:center;gap:8px;background:var(--bg3)">
+          <span style="font-size:13px;font-weight:700;color:var(--t1)">${g.urun_adi||g.urun_kodu}</span>
+          <span style="font-size:10px;color:var(--t3)">${g.urun_kodu}</span>
+          ${g.marka_adi?`<span style="font-size:10px;color:var(--t2)">${g.marka_adi}</span>`:''}
+          <span style="flex:1"></span>
+          <span style="font-size:10px;color:var(--t3)">${g.channels.length} kanal</span>
         </div>
+        ${chanRows}
       </div>`;
     }).join('');
     // Sayfalama
