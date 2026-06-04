@@ -1361,6 +1361,13 @@ body,
           <select id="dp-yil" onchange="loadDonemseel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
+          <select id="dp-ay" onchange="loadDonemseel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
+            <option value="">Tüm Aylar</option>
+            <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+            <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+            <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+            <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+          </select>
 
           <span id="dp-status" style="font-size:11px;color:var(--t3)"></span>
         </div>
@@ -6388,9 +6395,9 @@ function renderMagazaPerformans(d) {
       <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">MAĞAZA BAZINDA DETAY · ${d.donem||d['donem']||''}</span>
       <div style="display:flex;gap:6px">${sortBtns}</div>
     </div>
-    <div style="overflow-x:auto">
+    <div style="overflow-x:auto;overflow-y:auto;max-height:760px">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--bg3)">
+        <thead style="position:sticky;top:0;z-index:1"><tr style="background:var(--bg3)">
           <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px;letter-spacing:.5px">MAĞAZA</th>
           <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px">BÖLGE MÜDÜRÜ</th>
           <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
@@ -6514,6 +6521,7 @@ let _dpBolgeLoaded = false;
 async function loadDonemseel() {
   const yil   = document.getElementById('dp-yil')?.value   || '2026';
   const bolge = '';
+  const ay    = document.getElementById('dp-ay')?.value    || '';
   const st    = document.getElementById('dp-status');
   const content = document.getElementById('dp-content');
   if(st) st.textContent = '⏳ Yükleniyor...';
@@ -6522,6 +6530,7 @@ async function loadDonemseel() {
   try {
     const params = new URLSearchParams({yil});
     if(bolge) params.set('bolge', bolge);
+    if(ay) params.set('ay', ay);
     const d = await fetch(`${API}/magaza-satis/donemseel-performans?${params}`).then(r=>r.json());
     if(d.error){content.innerHTML=`<div style="padding:20px;color:var(--red)">${d.error}</div>`;return;}
 
@@ -6647,44 +6656,54 @@ function renderDonemseel(d) {
     </div>
   </div>`;
 
-  // ── Dönem Karşılaştırması ─────────────────────────────────────────────────
+  // ── Tüm Aylar KPI Karşılaştırma Pivot Tablosu ────────────────────────────
   let karsiHtml = '';
-  if(d.karsilastirma) {
-    const ks = d.karsilastirma;
-    const maxVal = Math.max(...ks.satirlar.map(s=>Math.max(Math.abs(s.onceki||0),Math.abs(s.simdiki||0))),1);
-    const rows = ks.satirlar.map(s=>{
-      const fmt = v => s.fmt==='tl'?_myFmt(v,'tl'):s.fmt==='pct'?'%'+(+(v||0)).toFixed(1):s.fmt==='sayi'?_myFmt(v,'sayi'):v.toFixed(2);
-      const dc = s.delta_pct>0?'var(--green)':s.delta_pct<0?'var(--red)':'var(--t3)';
-      const sign = s.delta_pct>0?'+':'';
-      const wP = Math.round(Math.abs(s.onceki||0)/maxVal*80);
-      const wS = Math.round(Math.abs(s.simdiki||0)/maxVal*80);
+  if(aylik.length >= 2) {
+    const kpiDefs = [
+      {key:'net_ciro',   label:'Net Ciro',    fmt:'tl'},
+      {key:'hedef_oran', label:'Hedef Oranı', fmt:'pct'},
+      {key:'ziyaretci',  label:'Ziyaretçi',   fmt:'sayi'},
+      {key:'mdo',        label:'MDO',         fmt:'pct'},
+      {key:'obf',        label:'OBF',         fmt:'tl'},
+      {key:'sepet',      label:'Sepet',       fmt:'num'},
+    ];
+    const fmtV = (v,fmt) => fmt==='tl'?_myFmt(v||0,'tl'):fmt==='pct'?'%'+(+(v||0)).toFixed(1):fmt==='sayi'?_myFmt(v||0,'sayi'):(+(v||0)).toFixed(2);
+    const ayHdr = aylik.map(a=>`<th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px;white-space:nowrap;min-width:85px">${a.ay_adi}</th>`).join('');
+    const karsiRows = kpiDefs.map(kpi=>{
+      const cells = aylik.map((a,i)=>{
+        const v = a[kpi.key];
+        const prev = i>0?aylik[i-1][kpi.key]:null;
+        let deltaStr = '';
+        if(prev!=null && Math.abs(prev)>0){
+          const d2 = kpi.fmt==='pct'||kpi.fmt==='num' ? (v-prev) : ((v-prev)/Math.abs(prev)*100);
+          const sign2 = d2>0?'+':'';
+          const dc2 = d2>0?'var(--green)':d2<0?'var(--red)':'var(--t3)';
+          const unit = (kpi.fmt==='pct'||kpi.fmt==='num')?'p':'%';
+          deltaStr = `<div style="font-size:9px;color:${dc2}">${sign2}${Math.abs(d2).toFixed(1)}${unit}</div>`;
+        }
+        const isLast = i===aylik.length-1;
+        return `<td style="padding:6px 10px;text-align:right;font-size:11px;color:${isLast?'var(--teal)':'var(--t1)'};${isLast?'font-weight:600':''}">${fmtV(v,kpi.fmt)}${deltaStr}</td>`;
+      }).join('');
       return `<tr style="border-bottom:1px solid rgba(42,42,58,.2)">
-        <td style="padding:8px 10px;font-size:11px;color:var(--t2)">${s.kpi}</td>
-        <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${fmt(s.onceki)}</td>
-        <td style="padding:8px 10px;width:120px">
-          <div style="height:6px;background:var(--teal);border-radius:3px;width:${wS}%;margin-bottom:2px"></div>
-          <div style="height:6px;background:var(--bg3);border-radius:3px;width:${wP}%"></div>
-        </td>
-        <td style="padding:8px 10px;text-align:right;font-size:11px;font-weight:700;color:var(--teal)">${fmt(s.simdiki)}</td>
-        <td style="padding:8px 10px;text-align:right;font-size:12px;font-weight:700;color:${dc}">${sign}${(s.delta_pct||0)}%</td>
+        <td style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--t2);white-space:nowrap;position:sticky;left:0;background:var(--bg2)">${kpi.label}</td>
+        ${cells}
       </tr>`;
     }).join('');
 
     karsiHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
       <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-        <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">${ks.simdiki.toUpperCase()} VS ${ks.onceki.toUpperCase()} KARŞILAŞTIRMASI</span>
-        <span style="font-size:10px;color:var(--t3)">KPI değişimleri</span>
+        <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">AYLIK KPI KARŞILAŞTIRMASI</span>
+        <span style="font-size:10px;color:var(--t3)">Tüm aylar · Ok: bir önceki aya göre</span>
       </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:var(--bg3)">
-          <th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px">KPI</th>
-          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">${ks.onceki}</th>
-          <th style="padding:6px 10px;color:var(--t3);font-size:9px"></th>
-          <th style="padding:6px 10px;text-align:right;color:var(--teal);font-size:9px">${ks.simdiki}</th>
-          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">DEĞİŞİM</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:500px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;position:sticky;left:0;background:var(--bg3)">KPI</th>
+            ${ayHdr}
+          </tr></thead>
+          <tbody>${karsiRows}</tbody>
+        </table>
+      </div>
     </div>`;
   }
 
