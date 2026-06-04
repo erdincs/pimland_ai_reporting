@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # ARN format: arn:aws:bedrock:<region>:<account>:inference-profile/<id>
     bedrock_model_id: str = "anthropic.claude-sonnet-4-5"
     anthropic_max_tokens: int = 4096
-    llm_timeout_seconds: int = 60
+    llm_timeout_seconds: int = 120
 
     # --- Pimland MCP-1 credentials ---
     pimland_token_url: str = "https://ids.pimland.com/connect/token"

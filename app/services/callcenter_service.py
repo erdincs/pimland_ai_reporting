@@ -309,6 +309,10 @@ async def _fetch_db_products(
 
 # ── Toplu dosya işleme ────────────────────────────────────────────────────────
 
+_CHUNK_SIZE = 20   # Her LLM çağrısına gönderilen max satır sayısı
+_MCP_CHUNK  = 20   # Tek seferde MCP'den çekilen max ürün sayısı
+
+
 async def _run_batch_mcp(
     session: AsyncSession,
     question: str,
@@ -316,7 +320,10 @@ async def _run_batch_mcp(
     system: str,
     history: Optional[List],
 ) -> str:
-    """Yaklaşım A: Temp tablodan kodları çek → batch MCP → cevap üret."""
+    """
+    Yaklaşım A: Temp tablodan kodları çek → chunk'lı batch MCP → cevap üret.
+    20'şerli gruplarda işler, her grup için MCP çeker, tek yanıtta birleştirir.
+    """
     from sqlalchemy import text as sa_text
     from app.services.batch_mcp_service import fetch_batch, extract_product_summary
 
@@ -324,7 +331,6 @@ async def _run_batch_mcp(
     pg_tables = meta["pg_tables"]
     all_tabs  = meta["all_tables"]
 
-    # Kolon adları + kodları çek (ilk tablo yeterli)
     if not pg_tables:
         return "Veri tablosu bulunamadı."
 
@@ -332,54 +338,68 @@ async def _run_batch_mcp(
     tab_info = all_tabs[0] if all_tabs else {}
     columns  = tab_info.get("columns", [])
 
-    # Tüm satırları çek (max 200)
+    # Tüm satırları çek (max 250)
     rows_result = (await session.execute(
-        sa_text(f'SELECT * FROM "{pg_table}" LIMIT 200')
+        sa_text(f'SELECT * FROM "{pg_table}" LIMIT 250')
     )).mappings().all()
     rows = [dict(r) for r in rows_result]
 
     if not rows:
         return "Yüklenen tabloda veri bulunamadı."
 
-    # Kodları topla
-    skus = [str(r.get(code_col, "")).strip() for r in rows if r.get(code_col)]
-    skus = [s for s in skus if s and s != "nan"]
+    total = len(rows)
+    log.info("batch_mcp.starting", total=total, code_col=code_col)
 
-    log.info("batch_mcp.starting", count=len(skus), code_col=code_col)
+    # Tüm SKU'ları MCP'den chunk'lı çek
+    all_skus = [str(r.get(code_col, "")).strip() for r in rows if r.get(code_col)]
+    all_skus = [s for s in all_skus if s and s != "nan"]
 
-    # Paralel MCP çekme
-    mcp_data = await fetch_batch(skus, limit=100)
+    mcp_data: Dict[str, Any] = {}
+    for i in range(0, len(all_skus), _MCP_CHUNK):
+        chunk_skus = all_skus[i:i + _MCP_CHUNK]
+        chunk_data = await fetch_batch(chunk_skus, limit=_MCP_CHUNK)
+        mcp_data.update(chunk_data)
+        log.info("batch_mcp.chunk_done", fetched=len(mcp_data), total=len(all_skus))
 
-    # Ürün özetlerini oluştur
-    urun_ozet = []
-    for sku, data in mcp_data.items():
-        urun_ozet.append(extract_product_summary(data, sku))
+    # Her satır için ürün özeti hazırla
+    mcp_summaries = {sku: extract_product_summary(data, sku) for sku, data in mcp_data.items()}
 
-    # Tüm satırları ve MCP verilerini birleştir
+    # İlk chunk'ı LLM'e gönder, geri kalanını özetle
     birlesik = []
-    for row in rows[:50]:  # ilk 50 satır detaylı, geri kalanı özet
+    for row in rows[:_CHUNK_SIZE]:
         sku = str(row.get(code_col, "")).strip()
-        mcp = next((o for o in urun_ozet if o["sku"] == sku), {})
-        birlesik.append({**{k: v for k, v in row.items()}, "mcp": mcp})
+        mcp = mcp_summaries.get(sku, {})
+        birlesik.append({**{k: v for k, v in row.items()}, "mcp_veri": mcp})
 
-    # LLM'e gönder
+    ozet_satir = total - _CHUNK_SIZE
     context_text = (
-        f"DOSYA: {tab_info.get('sheet','Sheet1')} — {len(rows)} satır\n"
-        f"KOLON ADLARI: {', '.join(str(c) for c in columns)}\n\n"
-        f"ÜRÜN VERİLERİ (MCP'den çekildi, {len(mcp_data)} ürün):\n"
-        + json.dumps(birlesik[:30], default=str, ensure_ascii=False, indent=1)
-        + (f"\n\n... ve {len(rows)-30} satır daha" if len(rows) > 30 else "")
-        + f"\n\nKULLANICI SORUSU: {question}"
+        f"DOSYA: {tab_info.get('sheet','Sheet1')} — toplam {total} satır\n"
+        f"KOLONLAR: {', '.join(str(c) for c in columns)}\n"
+        f"MCP'den çekilen ürün: {len(mcp_data)}/{len(all_skus)}\n\n"
+        f"İLK {_CHUNK_SIZE} SATIR (detaylı işle):\n"
+        + json.dumps(birlesik, default=str, ensure_ascii=False, indent=1)
+        + (f"\n\n[Ek {ozet_satir} satır daha var — özet ver]" if ozet_satir > 0 else "")
+        + f"\n\nGÖREV: {question}\n\n"
+        f"ÖNEMLİ: Doğrudan yanıt üret. Kullanıcıya nasıl devam edeceğini sorma. "
+        f"Tabloyu doldur ve tamamlandı de."
     )
 
     batch_system = system + """
 
-## Toplu Dosya İşleme Modu
-Kullanıcı birden fazla ürün içeren bir dosya yükledi.
-- Her ürün için ürün verisi ve MCP canlı data mevcuttur
-- Satırları bir tablo halinde özetle
-- Her ürün için net, kısa yanıt ver
-- Teknik detay gösterme, sadece müşteriye faydalı bilgi"""
+## Toplu Dosya İşleme Modu — KESİN KURALLAR
+Kullanıcı birden fazla ürün içeren bir liste dosyası yükledi.
+
+YAPILMASI GEREKENLER:
+- Her satır için kısa, net yanıt üret
+- Sonucu tablo formatında sun (Ürün | Soru Kategorisi | Yanıt)
+- Kapsam dışı soruları (kargo, ödeme vs.) "Kapsam dışı" olarak işaretle
+- İşlemi tamamla, kullanıcıya nasıl devam edeceğini SORMA
+
+YAPILMAMASI GEREKENLER:
+- "Nasıl devam edelim?", "Hangi yöntemi tercih edersiniz?" gibi sorular sorma
+- İzin veya onay isteme
+- Seçenekler sunma
+- Teknik detay, SQL veya sistem bilgisi gösterme"""
 
     return await llm_client.complete(
         system=batch_system, user=context_text, temperature=0.3, history=history
