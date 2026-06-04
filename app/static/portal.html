@@ -4812,14 +4812,39 @@ function swGetSelectedChannels(){
   return [...document.querySelectorAll('.sw-kanal-cb:checked')].map(c=>c.value);
 }
 
-function swAddCard(p){
+async function swAddCard(p){
   const emptyMsg=document.getElementById('sw-empty-msg');
   if(emptyMsg) emptyMsg.style.display='none';
-  // Her kart kendi kanal setini taşır — başlangıçta tüm kanallar açık
   if(!_SW.cardChannels[p.urun_kodu])
     _SW.cardChannels[p.urun_kodu]=new Set(_SW_ALL_CHANNELS);
   const wrap=document.getElementById('sw-cards-wrap');
   wrap.insertAdjacentHTML('beforeend',swCardHtml(p));
+  // Mevcut DB hikayelerini yükle
+  try{
+    const stories=await fetch(`${API}/enrichment/story/for-product/${p.urun_kodu}`).then(r=>r.json());
+    if(stories&&stories.length){
+      if(!_SW.storyData[p.urun_kodu]) _SW.storyData[p.urun_kodu]={};
+      stories.forEach(s=>{
+        _SW.storyData[p.urun_kodu][s.kanal]={id:s.id,story:s.story,karakter_sayisi:s.karakter_sayisi,durum:s.durum};
+        const cc=document.getElementById(`sw-cc-${p.urun_kodu}-${s.kanal}`);
+        if(cc){
+          cc.innerHTML=swChanContent(p.urun_kodu,s.kanal,_SW.storyData[p.urun_kodu][s.kanal]);
+          cc.style.display='flex';
+        }
+        // Tab badge güncelle
+        const tab=document.querySelector(`.sw-chan-tab[data-kod="${p.urun_kodu}"][data-kanal="${s.kanal}"]`);
+        if(tab){
+          const badge=s.durum==='onaylandi'?' ✓':'';
+          tab.querySelector('button')?.innerHTML!==undefined
+            ? null
+            : (tab.innerHTML=(_SW_KANAL_LABEL[s.kanal]||s.kanal)+badge);
+        }
+      });
+      // İlk tab'ı aktif yap (hikayesi olan)
+      const firstWithStory=stories[0]?.kanal;
+      if(firstWithStory) swSwitchTab(p.urun_kodu,firstWithStory);
+    }
+  }catch(e){ /* sessizce devam */ }
 }
 
 function swCardHtml(p){
@@ -4864,8 +4889,10 @@ function swCardHtml(p){
         </div>
       </div>
       ${p.quality_grade?`<span style="font-size:11px;font-weight:700;color:${gc};background:${gc}22;padding:2px 7px;border-radius:4px;flex-shrink:0">${p.quality_grade}</span>`:''}
+      <button onclick="swApproveAll('${p.urun_kodu}')" title="Tüm kanalları onayla"
+        style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">✓ Tümünü Onayla</button>
       <button onclick="swToggleProduct('${p.urun_kodu}')"
-        style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:16px;padding:0 4px;line-height:1" title="Kaldır">×</button>
+        style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;flex-shrink:0" title="Kaldır">×</button>
     </div>
     <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap" id="sw-tabs-${p.urun_kodu}">
       ${tabsHtml}
@@ -4895,8 +4922,8 @@ function swChanContent(kod,kanal,sd){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
       <span id="sw-kar-${kod}-${kanal}" style="font-size:11px;color:var(--t3)">${sd.karakter_sayisi||sd.story?.length||0} karakter</span>
       <div style="display:flex;gap:5px">
-        ${sd.durum!=='onaylandi'?`<button onclick="swApprove(${sd.id},'${kod}','${kanal}')"
-          style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
+        ${sd.durum==='onaylandi'?'<span style="font-size:10px;color:var(--green)">✓ Onaylı</span>':
+          '<span style="font-size:10px;color:var(--yellow)">⏳ Taslak</span>'}
         <button onclick="swRegenerate('${kod}','${kanal}')"
           style="background:none;border:1px solid var(--border);color:var(--t2);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">↺ Yeniden</button>
         <button onclick="swCopy('${kod}','${kanal}')"
@@ -5049,6 +5076,28 @@ async function swGenerateStories(){
   }
 }
 
+async function swApproveAll(kod){
+  try{
+    const res=await fetch(`${API}/enrichment/story/approve-product/${kod}`,{method:'POST'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d=await res.json();
+    const approvedKanallar=(d.approved||[]).map(r=>r.kanal);
+    approvedKanallar.forEach(kanal=>{
+      if(_SW.storyData[kod]&&_SW.storyData[kod][kanal])
+        _SW.storyData[kod][kanal].durum='onaylandi';
+      const cc=document.getElementById(`sw-cc-${kod}-${kanal}`);
+      if(cc) cc.innerHTML=swChanContent(kod,kanal,_SW.storyData[kod][kanal]);
+    });
+    if(approvedKanallar.length){
+      _SW.stats.onaylanan+=approvedKanallar.length;
+      swUpdateStats();
+    }
+    // Başlık butonunu güncelle
+    const btn=document.querySelector(`[onclick="swApproveAll('${kod}')"]`);
+    if(btn){btn.textContent='✓ Onaylandı';btn.style.opacity='0.5';btn.disabled=true;}
+  }catch(e){alert('Onaylama hatası: '+e.message);}
+}
+
 async function swApprove(storyId,kod,kanal){
   try{
     const res=await fetch(`${API}/enrichment/story/${storyId}/approve`,{method:'POST'});
@@ -5162,10 +5211,8 @@ async function swaLoad(page){
           <div style="display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:10px;color:var(--t3)">${s.karakter_sayisi||0} karakter · ${s.ton}</span>
             <div style="display:flex;gap:5px">
-              ${s.durum!=='onaylandi'?`<button onclick="swaApprove(${s.id},this,'${uk}','${s.kanal}')"
-                style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">✓ Onayla</button>`:''}
-              <button onclick="swaDelete(${s.id},this)"
-                style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Sil</button>
+              <button onclick="swaDelete(${s.id},'${uk}','${s.kanal}',this)"
+                style="background:none;border:1px solid var(--border);color:var(--red);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">🗑 Kanalı Sil</button>
               <button onclick="navigator.clipboard.writeText(${JSON.stringify(s.story)})"
                 style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:inherit">⎘ Kopyala</button>
             </div>
@@ -5178,6 +5225,9 @@ async function swaLoad(page){
             <div style="font-size:13px;font-weight:700;color:var(--t1)">${g.urun_adi||g.urun_kodu}</div>
             <div style="font-size:10px;color:var(--t3)">${g.urun_kodu}${g.marka_adi?' · <span style="color:var(--t2)">'+g.marka_adi+'</span>':''}</div>
           </div>
+          ${g.channels.some(s=>s.durum!=='onaylandi')?
+            `<button onclick="swaApproveAll('${uk}',this)"
+              style="background:none;border:1px solid var(--green);color:var(--green);font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:inherit;white-space:nowrap">✓ Tümünü Onayla</button>`:''}
         </div>
         <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap">${tabBtns}</div>
         <div style="padding:12px 14px">${chanPanels}</div>
@@ -5198,7 +5248,6 @@ async function swaLoad(page){
 }
 
 function swaSwitchTab(uk,kanal){
-  // Tab butonlarını güncelle
   document.querySelectorAll(`.swa-tab[data-uk="${uk}"]`).forEach(btn=>{
     const k=btn.dataset.kanal;
     const kc=_SW_KANAL_COLOR[k]||'var(--t3)';
@@ -5207,27 +5256,43 @@ function swaSwitchTab(uk,kanal){
     btn.style.borderColor=active?kc:'var(--border)';
     btn.style.color=active?kc:'var(--t2)';
   });
-  // Panel'leri göster/gizle
   document.querySelectorAll(`[id^="swa-panel-${uk}-"]`).forEach(panel=>{
     panel.style.display=panel.id===`swa-panel-${uk}-${kanal}`?'block':'none';
   });
 }
 
-async function swaApprove(id,btn,uk,kanal){
+async function swaApproveAll(uk,btn){
   try{
-    await fetch(`${API}/enrichment/story/${id}/approve`,{method:'POST'});
-    btn.remove();
-    // Tab badge güncelle
-    const tab=document.querySelector(`.swa-tab[data-uk="${uk}"][data-kanal="${kanal}"]`);
-    if(tab) tab.innerHTML=(_SW_KANAL_LABEL[kanal]||kanal)+' ✓';
+    const res=await fetch(`${API}/enrichment/story/approve-product/${uk}`,{method:'POST'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    // Tab badge'lerini güncelle
+    document.querySelectorAll(`.swa-tab[data-uk="${uk}"]`).forEach(t=>{
+      if(!t.innerHTML.includes('✓')) t.innerHTML+=(' ✓');
+    });
+    if(btn){btn.textContent='✓ Onaylandı';btn.style.opacity='0.5';btn.disabled=true;}
   }catch(e){alert('Hata: '+e.message);}
 }
 
-async function swaDelete(id,btn){
-  if(!confirm('Bu hikayeyi silmek istediğinizden emin misiniz?')) return;
+async function swaDelete(id,uk,kanal,btn){
+  if(!confirm('Bu kanalın hikayesini silmek istiyor musunuz?')) return;
   try{
     await fetch(`${API}/enrichment/story/${id}`,{method:'DELETE'});
-    btn.closest('[style*="bg2"]')?.remove();
+    // Kanal panelini kaldır
+    const panel=document.getElementById(`swa-panel-${uk}-${kanal}`);
+    if(panel) panel.remove();
+    // Kanal tab butonunu kaldır
+    const tab=document.querySelector(`.swa-tab[data-uk="${uk}"][data-kanal="${kanal}"]`);
+    if(tab) tab.remove();
+    // Tüm paneller gizlendiyse ürün kartını kaldır
+    const remaining=document.querySelectorAll(`[id^="swa-panel-${uk}-"]`);
+    if(!remaining.length){
+      const card=btn.closest('[style*="border-radius:10px"]');
+      if(card) card.remove();
+    } else {
+      // Başka bir tab'ı aktif yap
+      const firstTab=document.querySelector(`.swa-tab[data-uk="${uk}"]`);
+      if(firstTab) swaSwitchTab(uk,firstTab.dataset.kanal);
+    }
   }catch(e){alert('Hata: '+e.message);}
 }
 

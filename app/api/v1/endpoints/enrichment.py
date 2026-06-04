@@ -737,7 +737,7 @@ async def approve_story(
     story_id: int,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Dict[str, Any]:
-    """Hikayeyi onayla — durum → onaylandi."""
+    """Tek hikayeyi onayla — durum → onaylandi."""
     result = await session.execute(text("""
         UPDATE product_stories
         SET durum='onaylandi', approved_at=NOW()
@@ -752,6 +752,23 @@ async def approve_story(
     d = dict(row)
     d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
     return d
+
+
+@router.post("/story/approve-product/{urun_kodu}")
+async def approve_all_product_stories(
+    urun_kodu: str,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Bir ürünün tüm taslak hikayelerini onayla."""
+    result = await session.execute(text("""
+        UPDATE product_stories
+        SET durum='onaylandi', approved_at=NOW()
+        WHERE urun_kodu=:uk AND durum='taslak'
+        RETURNING id, kanal
+    """), {"uk": urun_kodu})
+    rows = result.mappings().all()
+    await session.commit()
+    return {"urun_kodu": urun_kodu, "approved": [dict(r) for r in rows]}
 
 
 @router.delete("/story/{story_id}")
