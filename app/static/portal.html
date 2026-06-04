@@ -4825,6 +4825,9 @@ async function swAddCard(p){
     if(stories&&stories.length){
       if(!_SW.storyData[p.urun_kodu]) _SW.storyData[p.urun_kodu]={};
       stories.forEach(s=>{
+        // Kanal başına tek kayıt: onaylı > en yeni taslak
+        const ex=_SW.storyData[p.urun_kodu][s.kanal];
+        if(ex && ex.durum==='onaylandi' && s.durum!=='onaylandi') return; // onaylıyı koru
         _SW.storyData[p.urun_kodu][s.kanal]={id:s.id,story:s.story,karakter_sayisi:s.karakter_sayisi,durum:s.durum};
         const cc=document.getElementById(`sw-cc-${p.urun_kodu}-${s.kanal}`);
         if(cc){
@@ -5205,9 +5208,15 @@ async function swaLoad(page){
     const groups={};
     const groupOrder=[];
     d.items.forEach(s=>{
-      if(!groups[s.urun_kodu]){groups[s.urun_kodu]={urun_kodu:s.urun_kodu,urun_adi:s.urun_adi,marka_adi:s.marka_adi,channels:[]};groupOrder.push(s.urun_kodu);}
-      groups[s.urun_kodu].channels.push(s);
+      if(!groups[s.urun_kodu]){groups[s.urun_kodu]={urun_kodu:s.urun_kodu,urun_adi:s.urun_adi,marka_adi:s.marka_adi,chanMap:{}};groupOrder.push(s.urun_kodu);}
+      const g=groups[s.urun_kodu];
+      // Kanal başına tek kayıt: onaylı olanı veya en yeni taslağı tut
+      const existing=g.chanMap[s.kanal];
+      if(!existing || s.durum==='onaylandi' || (existing.durum!=='onaylandi' && s.created_at>existing.created_at))
+        g.chanMap[s.kanal]=s;
     });
+    // chanMap → sıralı channels dizisine çevir
+    groupOrder.forEach(uk=>{ groups[uk].channels=Object.values(groups[uk].chanMap); });
     wrap.innerHTML=groupOrder.map(uk=>{
       const g=groups[uk];
       const firstKanal=g.channels[0]?.kanal||'trendyol';
