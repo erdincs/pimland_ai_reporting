@@ -75,6 +75,14 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .sidebar::-webkit-scrollbar{width:3px}
 .sidebar::-webkit-scrollbar-thumb{background:var(--border)}
 .nav-section{padding:14px 14px 4px;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3)}
+/* Ağaç nav grubu */
+.nav-group-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 9px 12px;cursor:pointer;user-select:none;background:var(--bg3);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);transition:background .12s}
+.nav-group-hdr:hover{background:var(--bg4)}
+.nav-group-hdr .g-arrow{font-size:9px;color:var(--t4);transition:transform .15s;flex-shrink:0}
+.nav-group-hdr.open .g-arrow{transform:rotate(90deg)}
+.nav-group-body{display:none;background:var(--bg2)}
+.nav-group-body.open{display:block}
+.nav-sub{padding:8px 14px 8px 28px !important;font-size:12px}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;transition:background .12s;border-left:3px solid transparent}
 .nav-item:hover{background:var(--bg3)}
 .nav-item.active{background:var(--bg3);border-left-color:var(--orange)}
@@ -591,97 +599,105 @@ body,
 <div class="layout">
   <!-- SIDEBAR -->
   <nav class="sidebar">
-    <!-- AI Agents — pinned top -->
-    <div style="border-bottom:1px solid var(--border)">
-      <div class="nav-item nav-ai-top active" onclick="showSection('ai')" id="nav-ai" style="padding:11px 16px">
-        <span class="nav-icon" style="font-size:15px">🤖</span>
-        <div style="flex:1;min-width:0">
-          <div class="nav-text">Pimland AI Agent</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:1px">Veri analiz asistanı</div>
-        </div>
-        <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">AI</span>
+    <!-- ── E-TİCARET ──────────────────────────────────────────────────── -->
+    <div class="nav-group-hdr open" id="grp-eticaret" onclick="toggleNavGroup('eticaret')">
+      <span>🛒 E-TİCARET</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body open" id="grpb-eticaret">
+      <div class="nav-item nav-sub active" onclick="showSection('ai')" id="nav-ai">
+        <span class="nav-icon">🤖</span>
+        <div style="flex:1;min-width:0"><div class="nav-text">Pimland AI Agent</div></div>
+        <span style="font-size:8px;background:rgba(255,107,43,.25);color:var(--orange);font-weight:700;padding:2px 5px;border-radius:3px">AI</span>
       </div>
-      <div class="nav-item" onclick="showSection('callcenter')" id="nav-callcenter" style="padding:11px 16px;border-left:3px solid transparent">
-        <span class="nav-icon" style="font-size:15px">📞</span>
-        <div style="flex:1;min-width:0">
-          <div class="nav-text">Call Center Agent</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:1px">Ürün bilgi asistanı</div>
-        </div>
-        <span style="font-size:8px;background:rgba(0,194,168,.15);color:var(--teal);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">CC</span>
+      <div class="nav-item nav-sub" onclick="showSection('callcenter')" id="nav-callcenter">
+        <span class="nav-icon">📞</span>
+        <div style="flex:1;min-width:0"><div class="nav-text">Call Center Agent</div></div>
+        <span style="font-size:8px;background:rgba(0,194,168,.15);color:var(--teal);font-weight:700;padding:2px 5px;border-radius:3px">CC</span>
       </div>
-      <div class="nav-item" onclick="showSection('sizewin')" id="nav-sizewin" style="padding:11px 16px;border-left:3px solid transparent">
-        <span class="nav-icon" style="font-size:15px">📏</span>
-        <div style="flex:1;min-width:0">
-          <div class="nav-text">Sizewin Agent</div>
-          <div style="font-size:9px;color:var(--t3);margin-top:1px">Beden öneri sistemi</div>
-        </div>
-        <span style="font-size:8px;background:rgba(168,85,247,.15);color:var(--purple);font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:.4px;flex-shrink:0">SW</span>
+      <div class="nav-item nav-sub" onclick="showSection('sizewin')" id="nav-sizewin">
+        <span class="nav-icon">📏</span>
+        <div style="flex:1;min-width:0"><div class="nav-text">Sizewin Agent</div></div>
+        <span style="font-size:8px;background:rgba(168,85,247,.15);color:var(--purple);font-weight:700;padding:2px 5px;border-radius:3px">SW</span>
       </div>
-    </div>
-    <div class="nav-section">E-Ticaret</div>
-    <div class="nav-item" onclick="showSection('exec')" id="nav-exec">
-      <span class="nav-icon">🎯</span><span class="nav-text">Executive Özet</span>
-    </div>
-    <div class="nav-item" onclick="showSection('kpi')" id="nav-kpi">
-      <span class="nav-icon">📊</span><span class="nav-text">KPI Dashboard</span>
-    </div>
-    <div class="nav-item" onclick="showSection('overview')" id="nav-overview">
-      <span class="nav-icon">📈</span><span class="nav-text">Trend & Kanal</span>
-    </div>
-    <div class="nav-item" onclick="showSection('kategori')" id="nav-kategori">
-      <span class="nav-icon">🗂️</span><span class="nav-text">Kategori</span>
-    </div>
-    <div class="nav-item" onclick="showSection('urunler')" id="nav-urunler">
-      <span class="nav-icon">⭐</span><span class="nav-text">Top Ürünler</span>
-    </div>
-    <div class="nav-item" onclick="showSection('iade')" id="nav-iade">
-      <span class="nav-icon">↩️</span><span class="nav-text">İade Analizi</span>
-    </div>
-    <div class="nav-item" onclick="showSection('risk')" id="nav-risk">
-      <span class="nav-icon">⚠️</span><span class="nav-text">Risk Analizi</span>
-    </div>
-    <div class="nav-item" onclick="showSection('karlilik')" id="nav-karlilik">
-      <span class="nav-icon">💰</span><span class="nav-text">Kârlılık</span>
-      <span class="nav-badge" id="badge-karlilik">—</span>
-    </div>
-    <div class="nav-item" onclick="showSection('colors')" id="nav-colors">
-      <span class="nav-icon">🎨</span><span class="nav-text">Renk Analizi</span>
-    </div>
-    <div class="nav-section">Ürün Yönetimi</div>
-    <div class="nav-item" onclick="showSection('products')" id="nav-products">
-      <span class="nav-icon">📦</span><span class="nav-text">Ürün Listesi</span>
-      <span class="nav-badge" id="badge-products">—</span>
-    </div>
-    <div class="nav-item" onclick="showSection('plm-katalog')" id="nav-plm-katalog">
-      <span class="nav-icon">🏷️</span><span class="nav-text">PLM Katalog</span>
-    </div>
-    <div class="nav-item" onclick="showSection('urun-yonetimi')" id="nav-urun-yonetimi">
-      <span class="nav-icon">📊</span><span class="nav-text">Ürün Yönetimi</span>
-      <span class="nav-badge" style="background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:var(--purple)">YK</span>
-    </div>
-    <div class="nav-item" onclick="showSection('urun-satis')" id="nav-urun-satis">
-      <span class="nav-icon">🔍</span><span class="nav-text">Satış Detay Analizi</span>
-    </div>
-    <!-- Ürün Zenginleştirme — genişleyen menü -->
-    <div style="border-top:1px solid var(--border);margin-top:8px">
-      <div class="nav-item" onclick="toggleEnrMenu()" id="nav-enrichment-parent" style="justify-content:space-between">
-        <span><span class="nav-icon">✨</span><span class="nav-text">Ürün Zenginleştirme</span></span>
-        <span id="enr-menu-arrow" style="font-size:10px;color:var(--t3);transition:transform .15s">▶</span>
+      <div class="nav-item nav-sub" onclick="showSection('exec')" id="nav-exec">
+        <span class="nav-icon">🎯</span><span class="nav-text">Executive Özet</span>
       </div>
-      <div id="enr-submenu" style="display:none">
-        <div class="nav-item nav-sub" onclick="showEnrPage('dashboard')" id="nav-enr-dashboard">
-          <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">Dashboard</span>
-        </div>
-        <div class="nav-item nav-sub" onclick="showEnrPage('scorelist')" id="nav-enr-scorelist">
-          <span class="nav-icon" style="font-size:12px">📋</span><span class="nav-text">Ürün Skor Listesi</span>
-        </div>
-        <div class="nav-item nav-sub" onclick="showEnrPage('products')" id="nav-enr-products">
-          <span class="nav-icon" style="font-size:12px">🔍</span><span class="nav-text">Ürün Listesi</span>
-        </div>
+      <div class="nav-item nav-sub" onclick="showSection('kpi')" id="nav-kpi">
+        <span class="nav-icon">📊</span><span class="nav-text">KPI Dashboard</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('overview')" id="nav-overview">
+        <span class="nav-icon">📈</span><span class="nav-text">Trend & Kanal</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('kategori')" id="nav-kategori">
+        <span class="nav-icon">🗂️</span><span class="nav-text">Kategori</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('urunler')" id="nav-urunler">
+        <span class="nav-icon">⭐</span><span class="nav-text">Top Ürünler</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('iade')" id="nav-iade">
+        <span class="nav-icon">↩️</span><span class="nav-text">İade Analizi</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('risk')" id="nav-risk">
+        <span class="nav-icon">⚠️</span><span class="nav-text">Risk Analizi</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('karlilik')" id="nav-karlilik">
+        <span class="nav-icon">💰</span><span class="nav-text">Kârlılık</span>
+        <span class="nav-badge" id="badge-karlilik">—</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('colors')" id="nav-colors">
+        <span class="nav-icon">🎨</span><span class="nav-text">Renk Analizi</span>
       </div>
     </div>
-    <div class="nav-item" onclick="showSection('monitoring')" id="nav-monitoring">
-      <span class="nav-icon">📊</span><span class="nav-text">Sistem Sağlığı</span>
+
+    <!-- ── ÜRÜN YÖNETİMİ ────────────────────────────────────────────── -->
+    <div class="nav-group-hdr open" id="grp-urunmgmt" onclick="toggleNavGroup('urunmgmt')">
+      <span>📦 ÜRÜN YÖNETİMİ</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body open" id="grpb-urunmgmt">
+      <div class="nav-item nav-sub" onclick="showSection('products')" id="nav-products">
+        <span class="nav-icon">📦</span><span class="nav-text">Ürün Listesi</span>
+        <span class="nav-badge" id="badge-products">—</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('plm-katalog')" id="nav-plm-katalog">
+        <span class="nav-icon">🏷️</span><span class="nav-text">PLM Katalog</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('urun-yonetimi')" id="nav-urun-yonetimi">
+        <span class="nav-icon">📊</span><span class="nav-text">Ürün Yönetimi</span>
+        <span class="nav-badge" style="background:rgba(168,85,247,.12);border-color:rgba(168,85,247,.3);color:var(--purple)">YK</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('urun-satis')" id="nav-urun-satis">
+        <span class="nav-icon">🔍</span><span class="nav-text">Satış Detay Analizi</span>
+      </div>
+    </div>
+
+    <!-- ── ÜRÜN ZENGİNLEŞTİRME ─────────────────────────────────────── -->
+    <div class="nav-group-hdr" id="grp-enrichment" onclick="toggleNavGroup('enrichment')">
+      <span>✨ ÜRÜN ZENGİNLEŞTİRME</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body" id="grpb-enrichment">
+      <div class="nav-item nav-sub" onclick="showEnrPage('dashboard')" id="nav-enr-dashboard">
+        <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">Dashboard</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('scorelist')" id="nav-enr-scorelist">
+        <span class="nav-icon" style="font-size:12px">📋</span><span class="nav-text">Ürün Skor Listesi</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('products')" id="nav-enr-products">
+        <span class="nav-icon" style="font-size:12px">🔍</span><span class="nav-text">Ürün Listesi</span>
+      </div>
+    </div>
+
+    <!-- ── DİĞER ────────────────────────────────────────────────────── -->
+    <div class="nav-group-hdr" id="grp-other" onclick="toggleNavGroup('other')">
+      <span>⚙️ DİĞER</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body" id="grpb-other">
+      <div class="nav-item nav-sub" onclick="showSection('monitoring')" id="nav-monitoring">
+        <span class="nav-icon">📊</span><span class="nav-text">Sistem Sağlığı</span>
+      </div>
     </div>
   </nav>
 
@@ -1597,6 +1613,9 @@ function showSection(id,push=true){
   if(sec){sec.classList.add('active');sec.style.display='flex';}
   document.getElementById('nav-'+id)?.classList.add('active');
   currentSection=id;if(push)pushURL();
+  // Grubu otomatik aç
+  const g=_SECTION_GROUP&&_SECTION_GROUP[id];
+  if(g) _openNavGroup(g);
   loadSection(id);
 }
 function loadSection(id){
@@ -3653,22 +3672,18 @@ let _enrPage=1, _enrGrade='', _enrJobId=null, _enrJobTimer=null, _enrActivePage=
 
 // ─ Menü ─
 function toggleEnrMenu(){
-  const sub=document.getElementById('enr-submenu');
-  const arrow=document.getElementById('enr-menu-arrow');
-  const open=sub.style.display==='block';
-  sub.style.display=open?'none':'block';
-  arrow.style.transform=open?'':'rotate(90deg)';
-  if(!open) { showEnrPage('scorelist'); loadEnrichmentSeasons(); }
+  // Artık nav-group ile yönetiliyor
+  toggleNavGroup('enrichment');
 }
 
 function showEnrPage(page){
   _enrActivePage=page;
-  // Tüm section'ları gizle, enrichment'ı göster
   document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const sec=document.getElementById('section-enrichment');
   sec.classList.add('active'); sec.style.display='flex';
-  document.getElementById('nav-enrichment-parent').classList.add('active');
+  // Enrichment grubunu aç
+  _openNavGroup('enrichment');
   // Sayfalar
   ['dashboard','scorelist','products'].forEach(p=>{
     const el=document.getElementById('enr-page-'+p);
@@ -4176,6 +4191,31 @@ async function startEnrichmentScoring(useMcp=true){
     }else if(s.status==='failed'){prog.textContent=`❌ ${s.error||'?'}`;clearInterval(_enrJobTimer);}
   },2000);
 }
+
+// ── NAV GRUP ─────────────────────────────────────────────────────────────────────
+function toggleNavGroup(id){
+  const hdr=document.getElementById('grp-'+id);
+  const body=document.getElementById('grpb-'+id);
+  if(!hdr||!body)return;
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  hdr.classList.toggle('open',!open);
+}
+function _openNavGroup(id){
+  const hdr=document.getElementById('grp-'+id);
+  const body=document.getElementById('grpb-'+id);
+  if(hdr&&body){body.classList.add('open');hdr.classList.add('open');}
+}
+// showSection: ilgili grubu otomatik aç
+const _SECTION_GROUP = {
+  ai:'eticaret',callcenter:'eticaret',sizewin:'eticaret',
+  exec:'eticaret',kpi:'eticaret',overview:'eticaret',
+  kategori:'eticaret',urunler:'eticaret',iade:'eticaret',
+  risk:'eticaret',karlilik:'eticaret',colors:'eticaret',
+  products:'urunmgmt','plm-katalog':'urunmgmt',
+  'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
+  monitoring:'other'
+};
 
 // ── START ─────────────────────────────────────────────────────────────────────
 if(checkAuth()) init();
