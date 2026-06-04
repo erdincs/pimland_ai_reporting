@@ -70,6 +70,16 @@ async def lifespan(app: FastAPI):
         """))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_job    ON siralama_gecmisi(job_id)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_sezon  ON siralama_gecmisi(sezon_kodu, marka_adi, kategori)"))
+    # Mağaza satış cache'ini arka planda ısıt
+    import asyncio as _asyncio
+    async def _warm_magaza():
+        try:
+            from app.api.v1.endpoints.magaza_satis import _fetch_mcp_data
+            await _fetch_mcp_data()
+            log.info("magaza_satis.cache_warmed")
+        except Exception as e:
+            log.warning("magaza_satis.cache_warm_failed", error=str(e))
+    _asyncio.create_task(_warm_magaza())
     yield
     scheduler.stop()
     log.info("app.shutdown")
