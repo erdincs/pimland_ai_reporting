@@ -31,9 +31,16 @@ GRADE_ORDER = ["A", "B", "C", "D", "F"]
 @router.get("/seasons")
 async def get_seasons(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    marka: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Pimland DB'deki sezonlar + enrichment durumu."""
-    rows = (await session.execute(text("""
+    """Pimland DB'deki sezonlar + enrichment durumu (sadece internet_aktif)."""
+    params: Dict[str, Any] = {}
+    marka_filter = ""
+    if marka:
+        marka_filter = "AND p.marka_adi = :marka"
+        params["marka"] = marka
+
+    rows = (await session.execute(text(f"""
         SELECT
             p.sezon_kodu,
             p.sezon_adi,
@@ -45,12 +52,14 @@ async def get_seasons(
         FROM pim_products p
         LEFT JOIN enrichment_season_summary s ON s.sezon_kodu = p.sezon_kodu
         WHERE p.sezon_kodu IS NOT NULL
+          AND p.internet_aktif = true
+          {marka_filter}
         GROUP BY p.sezon_kodu, p.sezon_adi,
                  s.sezon_kodu, s.ortalama_puan,
                  s.grade_a, s.grade_b, s.grade_c, s.grade_d, s.grade_f,
                  s.scored_at
         ORDER BY p.sezon_kodu DESC
-    """))).mappings().all()
+    """), params)).mappings().all()
 
     return [dict(r) for r in rows]
 
@@ -144,48 +153,84 @@ async def get_job_status(job_id: str) -> Dict[str, Any]:
 async def get_dashboard(
     season_code: str,
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    marka: Optional[str] = None,
 ) -> Dict[str, Any]:
-    # Summary
-    summary = (await session.execute(text("""
-        SELECT * FROM enrichment_season_summary WHERE sezon_kodu = :sc
-    """), {"sc": season_code})).mappings().first()
+    """Sezon dashboard — sadece internet_aktif ürünler."""
+    params: Dict[str, Any] = {"sc": season_code}
+    marka_filter = ""
+    if marka:
+        marka_filter = "AND p.marka_adi = :marka"
+        params["marka"] = marka
 
-    if not summary:
-        return {"error": f"'{season_code}' henüz puanlanmamış"}
-
-    # Puan dağılımı (10'ar aralık)
-    dist_rows = (await session.execute(text("""
+    # Internet aktif ürünlerin özeti
+    stats = (await session.execute(text(f"""
         SELECT
-            (quality_score / 10) * 10 AS aralik_bas,
-            COUNT(*) AS sayi
-        FROM enrichment_quality WHERE sezon_kodu = :sc
+            COUNT(*) AS toplam_urun,
+            ROUND(AVG(eq.quality_score)::numeric, 1) AS ortalama_puan,
+            COUNT(*) FILTER (WHERE eq.quality_grade='A') AS grade_a,
+            COUNT(*) FILTER (WHERE eq.quality_grade='B') AS grade_b,
+            COUNT(*) FILTER (WHERE eq.quality_grade='C') AS grade_c,
+            COUNT(*) FILTER (WHERE eq.quality_grade='D') AS grade_d,
+            COUNT(*) FILTER (WHERE eq.quality_grade='F') AS grade_f,
+            MAX(eq.last_scored_at) AS scored_at
+        FROM enrichment_quality eq
+        JOIN pim_products p ON p.urun_kodu = eq.urun_kodu
+        WHERE eq.sezon_kodu = :sc
+          AND p.internet_aktif = true
+          {marka_filter}
+    """), params)).mappings().first()
+
+    if not stats or not stats["toplam_urun"]:
+        return {"error": f"'{season_code}' için internet aktif puanlanmış ürün bulunamadı"}
+
+    # Puan dağılımı
+    dist_rows = (await session.execute(text(f"""
+        SELECT (eq.quality_score / 10) * 10 AS aralik_bas, COUNT(*) AS sayi
+        FROM enrichment_quality eq
+        JOIN pim_products p ON p.urun_kodu = eq.urun_kodu
+        WHERE eq.sezon_kodu = :sc AND p.internet_aktif = true {marka_filter}
         GROUP BY aralik_bas ORDER BY aralik_bas
-    """), {"sc": season_code})).mappings().all()
+    """), params)).mappings().all()
 
     puan_dagilimi = []
     for i in range(0, 100, 10):
         row = next((r for r in dist_rows if r["aralik_bas"] == i), None)
-        puan_dagilimi.append({
-            "aralik": f"{i}-{i+10}",
-            "sayi":   row["sayi"] if row else 0,
-        })
+        puan_dagilimi.append({"aralik": f"{i}-{i+10}", "sayi": row["sayi"] if row else 0})
 
-    # Top sorunlar
-    top_sorunlar = json.loads(summary["top_sorunlar"] or "[]")
+    # Top sorunlar — en sık eksik alanlar
+    sorun_rows = (await session.execute(text(f"""
+        SELECT eksik_alan, COUNT(*) AS sayi
+        FROM enrichment_quality eq
+        JOIN pim_products p ON p.urun_kodu = eq.urun_kodu
+        CROSS JOIN LATERAL jsonb_array_elements_text(eq.eksik_alanlar) AS eksik_alan
+        WHERE eq.sezon_kodu = :sc AND p.internet_aktif = true {marka_filter}
+        GROUP BY eksik_alan ORDER BY sayi DESC LIMIT 10
+    """), params)).mappings().all()
+
+    total = stats["toplam_urun"] or 1
+    top_sorunlar = [
+        {"sorun": r["eksik_alan"], "sayi": r["sayi"], "pct": round(r["sayi"] / total * 100)}
+        for r in sorun_rows
+    ]
+
+    sezon_adi = (await session.execute(
+        text("SELECT sezon_adi FROM pim_products WHERE sezon_kodu=:sc LIMIT 1"),
+        {"sc": season_code}
+    )).scalar()
 
     return {
         "season_code":   season_code,
-        "season_name":   summary["sezon_adi"],
-        "toplam_urun":   summary["toplam_urun"],
-        "ortalama_puan": float(summary["ortalama_puan"] or 0),
+        "season_name":   sezon_adi or season_code,
+        "toplam_urun":   stats["toplam_urun"],
+        "ortalama_puan": float(stats["ortalama_puan"] or 0),
         "grade_dist": {
-            "A": summary["grade_a"], "B": summary["grade_b"],
-            "C": summary["grade_c"], "D": summary["grade_d"],
-            "F": summary["grade_f"],
+            "A": stats["grade_a"], "B": stats["grade_b"],
+            "C": stats["grade_c"], "D": stats["grade_d"],
+            "F": stats["grade_f"],
         },
         "puan_dagilimi": puan_dagilimi,
         "top_sorunlar":  top_sorunlar,
-        "scored_at":     summary["scored_at"],
+        "scored_at":     stats["scored_at"],
     }
 
 
@@ -200,22 +245,27 @@ async def get_products(
     sort: str = "score_asc",
     page: int = 1,
     limit: int = 50,
+    marka: Optional[str] = None,
 ) -> Dict[str, Any]:
-    conditions = ["eq.sezon_kodu = :sc"]
+    conditions = ["eq.sezon_kodu = :sc", "p.internet_aktif = true"]
     params: Dict[str, Any] = {"sc": season_code}
+
+    if marka:
+        conditions.append("p.marka_adi = :marka")
+        params["marka"] = marka
 
     if grade:
         grades = [g.strip().upper() for g in grade.split(",")]
         conditions.append(f"eq.quality_grade = ANY(ARRAY{grades})")
 
     if sorun == "eksik_kumas":
-        conditions.append("eq.eksik_alanlar @> '[\"fabricMaterialName\"]'")
+        conditions.append("eq.eksik_alanlar @> '[\"Kumaş Adı\"]'")
     elif sorun == "eksik_gorsel":
-        conditions.append("eq.eksik_alanlar @> '[\"productImages\"]'")
+        conditions.append("eq.eksik_alanlar @> '[\"Ürün Görseli\"]'")
     elif sorun == "kisa_aciklama":
-        conditions.append("eq.hatali_alanlar::text LIKE '%description%'")
+        conditions.append("eq.hatali_alanlar::text ILIKE '%Açıklama%'")
     elif sorun == "eksik_tema":
-        conditions.append("eq.uyarilar::text LIKE '%Tema%'")
+        conditions.append("eq.eksik_alanlar @> '[\"Koleksiyon Teması\"]'")
 
     order = {
         "score_asc":  "eq.quality_score ASC",
@@ -228,7 +278,7 @@ async def get_products(
     params.update({"lim": limit, "off": offset})
 
     count_row = (await session.execute(
-        text(f"SELECT COUNT(*) FROM enrichment_quality eq WHERE {where}"), params
+        text(f"SELECT COUNT(*) FROM enrichment_quality eq JOIN pim_products p ON p.urun_kodu=eq.urun_kodu WHERE {where}"), params
     )).scalar()
 
     rows = (await session.execute(text(f"""

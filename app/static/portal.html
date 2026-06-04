@@ -1337,14 +1337,15 @@ body,
     <!-- ✨ ÜRÜN ZENGİNLEŞTİRME -->
     <div class="section" id="section-enrichment" style="padding:0;flex-direction:column;overflow:hidden">
 
-      <!-- Üst bar — her alt sayfada sabit -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <!-- Üst bar — ortak filtreler, tüm alt sayfalarda sabit -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
         <span id="enr-page-title" style="font-size:13px;font-weight:700;color:var(--t1)">✨ Ürün Zenginleştirme</span>
-        <select id="enr-season-sel" onchange="onEnrSeasonChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
+        <select id="enr-marka-sel" onchange="onEnrFilterChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
+          <option value="">Tüm Markalar</option>
+        </select>
+        <select id="enr-season-sel" onchange="onEnrFilterChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
           <option value="">Sezon Seç...</option>
         </select>
-        <button onclick="startEnrichmentScoring(true)" title="MCP'den gerçek veri çeker (~3-5 dk)" style="background:var(--orange);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">▶ Tam Puanla</button>
-        <button onclick="startEnrichmentScoring(false)" title="Sadece DB verisi, hızlı (~5 sn)" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px">⚡ Hızlı</button>
         <span id="enr-progress" style="font-size:11px;color:var(--t3)"></span>
       </div>
 
@@ -1374,6 +1375,12 @@ body,
 
       <!-- ── SKOR LİSTESİ ── -->
       <div id="enr-page-scorelist" style="display:none;flex-direction:column;overflow:hidden;flex:1">
+        <!-- Puanlama butonları sadece burada -->
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--bg3);flex-shrink:0">
+          <span style="font-size:11px;color:var(--t3)">Seçili sezonu puanla:</span>
+          <button onclick="startEnrichmentScoring(true)" title="MCP'den gerçek veri (~3-5 dk)" style="background:var(--orange);color:#fff;border:none;padding:5px 12px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600">▶ Tam Puanla</button>
+          <button onclick="startEnrichmentScoring(false)" title="DB verisi, hızlı (~5 sn)" style="background:var(--bg4);border:1px solid var(--border);color:var(--t2);padding:5px 10px;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px">⚡ Hızlı</button>
+        </div>
         <!-- Tablo başlığı -->
         <div style="flex-shrink:0">
           <div style="display:grid;grid-template-columns:1fr 90px 200px 80px 80px;gap:0;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--bg2)">
@@ -3672,12 +3679,12 @@ function showEnrPage(page){
   document.getElementById('enr-page-title').textContent = {
     dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi', products:'🔍 Ürün Listesi'
   }[page]||'✨ Ürün Zenginleştirme';
-  if(page==='dashboard') { loadEnrichmentSeasons().then(()=>loadEnrichmentDashboard()); }
-  if(page==='scorelist') { loadEnrichmentSeasons().then(()=>loadScoreList()); }
-  if(page==='products')  { loadEnrichmentSeasons().then(()=>loadEnrichmentList(1)); }
+  if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
+  if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
+  if(page==='products')  { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentList(1)); }
 }
 
-async function onEnrSeasonChange(){
+async function onEnrFilterChange(){
   if(_enrActivePage==='dashboard') loadEnrichmentDashboard();
   if(_enrActivePage==='products')  loadEnrichmentList(1);
   // scorelist sezon bağımsız — tüm markalar gösterir
@@ -3685,9 +3692,11 @@ async function onEnrSeasonChange(){
 
 // ─ Sezon listesi ─
 async function loadEnrichmentSeasons(){
+  const marka=document.getElementById('enr-marka-sel')?.value||'';
+  const markaParam=marka?`?marka=${encodeURIComponent(marka)}`:'';
   const sel=document.getElementById('enr-season-sel');
   const cur=sel.value;
-  const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
+  const seasons=await fetch(`${API}/enrichment/seasons${markaParam}`).then(r=>r.json()).catch(()=>[]);
   sel.innerHTML='<option value="">Sezon Seç...</option>';
   (seasons||[]).forEach(s=>{
     const badge=s.scored?` ✓${s.ortalama_puan?` ${s.ortalama_puan}`:''}` : ' —';
@@ -3695,10 +3704,22 @@ async function loadEnrichmentSeasons(){
       `<option value="${s.sezon_kodu}"${s.sezon_kodu===cur?' selected':''}>${s.sezon_kodu} ${s.sezon_adi||''}${badge}</option>`);
   });
   if(!sel.value && seasons.length){
-    // Puanlanmış ilk sezonu seç
     const scored=seasons.find(s=>s.scored);
     if(scored) sel.value=scored.sezon_kodu;
   }
+}
+
+async function loadEnrMarkas(){
+  const mSel=document.getElementById('enr-marka-sel');
+  if(!mSel)return;
+  const cur=mSel.value;
+  // pim_brands API'si yoksa pim_products'tan benzersiz markalar
+  const rows=await fetch(`${API}/enrichment/scorelist`).then(r=>r.json()).catch(()=>[]);
+  mSel.innerHTML='<option value="">Tüm Markalar</option>';
+  (rows||[]).forEach(b=>{
+    mSel.insertAdjacentHTML('beforeend',
+      `<option value="${b.marka_adi}"${b.marka_adi===cur?' selected':''}>${b.marka_adi}</option>`);
+  });
 }
 
 // ─ Dashboard ─
@@ -3710,7 +3731,9 @@ async function loadEnrichmentDashboard(){
     return;
   }
   kpis.innerHTML='<div class="loading" style="grid-column:1/-1;padding:20px"><div class="spinner"></div></div>';
-  const d=await fetch(`${API}/enrichment/dashboard/${sc}`).then(r=>r.json()).catch(()=>null);
+  const marka=document.getElementById('enr-marka-sel')?.value||'';
+  const markaQ=marka?`&marka=${encodeURIComponent(marka)}`:''
+  const d=await fetch(`${API}/enrichment/dashboard/${sc}?${markaQ}`).then(r=>r.json()).catch(()=>null);
   if(!d||d.error){
     kpis.innerHTML=`<div style="grid-column:1/-1;padding:20px;color:var(--t3)">${d?.error||'Veri yok — önce Puanla butonuna basın'}</div>`;
     return;

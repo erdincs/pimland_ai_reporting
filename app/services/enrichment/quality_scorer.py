@@ -407,7 +407,7 @@ async def score_season(
                    fabricmaterialname, bloke, internet_aktif,
                    color_codes, first_color_code, default_image_url
             FROM pim_products
-            WHERE sezon_kodu = %s
+            WHERE sezon_kodu = %s AND internet_aktif = true
             ORDER BY urun_kodu
         """, (season_code,))
         db_rows = cur.fetchall()
