@@ -2046,6 +2046,12 @@ function pushURL(){
 }
 
 // ── NAVIGATION ───────────────────────────────────────────────────────────────
+// E-Ticaret bölümleri — topbar filtresi yalnızca bunlar için görünür
+const _ETICARET_SECTIONS = new Set([
+  'exec','kpi','overview','kategori','urunler','iade',
+  'risk','karlilik','colors','products','ai','callcenter','sizewin'
+]);
+
 function showSection(id,push=true){
   document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -2053,6 +2059,9 @@ function showSection(id,push=true){
   if(sec){sec.classList.add('active');sec.style.display='flex';}
   document.getElementById('nav-'+id)?.classList.add('active');
   currentSection=id;if(push)pushURL();
+  // Topbar filtre barı: sadece E-Ticaret bölümlerinde göster
+  const tbFilters=document.querySelector('.tb-filters');
+  if(tbFilters) tbFilters.style.display=_ETICARET_SECTIONS.has(id)?'flex':'none';
   // Grubu otomatik aç
   const g=_SECTION_GROUP&&_SECTION_GROUP[id];
   if(g) _openNavGroup(g);
