@@ -23,7 +23,8 @@ log = get_logger(__name__)
 
 _MCP_BASE = "https://agentup-mcp-test.pimland.com/30001"
 _TOKEN_CACHE: Dict[str, Any] = {}
-_TIMEOUT = 20  # saniye
+_TIMEOUT        = 30   # tekil ürün sorguları
+_SEASON_TIMEOUT = 60   # toplu sezon sorguları (daha büyük payload)
 
 
 # ── OAuth2 token ─────────────────────────────────────────────────────────────
@@ -190,7 +191,7 @@ async def fetch_season_products(season_code: str) -> Dict[str, Dict]:
     result_map: Dict[str, Dict] = {}
     page = 1
 
-    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=_SEASON_TIMEOUT) as client:
         try:
             token = await _get_token(client)
         except Exception as exc:
@@ -198,9 +199,12 @@ async def fetch_season_products(season_code: str) -> Dict[str, Dict]:
             return result_map
 
         while True:
+            # pageNumber: None → sunucu sıfırlama hatası vermez (1 gönderince 0 sonuç döner)
+            params: Dict[str, Any] = {"season": season_code, "pageSize": 25}
+            if page > 1:
+                params["pageNumber"] = page
             raw = await _call_tool(client, token,
-                "post_api_Product_get_products_by_filter",
-                {"season": season_code, "pageSize": 100, "pageNumber": page}
+                "post_api_Product_get_products_by_filter", params
             )
             if not raw:
                 break
