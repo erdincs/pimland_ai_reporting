@@ -65,29 +65,54 @@ class LLMClient:
             messages.append({"role": role, "content": [{"text": str(content)}]})
 
         if isinstance(user, list):
+            import re as _re
+            import base64 as _b64
+
+            def _safe_doc_name(raw: str) -> str:
+                # Bedrock: SADECE ASCII alfanümerik, boşluk, tire, parantez, köşeli parantez
+                s = _re.sub(r"[^a-zA-Z0-9 \-()\[\]]", " ", raw)
+                s = _re.sub(r" {2,}", " ", s).strip()[:200]
+                return s or "document"
+
             # Multi-content: text + documents + images
             user_content = []
             for block in user:
                 btype = block.get("type")
-                if btype == "text":
-                    user_content.append({"text": block["text"]})
-                elif btype == "image":
-                    user_content.append({"image": {
-                        "format": block["source"]["media_type"].split("/")[-1],
-                        "source": {"bytes": __import__("base64").b64decode(block["source"]["data"])},
-                    }})
-                elif btype == "document":
-                    import re as _re
-                    raw_name = block.get("title", "document")
-                    # Bedrock: SADECE ASCII alfanümerik, boşluk, tire, parantez, köşeli parantez
-                    # \w ve Unicode harfler (ö,ü,ş) + alt çizgi YASAK
-                    safe_name = _re.sub(r"[^a-zA-Z0-9\s\-()\[\]]", " ", raw_name)
-                    safe_name = _re.sub(r"\s{2,}", " ", safe_name).strip()[:200] or "document"
-                    user_content.append({"document": {
-                        "name":   safe_name,
-                        "format": "txt",
-                        "source": {"bytes": block["source"]["data"].encode("utf-8")},
-                    }})
+                try:
+                    if btype == "text":
+                        text = block.get("text", "")
+                        if text:
+                            user_content.append({"text": text})
+
+                    elif btype == "image":
+                        img_data = block.get("source", {}).get("data", "")
+                        mime     = block.get("source", {}).get("media_type", "image/jpeg")
+                        fmt      = mime.split("/")[-1].lower()
+                        if fmt not in ("jpeg", "jpg", "png", "gif", "webp"):
+                            fmt = "jpeg"
+                        if img_data:
+                            user_content.append({"image": {
+                                "format": fmt,
+                                "source": {"bytes": _b64.b64decode(img_data)},
+                            }})
+
+                    elif btype == "document":
+                        raw_data = block.get("source", {}).get("data", "")
+                        if not raw_data:
+                            continue   # boş dosya → atla
+                        safe_name = _safe_doc_name(block.get("title", "document"))
+                        user_content.append({"document": {
+                            "name":   safe_name,
+                            "format": "txt",
+                            "source": {"bytes": raw_data.encode("utf-8")},
+                        }})
+                except Exception as blk_err:
+                    log.warning("llm.content_block_skip", btype=btype, error=str(blk_err))
+
+            # Eğer hiç geçerli blok kalmadıysa fallback plain text
+            if not user_content:
+                user_content = [{"text": "Dosya içeriği işlenemedi, lütfen tekrar deneyin."}]
+
             messages.append({"role": "user", "content": user_content})
         else:
             messages.append({"role": "user", "content": [{"text": user}]})

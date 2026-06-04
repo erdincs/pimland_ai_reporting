@@ -2166,15 +2166,19 @@ async function askAgent(agentKey) {
           agentHistory[agentKey] = agentHistory[agentKey].slice(-MAX_HISTORY * 2);
       }
       const answerHtml = renderMD(d.answer||'');
+      const msgId = 'msg-' + agentKey + '-' + Date.now();
       const metaHtml = `<div class="ai-meta">
         <span style="font-size:10px;color:var(--t3)">${d.elapsed_ms?.toFixed(0)||'—'} ms</span>
         ${d.products_found!==undefined?`<span style="font-size:10px;color:var(--t3)">${d.products_found} ürün bulundu</span>`:''}
         ${d.size_chart_used?`<span style="font-size:10px;color:var(--t3)">Beden tablosu: ${d.size_chart_used}</span>`:''}
+        <span style="margin-left:auto;display:flex;gap:4px">
+          ${['pdf','docx','xlsx'].map(fmt=>`<button onclick="downloadAnswer('${msgId}','${fmt}')" title="${fmt.toUpperCase()} indir" style="background:var(--bg4);border:1px solid var(--border);color:var(--t3);font-size:9px;padding:2px 6px;border-radius:4px;cursor:pointer;font-family:inherit">⬇ ${fmt.toUpperCase()}</button>`).join('')}
+        </span>
       </div>`;
       chat.insertAdjacentHTML('beforeend',`
         <div class="ai-bot-msg anim">
           <div class="ai-bot-avatar" style="background:${cfg.avatar}">${cfg.icon}</div>
-          <div class="ai-bot-bubble">${answerHtml}${metaHtml}</div>
+          <div class="ai-bot-bubble" id="${msgId}" data-answer="${encodeURIComponent(d.answer||'')}">${answerHtml}${metaHtml}</div>
         </div>`);
     }
   } catch(e) {
@@ -2338,10 +2342,11 @@ async function askAI(){
       const sqlHtml=showSQL&&d.sql?`
         <div class="ai-sql-block" onclick="this.style.display='none'" title="Gizlemek için tıklayın">${d.sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
       const filterTag=useFilters&&(state.yil||state.ay.length)?`<span style="background:rgba(255,107,43,.1);color:var(--orange);padding:1px 7px;border-radius:4px">${state.yil||''} ${state.ay.length?AY_ADI[state.ay[0]]:''}</span>`:'';
+      const aiMsgId='msg-ai-'+Date.now();
       chat.insertAdjacentHTML('beforeend',`
         <div class="ai-bot-msg anim">
           <div class="ai-bot-avatar">🤖</div>
-          <div class="ai-bot-bubble">
+          <div class="ai-bot-bubble" id="${aiMsgId}" data-answer="${encodeURIComponent(d.answer||'')}">
             ${answerHtml}
             ${dataHtml}
             ${sqlHtml}
@@ -2350,6 +2355,9 @@ async function askAI(){
               <span>${d.row_count||0} satır</span>
               <span>${d.elapsed_ms||0}ms</span>
               ${d.cached?'<span style="color:var(--teal)">⚡ cache</span>':''}
+              <span style="margin-left:auto;display:flex;gap:4px">
+                ${['pdf','docx','xlsx'].map(fmt=>`<button onclick="downloadAnswer('${aiMsgId}','${fmt}')" title="${fmt.toUpperCase()} indir" style="background:var(--bg4);border:1px solid var(--border);color:var(--t3);font-size:9px;padding:2px 6px;border-radius:4px;cursor:pointer;font-family:inherit">⬇ ${fmt.toUpperCase()}</button>`).join('')}
+              </span>
             </div>
           </div>
         </div>`);
@@ -3436,6 +3444,37 @@ function initMonitoring() {
 
 function stopMonitoring() {
   if(_monTimer){clearInterval(_monTimer);_monTimer=null;}
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+async function downloadAnswer(msgId, fmt) {
+  const bubble = document.getElementById(msgId);
+  if(!bubble) return;
+  const content = decodeURIComponent(bubble.dataset.answer || '');
+  if(!content) return;
+
+  const btn = bubble.querySelector(`button[onclick*="${fmt}"]`);
+  if(btn){ btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    const r = await fetch(`${API}/export/${fmt}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({content, format: fmt, title: 'Pimland AI Yanıtı'})
+    });
+    if(!r.ok) throw new Error(await r.text());
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `pimland_yanit.${fmt}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('İndir hatası: ' + e.message);
+  } finally {
+    if(btn){ btn.textContent = `⬇ ${fmt.toUpperCase()}`; btn.disabled = false; }
+  }
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
