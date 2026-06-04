@@ -1530,18 +1530,11 @@ body,
               <select id="sw-season-sel" onchange="swLoadProducts()" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px;margin-bottom:5px">
                 <option value="">Tüm Sezonlar</option>
               </select>
-              <div style="display:flex;gap:5px">
-                <select id="sw-marka-sel" onchange="swLoadProducts()" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
-                  <option value="">Tüm Markalar</option>
-                  <option value="adL">adL</option>
-                  <option value="Love My Body">Love My Body</option>
-                </select>
-                <select id="sw-grade-sel" onchange="swLoadProducts()" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
-                  <option value="">Tüm Grade'ler</option>
-                  <option value="A">A</option><option value="B">B</option>
-                  <option value="C">C</option><option value="D">D</option><option value="F">F</option>
-                </select>
-              </div>
+              <select id="sw-marka-sel" onchange="swLoadProducts()" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 8px;border-radius:5px;font-family:inherit;font-size:11px">
+                <option value="">Tüm Markalar</option>
+                <option value="adL">adL</option>
+                <option value="Love My Body">Love My Body</option>
+              </select>
             </div>
             <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
               <span id="sw-sel-count" style="font-size:11px;color:var(--t2)">0 ürün seçildi</span>
@@ -4767,10 +4760,11 @@ async function swInit(){
   _SW._inited=false; // reset on each page open
   // Sezon dropdown
   const sel=document.getElementById('sw-season-sel');
-  const seasons=await fetch(`${API}/enrichment/seasons`).then(r=>r.json()).catch(()=>[]);
+  // Tüm sezonları pim_products'tan çek (enrichment bağımsız)
+  const seasons=await fetch(`${API}/enrichment/story/seasons`).then(r=>r.json()).catch(()=>[]);
   sel.innerHTML='<option value="">Tüm Sezonlar</option>';
   (seasons||[]).forEach(s=>{sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}">${s.sezon_kodu} ${s.sezon_adi||''}</option>`);});
-  if(seasons&&seasons.length>0) sel.value=seasons[0].sezon_kodu;
+  // Sezon auto-seçme yok — kullanıcı seçsin veya tüm ürünler gelsin
   swLoadProducts();
 }
 
@@ -4779,7 +4773,6 @@ async function swLoadProducts(page){
   const q=document.getElementById('sw-search')?.value||'';
   const sezon=document.getElementById('sw-season-sel')?.value||'';
   const marka=document.getElementById('sw-marka-sel')?.value||'';
-  const grade=document.getElementById('sw-grade-sel')?.value||'';
   const params=new URLSearchParams({page,limit:30});
   if(q) params.set('q',q);
   if(sezon) params.set('sezon',sezon);
@@ -4790,7 +4783,6 @@ async function swLoadProducts(page){
     const d=await fetch(`${API}/enrichment/story/products?${params}`).then(r=>r.json());
     _SW.total=d.total||0;
     let items=d.items||[];
-    if(grade) items=items.filter(p=>p.quality_grade===grade);
     _SW.products=items;
     swRenderList(items);
     swRenderListPagination(d.total,page,30);

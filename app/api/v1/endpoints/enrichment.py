@@ -567,6 +567,27 @@ async def get_overview(
 
 # ── Story Writer endpoints ─────────────────────────────────────────────────────
 
+@router.get("/story/seasons")
+async def get_story_seasons(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    marka: Optional[str] = Query(None),
+) -> List[Dict[str, Any]]:
+    """Hikaye yazıcı için sezon listesi — sadece pim_products, enrichment bağımsız."""
+    params: Dict[str, Any] = {}
+    extra = ""
+    if marka:
+        extra = "AND marka_adi ILIKE :marka"
+        params["marka"] = f"%{marka}%"
+    rows = (await session.execute(text(f"""
+        SELECT sezon_kodu, MAX(sezon_adi) AS sezon_adi, COUNT(*) AS urun_sayisi
+        FROM pim_products
+        WHERE internet_aktif = true AND sezon_kodu IS NOT NULL {extra}
+        GROUP BY sezon_kodu
+        ORDER BY sezon_kodu DESC
+    """), params)).mappings().all()
+    return [dict(r) for r in rows]
+
+
 _TON_PROMPTS = {
     "lüks_zarif":   "Lüks, zarif ve sofistike bir ton kullan. Kaliteyi ve şıklığı ön plana çıkar.",
     "genç_enerjik": "Genç, enerjik ve dinamik bir ton kullan. Trendy, canlı ve heyecan verici bir dil seç.",
