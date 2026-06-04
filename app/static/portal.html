@@ -1374,12 +1374,22 @@ body,
       <!-- ── SKOR LİSTESİ ── -->
       <div id="enr-page-scorelist" style="display:none;flex-direction:column;overflow:hidden;flex:1">
         <!-- Tablo başlığı -->
-        <div style="display:grid;grid-template-columns:1fr 90px 200px 80px 80px;gap:0;padding:8px 20px;border-bottom:2px solid var(--border);background:var(--bg2);flex-shrink:0">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">AD</div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">SKU</div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:center">PUAN DAĞILIMI</div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">ORT. PUAN</div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">GRADE</div>
+        <div style="flex-shrink:0">
+          <div style="display:grid;grid-template-columns:1fr 90px 200px 80px 80px;gap:0;padding:8px 20px;border-bottom:1px solid var(--border);background:var(--bg2)">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3)">MARKA · SEZON · KATEGORİ ANALİZİ</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">SKU</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:center">GRADE DAĞILIMI</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right">ORT. KALİTE</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);text-align:right;padding-right:4px">GRADE</div>
+          </div>
+          <!-- Ürün seviyesi için sub-header (scroll ile sabitlenmez, sadece bilgi) -->
+          <div style="display:flex;gap:0;padding:4px 20px 4px 96px;border-bottom:2px solid var(--border);background:var(--bg3)">
+            <div style="flex:1;font-size:9px;color:var(--t4)">Ürün detay satırları: Temel /25 · Kumaş /25 · Görsel /25 · Satış /25 — Tıklayarak detay modalını açın</div>
+            <div style="width:90px;font-size:9px;color:var(--t4);text-align:right">SKU</div>
+            <div style="width:200px;font-size:9px;color:var(--t4);text-align:center">Temel · Kumaş · Görsel · Satış</div>
+            <div style="width:80px;font-size:9px;color:var(--t4);text-align:right">Puan /100</div>
+            <div style="width:80px;font-size:9px;color:var(--t4);text-align:right">Grade</div>
+          </div>
         </div>
         <!-- Tablo gövdesi — scroll -->
         <div id="enr-scorelist-wrap" style="overflow-y:auto;flex:1">
@@ -1415,11 +1425,12 @@ body,
         <div id="enr-pagination" style="display:flex;gap:8px;justify-content:center"></div>
       </div>
 
-      <!-- Modal -->
-      <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
-        <div class="enr-modal-box" id="enr-modal-box"></div>
-      </div>
     </div><!-- /section-enrichment -->
+
+    <!-- Enrichment ürün detay modalı — section dışında (overflow:hidden bypass) -->
+    <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
+      <div class="enr-modal-box" id="enr-modal-box"></div>
+    </div>
 
   </main>
 </div>
