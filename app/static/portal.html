@@ -1435,7 +1435,7 @@ body,
           <!-- Histogram -->
           <div style="background:var(--bg2);border-radius:12px;padding:16px">
             <div style="font-size:10px;font-weight:700;letter-spacing:.7px;color:var(--t3);margin-bottom:14px">PUAN DAĞILIMI (TÜM SKU)</div>
-            <div style="display:flex;align-items:flex-end;gap:4px;height:100px" id="enr-puan-dist"></div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:90px" id="enr-puan-dist"></div>
             <div style="display:flex;gap:4px;margin-top:4px" id="enr-hist-labels"></div>
           </div>
           <!-- Alan oranları -->
@@ -3798,12 +3798,12 @@ async function loadEnrMarkas(){
 // ─ Dashboard ─
 const _ALAN_TR={
   'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'Kumaş içerik bilgisi eksik',
-  'Ürün Notu / Stil Önerisi':'Satış açıklaması kısa (<50 kar.)',
+  'Ürün Notu / Stil Önerisi':'Ürün notu / stil önerisi eksik',
   '1. E-Ticaret Etiketi (Zorunlu)':'E-ticaret etiketi atanmamış',
   'Kalıp Tipi (Slim/Regular/Oversize)':'Fit/kesim bilgisi eksik',
-  'Bakım Talimatları':'Bakım talimatı eksik',
+  'Bakım Talimatları':'Yıkama ve bakım talimatı eksik',
   'Koleksiyon Teması':'Tema atanmamış',
-  'Ürün Görseli':'Görsel sayısı yetersiz (<3)',
+  'Ürün Görseli':'Görsel sayısı yetersiz',
   'Kumaş Adı':'Kumaş adı girilmemiş',
   'Kumaş Kodu':'Kumaş kodu girilmemiş',
 };
@@ -3935,26 +3935,30 @@ async function loadEnrichmentDashboard(){
   const bars=d.puan_dagilimi||[];
   const maxB=Math.max(...bars.map(b=>b.sayi),1);
   const histPalette=['#c0504d','#c05c4d','#c07050','#c08452','#d4974e','#d4ae4e','#6baed6','#56a0c8','#74c476','#41ab5d'];
+  const histH=90; // px — container yüksekliği
   document.getElementById('enr-puan-dist').innerHTML=bars.map((b,i)=>{
-    const h=Math.max(Math.round(b.sayi/maxB*100),3);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0" title="${b.aralik}: ${(b.sayi||0).toLocaleString('tr-TR')} ürün">
-      <div style="width:100%;height:${h}%;background:${histPalette[i]||'var(--teal)'};border-radius:3px 3px 0 0;min-height:3px;transition:height .7s cubic-bezier(.16,1,.3,1)"></div>
+    const px=Math.max(Math.round(b.sayi/maxB*histH),3);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:${histH}px" title="${b.aralik}: ${(b.sayi||0).toLocaleString('tr-TR')} ürün">
+      <div style="width:85%;height:${px}px;background:${histPalette[i]||'var(--teal)'};border-radius:3px 3px 0 0;transition:height .7s cubic-bezier(.16,1,.3,1)"></div>
     </div>`;
   }).join('');
   const labels=document.getElementById('enr-hist-labels');
   if(labels) labels.innerHTML=bars.map((b,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--t4)">${i===bars.length-1?'90+':b.aralik.split('-')[0]}</div>`).join('');
 
   // ── Alan Bazlı Eksiklik Oranı ─────────────────────────────────────────────
-  const ALAN_RAW_TR={'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'mainMaterialContent',
-    'Ürün Notu / Stil Önerisi':'description (kısa)',
-    'Ürün Görseli':'productImages (az)',
-    '1. E-Ticaret Etiketi (Zorunlu)':'ecomTag1Code',
-    'Koleksiyon Teması':'productThemeCode',
-    'Kalıp Tipi (Slim/Regular/Oversize)':'fitCode',
-    'Bakım Talimatları':'washingAndCareInstructions',
-    'Kumaş Adı':'fabricMaterialName',
+  // Alan adı Türkçe kısa gösterim
+  const _ALAN_KISALT={
+    'Kumaş İçerik % (ör: Pamuk %95, Elastan %5)':'Kumaş İçerik Bilgisi',
+    'Ürün Notu / Stil Önerisi':'Ürün Notu / Stil Önerisi',
+    '1. E-Ticaret Etiketi (Zorunlu)':'E-Ticaret Etiketi (Zorunlu)',
+    'Kalıp Tipi (Slim/Regular/Oversize)':'Kalıp / Fit Tipi',
+    'Bakım Talimatları':'Yıkama ve Bakım Talimatı',
+    'Koleksiyon Teması':'Koleksiyon Teması',
+    'Ürün Görseli':'Ürün Görseli',
+    'Kumaş Adı':'Kumaş Adı',
+    'Kumaş Kodu':'Kumaş Kodu',
   };
-  function _rawName(k){return ALAN_RAW_TR[k]||(k.length>22?k.substring(0,22)+'…':k);}
+  function _rawName(k){return _ALAN_KISALT[k]||_aTr(k);}
   const alanEl=document.getElementById('enr-alan-list');
   if(alanEl) alanEl.innerHTML=(d.top_eksiklikler||[]).slice(0,8).map(e=>{
     const pct=e.pct||0;
