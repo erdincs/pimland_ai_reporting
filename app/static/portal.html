@@ -1379,8 +1379,8 @@ body,
     <!-- ✨ ÜRÜN ZENGİNLEŞTİRME -->
     <div class="section" id="section-enrichment" style="padding:0;flex-direction:column;overflow:hidden">
 
-      <!-- Üst bar — ortak filtreler, tüm alt sayfalarda sabit -->
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
+      <!-- Üst bar — dashboard/scorelist/products için; story kendi topbar'ını yönetir -->
+      <div id="enr-topbar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0">
         <span id="enr-page-title" style="font-size:13px;font-weight:700;color:var(--t1)">✨ Ürün Zenginleştirme</span>
         <select id="enr-marka-sel" onchange="onEnrFilterChange()" style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:11px">
           <option value="">Tüm Markalar</option>
@@ -1511,8 +1511,8 @@ body,
       </div>
 
       <!-- ── HİKAYE YAZICI ──────────────────────────────────────────── -->
-      <div id="enr-page-story" style="display:none;flex:1;overflow:hidden">
-        <div style="display:grid;grid-template-columns:230px 1fr 272px;height:100%;overflow:hidden">
+      <div id="enr-page-story" style="display:none;flex:1;overflow:hidden;min-height:0">
+        <div style="display:grid;grid-template-columns:230px 1fr 272px;flex:1;overflow:hidden;min-height:0;height:100%">
 
           <!-- LEFT: Ürün Seçimi -->
           <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
@@ -3952,6 +3952,9 @@ function showEnrPage(page){
     dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi',
     products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı'
   }[page]||'✨ Ürün Zenginleştirme';
+  // Story sayfasında ortak üst bar gizli — kendi sol paneli var
+  const topbar=document.getElementById('enr-topbar');
+  if(topbar) topbar.style.display=page==='story'?'none':'flex';
   if(page==='dashboard') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist') { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
   if(page==='products'){
