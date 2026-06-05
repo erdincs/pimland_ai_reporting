@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import agents, connectors, enrichment, export, files, health, ingestion, magaza_satis, monitoring, portal, query, reports, siralama
+from app.api.v1.endpoints import agents, connectors, enrichment, export, files, health, ingestion, magaza_satis, monitoring, portal, query, reports, reporting_agents, siralama
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -20,3 +20,4 @@ api_router.include_router(export.router)
 api_router.include_router(monitoring.router)
 api_router.include_router(siralama.router)
 api_router.include_router(magaza_satis.router)  # yonetici-ozeti, magaza-performans, donemseel-performans, donemseel-karsilastirma
+api_router.include_router(reporting_agents.router)  # chat + insights

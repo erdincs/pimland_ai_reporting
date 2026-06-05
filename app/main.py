@@ -74,6 +74,40 @@ async def lifespan(app: FastAPI):
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_yil_ay    ON incorta_magaza_performans(yil, ay)"))
         await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_bolge     ON incorta_magaza_performans(bolge_muduru)"))
         await conn.execute(_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)"))
+        # Mağaza satış özet materialized view (raporlama agent hızlı yol)
+        await conn.execute(_text("""
+            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_magaza_satis_ozet AS
+            SELECT
+                yil::integer AS yil,
+                ay::integer  AS ay,
+                bolge_muduru,
+                magaza,
+                SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) AS toplam_hedef,
+                SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END) AS toplam_ciro,
+                SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) AS toplam_ziyaretci,
+                SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) AS toplam_adet,
+                CASE WHEN SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) > 0
+                     THEN SUM(CASE WHEN mdo::text NOT IN ('--','') THEN mdo::float ELSE 0 END
+                              * CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
+                          / SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
+                     ELSE 0 END AS ort_mdo,
+                CASE WHEN SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) > 0
+                     THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
+                          / SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END)
+                     ELSE 0 END AS ort_obf,
+                CASE WHEN SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) > 0
+                     THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
+                          / SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END)
+                     ELSE 0 END AS hedef_oran
+            FROM incorta_magaza_performans
+            WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
+            GROUP BY yil::integer, ay::integer, bolge_muduru, magaza
+            WITH DATA
+        """))
+        await conn.execute(_text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_mag_pk "
+            "ON mv_magaza_satis_ozet (yil, ay, bolge_muduru, magaza)"
+        ))
         # Sıralama yönetimi tablosu
         await conn.execute(_text("""
             CREATE TABLE IF NOT EXISTS siralama_gecmisi (
