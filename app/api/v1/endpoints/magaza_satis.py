@@ -38,8 +38,19 @@ async def _fetch_from_db() -> List[List]:
         from sqlalchemy import text as _text
         async with ReadOnlySessionLocal() as session:
             result = await session.execute(_text("""
-                SELECT yil, ay, bolge_muduru, magaza, hedef, net_ciro,
-                       hedef_orani, ziyaretci, mdo, sepet, obf, net_adet
+                SELECT 
+                    CASE WHEN yil::text ~ '^[0-9]+$' THEN yil::integer ELSE 0 END AS yil,
+                    CASE WHEN ay::text  ~ '^[0-9.]+$' THEN ay::integer ELSE 0 END AS ay,
+                    bolge_muduru,
+                    magaza,
+                    CASE WHEN hedef::text    IN ('--','') OR hedef IS NULL    THEN 0 ELSE hedef::float    END AS hedef,
+                    CASE WHEN net_ciro::text IN ('--','') OR net_ciro IS NULL THEN 0 ELSE net_ciro::float END AS net_ciro,
+                    CASE WHEN hedef_orani::text IN ('--','') OR hedef_orani IS NULL THEN 0 ELSE hedef_orani::float END AS hedef_orani,
+                    CASE WHEN ziyaretci::text IN ('--','') OR ziyaretci IS NULL THEN 0 ELSE ziyaretci::float END AS ziyaretci,
+                    CASE WHEN mdo::text IN ('--','') OR mdo IS NULL THEN 0 ELSE mdo::float END AS mdo,
+                    CASE WHEN sepet::text IN ('--','') OR sepet IS NULL THEN 0 ELSE sepet::float END AS sepet,
+                    CASE WHEN obf::text IN ('--','') OR obf IS NULL THEN 0 ELSE obf::float END AS obf,
+                    CASE WHEN net_adet::text IN ('--','') OR net_adet IS NULL THEN 0 ELSE net_adet::float END AS net_adet
                 FROM incorta_magaza_performans
                 WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
                 ORDER BY yil, ay, bolge_muduru, magaza
