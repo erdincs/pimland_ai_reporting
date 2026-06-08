@@ -30,13 +30,44 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .btn-primary:hover{background:var(--acc2)}
 .btn-sm{padding:4px 10px;font-size:12px}
 
-/* ── Search hero ── */
-.hero{padding:32px 24px 20px;max-width:900px;margin:0 auto}
-.hero-title{font-size:26px;font-weight:800;margin-bottom:6px}
+/* ── Search hero — initial (centered) ── */
+.hero{
+  padding:0 24px;
+  max-width:none;
+  margin:0 auto;
+  min-height:calc(100vh - 65px);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  transition:min-height .4s ease,padding .4s ease,max-width .4s ease;
+}
+.hero-title{font-size:42px;font-weight:900;margin-bottom:10px;transition:font-size .35s ease}
 .hero-title span{color:var(--acc)}
-.hero-sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+.hero-sub{
+  color:var(--muted);font-size:15px;margin-bottom:28px;
+  max-height:40px;overflow:hidden;
+  transition:opacity .25s ease,max-height .35s ease,margin .35s ease;
+}
+.search-wrap{position:relative;display:flex;align-items:center;max-width:700px;width:100%}
 
-.search-wrap{position:relative;display:flex;align-items:center}
+/* ── Filters + content: hidden until search ── */
+.filters{display:none}
+.content{display:none}
+
+/* ── Searched state ── */
+body.searched .hero{
+  min-height:0;
+  padding:20px 24px 16px;
+  max-width:900px;
+  align-items:flex-start;
+  text-align:left;
+}
+body.searched .hero-title{font-size:22px}
+body.searched .hero-sub{opacity:0;max-height:0;margin:0}
+body.searched .search-wrap{max-width:100%}
+body.searched .filters{display:flex;animation:fadeUp .3s ease .1s both}
+body.searched .content{display:block;animation:fadeUp .3s ease .2s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .search-icon{position:absolute;left:16px;color:var(--muted);font-size:20px;pointer-events:none}
 #searchInput{width:100%;background:var(--card);border:2px solid var(--border);border-radius:14px;
   color:var(--text);font-size:18px;padding:14px 52px 14px 48px;outline:none;transition:.2s}
@@ -54,7 +85,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .ac-item:hover,.ac-item.active{background:var(--card2);color:var(--acc)}
 
 /* ── Filters row ── */
-.filters{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 16px;max-width:900px;margin:0 auto}
+.filters{flex-wrap:wrap;gap:8px;padding:0 24px 16px;max-width:900px;margin:0 auto}
 .filter-chip{display:flex;align-items:center;gap:6px;background:var(--card);
   border:1px solid var(--border);border-radius:99px;padding:5px 12px;cursor:pointer;
   font-size:12px;font-weight:500;color:var(--muted);transition:.15s;white-space:nowrap}
@@ -371,7 +402,7 @@ let priceAbortCtrl = null;
 ───────────────────────────────────────── */
 async function init(){
   await Promise.all([loadFilterOptions(), loadIndexStatus()]);
-  runSearch();
+  // İlk açılışta arama yapma — kullanıcı bir şey girince başlasın
 }
 
 async function loadFilterOptions(){
@@ -455,6 +486,14 @@ function clearSearch(){
   document.getElementById('expansionBar').style.display='none';
   hideAC();
   currentPage = 1;
+  // Filtre de yoksa başlangıç ekranına dön
+  const marka   = document.getElementById('fMarka').value;
+  const sezon   = document.getElementById('fSezon').value;
+  const internet = document.getElementById('fInternet').value;
+  if(!marka && !sezon && !internet){
+    document.body.classList.remove('searched');
+    return;
+  }
   runSearch();
 }
 
@@ -463,6 +502,12 @@ function resetFilters(){
     document.getElementById(id).value = ''
   );
   currentPage = 1;
+  // Sorgu da yoksa başlangıç ekranına dön
+  const q = document.getElementById('searchInput').value.trim();
+  if(!q){
+    document.body.classList.remove('searched');
+    return;
+  }
   runSearch();
 }
 
@@ -471,6 +516,15 @@ async function runSearch(){
   const marka   = document.getElementById('fMarka').value;
   const sezon   = document.getElementById('fSezon').value;
   const internet = document.getElementById('fInternet').value;
+
+  // Hiçbir kriter yoksa başlangıç ekranında kal
+  if(!q && !marka && !sezon && !internet){
+    document.body.classList.remove('searched');
+    return;
+  }
+
+  // İlk aramada arama ekranına geç
+  document.body.classList.add('searched');
 
   const params = new URLSearchParams({page: currentPage, limit: PAGE_SIZE, smart: 'true'});
   if(q)        params.set('q', q);
