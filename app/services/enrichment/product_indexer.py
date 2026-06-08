@@ -67,60 +67,90 @@ async def _embed_async(text: str, client, sem: asyncio.Semaphore) -> Optional[Li
 # ── Search text builder ───────────────────────────────────────────────────────
 
 def _build_search_text(row: Dict[str, Any]) -> str:
-    """Hem pim_products hem detail_json'dan zengin arama belgesi oluştur."""
+    """
+    Hem pim_products hem detail_json'dan zengin arama belgesi oluştur.
+
+    detail_json iki yapıda gelebilir:
+      - attrs bloğu varsa  → yeni scorer çıktısı (ham attribute'lar)
+      - attrs bloğu yoksa  → eski nested yapı (kumas/satis/temel/gorsel)
+    Her iki durumda da doğru değerleri çeker.
+    """
     parts: List[str] = []
 
-    # Temel kimlik (pim_products)
-    if row.get("marka_adi"):       parts.append(row["marka_adi"])
-    if row.get("urun_adi"):        parts.append(row["urun_adi"])
-    if row.get("sezon_adi"):       parts.append(row["sezon_adi"])
-    if row.get("tema_adi"):        parts.append(f"Tema: {row['tema_adi']}")
-    if row.get("ana_grup_adi"):    parts.append(row["ana_grup_adi"])
-    if row.get("urun_grubu_adi"):  parts.append(row["urun_grubu_adi"])
-    if row.get("fabricmaterialname"): parts.append(f"Kumaş: {row['fabricmaterialname']}")
+    # ── Temel kimlik (pim_products) ──────────────────────────────────────────
+    if row.get("marka_adi"):      parts.append(row["marka_adi"])
+    if row.get("urun_adi"):       parts.append(row["urun_adi"])
+    if row.get("sezon_adi"):      parts.append(row["sezon_adi"])
+    if row.get("tema_adi"):       parts.append(f"Tema: {row['tema_adi']}")
+    if row.get("ana_grup_adi"):   parts.append(row["ana_grup_adi"])
+    if row.get("urun_grubu_adi"): parts.append(row["urun_grubu_adi"])
+    if row.get("fabricmaterialname"):
+        parts.append(f"Kumaş: {row['fabricmaterialname']}")
 
-    # Zengin veri: enrichment_quality.detail_json
     detail: Dict = row.get("detail_json") or {}
 
-    if detail.get("description"):
-        parts.append(detail["description"])
+    # ── Yeni yapı: attrs bloğu ───────────────────────────────────────────────
+    attrs: Dict = detail.get("attrs") or {}
 
-    if detail.get("fabricMaterialName"):
-        parts.append(f"Kumaş: {detail['fabricMaterialName']}")
+    def _a(key: str) -> str:
+        return (attrs.get(key) or "").strip()
 
-    # Kumaş içerik (barcodes'dan)
-    for b in (detail.get("barcodes") or [])[:1]:
-        mat = b.get("mainMaterialContent", "")
-        if mat:
-            parts.append(f"İçerik: {mat}")
-            break
+    if _a("description"):        parts.append(_a("description")[:300])
+    if _a("fabricMaterialName"): parts.append(f"Kumaş: {_a('fabricMaterialName')}")
+    if _a("mainMaterialContent"):parts.append(f"İçerik: {_a('mainMaterialContent')[:150]}")
+    if _a("fitName"):            parts.append(f"Kalıp: {_a('fitName')}")
+    if _a("productTypeName"):    parts.append(_a("productTypeName"))
 
-    if detail.get("fitName"):
-        parts.append(f"Kalıp: {detail['fitName']}")
-
-    # Ürün hikayeleri
-    for s in (detail.get("productStories") or [])[:2]:
-        txt = s.get("storyText") or ""
-        if txt:
-            parts.append(txt[:200])
+    # Ürün özellikleri (yeni alanlar)
+    if _a("styleName"):          parts.append(f"Stil: {_a('styleName')}")
+    if _a("armLengthName"):      parts.append(_a("armLengthName"))
+    if _a("collarTypeName"):     parts.append(_a("collarTypeName"))
+    if _a("fabricPatternName"):  parts.append(_a("fabricPatternName"))
+    if _a("productLengthName"):  parts.append(_a("productLengthName"))
 
     # E-ticaret etiketleri
     for i in range(1, 5):
-        tag = detail.get(f"ecomTag{i}")
-        if tag:
-            parts.append(tag)
+        tag = attrs.get(f"ecomTag{i}")
+        if tag: parts.append(str(tag))
 
-    if detail.get("notes"):
-        parts.append(f"Not: {detail['notes'][:200]}")
+    # Renk adları
+    for renk in (attrs.get("renk_adlari") or [])[:5]:
+        if renk: parts.append(renk)
+
+    # Ürün hikayeleri
+    for s in (attrs.get("productStories") or [])[:2]:
+        if s: parts.append(str(s)[:200])
+
+    if _a("notes"): parts.append(f"Not: {_a('notes')[:200]}")
 
     # Bakım talimatları
-    care_names = [
-        c.get("instructionName", "")
-        for c in (detail.get("washingAndCareInstructions") or [])[:3]
-        if c.get("instructionName")
-    ]
-    if care_names:
-        parts.append("Bakım: " + ", ".join(care_names))
+    care = [c for c in (attrs.get("washingAndCareInstructions") or []) if c]
+    if care: parts.append("Bakım: " + ", ".join(care[:4]))
+
+    # ── Eski yapı: nested detail (attrs yoksa) ───────────────────────────────
+    if not attrs:
+        def _deger(section: str, key: str) -> str:
+            val = ((detail.get(section) or {}).get(key) or {}).get("deger")
+            return str(val).strip() if val and val != "None" else ""
+
+        if _deger("satis", "Ürün Açıklaması"):
+            parts.append(_deger("satis", "Ürün Açıklaması")[:300])
+        if _deger("kumas", "Kumaş Adı"):
+            parts.append(f"Kumaş: {_deger('kumas', 'Kumaş Adı')}")
+        if _deger("kumas", "Kumaş İçerik %"):
+            parts.append(f"İçerik: {_deger('kumas', 'Kumaş İçerik %')[:150]}")
+        if _deger("kumas", "Kalıp Tipi"):
+            parts.append(f"Kalıp: {_deger('kumas', 'Kalıp Tipi')}")
+        if _deger("temel", "Kumaş Tipi"):
+            parts.append(_deger("temel", "Kumaş Tipi"))
+        if _deger("satis", "Koleksiyon Teması"):
+            parts.append(_deger("satis", "Koleksiyon Teması"))
+        for i in range(1, 5):
+            tag = _deger("satis", f"E-Ticaret Etiketi {i}")
+            if tag: parts.append(tag)
+        care_val = ((detail.get("kumas") or {}).get("Bakım Talimatları") or {}).get("deger")
+        if isinstance(care_val, list):
+            parts.append("Bakım: " + ", ".join(str(c) for c in care_val[:4] if c))
 
     return " | ".join(p for p in parts if p).strip()
 
@@ -154,19 +184,43 @@ def _compute_hash(row: Dict[str, Any]) -> str:
 def _build_metadata(row: Dict[str, Any]) -> Dict[str, Any]:
     """Filtre için metadata JSONB."""
     detail: Dict = row.get("detail_json") or {}
-    images = detail.get("productImages") or []
+    attrs:  Dict = detail.get("attrs") or {}
+    images   = detail.get("productImages") or []
     barcodes = detail.get("barcodes") or []
+
+    # Eski nested yapıdan değer çekme yardımcısı
+    def _deger(section: str, key: str):
+        val = ((detail.get(section) or {}).get(key) or {}).get("deger")
+        return val if val and val != "None" else None
+
+    fit  = (attrs.get("fitName")
+            or _deger("kumas", "Kalıp Tipi")
+            or detail.get("fitName"))
+    kumaş = (attrs.get("fabricMaterialName")
+             or _deger("kumas", "Kumaş Adı")
+             or row.get("fabricmaterialname"))
+    tip   = (attrs.get("productTypeName")
+             or _deger("temel", "Kumaş Tipi"))
+
     return {
-        "sezon":        row.get("sezon_kodu"),
-        "marka":        row.get("marka_adi"),
-        "tema":         row.get("tema_adi"),
-        "ana_grup":     row.get("ana_grup_adi"),
-        "kategori":     row.get("urun_grubu_adi"),
-        "fit":          detail.get("fitCode") or detail.get("fitName"),
-        "gorsel_sayisi": len(images),
-        "video_var":    any(img.get("type") == "video" for img in images),
-        "beden_sayisi": len([b for b in barcodes if (b.get("stock") or 0) > 0]),
-        "renk_sayisi":  len(set(b.get("colorCode", "") for b in barcodes if b.get("colorCode"))),
+        "sezon":              row.get("sezon_kodu"),
+        "marka":              row.get("marka_adi"),
+        "tema":               row.get("tema_adi"),
+        "ana_grup":           row.get("ana_grup_adi"),
+        "kategori":           row.get("urun_grubu_adi"),
+        "fit":                fit,
+        "kumas":              kumaş,
+        "product_type":       tip,
+        "style":              attrs.get("styleName"),
+        "kol_uzunlugu":       attrs.get("armLengthName"),
+        "yaka_tipi":          attrs.get("collarTypeName"),
+        "desen":              attrs.get("fabricPatternName"),
+        "uzunluk":            attrs.get("productLengthName"),
+        "renk_adlari":        (attrs.get("renk_adlari") or [])[:8],
+        "gorsel_sayisi":      len(images),
+        "video_var":          any(img.get("type") == "video" for img in images),
+        "beden_sayisi":       len([b for b in barcodes if (b.get("stock") or 0) > 0]),
+        "renk_sayisi":        len(set(b.get("colorCode", "") for b in barcodes if b.get("colorCode"))),
     }
 
 

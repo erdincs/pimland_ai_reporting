@@ -276,7 +276,41 @@ def score_product(stock_code: str, product_data: dict) -> dict:
                      _extract_color_from_name_static(img.get("name",""), sku)) == rc]
         gorsel_renk_map[rc] = {"sayi": len(renk_imgs), "var": len(renk_imgs) > 0}
 
+    # Renk adları (barcodes'dan benzersiz liste)
+    renk_adlari = sorted(set(
+        b.get("colorName") or b.get("colorCode", "")
+        for b in barcodes
+        if b.get("colorName") or b.get("colorCode")
+    ))
+
     detail = {
+        # Ham ürün özellikleri — search_text için kullanılır
+        "attrs": {
+            "styleName":        product_data.get("styleName"),
+            "armLengthName":    product_data.get("armLengthName"),
+            "collarTypeName":   product_data.get("collarTypeName"),
+            "fabricPatternName":product_data.get("fabricPatternName"),
+            "productLengthName":product_data.get("productLengthName"),
+            "productTypeName":  product_data.get("productTypeName"),
+            "fitName":          product_data.get("fitName"),
+            "fabricMaterialName": product_data.get("fabricMaterialName"),
+            "description":      product_data.get("description"),
+            "notes":            product_data.get("notes"),
+            "ecomTag1":         product_data.get("ecomTag1Name") or product_data.get("ecomTag1Code"),
+            "ecomTag2":         product_data.get("ecomTag2Name") or product_data.get("ecomTag2Code"),
+            "ecomTag3":         product_data.get("ecomTag3Name") or product_data.get("ecomTag3Code"),
+            "ecomTag4":         product_data.get("ecomTag4Name") or product_data.get("ecomTag4Code"),
+            "renk_adlari":      renk_adlari[:10],
+            "mainMaterialContent": barcodes[0].get("mainMaterialContent") if barcodes else None,
+            "washingAndCareInstructions": [
+                c.get("instructionName") for c in (product_data.get("washingAndCareInstructions") or [])[:4]
+                if c.get("instructionName")
+            ],
+            "productStories": [
+                s.get("storyText") for s in (product_data.get("productStories") or [])[:2]
+                if s.get("storyText")
+            ],
+        },
         "temel": {
             "Ürün Açıklaması": {"deger": desc[:80] if desc else None, "skor": t if t > 0 else 0, "maks": 5},
             "Marka":           {"deger": product_data.get("brandName") or product_data.get("brandCode"), "skor": 4 if product_data.get("brandCode") else 0, "maks": 4},
@@ -353,6 +387,13 @@ def _merge_mcp_into_product_data(product_data: dict, mcp_details: dict) -> dict:
         "brandCode", "brandName",
         "seasonCode", "seasonName",
         "isBlocked", "useInternet", "hasDiscount", "isNewProduct",
+        # Ürün özellikleri — arama belgesi için gerekli
+        "styleCode", "styleName",
+        "armLengthCode", "armLengthName",
+        "collarTypeCode", "collarTypeName",
+        "fabricPatternCode", "fabricPatternName",
+        "productLengthCode", "productLengthName",
+        "productCategoryCode", "productCategoryName",
     ]:
         val = mcp_details.get(field)
         if val is not None:
