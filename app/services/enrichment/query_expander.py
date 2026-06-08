@@ -37,11 +37,33 @@ Kullanıcı sorgusundan şu bilgileri ÇIKAR (UYDURMA):
    - Soğuk → yün, polar, kaşmir, kalın
    - Aktif → esnek, terletmeyen
 
-5. ÜRÜN TİPİ: Kullanıcı belirttiyse al, yoksa null.
+5. BEDEN / ÖLÇÜ — bu boyut önemli, dikkatli değerlendir:
+   Kullanıcı beden/numara/ölçü ifadesi geçirirse ilgili bedenleri yakın değerlerle genişlet.
+   - Harf bedenler XS/S/M/L/XL/XXL: komşu bedenleri de ekle
+     XS → "XS S beden küçük"
+     S  → "XS S M beden"
+     M  → "S M L beden orta"
+     L  → "M L XL beden"
+     XL → "L XL XXL beden büyük"
+     XXL → "XL XXL beden büyük"
+   - Numara bedenler (34/36/38/40/42/44...): ±2 yakın numaraları da ekle
+     36 → "34 36 38 beden numara"
+     38 → "36 38 40 beden numara"
+     40 → "38 40 42 beden numara"
+   - Vücut ölçüleri cm:
+     "göğüs 90" → "Göğüs 88 90 92 94 cm ölçü beden"
+     "bel 70"   → "Bel 68 70 72 74 cm ölçü beden"
+     "kalça 96" → "Kalça 94 96 98 100 cm ölçü beden"
+   - Türkçe eşdeğerler: "beden" = "numara" = "size" = "ölçü"
+   - Büyük/küçük beden: büyük → XL XXL; küçük → XS S
+   - "Oversize/salaş" → L XL XXL oversize bol kalıp
+   - "Slim fit/dar kalıp" → XS S M slim fit
+
+6. ÜRÜN TİPİ: Kullanıcı belirttiyse al, yoksa null.
    - elbise/bluz/pantolon/mont/gömlek/etek/ceket/mayo/şort
 
-KURAL: Bilmediğin şeyi UYDURMA. Kullanıcı sadece "elbise öner" dediyse
-mevsim/yer çıkaramazsın → expanded sadece temel kelimeler.
+KURAL: Bilmediğin şeyi UYDURMA. Kullanıcı beden söylemediyse
+beden boyutuna dokunma → expanded'a beden terimi ekleme.
 
 YANITINI SADECE JSON FORMATINDA VER (başka hiçbir şey yazma):
 {"expanded":"virgülle ayrılmış anahtar kelimeler","product_type":"ürün tipi veya null","season_hint":"yaz/kış/ara mevsim veya null","context":"kısa açıklama 1 cümle"}
@@ -49,6 +71,15 @@ YANITINI SADECE JSON FORMATINDA VER (başka hiçbir şey yazma):
 ÖRNEKLER:
 Sorgu: "Temmuzda Antalya'ya gidiyorum, elbise öner"
 {"expanded":"yaz, sıcak hava, plaj, deniz, Akdeniz, tatil, hafif kumaş, pamuk, keten, beach wear, gündüz, açık renkli, rahat kesim, dökümlü","product_type":"Elbise","season_hint":"yaz","context":"Yaz tatili için plaj/deniz kullanımına uygun elbise"}
+
+Sorgu: "M beden bluz"
+{"expanded":"S M L beden bluz orta","product_type":"Bluz","season_hint":null,"context":"Orta (M) beden, ±1 komşu bedenler dahil bluz"}
+
+Sorgu: "38 numara pantolon"
+{"expanded":"36 38 40 beden numara pantolon","product_type":"Pantolon","season_hint":null,"context":"38 numara, yakın bedenler dahil pantolon"}
+
+Sorgu: "bel 72 cm olan etek"
+{"expanded":"Bel 70 72 74 76 cm ölçü beden etek","product_type":"Etek","season_hint":null,"context":"Bel ölçüsü 72 cm ve yakın değerli etek"}
 
 Sorgu: "Ofise giyebileceğim şık bir şey"
 {"expanded":"ofis, iş, profesyonel, şık, klasik, formal, business, working chic, günlük, kapalı","product_type":null,"season_hint":null,"context":"Ofis/iş ortamı için şık ürün"}

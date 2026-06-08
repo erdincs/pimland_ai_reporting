@@ -853,13 +853,18 @@ async def get_search_index_status(
 async def trigger_reindex(
     background_tasks: BackgroundTasks,
     skip_embeddings: bool = False,
+    skip_sizes: bool = False,
 ) -> Dict[str, Any]:
-    """Arama indexini yeniden oluştur (arka planda)."""
+    """Arama indexini yeniden oluştur (arka planda).
+
+    skip_sizes=true  → MCP beden/ölçü verisi çekmeden indexle (hızlı FTS modu).
+    skip_sizes=false → Beden verisi de çekilir; daha uzun sürer (~15 dk).
+    """
     job_id = str(uuid.uuid4())[:8]
     key = f"enrichment:index:{job_id}"
     await _redis.setex(key, 7200, json.dumps({"status": "queued", "indexed": 0}))
 
-    def _run_bg(jid: str, skip: bool) -> None:
+    def _run_bg(jid: str, skip_emb: bool, skip_sz: bool) -> None:
         import asyncio as _asyncio
         import redis.asyncio as _redis_mod
         from app.services.enrichment.product_indexer import run_indexer
@@ -873,7 +878,11 @@ async def trigger_reindex(
                     _asyncio.ensure_future(
                         rc.setex(k, 7200, json.dumps({"status": "running", "indexed": cur, "total": tot}))
                     )
-                result = await run_indexer(progress_cb=_progress, skip_embeddings=skip)
+                result = await run_indexer(
+                    progress_cb=_progress,
+                    skip_embeddings=skip_emb,
+                    skip_sizes=skip_sz,
+                )
                 await rc.setex(k, 7200, json.dumps({"status": "done", **result}))
             except Exception as exc:
                 await rc.setex(k, 7200, json.dumps({"status": "failed", "error": str(exc)}))
@@ -882,8 +891,13 @@ async def trigger_reindex(
 
         _asyncio.run(_go())
 
-    background_tasks.add_task(_run_bg, job_id, skip_embeddings)
-    return {"job_id": job_id, "status": "started", "skip_embeddings": skip_embeddings}
+    background_tasks.add_task(_run_bg, job_id, skip_embeddings, skip_sizes)
+    return {
+        "job_id": job_id,
+        "status": "started",
+        "skip_embeddings": skip_embeddings,
+        "skip_sizes": skip_sizes,
+    }
 
 
 @router.get("/search/index/status/{job_id}")

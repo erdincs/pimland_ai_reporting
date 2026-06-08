@@ -1,10 +1,11 @@
-"""Ürün arama indexleyici — pim_products + enrichment_quality → product_search_index.
+"""Ürün arama indexleyici — pim_products + enrichment_quality + MCP sizes → product_search_index.
 
 Her ürün için:
-  1. search_text belgesi oluşturur (temel + zengin MCP verisi detail_json'dan)
+  1. search_text belgesi oluşturur (temel + zengin MCP verisi detail_json'dan + beden bilgisi)
   2. pimland_hash hesaplar → delta indexing (sadece değişenler)
   3. AWS Bedrock Titan Embed v2 ile embedding üretir (pgvector mevcut ise)
-  4. UPSERT yapar — fts_vector GENERATED ALWAYS AS ile otomatik güncellenir
+  4. MCP get_product_size_type_values ile internet ölçülerini çeker → size_info
+  5. UPSERT yapar — fts_vector GENERATED ALWAYS AS ile otomatik güncellenir
 
 Nightly job (04:00) + manuel tetikleme (POST /enrichment/search/index).
 """
@@ -309,7 +310,7 @@ def _format_embedding(embedding: Optional[List[float]], use_vector: bool) -> Opt
 def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
     emb_cast = "%s::vector" if use_vector else "%s"
     template = (
-        f"(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,{emb_cast},NOW())"
+        f"(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,{emb_cast},NOW())"
     )
 
     with conn.cursor() as cur:
@@ -328,6 +329,7 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 json.dumps(r.get("metadata") or {}),
                 float(r.get("brut_ciro_30g") or 0),
                 float(r.get("net_ciro_30g") or 0),
+                r.get("size_info") or None,
                 _format_embedding(r["embedding"], use_vector),
             )
             for r in rows
@@ -346,6 +348,7 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 brut_ciro,
                 search_text, pimland_hash, metadata,
                 brut_ciro_30g, net_ciro_30g,
+                size_info,
                 embedding, last_indexed_at
             ) VALUES %s
             ON CONFLICT (urun_kodu) DO UPDATE SET
@@ -369,6 +372,7 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 metadata           = EXCLUDED.metadata,
                 brut_ciro_30g      = EXCLUDED.brut_ciro_30g,
                 net_ciro_30g       = EXCLUDED.net_ciro_30g,
+                size_info          = COALESCE(EXCLUDED.size_info, product_search_index.size_info),
                 embedding          = EXCLUDED.embedding,
                 last_indexed_at    = NOW()
             """,
@@ -402,11 +406,122 @@ def _create_ivfflat_index_if_needed(conn) -> None:
         conn.commit()
 
 
+# ── MCP size fetch ───────────────────────────────────────────────────────────
+
+def _listify_any(raw) -> list:
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, dict):
+        for k in ("items", "data", "result", "values", "sizes"):
+            if isinstance(raw.get(k), list):
+                return raw[k]
+    return []
+
+
+def _format_size_info(size_values_raw, sizes_raw) -> str:
+    """MCP size_type_values + sizes → arama metni.
+
+    Örnek çıktı:
+      Beden: XS S M L XL | Göğüs: 88-100 cm | Bel: 68-80 cm | Kalça: 96-108 cm
+    """
+    parts: list = []
+
+    # ── Beden kodları (get_product_sizes) ──────────────────────────────────
+    sizes = _listify_any(sizes_raw)
+    codes: list = []
+    for s in sizes:
+        if not isinstance(s, dict):
+            continue
+        code = (s.get("sizeCode") or s.get("sizeName") or
+                s.get("name") or s.get("code") or "").strip()
+        if code:
+            codes.append(code)
+    if codes:
+        parts.append("Beden: " + " ".join(codes[:20]))
+
+    # ── Ölçü değerleri (get_product_size_type_values) ──────────────────────
+    sv_list = _listify_any(size_values_raw)
+
+    # Ölçü adı → (min, max, unit) topla
+    measurements: dict = {}
+    for sv in sv_list:
+        if not isinstance(sv, dict):
+            continue
+        # Alan adı: sizeTypeName / name / measurementTypeName
+        name = (sv.get("sizeTypeName") or sv.get("measurementTypeName") or
+                sv.get("name") or "").strip()
+        if not name:
+            continue
+        unit = (sv.get("unit") or sv.get("measurementUnit") or "cm").strip()
+        # Değer: direkt veya min/max
+        val    = sv.get("value") or sv.get("measurementValue")
+        min_v  = sv.get("minValue") or sv.get("min")
+        max_v  = sv.get("maxValue") or sv.get("max")
+
+        if val is not None:
+            try:
+                v = float(str(val).replace(",", "."))
+                prev = measurements.get(name)
+                if prev:
+                    measurements[name] = (min(prev[0], v), max(prev[1], v), unit)
+                else:
+                    measurements[name] = (v, v, unit)
+            except (ValueError, TypeError):
+                pass
+        elif min_v is not None or max_v is not None:
+            try:
+                lo = float(str(min_v or max_v).replace(",", "."))
+                hi = float(str(max_v or min_v).replace(",", "."))
+                prev = measurements.get(name)
+                if prev:
+                    measurements[name] = (min(prev[0], lo), max(prev[1], hi), unit)
+                else:
+                    measurements[name] = (lo, hi, unit)
+            except (ValueError, TypeError):
+                pass
+
+    for name, (lo, hi, unit) in measurements.items():
+        if lo == hi:
+            parts.append(f"{name}: {int(lo)} {unit}")
+        else:
+            parts.append(f"{name}: {int(lo)}-{int(hi)} {unit}")
+
+    return " | ".join(parts)
+
+
+async def _fetch_size_info_async(
+    urun_kodu: str,
+    sem: asyncio.Semaphore,
+) -> str:
+    """Tek ürün için MCP'den beden + ölçü bilgisi çeker."""
+    async with sem:
+        try:
+            import httpx
+            from app.connectors.pimland_live import _get_token, _call_tool
+            async with httpx.AsyncClient(timeout=20) as client:
+                token = await _get_token(client)
+                sv_raw, sz_raw = await asyncio.gather(
+                    _call_tool(client, token,
+                               "post_api_Product_get_product_size_type_values",
+                               {"stockCode": urun_kodu}),
+                    _call_tool(client, token,
+                               "post_api_Product_get_product_sizes",
+                               {"stockCode": urun_kodu}),
+                )
+            return _format_size_info(sv_raw, sz_raw)
+        except Exception as exc:
+            log.debug("indexer.size_fetch_fail", urun_kodu=urun_kodu, error=str(exc))
+            return ""
+
+
 # ── Ana indexer ───────────────────────────────────────────────────────────────
 
 async def run_indexer(
     progress_cb=None,
     skip_embeddings: bool = False,
+    skip_sizes: bool = False,
     force_reindex: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -415,6 +530,7 @@ async def run_indexer(
     force_reindex=False (varsayılan) → sadece değişen ürünleri işle (delta).
     force_reindex=True               → tüm ürünleri yeniden indexle.
     skip_embeddings=True             → embedding olmadan sadece FTS indexler.
+    skip_sizes=True                  → MCP beden verisi çekmeden indexle (hızlı mod).
     """
     t0 = time.perf_counter()
     log.info("indexer.started", force=force_reindex, skip_emb=skip_embeddings)
@@ -439,8 +555,9 @@ async def run_indexer(
                     "errors": 0, "elapsed_ms": 0}
 
         if not skip_embeddings and use_vector:
-            bedrock = _bedrock_client()
-            sem     = asyncio.Semaphore(_BATCH_CONCURRENT)
+            bedrock  = _bedrock_client()
+            sem      = asyncio.Semaphore(_BATCH_CONCURRENT)
+        size_sem = asyncio.Semaphore(6)  # MCP concurrent limit
 
         indexed = skipped = errors = 0
         pending: List[Dict[str, Any]] = []
@@ -450,24 +567,57 @@ async def run_indexer(
             r["pimland_hash"] = _compute_hash(r)
             r["metadata"]    = _build_metadata(r)
             r["embedding"]   = None
+            r["size_info"]   = None
 
             if not force_reindex and existing.get(r["urun_kodu"]) == r["pimland_hash"]:
                 skipped += 1
                 continue
             pending.append(r)
 
-        # Embedding + UPSERT — chunk bazlı
+        # Embedding + size fetch + UPSERT — chunk bazlı
         for i in range(0, len(pending), _UPSERT_CHUNK):
             chunk = pending[i: i + _UPSERT_CHUNK]
 
+            # Embedding ve beden verisi paralel çek
+            tasks = []
             if not skip_embeddings and use_vector:
-                embeddings = await asyncio.gather(*[
+                tasks.append(asyncio.gather(*[
                     _embed_async(r["search_text"], bedrock, sem) for r in chunk
-                ])
-                for r, emb in zip(chunk, embeddings):
-                    r["embedding"] = emb
-                    if emb is None:
+                ]))
+            else:
+                tasks.append(asyncio.gather(*[asyncio.sleep(0) for _ in chunk]))
+
+            if not skip_sizes:
+                tasks.append(asyncio.gather(*[
+                    _fetch_size_info_async(r["urun_kodu"], size_sem) for r in chunk
+                ]))
+            else:
+                tasks.append(asyncio.gather(*[asyncio.sleep(0) for _ in chunk]))
+
+            results = await asyncio.gather(*tasks)
+            embeddings  = results[0]
+            size_infos  = results[1]
+
+            for r, emb, sz in zip(chunk, embeddings, size_infos):
+                if not skip_embeddings and use_vector:
+                    r["embedding"] = emb if not isinstance(emb, type(None)) else None
+                    if r["embedding"] is None:
                         errors += 1
+                if not skip_sizes and sz:
+                    r["size_info"] = sz
+                    # Beden bilgisini embedding metnine de ekle
+                    r["search_text"] = r["search_text"] + " | " + sz
+
+            # Beden eklenmiş search_text ile embedding yeniden üret
+            if not skip_sizes and not skip_embeddings and use_vector:
+                updated_embs = await asyncio.gather(*[
+                    _embed_async(r["search_text"], bedrock, sem)
+                    if r.get("size_info") else asyncio.sleep(0)
+                    for r in chunk
+                ])
+                for r, upd_emb in zip(chunk, updated_embs):
+                    if r.get("size_info") and upd_emb is not None:
+                        r["embedding"] = upd_emb
 
             _upsert_batch(conn, chunk, use_vector)
             indexed += len(chunk)
