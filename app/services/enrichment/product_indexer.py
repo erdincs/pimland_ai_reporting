@@ -196,11 +196,11 @@ def _fetch_products(conn) -> List[Dict[str, Any]]:
             WITH satis_30g AS (
                 SELECT
                     s.urun_kodu,
-                    ROUND(SUM(s.tutar)::numeric, 2)            AS brut_ciro_30g,
-                    ROUND(SUM(s.tutar) - COALESCE(ABS(SUM(d.tutar)), 0), 2) AS net_ciro_30g,
+                    ROUND(SUM(s.tutar)::numeric, 2)                                          AS brut_ciro_30g,
+                    ROUND((SUM(s.tutar) - COALESCE(ABS(SUM(d.tutar)), 0))::numeric, 2)       AS net_ciro_30g,
                     CASE WHEN SUM(s.tutar) > 0
-                         THEN ROUND(COALESCE(ABS(SUM(d.tutar)), 0) / SUM(s.tutar) * 100, 1)
-                         ELSE 0 END                            AS iade_orani
+                         THEN ROUND(COALESCE(ABS(SUM(d.tutar)), 0)::numeric / SUM(s.tutar)::numeric * 100, 1)
+                         ELSE 0 END                                                          AS iade_orani
                 FROM incorta_satis s
                 LEFT JOIN incorta_depo_iade d ON d.urun_kodu = s.urun_kodu
                     AND d.yil = s.yil AND d.ay = s.ay
