@@ -229,6 +229,28 @@ body.searched .content{display:block;animation:fadeUp .3s ease .2s both}
 .pmodal-size-chip .sz-qty{font-size:10px;color:var(--muted);margin-top:2px}
 .pmodal-size-chip.has-stock .sz-qty{color:var(--green)}
 
+/* ── Light mode ── */
+body.light{
+  --bg:#f8fafc;--card:#ffffff;--card2:#f1f5f9;--border:#e2e8f0;
+  --text:#1e293b;--muted:#94a3b8;
+  --green:#16a34a;--blue:#2563eb;--yellow:#d97706;--red:#dc2626;
+}
+body.light .hdr{box-shadow:0 1px 3px rgba(0,0,0,.07)}
+body.light #searchInput{background:#fff}
+body.light .skeleton-card{background:#e2e8f0}
+body.light .skel-img,.skel-line{background:#e2e8f0 !important}
+body.light .autocomplete-list{box-shadow:0 8px 32px rgba(0,0,0,.12)}
+body.light .modal,.light .pmodal,.light .auth-box{box-shadow:0 8px 40px rgba(0,0,0,.12)}
+
+/* Color swatches */
+.pmodal-colors{display:flex;flex-wrap:wrap;gap:8px}
+.pmodal-color-swatch{width:48px;height:48px;border-radius:8px;overflow:hidden;
+  cursor:pointer;border:2px solid var(--border);transition:.15s;
+  flex-shrink:0;background:var(--card2)}
+.pmodal-color-swatch:hover{border-color:var(--acc);transform:scale(1.06)}
+.pmodal-color-swatch.active{border-color:var(--acc);box-shadow:0 0 0 3px rgba(255,107,43,.25)}
+.pmodal-color-swatch img{width:100%;height:100%;object-fit:cover;display:block}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card2);
   border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;
@@ -277,6 +299,7 @@ body.searched .content{display:block;animation:fadeUp .3s ease .2s both}
   <span style="font-size:14px;font-weight:600">AI Search Engine</span>
   <div class="hdr-right">
     <span class="index-badge" id="indexBadge">Index yükleniyor…</span>
+    <button class="btn btn-ghost btn-sm" id="themeBtn" onclick="toggleTheme()" title="Tema değiştir">☀️</button>
     <button class="btn btn-ghost btn-sm" onclick="openIndexModal()">⚙ Index</button>
     <a href="/api/v1/portal" class="btn btn-ghost btn-sm">Portal'a dön</a>
   </div>
@@ -805,7 +828,7 @@ async function fetchProductDetail(urunKodu){
 }
 
 function renderProductModal(d){
-  // Image
+  // Image (ilk renk)
   const imgWrap = document.getElementById('pmodalImgWrap');
   if(d.default_image_url){
     imgWrap.innerHTML = `<img src="${d.default_image_url}" alt="${esc(d.urun_adi||'')}"
@@ -820,15 +843,57 @@ function renderProductModal(d){
     priceHtml = `<div class="pmodal-price">₺ ${fmtPrice}</div>`;
   }
 
-  // Features grid
+  // Colors
+  let colorsHtml = '';
+  const colors = d.colors || [];
+  if(colors.length > 0){
+    const swatches = colors.map((c, i) => `
+      <div class="pmodal-color-swatch ${i===0?'active':''}"
+           onclick="changeModalColor('${esc(d.urun_kodu)}','${esc(c.code)}',this)"
+           title="${esc(c.code)}">
+        <img src="${c.image_url}" alt="${esc(c.code)}"
+             onerror="this.parentElement.style.background='var(--card2)'">
+      </div>`).join('');
+    colorsHtml = `
+      <div>
+        <div class="pmodal-section-title">Renkler &nbsp;<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:12px;color:var(--muted)">${colors.length} seçenek</span></div>
+        <div class="pmodal-colors">${swatches}</div>
+      </div>`;
+  }
+
+  // Sizes + Stock
+  let sizesHtml = '';
+  if(d.stock_total != null){
+    const inStock = d.stock_total > 0;
+    const badgeCls = inStock ? 'in-stock' : 'out-of-stock';
+    const badgeTxt = inStock ? `● Stokta &nbsp;·&nbsp; ${d.stock_total} adet` : '● Stok Yok';
+    const sizeEntries = Object.entries(d.stock_by_size || {});
+    let sizeChips = '';
+    if(sizeEntries.length){
+      sizeChips = `<div class="pmodal-stock-sizes" style="margin-top:10px">
+        ${sizeEntries.map(([sz, qty]) => `
+          <div class="pmodal-size-chip ${qty > 0 ? 'has-stock' : ''}">
+            <span class="sz-code">${esc(sz)}</span>
+            <span class="sz-qty">${qty}</span>
+          </div>`).join('')}
+      </div>`;
+    }
+    sizesHtml = `
+      <div>
+        <div class="pmodal-section-title">Beden / Stok</div>
+        <div class="pmodal-stock-badge ${badgeCls}">${badgeTxt}</div>
+        ${sizeChips}
+      </div>`;
+  }
+
+  // Features grid (marka, sezon, kumaş…)
   const feats = [];
-  if(d.marka_adi)       feats.push({l:'Marka',        v:d.marka_adi});
-  if(d.sezon_adi)       feats.push({l:'Sezon',        v:`${d.sezon_adi}${d.sezon_kodu?' ('+d.sezon_kodu+')':''}`});
-  if(d.ana_grup_adi)    feats.push({l:'Kategori',     v:d.ana_grup_adi});
-  if(d.urun_grubu_adi)  feats.push({l:'Ürün Grubu',  v:d.urun_grubu_adi});
-  if(d.tema_adi)        feats.push({l:'Tema',         v:d.tema_adi});
-  if(d.fabricmaterialname) feats.push({l:'Kumaş',    v:d.fabricmaterialname});
-  if(d.color_count > 0) feats.push({l:'Renk',         v:`${d.color_count} seçenek`});
+  if(d.marka_adi)          feats.push({l:'Marka',      v:d.marka_adi});
+  if(d.sezon_adi)          feats.push({l:'Sezon',      v:`${d.sezon_adi}${d.sezon_kodu?' ('+d.sezon_kodu+')':''}`});
+  if(d.ana_grup_adi)       feats.push({l:'Kategori',   v:d.ana_grup_adi});
+  if(d.urun_grubu_adi)     feats.push({l:'Ürün Grubu', v:d.urun_grubu_adi});
+  if(d.tema_adi)           feats.push({l:'Tema',       v:d.tema_adi});
+  if(d.fabricmaterialname) feats.push({l:'Kumaş',      v:d.fabricmaterialname});
   feats.push({l:'İnternet', v:d.internet_aktif ? '✓ Aktif' : '✗ Pasif'});
 
   const featsHtml = feats.length ? `
@@ -846,74 +911,44 @@ function renderProductModal(d){
   // Description + material
   let contentHtml = '';
   const contentParts = [];
-  if(d.description && d.description.trim()){
+  if(d.description && d.description.trim())
     contentParts.push(`<div class="pmodal-desc">${esc(d.description.trim())}</div>`);
-  }
-  if(d.material_content && d.material_content.trim()){
+  if(d.material_content && d.material_content.trim())
     contentParts.push(`<div class="pmodal-desc" style="margin-top:8px"><strong>İçerik:</strong> ${esc(d.material_content.trim())}</div>`);
-  }
-  if(contentParts.length){
-    contentHtml = `
-      <div>
-        <div class="pmodal-section-title">Açıklama / İçerik</div>
-        ${contentParts.join('')}
-      </div>`;
-  }
+  if(contentParts.length)
+    contentHtml = `<div><div class="pmodal-section-title">Açıklama / İçerik</div>${contentParts.join('')}</div>`;
 
-  // Care instructions
+  // Care
   let careHtml = '';
   if(d.care_instructions && d.care_instructions.length){
     const items = Array.isArray(d.care_instructions) ? d.care_instructions : [d.care_instructions];
-    careHtml = `
-      <div>
-        <div class="pmodal-section-title">Bakım Talimatları</div>
-        <ul class="pmodal-care-list">
-          ${items.map(c=>`<li>${esc(String(c))}</li>`).join('')}
-        </ul>
-      </div>`;
+    careHtml = `<div><div class="pmodal-section-title">Bakım Talimatları</div>
+      <ul class="pmodal-care-list">${items.map(c=>`<li>${esc(String(c))}</li>`).join('')}</ul></div>`;
   }
 
-  // Stock
-  let stockHtml = '';
-  if(d.stock_total != null){
-    const inStock = d.stock_total > 0;
-    const badgeCls = inStock ? 'in-stock' : 'out-of-stock';
-    const badgeTxt = inStock ? `● Stokta &nbsp;·&nbsp; ${d.stock_total} adet` : '● Stok Yok';
-    const sizeEntries = Object.entries(d.stock_by_size || {});
-    let sizesHtml = '';
-    if(sizeEntries.length){
-      sizesHtml = `<div class="pmodal-stock-sizes">
-        ${sizeEntries.map(([sz, qty]) => `
-          <div class="pmodal-size-chip ${qty > 0 ? 'has-stock' : ''}">
-            <span class="sz-code">${esc(sz)}</span>
-            <span class="sz-qty">${qty}</span>
-          </div>`).join('')}
-      </div>`;
-    }
-    stockHtml = `
-      <div>
-        <div class="pmodal-section-title">Stok</div>
-        <div class="pmodal-stock-badge ${badgeCls}">${badgeTxt}</div>
-        ${sizesHtml}
-      </div>`;
-  }
+  const div = (html) => html ? `<div class="pmodal-divider"></div>${html}` : '';
 
-  const body = document.getElementById('pmodalBody');
-  body.innerHTML = `
+  document.getElementById('pmodalBody').innerHTML = `
     <div>
       <div class="pmodal-urun-kodu">${esc(d.urun_kodu)}</div>
       <div class="pmodal-name" style="margin-top:4px">${esc(d.urun_adi || d.urun_kodu)}</div>
     </div>
     ${priceHtml}
-    ${feats.length ? '<div class="pmodal-divider"></div>' : ''}
-    ${featsHtml}
-    ${stockHtml ? '<div class="pmodal-divider"></div>' : ''}
-    ${stockHtml}
-    ${contentParts.length ? '<div class="pmodal-divider"></div>' : ''}
-    ${contentHtml}
-    ${d.care_instructions && d.care_instructions.length ? '<div class="pmodal-divider"></div>' : ''}
-    ${careHtml}
+    ${div(colorsHtml)}
+    ${div(sizesHtml)}
+    ${div(featsHtml)}
+    ${div(contentHtml)}
+    ${div(careHtml)}
   `;
+}
+
+function changeModalColor(urunKodu, colorCode, el){
+  const url = `https://img-adl.sm.mncdn.com/cdnimages/products/${urunKodu}_${colorCode}_1.jpg`;
+  document.getElementById('pmodalImgWrap').innerHTML =
+    `<img src="${url}" alt="${colorCode}"
+       onerror="this.parentElement.innerHTML='<div class=no-img style=min-height:360px>📦</div>'">`;
+  document.querySelectorAll('.pmodal-color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
 }
 
 /* ─────────────────────────────────────────
@@ -1012,8 +1047,28 @@ function showToast(msg, type='ok'){
 }
 
 /* ─────────────────────────────────────────
+   Theme
+───────────────────────────────────────── */
+function initTheme(){
+  if(localStorage.getItem('pimland_theme') === 'light')
+    document.body.classList.add('light');
+  updateThemeBtn();
+}
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  localStorage.setItem('pimland_theme',
+    document.body.classList.contains('light') ? 'light' : 'dark');
+  updateThemeBtn();
+}
+function updateThemeBtn(){
+  const btn = document.getElementById('themeBtn');
+  if(btn) btn.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+}
+
+/* ─────────────────────────────────────────
    Boot
 ───────────────────────────────────────── */
+initTheme();
 checkAuth();
 </script>
 </body>

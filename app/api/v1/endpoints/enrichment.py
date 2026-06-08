@@ -854,9 +854,11 @@ async def trigger_reindex(
     background_tasks: BackgroundTasks,
     skip_embeddings: bool = False,
     skip_sizes: bool = False,
+    force: bool = False,
 ) -> Dict[str, Any]:
     """Arama indexini yeniden oluştur (arka planda).
 
+    force=true       → Tüm ürünleri yeniden indexle (hash atla).
     skip_sizes=true  → MCP beden/ölçü verisi çekmeden indexle (hızlı FTS modu).
     skip_sizes=false → Beden verisi de çekilir; daha uzun sürer (~15 dk).
     """
@@ -864,7 +866,7 @@ async def trigger_reindex(
     key = f"enrichment:index:{job_id}"
     await _redis.setex(key, 7200, json.dumps({"status": "queued", "indexed": 0}))
 
-    def _run_bg(jid: str, skip_emb: bool, skip_sz: bool) -> None:
+    def _run_bg(jid: str, skip_emb: bool, skip_sz: bool, force_re: bool) -> None:
         import asyncio as _asyncio
         import redis.asyncio as _redis_mod
         from app.services.enrichment.product_indexer import run_indexer
@@ -882,6 +884,7 @@ async def trigger_reindex(
                     progress_cb=_progress,
                     skip_embeddings=skip_emb,
                     skip_sizes=skip_sz,
+                    force_reindex=force_re,
                 )
                 await rc.setex(k, 7200, json.dumps({"status": "done", **result}))
             except Exception as exc:
@@ -891,12 +894,13 @@ async def trigger_reindex(
 
         _asyncio.run(_go())
 
-    background_tasks.add_task(_run_bg, job_id, skip_embeddings, skip_sizes)
+    background_tasks.add_task(_run_bg, job_id, skip_embeddings, skip_sizes, force)
     return {
         "job_id": job_id,
         "status": "started",
         "skip_embeddings": skip_embeddings,
         "skip_sizes": skip_sizes,
+        "force": force,
     }
 
 
@@ -946,9 +950,17 @@ async def get_search_product_detail(
 
     result: Dict[str, Any] = dict(prod)
 
-    # renk sayısı
+    # renk listesi + swatch URL'leri
     codes = (result.get("color_codes") or "")
-    result["color_count"] = len([c for c in codes.split(",") if c.strip()])
+    color_list = [c.strip() for c in codes.split(",") if c.strip()]
+    result["color_count"] = len(color_list)
+    result["colors"] = [
+        {
+            "code": c,
+            "image_url": f"https://img-adl.sm.mncdn.com/cdnimages/products/{urun_kodu}_{c}_1.jpg",
+        }
+        for c in color_list
+    ]
 
     # 2. enrichment_quality.detail_json (varsa)
     eq = (await session.execute(text("""
