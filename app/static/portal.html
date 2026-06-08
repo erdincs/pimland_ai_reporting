@@ -572,6 +572,14 @@ body,
   <div style="flex:1"></div>
   <div class="tb-right">
     <span id="data-source" style="display:none"></span>
+    <a href="/api/v1/portal/search" target="_blank"
+       style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;
+              border:1px solid var(--border);color:var(--t2);text-decoration:none;
+              font-size:12px;font-weight:500;transition:.15s;white-space:nowrap"
+       onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--t2)'">
+      🔎 <span>AI Search</span>
+    </a>
     <div class="hb-wrap">
       <button class="hb-btn" id="hb-btn" onclick="toggleHamburger()" title="Menü">☰</button>
       <div class="hb-menu" id="hb-menu">
@@ -580,12 +588,6 @@ body,
           <span id="hb-theme-icon" style="font-size:15px">☀️</span>
           <div><div style="font-size:12px;font-weight:500" id="hb-theme-txt">Light Mod</div><div style="font-size:10px;color:var(--t3)">Temayı değiştir</div></div>
         </div>
-        <div class="hb-sep"></div>
-        <div class="hb-label">Araçlar</div>
-        <a class="hb-item" href="/api/v1/portal/search" target="_blank" style="text-decoration:none;color:inherit">
-          <span style="font-size:15px">🔎</span>
-          <div><div style="font-size:12px;font-weight:500">AI Search Engine</div><div style="font-size:10px;color:var(--t3)">Ürün arama motoru</div></div>
-        </a>
         <div class="hb-sep"></div>
         <div class="hb-label">Sistem</div>
         <div class="hb-item no-hover">
