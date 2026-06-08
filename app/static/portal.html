@@ -6940,7 +6940,7 @@ function renderDonemseel(d) {
   </div>`;
 
   // ── Haftalık Isı Haritası ──────────────────────────────────────────────────
-  const maxIsi = Math.max(...(d.isi_harita||[]).flatMap(h=>h.haftalar),1);
+  const maxIsi = Math.max(...(d.isi_harita||[]).flatMap(h=>h.haftalar).filter(v=>v!=null),1);
   const isiCells = (d.isi_harita||[]).map(h=>{
     const haftaCells = [0,1,2,3,4].map(i=>{
       const v = h.haftalar[i];

@@ -585,10 +585,24 @@ async def get_donemseel_performans(
         karsilastirma = None
 
     # ── Haftalık ısı haritası (aylık veriden tahmin: 4 hafta + kısmi) ──────────
+    from datetime import date as _date
+    _today = _date.today()
+    _cur_yil, _cur_ay = _today.year, _today.month
+    _cur_hafta = (_today.day - 1) // 7   # 0-indexed: gün 1-7→0, 8-14→1, ...
+
+    # Haftalık dağılım katsayıları — tekrar etmeden 5 ayrı değer
+    _HAFTA_KATSAYILARI = [0.18, 0.22, 0.26, 0.20, 0.14]
+
     isi_harita = []
     for a in aylik_liste:
-        hafta_sayisi = 5 if a["ay"] in [1,3,5,7,8,10,12] else 4
-        hafta_ciro = [round(a["net_ciro"] * (0.22 + (i%3)*0.05), 0) for i in range(hafta_sayisi)]
+        hafta_sayisi = 5 if a["ay"] in [1, 3, 5, 7, 8, 10, 12] else 4
+        is_current = (a.get("yil", yil) == _cur_yil and a["ay"] == _cur_ay)
+        hafta_ciro = []
+        for i in range(hafta_sayisi):
+            if is_current and i > _cur_hafta:
+                hafta_ciro.append(None)   # Henüz gelmemiş haftalar → "—"
+            else:
+                hafta_ciro.append(round(a["net_ciro"] * _HAFTA_KATSAYILARI[i], 0))
         isi_harita.append({
             "ay_adi": a["ay_adi"],
             "haftalar": hafta_ciro,
