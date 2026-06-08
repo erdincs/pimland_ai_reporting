@@ -2,6 +2,7 @@
 
 Modlar:
   - filter      : sorgu yok → filtrele + brut_ciro_30g DESC
+  - code        : sorgu ürün koduna benziyor → urun_kodu ILIKE (doğrudan)
   - fts         : sorgu var, vector yok → plainto_tsquery('turkish', ...)
   - hybrid      : sorgu + vector → RRF (1/(k+fts_rank) + 1/(k+sem_rank)), k=60
   - hybrid_smart: hybrid + Claude query expansion (doğal dil anlama)
@@ -9,7 +10,10 @@ Modlar:
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any, Dict, List, Optional
+
+_CODE_RE = re.compile(r'^[A-Za-z0-9][\w\-]{1,}$')  # ASCII harf/rakam/tire — Türkçe karakter yok
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,6 +89,30 @@ async def search_products(
     params: Dict[str, Any] = {"limit": limit, "offset": offset}
     where = _build_where(marka, sezon, internet_aktif, params)
     q_clean = (q or "").strip()
+
+    # ── 0. Ürün kodu direkt arama ─────────────────────────────────────────────
+    # ASCII-only, boşluksuz → ürün kodu olabilir; substring ILIKE araması yap
+    if q_clean and _CODE_RE.match(q_clean):
+        p_code = {**params, "q_ilike": f"%{q_clean}%", "q_exact": q_clean}
+        code_count = (await session.execute(text(f"""
+            SELECT COUNT(*) FROM product_search_index
+            WHERE {where} AND urun_kodu ILIKE :q_ilike
+        """), p_code)).scalar() or 0
+
+        if code_count > 0:
+            code_rows = (await session.execute(text(f"""
+                SELECT {_SELECT_COLS},
+                       1::float AS fts_score, 0::float AS sem_score,
+                       CASE WHEN urun_kodu ILIKE :q_exact THEN 2.0 ELSE 1.0 END AS hybrid_score
+                FROM product_search_index
+                WHERE {where} AND urun_kodu ILIKE :q_ilike
+                ORDER BY hybrid_score DESC, brut_ciro_30g DESC NULLS LAST
+                LIMIT :limit OFFSET :offset
+            """), p_code)).mappings().all()
+            return {
+                "total": code_count, "mode": "code",
+                "expansion": None, "items": _cast(list(code_rows)),
+            }
 
     # ── 1. Sorgu yok → filtrele + sırala ─────────────────────────────────────
     if not q_clean:
@@ -240,7 +268,7 @@ async def get_suggestions(
     """Autocomplete — marka + ürün adı prefix araması."""
     if len(q) < 2:
         return []
-    params = {"q": f"{q}%", "limit": limit}
+    params = {"q": f"{q}%", "q_sub": f"%{q}%", "limit": limit}
     rows = (await session.execute(text("""
         SELECT DISTINCT val FROM (
             SELECT marka_adi   AS val FROM product_search_index WHERE marka_adi   ILIKE :q
@@ -250,6 +278,8 @@ async def get_suggestions(
             SELECT tema_adi    AS val FROM product_search_index WHERE tema_adi    ILIKE :q
             UNION ALL
             SELECT ana_grup_adi AS val FROM product_search_index WHERE ana_grup_adi ILIKE :q
+            UNION ALL
+            SELECT urun_kodu   AS val FROM product_search_index WHERE urun_kodu   ILIKE :q_sub
         ) sub
         WHERE val IS NOT NULL
         ORDER BY val

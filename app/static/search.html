@@ -105,6 +105,7 @@ body.searched .content{display:block;animation:fadeUp .3s ease .2s both}
 .mode-pill.hybrid{background:rgba(59,130,246,.15);border:1px solid #3b82f6;color:#3b82f6}
 .mode-pill.fts{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#f59e0b}
 .mode-pill.filter{background:rgba(100,116,139,.15);border:1px solid var(--muted);color:var(--muted)}
+.mode-pill.code{background:rgba(139,92,246,.15);border:1px solid #8b5cf6;color:#8b5cf6}
 .expansion-bar{padding:0 0 14px;font-size:12px;color:var(--muted);display:none;
   line-height:1.5;border-left:2px solid var(--acc);padding-left:10px;margin-bottom:4px}
 .expansion-bar span{color:var(--text)}
@@ -628,7 +629,7 @@ function updateMeta(elapsed){
   meta.style.display = 'flex';
   document.getElementById('totalCount').textContent = totalItems.toLocaleString('tr-TR');
   const pill = document.getElementById('modePill');
-  const labels = {hybrid_smart:'🧠 AI Arama', hybrid:'🔮 Hybrid', fts:'📄 Tam Metin', filter:'🔧 Filtre'};
+  const labels = {hybrid_smart:'🧠 AI Arama', hybrid:'🔮 Hybrid', fts:'📄 Tam Metin', filter:'🔧 Filtre', code:'🔑 Ürün Kodu'};
   pill.textContent = labels[lastMode] || lastMode;
   pill.className = `mode-pill ${lastMode}`;
   document.getElementById('elapsedInfo').textContent = `${elapsed}ms`;
