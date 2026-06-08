@@ -39,8 +39,8 @@ def _build_year_month_prompts(months: List[Tuple[int, int]], cfg: Dict) -> List[
     years  = list({y for y, _ in months})
     mths   = list({m for _, m in months})
     return [
-        {"field": cfg["year_field"],  "operator": "in", "values": years, "type": "integer"},
-        {"field": cfg["month_field"], "operator": "in", "values": mths,  "type": "integer"},
+        {"field": cfg["year_field"],  "operator": "IN", "values": years, "type": "dimension"},
+        {"field": cfg["month_field"], "operator": "IN", "values": mths,  "type": "dimension"},
     ]
 
 
@@ -48,7 +48,7 @@ def _build_date_prompts(months: List[Tuple[int, int]], cfg: Dict) -> List[Dict]:
     start = min(f"{y}-{m:02d}-01" for y, m in months)
     end   = max(f"{y}-{m:02d}-{calendar.monthrange(y, m)[1]:02d}" for y, m in months)
     return [
-        {"field": cfg["date_field"], "operator": "between", "values": [start, end], "type": "string"},
+        {"field": cfg["date_field"], "operator": "BETWEEN", "values": [start, end], "type": "dimension"},
     ]
 
 
