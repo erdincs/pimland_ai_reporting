@@ -259,36 +259,9 @@ body.light .modal,.light .pmodal,.light .auth-box{box-shadow:0 8px 40px rgba(0,0
 .toast.ok{border-color:var(--green);color:var(--green)}
 .toast.err{border-color:var(--red);color:var(--red)}
 
-/* Auth overlay */
-.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:500;
-  display:flex;align-items:center;justify-content:center}
-.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;
-  padding:36px;width:360px;text-align:center}
-.auth-logo{font-size:24px;font-weight:800;color:var(--acc);margin-bottom:4px}
-.auth-logo span{color:var(--text)}
-.auth-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
-.auth-input{width:100%;background:var(--card2);border:1px solid var(--border);
-  border-radius:10px;color:var(--text);font-size:15px;padding:12px 16px;
-  outline:none;margin-bottom:12px;transition:.2s}
-.auth-input:focus{border-color:var(--acc)}
-.auth-err{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
-.btn-auth{width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;
-  padding:12px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
-.btn-auth:hover{background:var(--acc2)}
 </style>
 </head>
 <body>
-
-<!-- Auth overlay -->
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-box">
-    <div class="auth-logo">pim<span>land</span></div>
-    <div class="auth-sub">AI Search Engine — giriş yapın</div>
-    <input id="authPw" class="auth-input" type="password" placeholder="Şifre" autocomplete="current-password"/>
-    <div class="auth-err" id="authErr"></div>
-    <button class="btn-auth" onclick="doAuth()">Giriş</button>
-  </div>
-</div>
 
 <!-- Header -->
 <header class="hdr">
@@ -396,31 +369,6 @@ body.light .modal,.light .pmodal,.light .auth-box{box-shadow:0 8px 40px rgba(0,0
 <div class="toast" id="toast"></div>
 
 <script>
-/* ─────────────────────────────────────────
-   Auth
-───────────────────────────────────────── */
-const PASS = 'pimland2026';
-const AUTH_KEY = 'pimland_auth';
-
-function checkAuth(){
-  if(sessionStorage.getItem(AUTH_KEY) === PASS){
-    document.getElementById('authOverlay').style.display='none';
-    init();
-  }
-}
-function doAuth(){
-  const pw = document.getElementById('authPw').value;
-  if(pw === PASS){
-    sessionStorage.setItem(AUTH_KEY, PASS);
-    document.getElementById('authOverlay').style.display='none';
-    init();
-  } else {
-    document.getElementById('authErr').textContent = 'Şifre hatalı.';
-  }
-}
-document.getElementById('authPw').addEventListener('keydown', e => {
-  if(e.key==='Enter') doAuth();
-});
 
 /* ─────────────────────────────────────────
    State
@@ -1069,7 +1017,7 @@ function updateThemeBtn(){
    Boot
 ───────────────────────────────────────── */
 initTheme();
-checkAuth();
+init();
 </script>
 </body>
 </html>
