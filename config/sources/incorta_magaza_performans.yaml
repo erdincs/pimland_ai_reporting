@@ -15,6 +15,11 @@ tool:
   name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_d66efa54
   args:
     Authorization: "__env:INCORTA_TOKEN"
+    prompts:
+      - field: "SALES.DateHoursDim.Year"
+        operator: "BETWEEN"
+        values: [2024, 2026]
+        type: dimension
   response_format: incorta
   pagination_start_field: "pagination.startRow"
   pagination_size_field: "pagination.pageSize"

@@ -10,7 +10,7 @@ import json
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -31,6 +31,12 @@ _sync_engine = create_engine(settings.sync_database_url, pool_pre_ping=True)
 # Only views whose source tables were updated are refreshed.
 _VIEW_DEPENDENCIES: dict = {
     "eticaret_satis": ["mv_satis_aylik", "mv_satis_urun", "mv_satis_kanal"],
+}
+
+# Tablolar için beklenen minimum yıl — yeni veri daha eskiyse eski veriyi koru.
+# Bu sayede Incorta geçici olarak eski veri döndürdüğünde DB silinmez.
+_MIN_YEAR_GUARD: dict = {
+    "incorta_magaza_performans": 2025,  # 2025+ yılı yoksa replace etme
 }
 
 
@@ -63,6 +69,29 @@ async def run(
 
         # 4. Bulk load into PostgreSQL
         df = pd.DataFrame(records)
+
+        # Yıl guard: beklenen minimum yıl yeni veride yoksa eski veriyi koru.
+        min_year = _MIN_YEAR_GUARD.get(cfg.target_table)
+        if min_year and "yil" in df.columns:
+            try:
+                yillar: Set = set(df["yil"].dropna().astype(int).unique())
+                if not any(y >= min_year for y in yillar):
+                    log.warning(
+                        "sync.year_guard_triggered",
+                        source=source_id,
+                        table=cfg.target_table,
+                        new_years=sorted(yillar),
+                        expected_min=min_year,
+                    )
+                    raise IngestionError(
+                        f"[{source_id}] Yıl guard: yeni veri yalnızca {sorted(yillar)} "
+                        f"yıllarını içeriyor, {min_year}+ bekleniyor. DB korundu."
+                    )
+            except IngestionError:
+                raise
+            except Exception as guard_exc:
+                log.warning("sync.year_guard_error", error=str(guard_exc))
+
         df.to_sql(
             cfg.target_table,
             _sync_engine,

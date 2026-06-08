@@ -82,6 +82,15 @@ async def _fetch_mcp_data() -> List[List]:
     rows: List[List] = []
 
     PAGE = 500
+    # Yıl filtresi: 2024-2026 arası veriyi zorla — Incorta sadece 2024 döndürürse fark edilir
+    _INCORTA_YEAR_FILTER = [
+        {
+            "field": "SALES.DateHoursDim.Year",
+            "operator": "BETWEEN",
+            "values": [2024, 2026],
+            "type": "dimension",
+        }
+    ]
     async with httpx.AsyncClient(timeout=60) as c:
         start = 0
         total = None
@@ -90,7 +99,8 @@ async def _fetch_mcp_data() -> List[List]:
                 r = await c.post(
                     f"{MCP_BASE}/tools/{TOOL_ID}/execute",
                     json={"Authorization": token,
-                          "pagination": {"startRow": start, "pageSize": PAGE}},
+                          "pagination": {"startRow": start, "pageSize": PAGE},
+                          "prompts": _INCORTA_YEAR_FILTER},
                 )
                 body = r.json()["content"]["data"]
                 if total is None:
