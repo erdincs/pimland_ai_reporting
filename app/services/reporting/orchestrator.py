@@ -31,8 +31,10 @@ ROUTING_MAP: Dict[str, str] = {
     "urunler":               "eticaret",
     "iade":                  "eticaret",
     "colors":                "eticaret",
-    "urun-satis":            "eticaret",
-    "urun-yonetimi":         "eticaret",
+    "urun-satis":            "urun_yonetimi",
+    "urun-yonetimi":         "urun_yonetimi",
+    "plm-katalog":           "urun_yonetimi",
+    "products":              "urun_yonetimi",
 }
 
 # Ton haritası (report_ctx → ton)
@@ -42,8 +44,21 @@ TON_MAP: Dict[str, str] = {
     "magaza-donemseel":     "analitik",
     "magaza-karsilastirma": "stratejik",
     "enrichment":           "teknik",
+    "enrichment-dashboard": "yonetici",
+    "enrichment-scorelist": "analitik",
+    "enrichment-products":  "teknik",
     "siralama":             "teknik",
-    "eticaret":             "operasyonel",
+    "exec":                 "yonetici",
+    "kpi":                  "analitik",
+    "overview":             "analitik",
+    "kategori":             "operasyonel",
+    "urunler":              "operasyonel",
+    "iade":                 "stratejik",
+    "colors":               "analitik",
+    "urun-satis":           "analitik",
+    "urun-yonetimi":        "yonetici",
+    "plm-katalog":          "analitik",
+    "products":             "analitik",
 }
 
 
@@ -66,7 +81,7 @@ async def route_and_run(
 
     elif agent_key == "enrichment":
         from app.services.reporting.enrichment_agent import run_enrichment_agent
-        result = await run_enrichment_agent(session, question, filters, history)
+        result = await run_enrichment_agent(session, question, filters, history, ton)
 
     elif agent_key == "siralama":
         from app.services.reporting.siralama_agent import run_siralama_agent
@@ -74,7 +89,11 @@ async def route_and_run(
 
     elif agent_key == "eticaret":
         from app.services.reporting.eticaret_agent import run_eticaret_agent
-        result = await run_eticaret_agent(session, question, filters, history)
+        result = await run_eticaret_agent(session, question, filters, history, ton)
+
+    elif agent_key == "urun_yonetimi":
+        from app.services.reporting.urun_yonetimi_agent import run_urun_yonetimi_agent
+        result = await run_urun_yonetimi_agent(session, question, filters, history, ton)
 
     else:
         result = {

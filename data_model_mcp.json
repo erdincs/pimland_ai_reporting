@@ -1,0 +1,1081 @@
+{
+  "post_api_EcomCategory_get_all": {
+    "parameters": {},
+    "example_args": {
+      "catalogCode": "null"
+    },
+    "response_fields": {
+      "result": "null",
+      "isSuccessful": "bool",
+      "error": {
+        "_type": "object",
+        "_fields": {
+          "code": "null",
+          "message": "str"
+        }
+      },
+      "statusCode": "int",
+      "statusDescription": "null"
+    },
+    "sample_record": {
+      "result": null,
+      "isSuccessful": false,
+      "error": {
+        "code": null,
+        "message": "Parameter 'catalogCode' can not be null or empty."
+      },
+      "statusCode": 500,
+      "statusDescription": null
+    },
+    "total_records": null
+  },
+  "post_api_MasterData_brands_get_brands": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": "list"
+    },
+    "sample_record": {
+      "id": 1,
+      "name": "adL",
+      "referenceCode": "01",
+      "isActive": true,
+      "translations": []
+    },
+    "total_records": 3
+  },
+  "post_api_MasterData_colors_get_colors": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 248,
+      "name": "A.Bej",
+      "referenceCode": "482",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "tr-TR",
+          "name": "A.Bej"
+        },
+        {
+          "language": "en-US",
+          "name": "Light Beige"
+        }
+      ]
+    },
+    "total_records": 241
+  },
+  "post_api_MasterData_main_product_groups_get_main_product_groups": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 1,
+      "name": "AKSESUAR",
+      "referenceCode": "006",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "tr-TR",
+          "name": "AKSESUAR"
+        },
+        {
+          "language": "en-US",
+          "name": "ACCESSORIES"
+        }
+      ]
+    },
+    "total_records": 7
+  },
+  "post_api_MasterData_product_groups_get_product_groups": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 2,
+      "name": "Atkı",
+      "referenceCode": "U0001",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "tr-TR",
+          "name": "Atkı"
+        },
+        {
+          "language": "en-US",
+          "name": "SCARF"
+        }
+      ]
+    },
+    "total_records": 59
+  },
+  "post_api_MasterData_product_stories_get_product_stories": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 4,
+      "name": "AC01",
+      "referenceCode": "AC01",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "en-US",
+          "name": "AC01"
+        },
+        {
+          "language": "tr-TR",
+          "name": "AC01"
+        }
+      ]
+    },
+    "total_records": 236
+  },
+  "post_api_MasterData_product_themes_get_product_themes": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 1,
+      "name": "ACCESSORIES",
+      "referenceCode": "A009",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "en-US",
+          "name": "ACCESSORIES"
+        },
+        {
+          "language": "tr-TR",
+          "name": "ACCESSORIES"
+        }
+      ]
+    },
+    "total_records": 30
+  },
+  "post_api_MasterData_seasons_get_seasons": {
+    "parameters": {},
+    "example_args": {
+      "filter": "null"
+    },
+    "response_fields": {
+      "id": "int",
+      "name": "str",
+      "referenceCode": "str",
+      "isActive": "bool",
+      "translations": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "language": "str",
+          "name": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "id": 27,
+      "name": "2018 AUTUMN",
+      "referenceCode": "18-AN",
+      "isActive": true,
+      "translations": [
+        {
+          "language": "en-US",
+          "name": "2018 AUTUMN"
+        },
+        {
+          "language": "tr-TR",
+          "name": "2018 AUTUMN"
+        }
+      ]
+    },
+    "total_records": 35
+  },
+  "post_api_Product_get_product_erp_prices": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "price": "float",
+      "retailPrice": "float",
+      "previousPrice": "float",
+      "taxRate": "int",
+      "currencyName": "str",
+      "isDiscounted": "bool",
+      "priceDate": "str"
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "price": 2999.95,
+      "retailPrice": 2999.95,
+      "previousPrice": 2999.95,
+      "taxRate": 10,
+      "currencyName": "TRY",
+      "isDiscounted": false,
+      "priceDate": "2026-04-28T22:00:07.650821+03:00"
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_financial_datas": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "financialDatas": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "calculatedSalesPrice": "int",
+          "markUp": "float",
+          "bareCostOfGoods": "int",
+          "costSummary": "int",
+          "actualMarkUp": "int",
+          "realSellingPriceInTurkishLira": "null",
+          "realSellingPriceInDolar": "null",
+          "revisionDescription": "str",
+          "revisionCode": "str",
+          "costSummaryItem": "dict",
+          "priceEntries": "list",
+          "rawMaterials": "list",
+          "auxiliaryMaterials": "list",
+          "laborCosts": "list",
+          "fixVariables": "list",
+          "otherCosts": "list"
+        }
+      }
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "financialDatas": [
+        {
+          "calculatedSalesPrice": "***MASKED***",
+          "markUp": "***MASKED***",
+          "bareCostOfGoods": "***MASKED***",
+          "costSummary": "***MASKED***",
+          "actualMarkUp": "***MASKED***",
+          "realSellingPriceInTurkishLira": null,
+          "realSellingPriceInDolar": null,
+          "revisionDescription": "",
+          "revisionCode": "Main",
+          "costSummaryItem": "***MASKED***",
+          "priceEntries": [],
+          "rawMaterials": [],
+          "auxiliaryMaterials": [],
+          "laborCosts": [],
+          "fixVariables": [],
+          "otherCosts": []
+        }
+      ]
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_relations": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "result": "null",
+      "isSuccessful": "bool",
+      "error": {
+        "_type": "object",
+        "_fields": {
+          "code": "null",
+          "message": "str"
+        }
+      },
+      "statusCode": "int",
+      "statusDescription": "null"
+    },
+    "sample_record": {
+      "result": null,
+      "isSuccessful": false,
+      "error": {
+        "code": null,
+        "message": "'UpdatedDate' parameter is required"
+      },
+      "statusCode": 500,
+      "statusDescription": null
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_sales_performances": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "salesPerformances": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "colorName": "str",
+          "colorCode": "str",
+          "sizeName": "str",
+          "sizeCode": "str",
+          "initialShipmentDate": "str",
+          "initialSeasonSalesPrice": "float",
+          "discountedSalesPrice": "float",
+          "costWithGeneralExpense": "float",
+          "generalSalesAmount": "int",
+          "actualPrice": "float",
+          "soldCost": "float",
+          "initialPrice": "float",
+          "soldLossOfValuePrice": "float",
+          "soldLossOfValuePercentage": "float",
+          "whC01": "int",
+          "whC02": "int",
+          "whC03": "int",
+          "whC04": "int",
+          "remainingInventory": "int",
+          "markUp": "float",
+          "profitMargin": "str",
+          "shipmentQuantity": "int"
+        }
+      }
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "salesPerformances": [
+        {
+          "colorName": "Beyaz",
+          "colorCode": "002",
+          "sizeName": "M",
+          "sizeCode": "M",
+          "initialShipmentDate": "2026-06-02T00:00:00+03:00",
+          "initialSeasonSalesPrice": 2999.95,
+          "discountedSalesPrice": 2999.95,
+          "costWithGeneralExpense": "***MASKED***",
+          "generalSalesAmount": 11,
+          "actualPrice": 32699.46,
+          "soldCost": "***MASKED***",
+          "initialPrice": 32999.45,
+          "soldLossOfValuePrice": "***MASKED***",
+          "soldLossOfValuePercentage": -0.00909075757323219,
+          "whC01": 0,
+          "whC02": 41,
+          "whC03": 0,
+          "whC04": 0,
+          "remainingInventory": 41,
+          "markUp": "***MASKED***",
+          "profitMargin": "***MASKED***",
+          "shipmentQuantity": 52
+        },
+        {
+          "colorName": "Beyaz",
+          "colorCode": "002",
+          "sizeName": "S",
+          "sizeCode": "S",
+          "initialShipmentDate": "2026-06-01T00:00:00+03:00",
+          "initialSeasonSalesPrice": 2999.95,
+          "discountedSalesPrice": 2999.95,
+          "costWithGeneralExpense": "***MASKED***",
+          "generalSalesAmount": 6,
+          "actualPrice": 17999.7,
+          "soldCost": "***MASKED***",
+          "initialPrice": 17999.7,
+          "soldLossOfValuePrice": "***MASKED***",
+          "soldLossOfValuePercentage": 0,
+          "whC01": 0,
+          "whC02": 44,
+          "whC03": 0,
+          "whC04": 0,
+          "remainingInventory": 44,
+          "markUp": "***MASKED***",
+          "profitMargin": "***MASKED***",
+          "shipmentQuantity": 50
+        }
+      ]
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_sales_prices": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "salesPrices": "list"
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "salesPrices": []
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_size_type_values": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "sizeTypeValues": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "routeTypeName": "str",
+          "routeTypeCode": "str",
+          "sizeTypeName": "str",
+          "sizeTypeCode": "str",
+          "productSizeName": "str",
+          "productSizeCode": "str",
+          "productSizeValue": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "sizeTypeValues": [
+        {
+          "routeTypeName": "Internet Ölçüsü",
+          "routeTypeCode": "005",
+          "sizeTypeName": "TÜM BEL",
+          "sizeTypeCode": "B01",
+          "productSizeName": "XS",
+          "productSizeCode": "XS",
+          "productSizeValue": "68"
+        },
+        {
+          "routeTypeName": "Internet Ölçüsü",
+          "routeTypeCode": "005",
+          "sizeTypeName": "TÜM BEL",
+          "sizeTypeCode": "B01",
+          "productSizeName": "S",
+          "productSizeCode": "S",
+          "productSizeValue": "72"
+        }
+      ]
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_sizes": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "productSizes": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "sizeName": "str",
+          "sizeCode": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "productSizes": [
+        {
+          "sizeName": "XS",
+          "sizeCode": "XS"
+        },
+        {
+          "sizeName": "S",
+          "sizeCode": "S"
+        }
+      ]
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_product_stocks": {
+    "parameters": {},
+    "example_args": {
+      "stockCode": "12746471001"
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "productStocks": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "stock": "int",
+          "lastUpdatedDate": "str",
+          "eanCode": "str",
+          "skuCode": "str",
+          "sizeName": "str",
+          "sizeCode": "str",
+          "colorName": "str",
+          "colorCode": "str"
+        }
+      }
+    },
+    "sample_record": {
+      "stockCode": "12746471001",
+      "productStocks": [
+        {
+          "stock": 39,
+          "lastUpdatedDate": "2026-06-02T14:48:01.233+03:00",
+          "eanCode": "8683394190377",
+          "skuCode": "12746471001002M",
+          "sizeName": "M",
+          "sizeCode": "M",
+          "colorName": "Beyaz",
+          "colorCode": "002"
+        },
+        {
+          "stock": 52,
+          "lastUpdatedDate": "2026-06-02T12:39:24.79+03:00",
+          "eanCode": "8683394190384",
+          "skuCode": "12746471001002S",
+          "sizeName": "S",
+          "sizeCode": "S",
+          "colorName": "Beyaz",
+          "colorCode": "002"
+        }
+      ]
+    },
+    "total_records": null
+  },
+  "post_api_Product_get_products_by_filter": {
+    "parameters": {},
+    "example_args": {
+      "pageSize": 1,
+      "pageNumber": 1
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "description": "str",
+      "notes": "str",
+      "unitType": "str",
+      "vatRate": "int",
+      "gtipNumber": "null",
+      "seasonCode": "str",
+      "seasonName": "str",
+      "brandCode": "str",
+      "brandName": "str",
+      "productThemeCode": "str",
+      "productThemeName": "str",
+      "productMainGroupCode": "str",
+      "productMainGroupName": "str",
+      "productGroupCode": "str",
+      "productGroupName": "str",
+      "productTypeCode": "str",
+      "productTypeName": "str",
+      "compositionCode": "null",
+      "compositionName": "null",
+      "armLengthCode": "null",
+      "armLengthName": "null",
+      "collarTypeCode": "null",
+      "collarTypeName": "null",
+      "fabricPatternCode": "null",
+      "fabricPatternName": "null",
+      "productLengthCode": "null",
+      "productLengthName": "null",
+      "cuttingCode": "null",
+      "cuttingName": "null",
+      "beltLengthCode": "null",
+      "beltLengthName": "null",
+      "legTypeCode": "null",
+      "legTypeName": "null",
+      "styleCode": "null",
+      "styleName": "null",
+      "ecommerceTypeCode": "null",
+      "ecommerceTypeName": "null",
+      "fabricMaterialCode": "str",
+      "fabricMaterialName": "str",
+      "isBlocked": "bool",
+      "useInternet": "bool",
+      "hasDiscount": "bool",
+      "deliverFromStore": "bool",
+      "barcodes": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "colorCode": "str",
+          "colorName": "str",
+          "colorHexCode": "str",
+          "barcode": "str",
+          "sizeCode": "str",
+          "sizeName": "str",
+          "compositionCode": "null",
+          "compositionName": "null",
+          "modelMeasures": "list",
+          "mainMaterialContent": "str",
+          "isBlocked": "bool"
+        }
+      },
+      "productImages": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "name": "str",
+          "extension": "str",
+          "contentType": "str",
+          "colorCode": "str",
+          "colorName": "str",
+          "type": "str",
+          "m3U8Url": "null",
+          "isDeleted": "bool"
+        }
+      },
+      "washingAndCareInstructions": "list",
+      "maintenanceInstruction": "str",
+      "productRelations": "list",
+      "productCategories": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "name": "str",
+          "code": "str",
+          "description": "str",
+          "colorCodes": "list"
+        }
+      },
+      "sizeTable": "null",
+      "isNewProduct": "bool",
+      "ecomTag1Name": "null",
+      "ecomTag1Code": "null",
+      "ecomTag2Name": "null",
+      "ecomTag2Code": "null",
+      "ecomTag3Name": "null",
+      "ecomTag3Code": "null",
+      "ecomTag4Name": "null",
+      "ecomTag4Code": "null",
+      "thicknessTypeName": "null",
+      "thicknessTypeCode": "null",
+      "fitName": "null",
+      "fitCode": "null"
+    },
+    "sample_record": {
+      "stockCode": "140M2365000",
+      "description": "Deri Kemer",
+      "notes": "",
+      "unitType": "AD",
+      "vatRate": 10,
+      "gtipNumber": null,
+      "seasonCode": "26-SR",
+      "seasonName": "2026 SUMMER",
+      "brandCode": "LMB",
+      "brandName": "Love My Body",
+      "productThemeCode": "A050",
+      "productThemeName": "Love My Body Moda Tutkusu",
+      "productMainGroupCode": "006",
+      "productMainGroupName": "AKSESUAR",
+      "productGroupCode": "U0040",
+      "productGroupName": "Kemer",
+      "productTypeCode": "X",
+      "productTypeName": "DOKUSUZ YUZEY",
+      "compositionCode": null,
+      "compositionName": null,
+      "armLengthCode": null,
+      "armLengthName": null,
+      "collarTypeCode": null,
+      "collarTypeName": null,
+      "fabricPatternCode": null,
+      "fabricPatternName": null,
+      "productLengthCode": null,
+      "productLengthName": null,
+      "cuttingCode": null,
+      "cuttingName": null,
+      "beltLengthCode": null,
+      "beltLengthName": null,
+      "legTypeCode": null,
+      "legTypeName": null,
+      "styleCode": null,
+      "styleName": null,
+      "ecommerceTypeCode": null,
+      "ecommerceTypeName": null,
+      "fabricMaterialCode": "DER",
+      "fabricMaterialName": "DERİ",
+      "isBlocked": false,
+      "useInternet": true,
+      "hasDiscount": false,
+      "deliverFromStore": false,
+      "barcodes": [
+        {
+          "colorCode": "010",
+          "colorName": "Kahverengi",
+          "colorHexCode": "#964B00",
+          "barcode": "8683394190483",
+          "sizeCode": "ST",
+          "sizeName": "ST",
+          "compositionCode": null,
+          "compositionName": null,
+          "modelMeasures": [],
+          "mainMaterialContent": "ANA KUMAŞ: DERİ - %100",
+          "isBlocked": false
+        },
+        {
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "colorHexCode": "#000000",
+          "barcode": "8683394190490",
+          "sizeCode": "ST",
+          "sizeName": "ST",
+          "compositionCode": null,
+          "compositionName": null,
+          "modelMeasures": [],
+          "mainMaterialContent": "ANA KUMAŞ: DERİ - %100",
+          "isBlocked": false
+        }
+      ],
+      "productImages": [
+        {
+          "name": "140M2365000_001_1.jpg",
+          "extension": "jpg",
+          "contentType": "image/jpeg",
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "type": "Fotoğraf - Web",
+          "m3U8Url": null,
+          "isDeleted": false
+        },
+        {
+          "name": "140M2365000_001_2.jpg",
+          "extension": "jpg",
+          "contentType": "image/jpeg",
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "type": "Fotoğraf - Web",
+          "m3U8Url": null,
+          "isDeleted": false
+        }
+      ],
+      "washingAndCareInstructions": [],
+      "maintenanceInstruction": "",
+      "productRelations": [],
+      "productCategories": [
+        {
+          "name": "Kemer",
+          "code": "0126",
+          "description": "Kemer",
+          "colorCodes": []
+        },
+        {
+          "name": "Moda Tutkusu Kemer",
+          "code": "0142",
+          "description": "MT.Kemer",
+          "colorCodes": []
+        }
+      ],
+      "sizeTable": null,
+      "isNewProduct": false,
+      "ecomTag1Name": null,
+      "ecomTag1Code": null,
+      "ecomTag2Name": null,
+      "ecomTag2Code": null,
+      "ecomTag3Name": null,
+      "ecomTag3Code": null,
+      "ecomTag4Name": null,
+      "ecomTag4Code": null,
+      "thicknessTypeName": null,
+      "thicknessTypeCode": null,
+      "fitName": null,
+      "fitCode": null
+    },
+    "total_records": 4194
+  },
+  "post_api_Product_get_products_with_squ": {
+    "parameters": {},
+    "example_args": {
+      "updatedDate": "2020-01-01T00:00:00",
+      "pageSize": 1,
+      "pageNumber": 1
+    },
+    "response_fields": {
+      "stockCode": "str",
+      "description": "str",
+      "notes": "str",
+      "unitType": "str",
+      "vatRate": "int",
+      "gtipNumber": "null",
+      "seasonCode": "str",
+      "seasonName": "str",
+      "brandCode": "str",
+      "brandName": "str",
+      "productThemeCode": "str",
+      "productThemeName": "str",
+      "productMainGroupCode": "str",
+      "productMainGroupName": "str",
+      "productGroupCode": "str",
+      "productGroupName": "str",
+      "productTypeCode": "str",
+      "productTypeName": "str",
+      "compositionCode": "null",
+      "compositionName": "null",
+      "armLengthCode": "null",
+      "armLengthName": "null",
+      "collarTypeCode": "null",
+      "collarTypeName": "null",
+      "fabricPatternCode": "null",
+      "fabricPatternName": "null",
+      "productLengthCode": "null",
+      "productLengthName": "null",
+      "cuttingCode": "null",
+      "cuttingName": "null",
+      "beltLengthCode": "null",
+      "beltLengthName": "null",
+      "legTypeCode": "null",
+      "legTypeName": "null",
+      "styleCode": "null",
+      "styleName": "null",
+      "ecommerceTypeCode": "null",
+      "ecommerceTypeName": "null",
+      "fabricMaterialCode": "str",
+      "fabricMaterialName": "str",
+      "isBlocked": "bool",
+      "useInternet": "bool",
+      "hasDiscount": "bool",
+      "deliverFromStore": "bool",
+      "barcodes": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "colorCode": "str",
+          "colorName": "str",
+          "colorHexCode": "str",
+          "barcode": "str",
+          "sizeCode": "str",
+          "sizeName": "str",
+          "compositionCode": "null",
+          "compositionName": "null",
+          "modelMeasures": "list",
+          "mainMaterialContent": "str",
+          "isBlocked": "bool"
+        }
+      },
+      "productImages": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "name": "str",
+          "extension": "str",
+          "contentType": "str",
+          "colorCode": "str",
+          "colorName": "str",
+          "type": "str",
+          "m3U8Url": "null",
+          "isDeleted": "bool"
+        }
+      },
+      "washingAndCareInstructions": "list",
+      "maintenanceInstruction": "str",
+      "productRelations": "list",
+      "productCategories": {
+        "_type": "list[object]",
+        "_item_fields": {
+          "name": "str",
+          "code": "str",
+          "description": "str",
+          "colorCodes": "list"
+        }
+      },
+      "sizeTable": "null",
+      "isNewProduct": "bool",
+      "ecomTag1Name": "null",
+      "ecomTag1Code": "null",
+      "ecomTag2Name": "null",
+      "ecomTag2Code": "null",
+      "ecomTag3Name": "null",
+      "ecomTag3Code": "null",
+      "ecomTag4Name": "null",
+      "ecomTag4Code": "null",
+      "thicknessTypeName": "null",
+      "thicknessTypeCode": "null",
+      "fitName": "null",
+      "fitCode": "null"
+    },
+    "sample_record": {
+      "stockCode": "140M2365000",
+      "description": "Deri Kemer",
+      "notes": "",
+      "unitType": "AD",
+      "vatRate": 10,
+      "gtipNumber": null,
+      "seasonCode": "26-SR",
+      "seasonName": "2026 SUMMER",
+      "brandCode": "LMB",
+      "brandName": "Love My Body",
+      "productThemeCode": "A050",
+      "productThemeName": "Love My Body Moda Tutkusu",
+      "productMainGroupCode": "006",
+      "productMainGroupName": "AKSESUAR",
+      "productGroupCode": "U0040",
+      "productGroupName": "Kemer",
+      "productTypeCode": "X",
+      "productTypeName": "DOKUSUZ YUZEY",
+      "compositionCode": null,
+      "compositionName": null,
+      "armLengthCode": null,
+      "armLengthName": null,
+      "collarTypeCode": null,
+      "collarTypeName": null,
+      "fabricPatternCode": null,
+      "fabricPatternName": null,
+      "productLengthCode": null,
+      "productLengthName": null,
+      "cuttingCode": null,
+      "cuttingName": null,
+      "beltLengthCode": null,
+      "beltLengthName": null,
+      "legTypeCode": null,
+      "legTypeName": null,
+      "styleCode": null,
+      "styleName": null,
+      "ecommerceTypeCode": null,
+      "ecommerceTypeName": null,
+      "fabricMaterialCode": "DER",
+      "fabricMaterialName": "DERİ",
+      "isBlocked": false,
+      "useInternet": true,
+      "hasDiscount": false,
+      "deliverFromStore": false,
+      "barcodes": [
+        {
+          "colorCode": "010",
+          "colorName": "Kahverengi",
+          "colorHexCode": "#964B00",
+          "barcode": "8683394190483",
+          "sizeCode": "ST",
+          "sizeName": "ST",
+          "compositionCode": null,
+          "compositionName": null,
+          "modelMeasures": [],
+          "mainMaterialContent": "ANA KUMAŞ: DERİ - %100",
+          "isBlocked": false
+        },
+        {
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "colorHexCode": "#000000",
+          "barcode": "8683394190490",
+          "sizeCode": "ST",
+          "sizeName": "ST",
+          "compositionCode": null,
+          "compositionName": null,
+          "modelMeasures": [],
+          "mainMaterialContent": "ANA KUMAŞ: DERİ - %100",
+          "isBlocked": false
+        }
+      ],
+      "productImages": [
+        {
+          "name": "140M2365000_001_1.jpg",
+          "extension": "jpg",
+          "contentType": "image/jpeg",
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "type": "Fotoğraf - Web",
+          "m3U8Url": null,
+          "isDeleted": false
+        },
+        {
+          "name": "140M2365000_001_2.jpg",
+          "extension": "jpg",
+          "contentType": "image/jpeg",
+          "colorCode": "001",
+          "colorName": "Siyah",
+          "type": "Fotoğraf - Web",
+          "m3U8Url": null,
+          "isDeleted": false
+        }
+      ],
+      "washingAndCareInstructions": [],
+      "maintenanceInstruction": "",
+      "productRelations": [],
+      "productCategories": [
+        {
+          "name": "Kemer",
+          "code": "0126",
+          "description": "Kemer",
+          "colorCodes": []
+        },
+        {
+          "name": "Moda Tutkusu Kemer",
+          "code": "0142",
+          "description": "MT.Kemer",
+          "colorCodes": []
+        }
+      ],
+      "sizeTable": null,
+      "isNewProduct": false,
+      "ecomTag1Name": null,
+      "ecomTag1Code": null,
+      "ecomTag2Name": null,
+      "ecomTag2Code": null,
+      "ecomTag3Name": null,
+      "ecomTag3Code": null,
+      "ecomTag4Name": null,
+      "ecomTag4Code": null,
+      "thicknessTypeName": null,
+      "thicknessTypeCode": null,
+      "fitName": null,
+      "fitCode": null
+    },
+    "total_records": 4194
+  }
+}

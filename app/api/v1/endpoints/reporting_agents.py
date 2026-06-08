@@ -118,14 +118,8 @@ async def reporting_insights(
             except Exception:
                 pass
 
-    # Veriyi çek ve insight üret
-    insight_question = (
-        f"Bu {payload.report_ctx} raporu için en kritik 4-5 bulguyu "
-        f"JSON array olarak listele. Her eleman: "
-        f'{{\"tur\": "basari|risk|trend|firsat|dikkat", '
-        f'"baslik": "max 8 kelime", "aciklama": "max 25 kelime"}}. '
-        f"Sadece JSON array döndür, başka bir şey yazma."
-    )
+    # Veriyi çek ve insight üret — bölüme göre odaklı prompt
+    insight_question = _insight_question(payload.report_ctx)
 
     result = await route_and_run(
         session=session,
@@ -155,6 +149,40 @@ async def reporting_insights(
 
 
 # ── Yardımcı fonksiyonlar ─────────────────────────────────────────────────────
+
+def _insight_question(report_ctx: str) -> str:
+    """Her bölüme özel insight sorusu — daha odaklı ve hızlı yanıt üretir."""
+    JSON_FORMAT = (
+        'JSON array döndür, başka metin yazma. Format: '
+        '[{"tur":"basari|risk|trend|firsat|dikkat","baslik":"max 8 kelime","aciklama":"max 20 kelime"}]'
+    )
+    ctx_map = {
+        # Satış / Mağaza
+        "magaza-yonetici":      f"Mağaza ağının hedef gerçekleşme, MDO ve OBF durumunu analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "magaza-performans":    f"Mağaza performans segmentasyonu ve aksiyon gereken mağazaları analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "magaza-donemseel":     f"Aylık ciro/hedef trend, büyüme ivmesi ve sezonsal anomalileri analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "magaza-karsilastirma": f"Dönemsel karşılaştırma: çeyrek/YoY büyüme ve zayıf dönemleri analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
+        # E-Ticaret
+        "exec":                 f"Net ciro, iade oranı ve kanal büyümesine göre executive 4-5 kritik bulguyu {JSON_FORMAT}",
+        "kpi":                  f"KPI dashboard: net ciro, iade, iptal, OBF anomalilerini analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "overview":             f"Kanal bazlı satış dağılımı, iade oranları ve aylık trend. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "kategori":             f"Ürün grubu bazında net ciro, pay ve iade oranı anomalileri. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "urunler":              f"Top ürünler ve yüksek iade riskli SKUlar. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "iade":                 f"İade analizi: kanal, ürün ve oran anomalileri. 4-5 kritik bulguyu {JSON_FORMAT}",
+        # Ürün Yönetimi
+        "urun-yonetimi":        f"PLM portföy durumu: marka/sezon/tema dağılımı ve blokaj/internet aktivasyon. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "plm-katalog":          f"Katalog sağlığı: SKU dağılımı, sezon derinliği ve tema konsantrasyonu. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "urun-satis":           f"PLM ürünlerin satış performansı, tema bazlı iade oranları. 4-5 kritik bulguyu {JSON_FORMAT}",
+        # Enrichment
+        "enrichment":           f"Ürün kalite puanı: grade dağılımı, en kritik eksik alanlar, acil düzeltilecekler. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "enrichment-dashboard": f"Sezon kalite özeti: ortalama puan, yayına hazır oran ve top sorunlar. 4-5 kritik bulguyu {JSON_FORMAT}",
+        "enrichment-scorelist": f"Grade D/F ürünler: satış hacmine göre önceliklendirme. 4-5 kritik bulguyu {JSON_FORMAT}",
+    }
+    return ctx_map.get(
+        report_ctx,
+        f"Bu rapor için en kritik 4-5 bulguyu {JSON_FORMAT}"
+    )
+
 
 def _insight_key(report_ctx: str, filters: Dict) -> str:
     fh = hashlib.sha256(

@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.llm_client import llm_client
+from app.services.reporting.utils.date_context import get_date_context
 
 SIRALAMA_SYSTEM = """\
 Sen Pimland'ın kategori sıralama uzmanısın.
@@ -30,7 +31,7 @@ async def run_siralama_agent(session: AsyncSession, question: str,
     except Exception:
         rows = []
     ctx = {"son_siralama_calismalari": rows}
-    system = SIRALAMA_SYSTEM.format(veri=json.dumps(ctx, ensure_ascii=False, indent=2))
+    system = get_date_context() + "\n\n" + SIRALAMA_SYSTEM.format(veri=json.dumps(ctx, ensure_ascii=False, indent=2))
     answer = await llm_client.complete(system=system, user=question, max_tokens=600,
                                        temperature=0.3, history=history[-4:])
     return {"answer": answer, "elapsed_ms": round((time.perf_counter()-t0)*1000,1),

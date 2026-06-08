@@ -1,0 +1,382 @@
+{
+  "incorta_satis": {
+    "tool_name": "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_be9a751b",
+    "description": "adL Ecommerce Sales",
+    "target_table": "incorta_satis",
+    "parameters": {
+      "Authorization": "string (Bearer token)",
+      "pagination": {
+        "startRow": "integer",
+        "pageSize": "integer"
+      },
+      "prompts": "[{field, operator, values, type}] — isteğe bağlı filtre"
+    },
+    "columns": [
+      {
+        "name": "Yıl",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Year",
+        "role": "dimension",
+        "index": 0
+      },
+      {
+        "name": "Ay",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Month",
+        "role": "dimension",
+        "index": 1
+      },
+      {
+        "name": "Satis Kanalı",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.Satiskanali",
+        "role": "dimension",
+        "index": 2
+      },
+      {
+        "name": "Urun Kodu",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemCode",
+        "role": "dimension",
+        "index": 3
+      },
+      {
+        "name": "Urun Adı",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.UrunAdi",
+        "role": "dimension",
+        "index": 4
+      },
+      {
+        "name": "Renk",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ColorDescription",
+        "role": "dimension",
+        "index": 5
+      },
+      {
+        "name": "Beden",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemDim1Code",
+        "role": "dimension",
+        "index": 6
+      },
+      {
+        "name": "Tutar",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Ciro",
+        "role": "measure",
+        "index": 7
+      },
+      {
+        "name": "Adet",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Adet",
+        "role": "measure",
+        "index": 8
+      }
+    ],
+    "column_count": 9,
+    "total_rows": 108961,
+    "sample_record": {
+      "Yıl": 2026,
+      "Ay": 1,
+      "Satis Kanalı": "ADL",
+      "Urun Kodu": "10146095000",
+      "Urun Adı": "Triko Atkı",
+      "Renk": "Antrasit",
+      "Beden": "ST",
+      "Tutar": 3999.8,
+      "Adet": 4
+    }
+  },
+  "incorta_depo_iade": {
+    "tool_name": "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_94f3f1b2",
+    "description": "adL Ecommerce Depo Iade",
+    "target_table": "incorta_depo_iade",
+    "parameters": {
+      "Authorization": "string (Bearer token)",
+      "pagination": {
+        "startRow": "integer",
+        "pageSize": "integer"
+      },
+      "prompts": "[{field, operator, values, type}] — isteğe bağlı filtre"
+    },
+    "columns": [
+      {
+        "name": "Yıl",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Year",
+        "role": "dimension",
+        "index": 0
+      },
+      {
+        "name": "Ay",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Month",
+        "role": "dimension",
+        "index": 1
+      },
+      {
+        "name": "Satis Kanalı",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.Satiskanali",
+        "role": "dimension",
+        "index": 2
+      },
+      {
+        "name": "Urun Kodu",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemCode",
+        "role": "dimension",
+        "index": 3
+      },
+      {
+        "name": "Urun Adi",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.UrunAdi",
+        "role": "dimension",
+        "index": 4
+      },
+      {
+        "name": "Renk",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ColorDescription",
+        "role": "dimension",
+        "index": 5
+      },
+      {
+        "name": "Beden",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemDim1Code",
+        "role": "dimension",
+        "index": 6
+      },
+      {
+        "name": "Tutar",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Ciro",
+        "role": "measure",
+        "index": 7
+      },
+      {
+        "name": "Adet",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Adet",
+        "role": "measure",
+        "index": 8
+      }
+    ],
+    "column_count": 9,
+    "total_rows": 44929,
+    "sample_record": {
+      "Yıl": 2026,
+      "Ay": 1,
+      "Satis Kanalı": "ADL",
+      "Urun Kodu": "10146095000",
+      "Urun Adi": "Triko Atkı",
+      "Renk": "Antrasit",
+      "Beden": "ST",
+      "Tutar": -999.95,
+      "Adet": -1
+    }
+  },
+  "incorta_iptal_siparis": {
+    "tool_name": "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_091c37f6",
+    "description": "adL Ecommerce Iptal Siparis",
+    "target_table": "incorta_iptal_siparis",
+    "parameters": {
+      "Authorization": "string (Bearer token)",
+      "pagination": {
+        "startRow": "integer",
+        "pageSize": "integer"
+      },
+      "prompts": "[{field, operator, values, type}] — isteğe bağlı filtre"
+    },
+    "columns": [
+      {
+        "name": "Yıl",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Year",
+        "role": "dimension",
+        "index": 0
+      },
+      {
+        "name": "Ay",
+        "dataType": "integer",
+        "field": "CALCULATIONS.EticaretOzet.Month",
+        "role": "dimension",
+        "index": 1
+      },
+      {
+        "name": "Satis Kanalı",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.Satiskanali",
+        "role": "dimension",
+        "index": 2
+      },
+      {
+        "name": "Urun Kodu",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemCode",
+        "role": "dimension",
+        "index": 3
+      },
+      {
+        "name": "Urun Adi",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.UrunAdi",
+        "role": "dimension",
+        "index": 4
+      },
+      {
+        "name": "Renk",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ColorDescription",
+        "role": "dimension",
+        "index": 5
+      },
+      {
+        "name": "Beden",
+        "dataType": "string",
+        "field": "CALCULATIONS.EticaretOzet.ItemDim1Code",
+        "role": "dimension",
+        "index": 6
+      },
+      {
+        "name": "Tutar",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Ciro",
+        "role": "measure",
+        "index": 7
+      },
+      {
+        "name": "Adet",
+        "dataType": "double",
+        "field": "CALCULATIONS.EticaretOzet.Adet",
+        "role": "measure",
+        "index": 8
+      }
+    ],
+    "column_count": 9,
+    "total_rows": 10178,
+    "sample_record": {
+      "Yıl": 2026,
+      "Ay": 1,
+      "Satis Kanalı": "ADL",
+      "Urun Kodu": "10244697000",
+      "Urun Adi": "Kolsuz Triko Atlet",
+      "Renk": "Gri",
+      "Beden": "M",
+      "Tutar": -899.95,
+      "Adet": -1
+    }
+  },
+  "incorta_analytics": {
+    "tool_name": "post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_3961ae53",
+    "description": "adL Ecommerce Analytics",
+    "target_table": "incorta_analytics",
+    "parameters": {
+      "Authorization": "string (Bearer token)",
+      "pagination": {
+        "startRow": "integer",
+        "pageSize": "integer"
+      },
+      "prompts": "[{field, operator, values, type}] — isteğe bağlı filtre"
+    },
+    "columns": [
+      {
+        "name": "Date",
+        "dataType": "date",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.date",
+        "role": "measure",
+        "index": 0
+      },
+      {
+        "name": "Marka",
+        "dataType": "string",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.satis_kanali",
+        "role": "measure",
+        "index": 1
+      },
+      {
+        "name": "Oturum Kaynağı",
+        "dataType": "string",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.sessionSource",
+        "role": "measure",
+        "index": 2
+      },
+      {
+        "name": "Oturum Kampanyası",
+        "dataType": "string",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.sessionCampaignName",
+        "role": "measure",
+        "index": 3
+      },
+      {
+        "name": "Kullanıcılar",
+        "dataType": "long",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.activeUsers",
+        "role": "measure",
+        "index": 4
+      },
+      {
+        "name": "Oturumlar",
+        "dataType": "long",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.sessions",
+        "role": "measure",
+        "index": 5
+      },
+      {
+        "name": "Ciro",
+        "dataType": "double",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.totalRevenue",
+        "role": "measure",
+        "index": 6
+      },
+      {
+        "name": "İşlem Sayısı",
+        "dataType": "long",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.transactions",
+        "role": "measure",
+        "index": 7
+      },
+      {
+        "name": "Conversion Rate",
+        "dataType": "double",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.sessionConversionRate",
+        "role": "measure",
+        "index": 8
+      },
+      {
+        "name": "Hemen Çıkma Oranı",
+        "dataType": "double",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.bounceRate",
+        "role": "measure",
+        "index": 9
+      },
+      {
+        "name": "Ortalama Oturum Süresi",
+        "dataType": "double",
+        "field": "E_Commerce.GA4_Oturum_Kampanyası_Raporu.averageSessionDuration",
+        "role": "measure",
+        "index": 10
+      }
+    ],
+    "column_count": 11,
+    "total_rows": 24504,
+    "sample_record": {
+      "Date": "2026-01-06 00:00:00",
+      "Marka": "ADL",
+      "Oturum Kaynağı": "Instagram_Feed",
+      "Oturum Kampanyası": "INB_Conversion_Interest",
+      "Kullanıcılar": 8,
+      "Oturumlar": 13,
+      "Ciro": 0,
+      "İşlem Sayısı": 0,
+      "Conversion Rate": 1,
+      "Hemen Çıkma Oranı": 0.07692307692307693,
+      "Ortalama Oturum Süresi": 84.32529284615384
+    }
+  }
+}

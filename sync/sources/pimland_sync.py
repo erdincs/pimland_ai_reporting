@@ -304,10 +304,9 @@ def sync_products(
         token = _get_token(client)
 
         while True:
-            raw = _call_tool(client, token, "post_api_Product_get_products_with_squ", {
-                "updatedDate": updated_date,
-                "pageSize":    100,
-                "pageNumber":  page,
+            raw = _call_tool(client, token, "post_api_Product_get_products_by_filter", {
+                "pageSize":   50,
+                "pageNumber": page,
             })
 
             products = []
@@ -386,7 +385,6 @@ def sync_products(
                         sync_updated_at   = EXCLUDED.sync_updated_at
                     """,
                     rows,
-                    fetch=True,
                     page_size=100,
                 )
             db_conn.commit()

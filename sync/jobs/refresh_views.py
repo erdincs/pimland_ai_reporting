@@ -29,10 +29,36 @@ def _get_view_order() -> list:
         ]
 
 
+# CONCURRENT refresh için gerekli unique index tanımları
+_UNIQUE_INDEXES = {
+    "mv_analytics_kanal":   ("uq_mv_analytics_kanal",   "(marka, oturum_kaynagi)"),
+    "mv_analytics_gunluk":  ("uq_mv_analytics_gunluk",  "(tarih, marka)"),
+    "mv_satis_marka_sezon": ("uq_mv_satis_marka_sezon", "(marka_adi, sezon_kodu, sezon_adi)"),
+    "mv_satis_kategori":    ("uq_mv_satis_kategori",    "(ana_grup_adi, urun_grubu_adi)"),
+}
+
+
+def _ensure_unique_indexes(db_conn: "psycopg2.connection") -> None:
+    """REFRESH CONCURRENTLY için gereken unique index'leri oluştur."""
+    with db_conn.cursor() as cur:
+        for view, (idx_name, cols) in _UNIQUE_INDEXES.items():
+            cur.execute(
+                "SELECT COUNT(*) FROM pg_indexes WHERE indexname=%s", (idx_name,)
+            )
+            if cur.fetchone()[0] == 0:
+                cur.execute(
+                    f"CREATE UNIQUE INDEX {idx_name} ON {view} {cols}"
+                )
+                log.info("unique index oluşturuldu: %s", idx_name)
+    db_conn.commit()
+
+
 def refresh_all_views(db_conn: "psycopg2.connection") -> Dict[str, Any]:
     """Tüm view'ları sırayla refresh et, hataları topla."""
     basarili: List[Dict] = []
     hatali:   List[Dict] = []
+
+    _ensure_unique_indexes(db_conn)
 
     for view in _get_view_order():
         t0 = time.perf_counter()

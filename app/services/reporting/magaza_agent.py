@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent.llm_client import llm_client
 from app.core.logging import get_logger
+from app.services.reporting.utils.date_context import get_date_context
 
 log = get_logger(__name__)
 
@@ -35,18 +36,30 @@ TON_EKLI = {
 
 # ── Sistem prompt ─────────────────────────────────────────────────────────────
 MAGAZA_SYSTEM = """\
-Sen Pimland'ın fiziksel mağaza satış analisti için AI asistanısın.
-Sadece mağaza verisi: hedef gerçekleştirme, MDO, OBF, sepet, ziyaretçi.
+Sen Pimland'ın fiziksel mağaza ağı için Satış Agent'ısın.
+Aşağıdaki tüm konularda UZMANSIN ve doğrudan yanıt verirsin:
 
-## Kapsam dışı sinyaller
-- E-ticaret sorusu gelirse: [KAPSAM_DIŞI: ETICARET_AGENT]
-- Ürün kalitesi sorusu: [KAPSAM_DIŞI: ENRICHMENT_AGENT]
-- Geçmiş dönem karşılaştırması: [A2A_GEREKLİ: KIYASLAMA_AGENT, <soru>]
+  • Yönetici Özeti    — ağ geneli hedef gerçekleşme, MDO, OBF, bölge/mağaza sıralaması
+  • Mağaza Performans — mağaza bazlı KPI karşılaştırması, segmentasyon, aksiyon listesi
+  • Dönemsel Perf.   — ay bazlı ciro/hedef trendi, büyüme ivmesi, sezonsal dip/zirve
+  • Dönemsel Karş.   — çeyrek/YTD karşılaştırması, en iyi/kötü dönem analizi
+
+## Kapsam dışı
+- E-ticaret sorusu: [KAPSAM_DIŞI: ETICARET_AGENT]
+- Ürün kalite/zenginleştirme: [KAPSAM_DIŞI: ENRICHMENT_AGENT]
+- Açık YoY (örn. "2024 ile 2025'i karşılaştır"): [A2A_GEREKLİ: KIYASLAMA_AGENT, <soru>]
+
+## Doğrudan yanıtla — A2A tetikleme
+magaza_tam_sira, bolgeler ve aylik_trend verileri mevcut; şunları devretme:
+- Mağaza sıralaması, en iyi/kötü, hedefi aşan/aşmayan
+- Aylık/çeyreklik performans trendi
+- Bölge karşılaştırması
+- MDO/OBF/sepet analizi
 
 ## Yanıt kuralları
 - Türkçe · yönetici tonu · jargon yok
 - Sayılarda Türk formatı: 1.234.567 ₺ · %14,7
-- "tahmini / yaklaşık / veriye göre" — kesinlik iddia etme
+- Kesinlik iddia etme — "veriye göre", "görünüyor" kullan
 - Tablo/SQL/kolon adı asla gösterme
 - Veri yoksa: "Bu konuda yeterli veri şu an mevcut değil"
 
@@ -114,7 +127,7 @@ async def _fetch_magaza_context(
             WHERE {where}
             GROUP BY bolge_muduru, magaza
             ORDER BY ciro DESC
-            LIMIT 50
+            LIMIT 200
         """), params)
         rows = r.mappings().all()
         source = "mv_magaza_satis_ozet"
@@ -132,7 +145,7 @@ async def _fetch_magaza_context(
             WHERE {where}
             GROUP BY bolge_muduru, magaza
             ORDER BY ciro DESC
-            LIMIT 50
+            LIMIT 200
         """), params)
         rows = r.mappings().all()
         source = "incorta_magaza_performans"
@@ -166,24 +179,32 @@ async def _fetch_magaza_context(
             "hedef_oran_pct": oran,
         })
 
-    # En iyi / en kötü 5 mağaza
-    mag_sorted = sorted(rows, key=lambda r: _fv(r.get("hedef_oran") or r.get("ciro", 0)), reverse=True)
-    en_iyi  = [{"magaza": r["magaza"], "bolge": r["bolge_muduru"],
-                "ciro": round(_fv(r["ciro"])),
-                "hedef_oran_pct": round(_fv(r.get("hedef_oran", 0)))}
-               for r in mag_sorted[:5]]
-    en_kotu = [{"magaza": r["magaza"], "bolge": r["bolge_muduru"],
-                "ciro": round(_fv(r["ciro"])),
-                "hedef_oran_pct": round(_fv(r.get("hedef_oran", 0)))}
-               for r in mag_sorted[-5:]]
+    # Mağaza sıralaması — hedef gerçekleşme oranına göre (tüm liste, max 50)
+    mag_sorted = sorted(rows, key=lambda r: _fv(r.get("hedef_oran") or 0), reverse=True)
+    magaza_siralama = [
+        {
+            "sira": i + 1,
+            "magaza": r["magaza"],
+            "bolge": r["bolge_muduru"],
+            "net_ciro": round(_fv(r["ciro"])),
+            "hedef": round(_fv(r.get("hedef", 0))),
+            "hedef_oran_pct": round(_fv(r.get("hedef_oran", 0)), 1),
+            "mdo_pct": round(_fv(r.get("mdo", 0)) * 100, 1),
+            "obf": round(_fv(r.get("obf", 0))),
+        }
+        for i, r in enumerate(mag_sorted)
+    ]
+    en_iyi  = magaza_siralama[:5]
+    en_kotu = magaza_siralama[-5:]
 
     # Ortalama MDO / OBF
-    mdo_vals = [_fv(r.get("mdo", 0)) for r in rows if _fv(r.get("mdo", 0)) > 0]
+    # mv_magaza_satis_ozet.ort_mdo fraksyon (0.07 = %7) → *100 ile yüzdeye çevir
+    mdo_vals = [_fv(r.get("mdo", 0)) * 100 for r in rows if _fv(r.get("mdo", 0)) > 0]
     obf_vals = [_fv(r.get("obf", 0)) for r in rows if _fv(r.get("obf", 0)) > 0]
     ort_mdo  = round(sum(mdo_vals) / len(mdo_vals), 1) if mdo_vals else 0
     ort_obf  = round(sum(obf_vals) / len(obf_vals), 0) if obf_vals else 0
 
-    # MDO segmentleri
+    # MDO segmentleri (eşikler yüzde cinsinden)
     mukemmel = sum(1 for v in mdo_vals if v >= 16)
     iyi      = sum(1 for v in mdo_vals if 13 <= v < 16)
     kritik   = sum(1 for v in mdo_vals if v < 13)
@@ -208,8 +229,47 @@ async def _fetch_magaza_context(
         "bolgeler": bolge_liste[:8],
         "en_iyi_5_magaza":  en_iyi,
         "en_kotu_5_magaza": en_kotu,
+        "magaza_tam_sira":  magaza_siralama,
         "kaynak": source,
     }
+
+
+async def _fetch_aylik_trend(
+    session: AsyncSession,
+    yil: int,
+) -> List[Dict[str, Any]]:
+    """Yıl boyunca aylık ağ geneli ciro/hedef/ziyaretçi trendi."""
+    AY_ADI = {1:"Ocak",2:"Şubat",3:"Mart",4:"Nisan",5:"Mayıs",6:"Haziran",
+              7:"Temmuz",8:"Ağustos",9:"Eylül",10:"Ekim",11:"Kasım",12:"Aralık"}
+    try:
+        rows = (await session.execute(text("""
+            SELECT ay::integer AS ay,
+                   ROUND(SUM(CASE WHEN net_ciro::text  NOT IN ('--','') THEN net_ciro::float  ELSE 0 END)::numeric) AS ciro,
+                   ROUND(SUM(CASE WHEN hedef::text     NOT IN ('--','') THEN hedef::float     ELSE 0 END)::numeric) AS hedef,
+                   ROUND(SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)::numeric) AS ziyaretci,
+                   ROUND((CASE
+                        WHEN SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) > 0
+                        THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
+                             / SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) * 100
+                        ELSE 0 END)::numeric, 1) AS hedef_oran_pct
+            FROM incorta_magaza_performans
+            WHERE yil = :yil AND magaza IS NOT NULL AND TRIM(magaza) <> ''
+            GROUP BY ay::integer ORDER BY ay::integer
+        """), {"yil": yil})).mappings().all()
+        return [
+            {
+                "ay": r["ay"],
+                "ay_adi": AY_ADI.get(r["ay"], str(r["ay"])),
+                "ciro": int(r["ciro"]),
+                "hedef": int(r["hedef"]),
+                "ziyaretci": int(r["ziyaretci"]),
+                "hedef_oran_pct": float(r["hedef_oran_pct"]),
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("magaza.trend_error", error=str(e))
+        return []
 
 
 # ── Ana fonksiyon ─────────────────────────────────────────────────────────────
@@ -242,12 +302,15 @@ async def run_magaza_agent(
             "a2a_signal": None,
         }
 
+    # Aylık trend ekle (dönemsel bölümler için)
+    ctx["aylik_trend"] = await _fetch_aylik_trend(session, yil)
+
     # Sistem prompt'u oluştur
     filtreler_str = json.dumps(ctx["filtre"], ensure_ascii=False)
     veri_str      = json.dumps(ctx, ensure_ascii=False, indent=2)
     ton_eki       = TON_EKLI.get(ton, TON_EKLI["yonetici"])
 
-    system = MAGAZA_SYSTEM.format(
+    system = get_date_context() + "\n\n" + MAGAZA_SYSTEM.format(
         sektor_normlari=SEKTOR_NORMLARI,
         filtreler=filtreler_str,
         veri_ozeti=veri_str,

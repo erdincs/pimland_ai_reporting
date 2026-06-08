@@ -312,19 +312,20 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 /* AI CHAT */
 #ai-chat::-webkit-scrollbar{width:4px}
 #ai-chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* ── AI Chat ────────────────────────────────────────────────────────────── */
 .ai-user-msg{display:flex;justify-content:flex-end}
-.ai-user-bubble{background:var(--orange);color:#fff;border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:70%;font-size:13px;line-height:1.5}
+.ai-user-bubble{background:linear-gradient(135deg,#ff6b2b,#ff8957);color:#fff;border-radius:16px 16px 2px 16px;padding:10px 16px;max-width:72%;font-size:13px;line-height:1.5;box-shadow:0 2px 12px rgba(255,107,43,.25)}
 .ai-bot-msg{display:flex;align-items:flex-start;gap:12px}
-.ai-bot-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--orange),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.ai-bot-bubble{background:var(--bg2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;padding:14px 16px;max-width:80%;flex:1}
+.ai-bot-avatar{width:34px;height:34px;background:linear-gradient(135deg,#ff6b2b,#a855f7);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(168,85,247,.25)}
+.ai-bot-bubble{background:linear-gradient(160deg,var(--bg2),rgba(19,19,26,.98));border:1px solid var(--border);border-radius:2px 16px 16px 16px;padding:14px 16px;max-width:calc(100% - 46px);flex:1}
 .ai-bot-bubble h1,.ai-bot-bubble h2{font-size:14px;font-weight:700;color:var(--t1);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 .ai-bot-bubble h1:first-child,.ai-bot-bubble h2:first-child{margin-top:0}
 .ai-bot-bubble h3{font-size:12px;font-weight:700;color:var(--teal);margin:10px 0 4px}
-.ai-bot-bubble p{font-size:12px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.ai-bot-bubble p{font-size:13px;color:var(--t2);line-height:1.75;margin-bottom:8px}
 .ai-bot-bubble p:last-child{margin-bottom:0}
 .ai-bot-bubble strong{color:var(--t1);font-weight:600}
 .ai-bot-bubble ul,.ai-bot-bubble ol{padding-left:18px;margin:6px 0}
-.ai-bot-bubble li{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:3px}
+.ai-bot-bubble li{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:4px}
 .ai-bot-bubble table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11px}
 .ai-bot-bubble table thead tr{background:var(--bg3);border-bottom:1px solid var(--border)}
 .ai-bot-bubble table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--t3)}
@@ -332,8 +333,42 @@ body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-ser
 .ai-bot-bubble table tr:hover td{background:var(--bg3);color:var(--t1)}
 .ai-bot-bubble table td:first-child{color:var(--t1);font-weight:500}
 .ai-sql-block{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:monospace;font-size:10px;color:var(--t3);margin-top:10px;line-height:1.5;overflow-x:auto;white-space:pre;cursor:pointer}
-.ai-meta{display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.ai-meta{display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);flex-wrap:wrap}
 .ai-meta span{font-size:10px;color:var(--t3)}
+/* ── AI Data Table ──────────────────────────────────────────────────────── */
+.ai-data-block{margin:12px 0}
+.ai-dtable{width:100%;border-collapse:collapse;font-size:11px}
+.ai-dtable thead tr{background:var(--bg3)}
+.ai-dtable th{padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);cursor:pointer;user-select:none;white-space:nowrap;border-bottom:1px solid var(--border)}
+.ai-dtable th:hover{color:var(--t2)}
+.ai-dtable th.srt-a::after{content:' ↑';color:#ff6b2b}
+.ai-dtable th.srt-d::after{content:' ↓';color:#ff6b2b}
+.ai-dtable td{padding:7px 12px;border-bottom:1px solid rgba(42,42,58,.35);color:var(--t2);vertical-align:middle}
+.ai-dtable tbody tr:last-child td{border-bottom:none}
+.ai-dtable tbody tr:hover td{background:var(--bg3);color:var(--t1)}
+.ai-dtable td.num{text-align:right;font-family:monospace;font-size:11px}
+.ai-dtable-footer{font-size:10px;color:var(--t3);padding:7px 12px;border-top:1px solid var(--border);background:var(--bg3)}
+/* ── AI Chart ───────────────────────────────────────────────────────────── */
+.ai-view-btn{background:var(--bg4);border:1px solid var(--border);color:var(--t3);font-size:10px;padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .15s}
+.ai-view-btn.active{background:#ff6b2b;color:#fff;border-color:transparent}
+.ai-chart-area{padding:4px 0 8px;overflow-x:auto}
+/* ── RP Panel Markdown ──────────────────────────────────────────────────── */
+.rp-ai-msg p{font-size:12px;color:var(--t2);line-height:1.65;margin-bottom:6px}
+.rp-ai-msg p:last-child{margin-bottom:0}
+.rp-ai-msg strong{color:var(--t1);font-weight:600}
+.rp-ai-msg em{color:var(--t2)}
+.rp-ai-msg h1,.rp-ai-msg h2{font-size:12px;font-weight:700;color:var(--t1);margin:10px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border)}
+.rp-ai-msg h3{font-size:11px;font-weight:700;color:var(--teal);margin:8px 0 3px}
+.rp-ai-msg ul,.rp-ai-msg ol{padding-left:16px;margin:4px 0}
+.rp-ai-msg li{font-size:11px;color:var(--t2);line-height:1.55;margin-bottom:2px}
+.rp-ai-msg hr{border:none;border-top:1px solid var(--border);margin:8px 0}
+.rp-ai-msg code{background:var(--bg4);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:10px;color:var(--teal)}
+.rp-ai-msg table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10px;border-radius:6px;overflow:hidden}
+.rp-ai-msg table thead tr{background:var(--bg4)}
+.rp-ai-msg table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);border-bottom:1px solid var(--border)}
+.rp-ai-msg table td{padding:5px 8px;border-bottom:1px solid rgba(42,42,58,.4);color:var(--t2)}
+.rp-ai-msg table tbody tr:last-child td{border-bottom:none}
+.rp-ai-msg table tbody tr:hover td{background:var(--bg4);color:var(--t1)}
 .ai-chip{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:10px;padding:4px 10px;border-radius:16px;cursor:pointer;transition:all .12s;white-space:nowrap}
 .enr-gbtn{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:11px;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .1s}
 .nav-sub{padding:8px 16px 8px 32px !important;font-size:12px}
@@ -1989,7 +2024,7 @@ body,
        border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg3)">
     <span style="font-size:16px">✦</span>
     <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:var(--t1)">AI Analiz</div>
+      <div id="rp-agent-title" style="font-size:13px;font-weight:700;color:var(--t1)">AI Analiz</div>
       <div id="rp-ctx-label" style="font-size:10px;color:var(--t3)">—</div>
     </div>
     <button onclick="rpClear()" title="Geçmişi temizle"
@@ -3028,23 +3063,147 @@ function renderMD(text){
   return h;
 }
 
-// Render data rows as table
-function renderDataTable(rows,limit=20){
+// ── Data helpers ─────────────────────────────────────────────────────────
+function _isNumCol(k,rows){return rows.length>0&&typeof rows[0][k]==='number';}
+function _isTimeCol(k){return /^(ay|month|hafta|week|tarih|date|gun|day|yil|year|donem|period)/i.test(k);}
+function _isMoneyCol(k){return /(ciro|tutar|gelir|satis|revenue|amount|price|fiyat|obf)/i.test(k);}
+function _isNegCol(k){return /(iade|iptal|cancel|return|loss)/i.test(k);}
+
+function _fmtCV(v,key){
+  const m=_isMoneyCol(key);
+  const a=Math.abs(v);
+  if(a>=1e6)return (v/1e6).toFixed(1)+(m?'M₺':'M');
+  if(a>=1e3)return (v/1e3).toFixed(0)+(m?'K₺':'K');
+  return m?v.toFixed(0)+'₺':v.toLocaleString('tr-TR',{maximumFractionDigits:1});
+}
+
+// Rich sortable table
+function renderRichTable(rows,limit=30){
   if(!rows||!rows.length)return '';
   const keys=Object.keys(rows[0]);
+  const numCols=new Set(keys.filter(k=>_isNumCol(k,rows)));
   const shown=rows.slice(0,limit);
-  const header='<tr>'+keys.map(k=>`<th>${k}</th>`).join('')+'</tr>';
-  const body=shown.map(r=>'<tr>'+keys.map(k=>{
+  const maxVals={};
+  numCols.forEach(k=>{maxVals[k]=Math.max(1,...shown.map(r=>Math.abs(parseFloat(r[k])||0)));});
+  const RANK_BG=['#ff6b2b','#00c2a8','#3b82f6'];
+  const thead='<tr>'+keys.map((k,ci)=>{
+    const isN=numCols.has(k);
+    return `<th style="${isN?'text-align:right':''}">${k.replace(/_/g,' ')}</th>`;
+  }).join('')+'</tr>';
+  const tbody=shown.map((r,ri)=>'<tr>'+keys.map((k,ci)=>{
     const v=r[k];
-    const vs=v===null||v===undefined?'—':typeof v==='number'?v.toLocaleString('tr-TR',{maximumFractionDigits:2}):String(v);
-    const isNum=typeof v==='number';
-    const isMoney=isNum&&(k.toLowerCase().includes('ciro')||k.toLowerCase().includes('tutar')||k.toLowerCase().includes('obf'));
-    const display=isMoney&&Math.abs(v)>=1000?fmtM(v):vs;
-    return`<td${isNum?' style="text-align:right"':''}>${display}</td>`;
+    if(v===null||v===undefined)return '<td>—</td>';
+    const isN=numCols.has(k);
+    if(!isN){
+      if(ci===0&&ri<3){
+        return `<td><span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:${RANK_BG[ri]};color:#fff;font-size:9px;font-weight:700;margin-right:6px;flex-shrink:0">${ri+1}</span>${String(v)}</td>`;
+      }
+      return `<td>${String(v)}</td>`;
+    }
+    const numV=parseFloat(v)||0;
+    const maxV=maxVals[k]||1;
+    const barPx=Math.round(Math.abs(numV)/maxV*36);
+    const isNeg=_isNegCol(k)||numV<0;
+    const barClr=isNeg?'#ef4444':'#00c2a8';
+    const txtClr=isNeg?'#ef4444':'#f0f0f8';
+    const disp=_isMoneyCol(k)?_fmtCV(numV,k):numV.toLocaleString('tr-TR',{maximumFractionDigits:1});
+    return `<td class="num"><div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+      <div style="width:36px;height:3px;background:#22222f;border-radius:2px;flex-shrink:0">
+        <div style="width:${barPx}px;height:100%;background:${barClr};border-radius:2px"></div>
+      </div>
+      <span style="color:${txtClr}">${disp}</span>
+    </div></td>`;
   }).join('')+'</tr>').join('');
-  return`<table><thead>${header}</thead><tbody>${body}</tbody></table>`+
-    (rows.length>limit?`<p style="font-size:10px;color:var(--t3);margin-top:4px">İlk ${limit} satır gösteriliyor (toplam ${rows.length})</p>`:'');
+  const footer=rows.length>limit
+    ?`<div class="ai-dtable-footer">İlk ${limit} satır &nbsp;·&nbsp; Toplam ${rows.length} kayıt</div>`:'';
+  return `<div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+    <table class="ai-dtable"><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+    ${footer}</div>`;
 }
+
+// Inline SVG chart
+function renderInlineChart(rows){
+  if(!rows||rows.length<2)return '';
+  const keys=Object.keys(rows[0]);
+  const numKeys=keys.filter(k=>_isNumCol(k,rows));
+  const txtKeys=keys.filter(k=>!_isNumCol(k,rows));
+  if(!numKeys.length)return '';
+  const labelKey=txtKeys[0]||null;
+  const valKey=numKeys.find(k=>_isMoneyCol(k))||numKeys[0];
+  const vals=rows.map(r=>parseFloat(r[valKey])||0);
+  const maxV=Math.max(...vals.map(Math.abs));
+  if(!maxV)return '';
+  const isTime=labelKey&&_isTimeCol(labelKey);
+  const COLORS=['#ff6b2b','#00c2a8','#3b82f6','#a855f7','#ec4899','#f59e0b','#22c55e','#64748b'];
+
+  if(!isTime&&rows.length<=12){
+    // Horizontal bar — ranking view
+    const rowH=26;const svgH=rows.length*rowH+8;
+    const items=rows.map((r,i)=>{
+      const v=vals[i];const pct=Math.abs(v)/maxV;
+      const bw=Math.round(pct*190);
+      const y=i*rowH+4;
+      const lbl=labelKey?String(r[labelKey]||'').substring(0,22):`#${i+1}`;
+      const clr=i<COLORS.length?COLORS[i]:'#3a3a52';
+      return `<g><text x="0" y="${y+14}" font-size="10" fill="#9898b8" font-family="Inter,sans-serif">${lbl}</text>
+        <rect x="148" y="${y+3}" width="${bw}" height="14" rx="3" fill="${clr}" opacity="${i<3?1:.65}"/>
+        <text x="${148+bw+5}" y="${y+14}" font-size="9" fill="#55556a" font-family="monospace">${_fmtCV(v,valKey)}</text>
+      </g>`;
+    }).join('');
+    return `<svg width="100%" viewBox="0 0 370 ${svgH}" style="display:block">${items}</svg>`;
+  } else {
+    // Vertical bar — time series or many rows
+    const n=Math.min(rows.length,24);
+    const bw=Math.max(18,Math.min(52,Math.floor(340/n)-4));
+    const bars=rows.slice(0,n).map((r,i)=>{
+      const v=vals[i];const pct=Math.abs(v)/maxV;
+      const bh=Math.round(pct*80);
+      const x=i*(bw+4);const y=80-bh;
+      const lbl=labelKey?String(r[labelKey]||'').substring(0,6):`${i+1}`;
+      const clr=_isNegCol(valKey)||v<0?'#ef4444':'#00c2a8';
+      return `<g>
+        <rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${clr}" opacity="${i===0?.95:.7}"/>
+        <text x="${x+bw/2}" y="97" text-anchor="middle" font-size="8" fill="#55556a" font-family="Inter,sans-serif">${lbl}</text>
+        <title>${lbl}: ${_fmtCV(v,valKey)}</title>
+      </g>`;
+    }).join('');
+    const svgW=n*(bw+4);
+    return `<div style="overflow-x:auto"><svg height="100" viewBox="0 0 ${svgW} 100" style="min-width:${svgW}px;display:block">${bars}</svg></div>`;
+  }
+}
+
+// Combined data block with table/chart toggle
+function renderDataBlock(rows){
+  if(!rows||!rows.length)return '';
+  const bid='db'+Date.now();
+  const tblHtml=renderRichTable(rows);
+  const chtHtml=renderInlineChart(rows);
+  const toggle=chtHtml?`<div style="display:flex;gap:4px;margin-bottom:8px">
+    <button class="ai-view-btn active" id="${bid}-tb" onclick="dbView('${bid}','t')">⊞ Tablo</button>
+    <button class="ai-view-btn" id="${bid}-cb" onclick="dbView('${bid}','c')">▦ Grafik</button>
+  </div>`:'';
+  return `<div class="ai-data-block">${toggle}
+    <div id="${bid}-t">${tblHtml}</div>
+    ${chtHtml?`<div id="${bid}-c" class="ai-chart-area" style="display:none">${chtHtml}</div>`:''}
+  </div>`;
+}
+
+function dbView(bid,mode){
+  ['t','c'].forEach(m=>{
+    const el=document.getElementById(`${bid}-${m}`);
+    const btn=document.getElementById(`${bid}-${m}b`);
+    if(el)el.style.display=(m===mode?'':'none');
+    if(btn)btn.classList.toggle('active',m===mode);
+  });
+  // update button active state via onclick-embedded ids
+  const tbtn=document.getElementById(`${bid}-tb`);
+  const cbtn=document.getElementById(`${bid}-cb`);
+  if(tbtn)tbtn.classList.toggle('active',mode==='t');
+  if(cbtn)cbtn.classList.toggle('active',mode==='c');
+}
+
+// Legacy alias (kept for other callers)
+function renderDataTable(rows,limit=20){return renderRichTable(rows,limit);}
 
 async function askAI(){
   const textarea=document.getElementById('ai-question');
@@ -3108,8 +3267,7 @@ async function askAI(){
         </div>`);
     } else {
       const answerHtml=renderMD(d.answer||'');
-      const dataHtml=d.rows&&d.rows.length?renderDataTable(d.rows):'';
-      // SQL bloğu sadece "SQL'i göster" checkbox aktifken ve satır verisi varsa görünür
+      const dataHtml=d.rows&&d.rows.length?renderDataBlock(d.rows):'';
       const sqlHtml=showSQL&&d.sql&&d.rows?.length?`
         <div class="ai-sql-block" onclick="this.style.display='none'" title="Gizlemek için tıklayın">${d.sql.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
       const filterTag=useFilters&&(state.yil||state.ay.length)?`<span style="background:rgba(255,107,43,.1);color:var(--orange);padding:1px 7px;border-radius:4px">${state.yil||''} ${state.ay.length?AY_ADI[state.ay[0]]:''}</span>`:'';
@@ -3123,7 +3281,7 @@ async function askAI(){
             ${sqlHtml}
             <div class="ai-meta">
               ${filterTag}
-              <span>${d.row_count||0} satır</span>
+              ${d.row_count?`<span style="background:rgba(0,194,168,.08);color:#00c2a8;padding:1px 7px;border-radius:4px">${d.row_count} satır</span>`:''}
               <span>${d.elapsed_ms||0}ms</span>
               ${d.cached?'<span style="color:var(--teal)">⚡ cache</span>':''}
               <span style="margin-left:auto;display:flex;gap:4px">
@@ -7369,6 +7527,7 @@ const RP_SUPPORTED = new Set([
   'magaza-yonetici','magaza-performans','magaza-donemseel','magaza-karsilastirma',
   'enrichment','enrichment-dashboard','enrichment-scorelist','enrichment-products',
   'siralama','exec','kpi','overview','kategori','urunler','iade','colors',
+  'urun-yonetimi','plm-katalog','products','urun-satis',
 ]);
 
 const RP_LABELS = {
@@ -7378,8 +7537,17 @@ const RP_LABELS = {
   'magaza-karsilastirma':'Dönemsel Karşılaştırma',
   'enrichment':          'Ürün Zenginleştirme',
   'siralama':            'Sıralama Yönetimi',
-  'exec':                'Executive Özet',
-  'kpi':                 'KPI Dashboard',
+  'exec':                'E-Ticaret Executive',
+  'kpi':                 'E-Ticaret KPI',
+  'overview':            'Satış Genel Bakış',
+  'kategori':            'Kategori Analizi',
+  'urunler':             'Ürün Performansı',
+  'iade':                'İade Analizi',
+  'colors':              'Renk Analizi',
+  'urun-satis':          'Ürün Satış Analizi',
+  'urun-yonetimi':       'Ürün Yönetimi (YK)',
+  'plm-katalog':         'PLM Katalog',
+  'products':            'Ürün Listesi',
 };
 
 const RP_CHIPS = {
@@ -7387,17 +7555,66 @@ const RP_CHIPS = {
   'magaza-performans':   ['Hedefi aşan mağazalar?','En düşük OBF nerede?','Aksiyon gereken liste?'],
   'magaza-donemseel':    ['En iyi ay hangisi?','Büyüme ivmesi nasıl?','Sezonluk dip ne zaman?'],
   'magaza-karsilastirma':['2026 vs 2025 büyüme?','Hangi çeyrek zayıf?','Yıl sonu projeksiyonu?'],
-  'enrichment':          ['Önce hangi ürünler?','Kalite satışı etkiliyor mu?','En büyük eksiklik?'],
+  'enrichment':          ['Genel kalite durumu nedir?','Kalite satışı etkiliyor mu?','En büyük eksik alanlar?','Önce hangi ürünler düzeltilmeli?'],
+  'enrichment-dashboard':['Bu sezon kaç ürün yayına hazır?','Ortalama puan nedir?','Top sorunlar neler?'],
+  'enrichment-scorelist': ['Grade D/F ürünler hangileri?','Satışı yüksek kötü puanlı ürünler?','Hangi alan en çok eksik?'],
+  'enrichment-products':  ['Bu ürünün puanı neden düşük?','Eksik alanları neler?','Nasıl düzeltilir?'],
   'siralama':            ['Son sıralama ne zaman?','Hangi kategori öncelikli?'],
-  'exec':                ['Bu ay özet nedir?','En büyük risk hangisi?','Öne çıkan fırsat?'],
-  'kpi':                 ['Net ciro nasıl?','İade oranı neden yüksek?'],
+  'exec':                ['Bu dönem özeti nedir?','En büyük risk hangisi?','Hangi kanal büyüyor?','YTD net ciro nasıl?'],
+  'kpi':                 ['Net ciro nerede?','İade oranı neden yüksek?','OBF trendi nasıl?'],
+  'overview':            ['En güçlü kanal hangisi?','Aylık trend nasıl?','İade oranı kaçta?'],
+  'kategori':            ['En çok satan kategori?','En yüksek iade hangi kategori?','Kategori büyüme sırası?'],
+  'urunler':             ['En çok satan 5 ürün?','İade riski en yüksek ürün?','Bu ay yeni çıkan ürünler?'],
+  'iade':                ['İade oranı neden yüksek?','En çok iade gelen ürün?','Hangi kanal daha çok iade yapıyor?'],
+  'colors':              ['En çok satan renk?','Renk bazlı iade oranı?','Sezon renk trendi?'],
+  'urun-satis':          ['Bu ürün nasıl satıyor?','Kanal bazlı satış dağılımı?','İade trendi nedir?'],
+  'urun-yonetimi':       ['Portföy özeti nedir?','Hangi tema en güçlü?','Sezon büyümesi nasıl?','Blokaj oranı nedir?'],
+  'plm-katalog':         ['Kaç aktif SKU var?','Marka dağılımı nasıl?','En büyük kategori hangisi?'],
+  'products':            ['Hangi ürünler internet aktif?','En çok satan ürün grubu?','Sezon bazlı SKU dağılımı?'],
 };
 
 let _rpOpen = false;
 let _rpCtx  = null;
-let _rpHistory = {};     // {ctx: [{role,content}]}
+let _rpHistory = {};     // {agentKey: [{role,content}]}
 let _rpFilters = {};
 let _rpInsightsLoaded = new Set();
+
+// Agent key → panel başlık adı
+const RP_AGENT_DISPLAY = {
+  'magaza':        'Satış Agent',
+  'eticaret':      'E-Ticaret Agent',
+  'enrichment':    'Zenginleştirme Agent',
+  'siralama':      'Sıralama Agent',
+  'urun_yonetimi': 'Ürün Yönetimi Agent',
+};
+
+// Section → agent eşlemesi: aynı agent'ın alt section'ları geçmişi paylaşır
+const RP_AGENT_KEY = {
+  'magaza-yonetici':     'magaza',
+  'magaza-performans':   'magaza',
+  'magaza-donemseel':    'magaza',
+  'magaza-karsilastirma':'magaza',
+  'enrichment':          'enrichment',
+  'enrichment-dashboard':'enrichment',
+  'enrichment-scorelist':'enrichment',
+  'enrichment-products': 'enrichment',
+  'siralama':            'siralama',
+  'exec':                'eticaret',
+  'kpi':                 'eticaret',
+  'overview':            'eticaret',
+  'kategori':            'eticaret',
+  'urunler':             'eticaret',
+  'iade':                'eticaret',
+  'colors':              'eticaret',
+  'urun-satis':          'urun_yonetimi',
+  'urun-yonetimi':       'urun_yonetimi',
+  'plm-katalog':         'urun_yonetimi',
+  'products':            'urun_yonetimi',
+};
+
+function _rpAgentKey() {
+  return (RP_AGENT_KEY[_rpCtx] || _rpCtx) || 'default';
+}
 
 function rpOnSectionChange(sectionId) {
   const ok = RP_SUPPORTED.has(sectionId);
@@ -7407,8 +7624,17 @@ function rpOnSectionChange(sectionId) {
   if(ok) {
     _rpCtx = sectionId;
     _rpFilters = _rpGetFilters(sectionId);
-    document.getElementById('rp-ctx-label').textContent = RP_LABELS[sectionId] || sectionId;
-    // Insight'ları arka planda yükle (panel kapalı olsa bile)
+    const agentKey = RP_AGENT_KEY[sectionId] || sectionId;
+    const agentTitle = RP_AGENT_DISPLAY[agentKey] || 'AI Analiz';
+    const sectionLabel = RP_LABELS[sectionId] || sectionId;
+    document.getElementById('rp-agent-title').textContent = agentTitle;
+    document.getElementById('rp-ctx-label').textContent = sectionLabel;
+    // Panel açıksa içeriği hemen güncelle
+    if(_rpOpen) {
+      rpRenderChips();
+      rpRenderHistory();
+    }
+    // Insight'ları arka planda yükle
     if(!_rpInsightsLoaded.has(sectionId)) rpLoadInsights(sectionId);
   }
 }
@@ -7417,6 +7643,8 @@ function rpToggle() { _rpOpen ? rpClose() : rpOpen(); }
 
 function rpOpen() {
   document.getElementById('rp-panel').style.right = '0';
+  const fab = document.getElementById('rp-fab');
+  if(fab) fab.style.display = 'none';
   _rpOpen = true;
   rpRenderChips();
   rpRenderHistory();
@@ -7424,11 +7652,14 @@ function rpOpen() {
 
 function rpClose() {
   document.getElementById('rp-panel').style.right = '-420px';
+  const fab = document.getElementById('rp-fab');
+  if(fab) fab.style.display = 'flex';
   _rpOpen = false;
 }
 
 function rpClear() {
-  if(_rpCtx) _rpHistory[_rpCtx] = [];
+  const key = _rpAgentKey();
+  _rpHistory[key] = [];
   document.getElementById('rp-chat').innerHTML = '';
   _rpInsightsLoaded.delete(_rpCtx);
   rpLoadInsights(_rpCtx);
@@ -7457,13 +7688,19 @@ function rpAskChip(q) {
 function rpRenderHistory() {
   const wrap=document.getElementById('rp-chat');
   if(!wrap) return;
-  const hist=(_rpCtx && _rpHistory[_rpCtx])||[];
-  wrap.innerHTML=hist.map(m=>`
-    <div style="display:flex;${m.role==='user'?'justify-content:flex-end':''}">
-      <div style="max-width:88%;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5;
-           background:${m.role==='user'?'var(--orange)':'var(--bg3)'};
-           color:${m.role==='user'?'#fff':'var(--t1)'}">${m.content.replace(/\n/g,'<br>')}</div>
-    </div>`).join('');
+  const hist=(_rpCtx && _rpHistory[_rpAgentKey()])||[];
+  wrap.innerHTML=hist.map(m=>{
+    const isUser=m.role==='user';
+    const html=isUser
+      ? m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+      : renderMD(m.content);
+    return `<div style="display:flex;${isUser?'justify-content:flex-end':'align-items:flex-start;gap:8px'}">
+      ${!isUser?'<div style="width:24px;height:24px;background:linear-gradient(135deg,#ff6b2b,#a855f7);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">✦</div>':''}
+      <div class="${isUser?'':'rp-ai-msg'}" style="max-width:88%;padding:8px 12px;border-radius:${isUser?'12px 12px 2px 12px':'2px 12px 12px 12px'};font-size:12px;line-height:1.5;
+           background:${isUser?'linear-gradient(135deg,#ff6b2b,#ff8957)':'var(--bg3)'};
+           color:${isUser?'#fff':'var(--t1)'};${isUser?'box-shadow:0 1px 8px rgba(255,107,43,.2)':''}">${html}</div>
+    </div>`;
+  }).join('');
   wrap.scrollTop=wrap.scrollHeight;
 }
 
@@ -7474,9 +7711,10 @@ async function rpAsk() {
   document.getElementById('rp-send-btn').disabled=true;
   document.getElementById('rp-loading').style.display='block';
 
-  // Geçmişe ekle
-  if(!_rpHistory[_rpCtx]) _rpHistory[_rpCtx]=[];
-  _rpHistory[_rpCtx].push({role:'user',content:q});
+  // Geçmişe ekle — agent key ile (tüm magaza alt-section'ları aynı history)
+  const _hKey = _rpAgentKey();
+  if(!_rpHistory[_hKey]) _rpHistory[_hKey]=[];
+  _rpHistory[_hKey].push({role:'user',content:q});
   rpRenderHistory();
   if(!_rpOpen) rpOpen();
 
@@ -7487,12 +7725,12 @@ async function rpAsk() {
         question:q,
         report_ctx:_rpCtx,
         filters:_rpFilters,
-        history:_rpHistory[_rpCtx].slice(-10),
+        history:_rpHistory[_hKey].slice(-10),
       })
     });
     const d=await res.json();
     const answer=d.answer||'Yanıt alınamadı.';
-    _rpHistory[_rpCtx].push({role:'assistant',content:answer});
+    _rpHistory[_hKey].push({role:'assistant',content:answer});
     rpRenderHistory();
   } catch(e) {
     _rpHistory[_rpCtx].push({role:'assistant',content:'Bağlantı hatası: '+e.message});
@@ -7542,11 +7780,28 @@ function _rpGetFilters(ctx) {
       ay:  document.getElementById('my-ay')?.value||document.getElementById('dp-ay')?.value||'',
     };
   }
-  if(ctx==='exec'||ctx==='kpi'||ctx==='overview') {
+  // Enrichment section'ları için filtreler
+  if(ctx.startsWith('enrichment')) {
+    const sezon = document.getElementById('enr-f-sezon')?.value || document.getElementById('uy-f-sezon')?.value || '';
+    return sezon ? {sezon} : {};
+  }
+  // Ürün Yönetimi section'ları için filtreler
+  if(['urun-yonetimi','plm-katalog','products','urun-satis'].includes(ctx)) {
+    const marka = document.getElementById('uy-f-marka')?.value || document.getElementById('plm-f-marka')?.value || '';
+    const sezon = document.getElementById('uy-f-sezon')?.value || document.getElementById('plm-f-sezon')?.value || '';
+    const tema  = document.getElementById('uy-f-tema')?.value  || document.getElementById('plm-f-tema')?.value  || '';
     return {
-      yil: document.getElementById('f-yil')?.value||'2026',
-      ay:  document.getElementById('f-ay')?.value||'',
+      ...(marka ? {marka} : {}),
+      ...(sezon ? {sezon} : {}),
+      ...(tema  ? {tema}  : {}),
     };
+  }
+  // Tüm eticaret section'ları için filtreler
+  if(['exec','kpi','overview','kategori','urunler','iade','colors'].includes(ctx)) {
+    const yil   = document.getElementById('f-yil')?.value||'2026';
+    const ay    = document.getElementById('f-ay')?.value||'';
+    const kanal = document.getElementById('f-kanal')?.value||'';
+    return { yil, ay, ...(kanal ? {satiskanali: kanal} : {}) };
   }
   return {};
 }
