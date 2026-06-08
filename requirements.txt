@@ -44,6 +44,9 @@ python-dateutil>=2.9.0             # relativedelta for date_context
 # --- SQL safety / parsing (read-only guard for generated SQL) ---
 sqlglot~=25.30.0                   # dialect-aware parse + validate generated SQL
 
+# --- Vector search (pgvector PostgreSQL extension) ---
+pgvector~=0.3.6                    # SQLAlchemy Vector type + psycopg2 register_vector
+
 # --- Observability ---
 structlog~=24.4.0                  # structured JSON logging
 

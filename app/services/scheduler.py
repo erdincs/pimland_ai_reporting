@@ -29,8 +29,29 @@ def _make_job(source_id: str):
     return _job
 
 
+async def _search_index_job():
+    """Her gece 04:00 — PLM sync'ten sonra arama indexini güncelle."""
+    from app.services.enrichment.product_indexer import run_indexer
+    log.info("scheduler.search_index_started")
+    try:
+        result = await run_indexer()
+        log.info("scheduler.search_index_done", **result)
+    except Exception as exc:
+        log.error("scheduler.search_index_failed", error=str(exc))
+
+
 def register_jobs() -> None:
     """Register a scheduler job for every source that has a schedule config."""
+    # Arama index — nightly 04:00 (PLM sync 03:00'den sonra)
+    _scheduler.add_job(
+        _search_index_job,
+        CronTrigger.from_crontab("0 4 * * *"),
+        id="search_index",
+        replace_existing=True,
+        misfire_grace_time=600,
+    )
+    log.info("scheduler.job_registered", source="search_index", trigger="CronTrigger")
+
     for source_id, cfg in registry.all_configs().items():
         if not cfg.schedule:
             continue

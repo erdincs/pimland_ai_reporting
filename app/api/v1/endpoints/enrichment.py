@@ -803,6 +803,87 @@ async def approve_all_product_stories(
     return {"urun_kodu": urun_kodu, "approved": [dict(r) for r in rows]}
 
 
+# ── AI Search endpoints ───────────────────────────────────────────────────────
+
+@router.get("/search")
+async def search_products_endpoint(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    q: Optional[str] = Query(None),
+    marka: Optional[str] = Query(None),
+    sezon: Optional[str] = Query(None),
+    grade: Optional[str] = Query(None),
+    internet_aktif: Optional[bool] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(24, ge=1, le=100),
+) -> Dict[str, Any]:
+    """Hybrid ürün arama — FTS + semantic embedding."""
+    from app.services.enrichment.product_search import search_products
+    return await search_products(
+        session,
+        q=q or "",
+        marka=marka,
+        sezon=sezon,
+        grade=grade,
+        internet_aktif=internet_aktif,
+        limit=limit,
+        offset=(page - 1) * limit,
+    )
+
+
+@router.get("/search/status")
+async def get_search_index_status(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """Index durumu — toplam ürün, embedding'li ürün, son güncelleme."""
+    from app.services.enrichment.product_search import get_index_status
+    return await get_index_status(session)
+
+
+@router.post("/search/index")
+async def trigger_reindex(
+    background_tasks: BackgroundTasks,
+    skip_embeddings: bool = False,
+) -> Dict[str, Any]:
+    """Arama indexini yeniden oluştur (arka planda)."""
+    job_id = str(uuid.uuid4())[:8]
+    key = f"enrichment:index:{job_id}"
+    await _redis.setex(key, 7200, json.dumps({"status": "queued", "indexed": 0}))
+
+    def _run_bg(jid: str, skip: bool) -> None:
+        import asyncio as _asyncio
+        import redis.asyncio as _redis_mod
+        from app.services.enrichment.product_indexer import run_indexer
+
+        async def _go():
+            rc = _redis_mod.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+            k = f"enrichment:index:{jid}"
+            await rc.setex(k, 7200, json.dumps({"status": "running", "indexed": 0}))
+            try:
+                def _progress(cur, tot):
+                    _asyncio.ensure_future(
+                        rc.setex(k, 7200, json.dumps({"status": "running", "indexed": cur, "total": tot}))
+                    )
+                result = await run_indexer(progress_cb=_progress, skip_embeddings=skip)
+                await rc.setex(k, 7200, json.dumps({"status": "done", **result}))
+            except Exception as exc:
+                await rc.setex(k, 7200, json.dumps({"status": "failed", "error": str(exc)}))
+            finally:
+                await rc.aclose()
+
+        _asyncio.run(_go())
+
+    background_tasks.add_task(_run_bg, job_id, skip_embeddings)
+    return {"job_id": job_id, "status": "started", "skip_embeddings": skip_embeddings}
+
+
+@router.get("/search/index/status/{job_id}")
+async def get_reindex_job_status(job_id: str) -> Dict[str, Any]:
+    raw = await _redis.get(f"enrichment:index:{job_id}")
+    if not raw:
+        return {"status": "not_found"}
+    return json.loads(raw)
+
+
 @router.delete("/story/{story_id}")
 async def delete_story(
     story_id: int,

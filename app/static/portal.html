@@ -740,6 +740,9 @@ body,
       <div class="nav-item nav-sub" onclick="showEnrPage('performance')" id="nav-enr-performance">
         <span class="nav-icon" style="font-size:12px">📈</span><span class="nav-text">Zenginleştirme Performansı</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('ai-search')" id="nav-enr-ai-search">
+        <span class="nav-icon" style="font-size:12px">🔎</span><span class="nav-text">AI Search Engine</span>
+      </div>
     </div>
 
     <!-- ── DİĞER ────────────────────────────────────────────────────── -->
@@ -1997,6 +2000,66 @@ body,
         </div>
 
       </div><!-- /enr-page-performance -->
+
+      <!-- ── AI Search Engine ──────────────────────────────────────── -->
+      <div id="enr-page-ai-search" style="display:none;flex:1;flex-direction:column;overflow:hidden;background:var(--bg)">
+
+        <!-- Arama bar -->
+        <div style="padding:16px 18px 10px;background:var(--card);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--t3)">🔎</span>
+              <input id="ai-search-input" type="text"
+                placeholder="Ürün ara… (ör: pamuklu yazlık elbise, basic tişört, adL pantolon)"
+                style="width:100%;box-sizing:border-box;padding:10px 14px 10px 38px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--t1);font-size:14px;outline:none"
+                oninput="aiSearchDebounce()" onkeydown="if(event.key==='Enter')aiSearchRun()">
+            </div>
+            <button onclick="aiSearchRun()" style="padding:10px 18px;border-radius:8px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap">Ara</button>
+          </div>
+          <!-- Filtreler -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="ai-search-marka" onchange="aiSearchRun()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);font-size:12px">
+              <option value="">Tüm Markalar</option>
+            </select>
+            <select id="ai-search-sezon" onchange="aiSearchRun()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);font-size:12px">
+              <option value="">Tüm Sezonlar</option>
+            </select>
+            <select id="ai-search-grade" onchange="aiSearchRun()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);font-size:12px">
+              <option value="">Tüm Kalite</option>
+              <option value="A">A — Mükemmel</option>
+              <option value="B">B — İyi</option>
+              <option value="C">C — Orta</option>
+              <option value="D,F">D/F — Kritik</option>
+            </select>
+            <select id="ai-search-internet" onchange="aiSearchRun()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);font-size:12px">
+              <option value="">Tüm Durum</option>
+              <option value="true">İnternet Aktif</option>
+              <option value="false">Pasif</option>
+            </select>
+            <div id="ai-search-status-badge" style="margin-left:auto;font-size:11px;color:var(--t4);cursor:pointer" onclick="aiSearchLoadStatus()"></div>
+          </div>
+        </div>
+
+        <!-- Sonuç başlığı -->
+        <div id="ai-search-summary" style="padding:8px 18px;font-size:12px;color:var(--t3);background:var(--card);border-bottom:1px solid var(--border);display:none"></div>
+
+        <!-- Sonuç grid -->
+        <div id="ai-search-results" style="flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;align-content:start">
+          <div id="ai-search-empty" style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t3);font-size:14px">
+            <div style="font-size:32px;margin-bottom:12px">🔎</div>
+            <div>Ürün aramak için yukarıya yazın</div>
+            <div style="font-size:12px;margin-top:6px;color:var(--t4)">Doğal dil arama desteklenmektedir</div>
+          </div>
+        </div>
+
+        <!-- Sayfalama -->
+        <div id="ai-search-pagination" style="display:none;padding:10px 18px;border-top:1px solid var(--border);background:var(--card);justify-content:center;align-items:center;gap:12px">
+          <button id="ai-search-prev" onclick="aiSearchPage(-1)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);cursor:pointer;font-size:12px">‹ Önceki</button>
+          <span id="ai-search-page-info" style="font-size:12px;color:var(--t3)"></span>
+          <button id="ai-search-next" onclick="aiSearchPage(1)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--t1);cursor:pointer;font-size:12px">Sonraki ›</button>
+        </div>
+
+      </div><!-- /enr-page-ai-search -->
 
     </div><!-- /section-enrichment -->
 
@@ -4430,7 +4493,7 @@ function showEnrPage(page){
   // Enrichment grubunu aç
   _openNavGroup('enrichment');
   // Sayfalar
-  ['dashboard','scorelist','products','story','story-archive','performance'].forEach(p=>{
+  ['dashboard','scorelist','products','story','story-archive','performance','ai-search'].forEach(p=>{
     const el=document.getElementById('enr-page-'+p);
     if(el) el.style.display = p===page?'flex':'none';
     const nb=document.getElementById('nav-enr-'+p);
@@ -4438,11 +4501,12 @@ function showEnrPage(page){
   });
   document.getElementById('enr-page-title').textContent = {
     dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi',
-    products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı', 'story-archive':'📚 Hikaye Arşivi'
+    products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı', 'story-archive':'📚 Hikaye Arşivi',
+    'ai-search':'🔎 AI Search Engine'
   }[page]||'✨ Ürün Zenginleştirme';
-  // Story sayfalarında ortak üst bar gizli
+  // Story / AI Search sayfalarında ortak üst bar gizli
   const topbar=document.getElementById('enr-topbar');
-  if(topbar) topbar.style.display=(page==='story'||page==='story-archive'||page==='performance')?'none':'flex';
+  if(topbar) topbar.style.display=(page==='story'||page==='story-archive'||page==='performance'||page==='ai-search')?'none':'flex';
   if(page==='dashboard')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
   if(page==='products'){
@@ -4457,6 +4521,7 @@ function showEnrPage(page){
   if(page==='story')         swInit();
   if(page==='story-archive') swaLoad();
   if(page==='performance')   loadEnrPerformance();
+  if(page==='ai-search')     aiSearchInit();
 }
 
 async function onEnrFilterChange(){
@@ -7809,6 +7874,175 @@ function _rpGetFilters(ctx) {
 // ── START ─────────────────────────────────────────────────────────────────────
 if(checkAuth()) init();
 else {} // init() checkPassword'dan çağrılacak
+
+// ── AI SEARCH ENGINE ──────────────────────────────────────────────────────────
+const _AIS = {page:1, limit:24, total:0, timer:null, initialized:false};
+const _GRADE_COLORS = {A:'#22c55e',B:'#84cc16',C:'#f59e0b',D:'#f97316',F:'#ef4444'};
+
+async function aiSearchInit(){
+  if(_AIS.initialized) { aiSearchLoadStatus(); return; }
+  _AIS.initialized = true;
+
+  // Marka listesi
+  const brands = await fetch(`${API}/enrichment/search`).then(r=>r.json()).catch(()=>({items:[]}));
+  const markaSet = new Set();
+  (brands.items||[]).forEach(i=>{ if(i.marka_adi) markaSet.add(i.marka_adi); });
+  // Pim products'tan çek
+  try {
+    const sl = await fetch(`${API}/enrichment/scorelist`).then(r=>r.json());
+    const mSel = document.getElementById('ai-search-marka');
+    sl.forEach(r=>{ const o=document.createElement('option'); o.value=r.marka_adi; o.textContent=r.marka_adi; mSel.appendChild(o); });
+  } catch(e){}
+
+  // Sezon listesi
+  try {
+    const seasons = await fetch(`${API}/enrichment/seasons`).then(r=>r.json());
+    const sSel = document.getElementById('ai-search-sezon');
+    seasons.forEach(r=>{ const o=document.createElement('option'); o.value=r.sezon_kodu; o.textContent=r.sezon_adi||r.sezon_kodu; sSel.appendChild(o); });
+  } catch(e){}
+
+  aiSearchLoadStatus();
+  // İlk açılışta tüm ürünleri göster
+  aiSearchRun();
+}
+
+async function aiSearchLoadStatus(){
+  try {
+    const s = await fetch(`${API}/enrichment/search/status`).then(r=>r.json());
+    const badge = document.getElementById('ai-search-status-badge');
+    if(!badge) return;
+    if(s.toplam>0){
+      const emb = s.embedding_li||0;
+      const mode = emb > s.toplam*0.5 ? '🧠 AI+FTS' : '📝 FTS';
+      const date = s.son_guncelleme ? new Date(s.son_guncelleme).toLocaleDateString('tr-TR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-';
+      badge.innerHTML = `${mode} · ${s.toplam.toLocaleString('tr-TR')} ürün · ${date} <span style="cursor:pointer;color:var(--acc)" onclick="aiSearchReindex()" title="Yeniden indexle">↻</span>`;
+    } else {
+      badge.innerHTML = `<span style="color:var(--acc);cursor:pointer" onclick="aiSearchReindex()">⚠ Index boş — indexle</span>`;
+    }
+  } catch(e){}
+}
+
+function aiSearchDebounce(){
+  clearTimeout(_AIS.timer);
+  _AIS.timer = setTimeout(()=>aiSearchRun(1), 350);
+}
+
+async function aiSearchRun(page){
+  _AIS.page = page||1;
+  const q      = (document.getElementById('ai-search-input')?.value||'').trim();
+  const marka  = document.getElementById('ai-search-marka')?.value||'';
+  const sezon  = document.getElementById('ai-search-sezon')?.value||'';
+  const grade  = document.getElementById('ai-search-grade')?.value||'';
+  const inet   = document.getElementById('ai-search-internet')?.value||'';
+  const limit  = _AIS.limit;
+  const offset = (_AIS.page-1)*limit;
+
+  const params = new URLSearchParams({limit, offset});
+  if(q)     params.set('q', q);
+  if(marka) params.set('marka', marka);
+  if(sezon) params.set('sezon', sezon);
+  if(grade) params.set('grade', grade);
+  if(inet)  params.set('internet_aktif', inet);
+
+  const grid = document.getElementById('ai-search-results');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--t3);font-size:13px">🔄 Aranıyor…</div>';
+  document.getElementById('ai-search-summary').style.display='none';
+  document.getElementById('ai-search-pagination').style.display='none';
+
+  try {
+    const data = await fetch(`${API}/enrichment/search?${params}`).then(r=>r.json());
+    _AIS.total = data.total||0;
+    aiSearchRenderResults(data, q);
+  } catch(e){
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#ef4444;font-size:13px">Hata oluştu</div>';
+  }
+}
+
+function aiSearchRenderResults(data, q){
+  const grid    = document.getElementById('ai-search-results');
+  const summary = document.getElementById('ai-search-summary');
+  const pag     = document.getElementById('ai-search-pagination');
+  const items   = data.items||[];
+
+  if(!items.length){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--t3);font-size:14px">
+      <div style="font-size:32px;margin-bottom:12px">🔎</div>
+      <div>${q ? `"${q}" için sonuç bulunamadı` : 'Ürün bulunamadı'}</div>
+    </div>`;
+    summary.style.display='none'; pag.style.display='none';
+    return;
+  }
+
+  // Özet
+  const modeLabel = {hybrid:'🧠 AI + FTS', fts:'📝 FTS', filter:'📋 Filtre'}[data.mode]||data.mode;
+  summary.textContent = `${_AIS.total.toLocaleString('tr-TR')} sonuç · ${modeLabel} modu`;
+  summary.style.display='block';
+
+  // Kartlar
+  grid.innerHTML = items.map(p=>{
+    const imgUrl = p.default_image_url || `https://img-adl.sm.mncdn.com/cdnimages/products/${p.urun_kodu}_1_1.jpg`;
+    const grade  = p.quality_grade||'';
+    const gradeColor = _GRADE_COLORS[grade]||'var(--t3)';
+    const score  = p.quality_score!=null ? p.quality_score : '';
+    const ciro   = p.brut_ciro>0 ? '₺'+Math.round(p.brut_ciro).toLocaleString('tr-TR') : '';
+    const bloke  = p.bloke ? '<span style="font-size:9px;background:#ef444430;color:#ef4444;padding:1px 5px;border-radius:3px;margin-left:4px">BLOKE</span>' : '';
+    const inetOff = !p.internet_aktif ? '<span style="font-size:9px;background:#f97316;color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px">PASİF</span>' : '';
+    return `
+    <div onclick="openEnrProductDetail('${p.urun_kodu}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.15)'" onmouseout="this.style.boxShadow='none'">
+      <div style="aspect-ratio:1;overflow:hidden;background:var(--bg2);position:relative">
+        <img src="${imgUrl}" alt="${p.urun_adi||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
+        ${grade ? `<div style="position:absolute;top:6px;right:6px;background:${gradeColor};color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px">${grade}${score!==''?' '+score:''}</div>` : ''}
+      </div>
+      <div style="padding:10px 10px 8px">
+        <div style="font-size:12px;font-weight:600;color:var(--t1);line-height:1.35;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${p.urun_adi||p.urun_kodu}${bloke}${inetOff}</div>
+        <div style="font-size:10px;color:var(--t4);margin-bottom:2px">${p.urun_kodu}</div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:2px">${[p.marka_adi,p.sezon_kodu].filter(Boolean).join(' · ')}</div>
+        ${p.tema_adi ? `<div style="font-size:10px;color:var(--t4)">${p.tema_adi}${p.ana_grup_adi?' · '+p.ana_grup_adi:''}</div>` : ''}
+        ${ciro ? `<div style="font-size:10px;color:var(--acc);font-weight:600;margin-top:4px">${ciro}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sayfalama
+  const totalPages = Math.ceil(_AIS.total / _AIS.limit);
+  if(totalPages > 1){
+    document.getElementById('ai-search-page-info').textContent = `Sayfa ${_AIS.page} / ${totalPages}`;
+    document.getElementById('ai-search-prev').disabled = _AIS.page<=1;
+    document.getElementById('ai-search-next').disabled = _AIS.page>=totalPages;
+    pag.style.display='flex';
+  }
+}
+
+function aiSearchPage(dir){
+  const totalPages = Math.ceil(_AIS.total / _AIS.limit);
+  const newPage = _AIS.page + dir;
+  if(newPage<1||newPage>totalPages) return;
+  aiSearchRun(newPage);
+}
+
+async function aiSearchReindex(){
+  const badge = document.getElementById('ai-search-status-badge');
+  if(badge) badge.innerHTML = '⏳ Indexleniyor…';
+  try {
+    const r = await fetch(`${API}/enrichment/search/index`,{method:'POST'}).then(r=>r.json());
+    // Durumu poll et
+    let attempts=0;
+    const poll = setInterval(async()=>{
+      attempts++;
+      const s = await fetch(`${API}/enrichment/search/index/status/${r.job_id}`).then(r=>r.json()).catch(()=>null);
+      if(!s||s.status==='done'||s.status==='failed'||attempts>120){
+        clearInterval(poll);
+        aiSearchLoadStatus();
+        if(s?.status==='done') aiSearchRun(_AIS.page);
+      } else if(badge){
+        badge.innerHTML = `⏳ Indexleniyor… ${s.indexed||0} ürün`;
+      }
+    }, 3000);
+  } catch(e){
+    if(badge) badge.innerHTML = '❌ Hata';
+  }
+}
+
 </script>
 </body>
 </html>
