@@ -127,7 +127,7 @@ async def _fetch_magaza_context(
             WHERE {where}
             GROUP BY bolge_muduru, magaza
             ORDER BY ciro DESC
-            LIMIT 200
+            LIMIT 500
         """), params)
         rows = r.mappings().all()
         source = "mv_magaza_satis_ozet"
@@ -145,7 +145,7 @@ async def _fetch_magaza_context(
             WHERE {where}
             GROUP BY bolge_muduru, magaza
             ORDER BY ciro DESC
-            LIMIT 200
+            LIMIT 500
         """), params)
         rows = r.mappings().all()
         source = "incorta_magaza_performans"
@@ -191,11 +191,26 @@ async def _fetch_magaza_context(
             "hedef_oran_pct": round(_fv(r.get("hedef_oran", 0)), 1),
             "mdo_pct": round(_fv(r.get("mdo", 0)) * 100, 1),
             "obf": round(_fv(r.get("obf", 0))),
+            "ziyaretci": round(_fv(r["ziy"])),
         }
         for i, r in enumerate(mag_sorted)
     ]
     en_iyi  = magaza_siralama[:5]
     en_kotu = magaza_siralama[-5:]
+
+    # Ziyaretçi bazlı sıralama (ayrıca)
+    ziy_sorted = sorted(rows, key=lambda r: _fv(r["ziy"]), reverse=True)
+    en_cok_ziyaret_5 = [
+        {
+            "sira": i + 1,
+            "magaza": r["magaza"],
+            "bolge": r["bolge_muduru"],
+            "ziyaretci": round(_fv(r["ziy"])),
+            "net_ciro": round(_fv(r["ciro"])),
+            "hedef_oran_pct": round(_fv(r.get("hedef_oran", 0)), 1),
+        }
+        for i, r in enumerate(ziy_sorted[:5])
+    ]
 
     # Ortalama MDO / OBF
     # mv_magaza_satis_ozet.ort_mdo fraksyon (0.07 = %7) → *100 ile yüzdeye çevir
@@ -226,9 +241,10 @@ async def _fetch_magaza_context(
             "iyi_13_16": iyi,
             "kritik_13_alti": kritik,
         },
-        "bolgeler": bolge_liste[:8],
+        "bolgeler": bolge_liste[:20],
         "en_iyi_5_magaza":  en_iyi,
         "en_kotu_5_magaza": en_kotu,
+        "en_cok_ziyaret_5": en_cok_ziyaret_5,
         "magaza_tam_sira":  magaza_siralama,
         "kaynak": source,
     }

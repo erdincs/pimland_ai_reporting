@@ -81,18 +81,28 @@ async def _fetch_mcp_data() -> List[List]:
     token = os.environ.get("INCORTA_TOKEN", "")
     rows: List[List] = []
 
-    async with httpx.AsyncClient(timeout=30) as c:
-        for start in range(0, 4000, 500):
+    PAGE = 500
+    async with httpx.AsyncClient(timeout=60) as c:
+        start = 0
+        total = None
+        while True:
             try:
                 r = await c.post(
                     f"{MCP_BASE}/tools/{TOOL_ID}/execute",
                     json={"Authorization": token,
-                          "pagination": {"startRow": start, "pageSize": 500}},
+                          "pagination": {"startRow": start, "pageSize": PAGE}},
                 )
-                batch = r.json()["content"]["data"].get("data", [])
+                body = r.json()["content"]["data"]
+                if total is None:
+                    total = body.get("headers", {}).get("totalRows", 0)
+                    log.info("magaza_satis.mcp_total", total=total)
+                batch = body.get("data", [])
                 if not batch:
                     break
                 rows.extend(batch)
+                start += PAGE
+                if total and start >= total:
+                    break
             except Exception as e:
                 log.warning("magaza_satis.fetch_error", start=start, error=str(e))
                 break

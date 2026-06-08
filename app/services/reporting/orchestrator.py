@@ -24,6 +24,7 @@ ROUTING_MAP: Dict[str, str] = {
     # Kategori Planlama
     "siralama":              "siralama",
     # E-Ticaret
+    "eticaret":              "eticaret",
     "exec":                  "eticaret",
     "kpi":                   "eticaret",
     "overview":              "eticaret",
@@ -48,6 +49,7 @@ TON_MAP: Dict[str, str] = {
     "enrichment-scorelist": "analitik",
     "enrichment-products":  "teknik",
     "siralama":             "teknik",
+    "eticaret":             "analitik",
     "exec":                 "yonetici",
     "kpi":                  "analitik",
     "overview":             "analitik",

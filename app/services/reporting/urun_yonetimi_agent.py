@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -13,6 +14,44 @@ from app.core.logging import get_logger
 from app.services.reporting.utils.date_context import get_date_context
 
 log = get_logger(__name__)
+
+_STOK_KEYWORDS = frozenset(["stok", "stok durumu", "stokta", "kaç adet", "mevcut mu", "var mı", "envanter"])
+
+
+async def _fetch_stok_live(question: str) -> Optional[Dict[str, Any]]:
+    """Soruda 10+ haneli ürün kodu ve stok anahtar kelimesi varsa MCP'den stok çek."""
+    q_lower = question.lower()
+    if not any(kw in q_lower for kw in _STOK_KEYWORDS):
+        return None
+    codes = re.findall(r'\b\d{10,}\b', question)
+    if not codes:
+        return None
+    try:
+        from app.connectors.pimland_live import fetch_product_full
+        data = await fetch_product_full(codes[0])
+        if not data:
+            return None
+        stocks = data.get("stocks") or []
+        # Beden/renk bazlı özet
+        stok_ozet = [
+            {
+                "renk": s.get("colorName") or s.get("colorCode"),
+                "beden": s.get("sizeName") or s.get("sizeCode"),
+                "mevcut": s.get("available", 0),
+                "rezerv": s.get("reserved", 0),
+                "toplam": s.get("total", 0),
+            }
+            for s in stocks[:30]
+        ]
+        return {
+            "urun_kodu": codes[0],
+            "toplam_mevcut": sum(s.get("available", 0) for s in stocks),
+            "toplam_rezerv": sum(s.get("reserved", 0) for s in stocks),
+            "beden_renk_stok": stok_ozet,
+        }
+    except Exception as exc:
+        log.warning("urun_yonetimi.stok_error", error=str(exc))
+        return None
 
 # ── Sistem prompt ─────────────────────────────────────────────────────────────
 URUN_YONETIMI_SYSTEM = """\
@@ -26,6 +65,7 @@ Aşağıdaki tüm konularda UZMANSIN ve doğrudan yanıt verirsin:
   • Kategori Analizi   — ürün grubu/ana grup dağılımı, derinlik analizi
   • Satış–PLM Köprüsü  — PLM ürünlerinin satış performansı, iade oranı, en iyi temalar
   • Katalog Sağlığı    — blokaj, internet aktivasyonu, eksik veri durumu
+  • Stok Durumu        — Pimland MCP'den anlık stok: beden/renk bazlı mevcut/rezerv/toplam
 
 Hiyerarşi: Marka → Sezon → Tema → Kategori (ürün grubu) → SKU
 
@@ -394,6 +434,7 @@ async def run_urun_yonetimi_agent(
     tema_lst  = await _fetch_tema_analiz(session, marka, sezon)
     kat_lst   = await _fetch_kategori_analiz(session, marka, sezon, tema)
     perf      = await _fetch_top_performans(session, marka, sezon)
+    stok      = await _fetch_stok_live(question)
 
     ctx: Dict[str, Any] = {
         "filtre":          {"marka": marka, "sezon": sezon, "tema": tema},
@@ -403,6 +444,8 @@ async def run_urun_yonetimi_agent(
         "kategori_analizi": kat_lst,
         "satis_performansi": perf,
     }
+    if stok:
+        ctx["stok_bilgisi"] = stok
 
     filtreler_str = json.dumps(ctx["filtre"], ensure_ascii=False)
     veri_str      = json.dumps(ctx, ensure_ascii=False, indent=2)
