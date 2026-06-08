@@ -905,6 +905,106 @@ async def get_search_suggestions(
     return await get_suggestions(session, q=q, limit=limit)
 
 
+@router.get("/search/product/{urun_kodu}")
+async def get_search_product_detail(
+    urun_kodu: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """Ürün arama modalı için detay — DB + MCP (Redis cache 1h)."""
+    import httpx
+    cache_key = f"enrichment:pdetail:{urun_kodu}"
+    cached = await _redis.get(cache_key)
+    if cached:
+        return json.loads(cached)
+
+    # 1. pim_products
+    prod = (await session.execute(text("""
+        SELECT urun_kodu, urun_adi, marka_adi, sezon_adi, sezon_kodu,
+               ana_grup_adi, urun_grubu_adi, tema_adi, fabricmaterialname,
+               color_codes, first_color_code, default_image_url,
+               internet_aktif, bloke
+        FROM pim_products WHERE urun_kodu = :uk
+    """), {"uk": urun_kodu})).mappings().first()
+
+    if not prod:
+        from fastapi import HTTPException
+        raise HTTPException(404, f"'{urun_kodu}' bulunamadı")
+
+    result: Dict[str, Any] = dict(prod)
+
+    # renk sayısı
+    codes = (result.get("color_codes") or "")
+    result["color_count"] = len([c for c in codes.split(",") if c.strip()])
+
+    # 2. enrichment_quality.detail_json (varsa)
+    eq = (await session.execute(text("""
+        SELECT detail_json FROM enrichment_quality WHERE urun_kodu = :uk
+    """), {"uk": urun_kodu})).mappings().first()
+
+    if eq and eq["detail_json"]:
+        dj = eq["detail_json"]
+        result["description"] = dj.get("description")
+        care_entry = dj.get("Bakım Talimatları") or {}
+        result["care_instructions"] = care_entry.get("deger") or []
+        mat_entry = dj.get("Kumaş İçerik %") or {}
+        result["material_content"] = mat_entry.get("deger")
+    else:
+        result["description"] = None
+        result["care_instructions"] = []
+        result["material_content"] = None
+
+    # 3. MCP: satış fiyatı
+    result["sales_price"] = None
+    result["sales_currency"] = "TRY"
+    try:
+        from app.connectors.pimland_live import _get_token, _call_tool
+        async with httpx.AsyncClient(timeout=20) as client:
+            token = await _get_token(client)
+            prices_raw = await _call_tool(
+                client, token,
+                "post_api_Product_get_product_sales_prices",
+                {"stockCode": urun_kodu},
+            )
+        prices: List[Dict] = []
+        if isinstance(prices_raw, list):
+            prices = prices_raw
+        elif isinstance(prices_raw, dict):
+            for k in ("items", "data", "result", "prices"):
+                if isinstance(prices_raw.get(k), list):
+                    prices = prices_raw[k]
+                    break
+
+        rpitl = next((p for p in prices if p.get("priceTypeCode") == "RPITL"), None)
+        chosen = rpitl or (prices[0] if prices else None)
+        if chosen:
+            result["sales_price"] = chosen.get("price")
+            result["sales_currency"] = chosen.get("currencyCode", "TRY")
+
+        # MCP detayından içerik/bakım (enrichment yoksa)
+        if not (eq and eq["detail_json"]):
+            from app.connectors.pimland_live import _listify_result
+            details_raw = await _call_tool(
+                client, token,
+                "post_api_Product_get_products_by_filter",
+                {"stockCode": urun_kodu, "pageSize": 5, "pageNumber": 1},
+            )
+            det_items = _listify_result(details_raw, urun_kodu)
+            if det_items:
+                det = det_items[0]
+                result["description"] = result["description"] or det.get("description")
+                care = det.get("washingAndCareInstructions") or []
+                if care:
+                    result["care_instructions"] = list(care)
+                mat = det.get("mainMaterialContent") or []
+                if mat:
+                    result["material_content"] = mat[0] if len(mat) == 1 else ", ".join(mat)
+    except Exception as exc:
+        log.warning("search_product_detail.mcp_failed", urun_kodu=urun_kodu, error=str(exc))
+
+    await _redis.setex(cache_key, 3600, json.dumps(result, ensure_ascii=False, default=str))
+    return result
+
+
 @router.delete("/story/{story_id}")
 async def delete_story(
     story_id: int,

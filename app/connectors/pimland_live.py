@@ -82,7 +82,7 @@ async def _call_tool(
         return None
 
 
-# ── Yardımcı: result listesini stockCode ile filtrele ─────────────────────────
+# ── Yardımcı fonksiyonlar ────────────────────────────────────────────────────
 
 def _filter_by_stock(result: Any, stock_code: str) -> List[Dict]:
     if not result:
@@ -91,6 +91,24 @@ def _filter_by_stock(result: Any, stock_code: str) -> List[Dict]:
     if not items:
         return []
     return [r for r in items if str(r.get("stockCode", "")) == str(stock_code)]
+
+
+def _listify_result(raw: Any, stock_code: str) -> List[Dict]:
+    """get_products_by_filter envelope'unu açar, stockCode'a göre filtreler."""
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return _filter_by_stock(raw, stock_code)
+    if isinstance(raw, dict):
+        result_obj = raw.get("result") or raw
+        if isinstance(result_obj, dict):
+            for key in ("products", "items", "data"):
+                if isinstance(result_obj.get(key), list):
+                    return _filter_by_stock(result_obj[key], stock_code)
+        for key in ("products", "items", "data"):
+            if isinstance(raw.get(key), list):
+                return _filter_by_stock(raw[key], stock_code)
+    return []
 
 
 # ── Paralel ürün veri çekici ──────────────────────────────────────────────────

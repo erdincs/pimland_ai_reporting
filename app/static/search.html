@@ -18,8 +18,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
 .hdr-logo{font-size:18px;font-weight:700;color:var(--acc);white-space:nowrap;text-decoration:none}
 .hdr-logo span{color:var(--text)}
-.hdr-back{color:var(--muted);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:4px}
-.hdr-back:hover{color:var(--text)}
 .hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .index-badge{font-size:11px;padding:3px 8px;border-radius:99px;
   background:var(--card2);border:1px solid var(--border);color:var(--muted)}
@@ -76,44 +74,39 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .mode-pill.hybrid{background:rgba(59,130,246,.15);border:1px solid #3b82f6;color:#3b82f6}
 .mode-pill.fts{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#f59e0b}
 .mode-pill.filter{background:rgba(100,116,139,.15);border:1px solid var(--muted);color:var(--muted)}
-/* AI expansion context */
 .expansion-bar{padding:0 0 14px;font-size:12px;color:var(--muted);display:none;
   line-height:1.5;border-left:2px solid var(--acc);padding-left:10px;margin-bottom:4px}
 .expansion-bar span{color:var(--text)}
 
 /* Grid */
-.grid{display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:460px){.grid{grid-template-columns:1fr}}
 
-/* Product card */
+/* Product card — simplified */
 .pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;
   overflow:hidden;cursor:pointer;transition:.2s;display:flex;flex-direction:column}
 .pcard:hover{border-color:var(--acc);transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(255,107,43,.1)}
-.pcard-img{aspect-ratio:1;background:var(--card2);overflow:hidden;position:relative}
+  box-shadow:0 8px 24px rgba(255,107,43,.12)}
+.pcard-img{aspect-ratio:1;background:var(--card2);overflow:hidden}
 .pcard-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
 .pcard:hover .pcard-img img{transform:scale(1.04)}
-.pcard-body{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
-.pcard-name{font-size:13px;font-weight:600;line-height:1.3;
+.pcard-body{padding:10px 12px 14px;flex:1;display:flex;flex-direction:column;gap:6px}
+.pcard-name{font-size:13px;font-weight:600;line-height:1.35;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pcard-meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
-.pcard-meta span{display:flex;align-items:center;gap:2px}
-.pcard-ciro{margin-top:auto;padding-top:6px;font-size:12px;font-weight:600;color:var(--acc)}
+.pcard-price{font-size:15px;font-weight:800;color:var(--acc);margin-top:auto}
+.pcard-price.loading{color:var(--muted);font-size:13px;font-weight:400}
 .no-img{display:flex;align-items:center;justify-content:center;
   width:100%;height:100%;color:var(--muted);font-size:28px;background:var(--card2)}
 
 /* Loading skeletons */
-.skeleton{background:var(--card2);border-radius:8px;animation:pulse 1.5s ease-in-out infinite}
 .skeleton-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
 .skel-img{aspect-ratio:1;background:var(--card2);animation:pulse 1.5s ease-in-out infinite}
 .skel-body{padding:10px 12px}
 .skel-line{height:12px;border-radius:4px;background:var(--card2);
   animation:pulse 1.5s ease-in-out infinite;margin-bottom:8px}
-.skel-line.short{width:60%}
+.skel-line.short{width:50%}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
 /* Pagination */
@@ -131,8 +124,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .empty-title{font-size:18px;font-weight:600;margin-bottom:6px}
 .empty-sub{color:var(--muted);font-size:14px}
 
-/* Index modal */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+/* ── Index modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;
   align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:16px;
@@ -140,7 +133,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .modal-title{font-size:18px;font-weight:700;margin-bottom:6px}
 .modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
 .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;
-  color:var(--muted);cursor:pointer;font-size:20px;padding:4px}
+  color:var(--muted);cursor:pointer;font-size:20px;padding:4px;line-height:1}
 .modal-close:hover{color:var(--text)}
 .modal-stat{display:flex;justify-content:space-between;align-items:center;
   padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
@@ -150,10 +143,50 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .index-progress-fill{height:100%;background:var(--acc);border-radius:99px;transition:.3s;width:0}
 #indexLog{font-size:12px;color:var(--muted);margin-top:8px;min-height:20px}
 
+/* ── Product detail modal ── */
+#productModal .pmodal{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  width:min(920px,96vw);max-height:92vh;overflow-y:auto;position:relative;
+  display:grid;grid-template-columns:320px 1fr;
+}
+@media(max-width:680px){
+  #productModal .pmodal{grid-template-columns:1fr}
+}
+.pmodal-img{background:var(--card2);border-radius:16px 0 0 16px;overflow:hidden;min-height:360px;position:relative}
+.pmodal-img img{width:100%;height:100%;object-fit:cover;display:block;min-height:360px}
+.pmodal-img .no-img{min-height:360px;height:100%}
+@media(max-width:680px){
+  .pmodal-img{border-radius:16px 16px 0 0;min-height:240px}
+  .pmodal-img img{min-height:240px}
+  .pmodal-img .no-img{min-height:240px}
+}
+.pmodal-body{padding:28px 24px;display:flex;flex-direction:column;gap:18px;overflow-y:auto}
+.pmodal-close{position:absolute;top:14px;right:14px;background:var(--card2);border:1px solid var(--border);
+  border-radius:99px;color:var(--muted);cursor:pointer;font-size:16px;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  z-index:10;transition:.15s;line-height:1}
+.pmodal-close:hover{color:var(--text);border-color:var(--acc)}
+.pmodal-urun-kodu{font-size:11px;color:var(--muted);font-family:monospace}
+.pmodal-name{font-size:19px;font-weight:700;line-height:1.3}
+.pmodal-price{font-size:30px;font-weight:800;color:var(--acc);letter-spacing:-.5px}
+.pmodal-price.loading{font-size:16px;color:var(--muted);font-weight:400}
+.pmodal-divider{height:1px;background:var(--border);margin:0 -4px}
+.pmodal-section-title{font-size:10px;font-weight:700;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.pmodal-features{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pmodal-feat{background:var(--card2);border-radius:8px;padding:8px 10px}
+.pmodal-feat-label{font-size:10px;color:var(--muted);margin-bottom:3px}
+.pmodal-feat-val{font-size:13px;font-weight:600;word-break:break-word}
+.pmodal-desc{font-size:13px;line-height:1.65;color:var(--text);opacity:.85}
+.pmodal-care-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.pmodal-care-list li{font-size:12px;background:var(--card2);border-radius:6px;
+  padding:6px 10px;border-left:2px solid var(--acc);color:var(--text);line-height:1.4}
+.pmodal-loading{padding:32px;text-align:center;color:var(--muted);font-size:14px}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card2);
   border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;
-  z-index:300;transform:translateY(8px);opacity:0;transition:.25s;pointer-events:none}
+  z-index:400;transform:translateY(8px);opacity:0;transition:.25s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.ok{border-color:var(--green);color:var(--green)}
 .toast.err{border-color:var(--red);color:var(--red)}
@@ -277,6 +310,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
   </div>
 </div>
 
+<!-- Product detail modal -->
+<div class="modal-bg" id="productModal">
+  <div class="pmodal">
+    <button class="pmodal-close" onclick="closeProductModal()">✕</button>
+    <div class="pmodal-img" id="pmodalImgWrap">
+      <div class="no-img">📦</div>
+    </div>
+    <div class="pmodal-body" id="pmodalBody">
+      <div class="pmodal-loading">Yükleniyor…</div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -318,6 +364,7 @@ let lastMode = 'filter';
 let acTimeout = null;
 let reindexJobId = null;
 let reindexPoll = null;
+let priceAbortCtrl = null;
 
 /* ─────────────────────────────────────────
    Init
@@ -329,27 +376,17 @@ async function init(){
 
 async function loadFilterOptions(){
   try{
-    const r = await fetch(`${BASE}/search?limit=1`);
-    const data = await r.json();
-    // get unique markas & sezons from the full index via a dedicated query
-  } catch(e){}
-
-  // Marka ve sezon listesi için farklı bir yaklaşım: search ile limit yüksek al
-  // Basit: product_search_index'ten distinct değerleri çek (search/status + filter API)
-  // Alternatif: pim_products seasons endpoint'ini kullan
-  try{
     const r = await fetch('/api/v1/enrichment/seasons');
     const seasons = await r.json();
     const fSezon = document.getElementById('fSezon');
     seasons.forEach(s => {
       const o = document.createElement('option');
       o.value = s.sezon_kodu;
-      o.textContent = `${s.sezon_adi || s.sezon_kodu}`;
+      o.textContent = s.sezon_adi || s.sezon_kodu;
       fSezon.appendChild(o);
     });
   } catch(e){}
 
-  // Markaları searchlist'ten çek
   try{
     const r = await fetch('/api/v1/enrichment/scorelist');
     const data = await r.json();
@@ -389,7 +426,6 @@ document.getElementById('searchInput').addEventListener('input', function(){
   const v = this.value;
   document.getElementById('clearBtn').style.display = v ? 'block' : 'none';
   clearTimeout(searchTimeout);
-  // Autocomplete
   if(v.length >= 2){
     clearTimeout(acTimeout);
     acTimeout = setTimeout(() => fetchSuggestions(v), 250);
@@ -431,16 +467,20 @@ function resetFilters(){
 }
 
 async function runSearch(){
-  const q      = document.getElementById('searchInput').value.trim();
-  const marka  = document.getElementById('fMarka').value;
-  const sezon  = document.getElementById('fSezon').value;
+  const q       = document.getElementById('searchInput').value.trim();
+  const marka   = document.getElementById('fMarka').value;
+  const sezon   = document.getElementById('fSezon').value;
   const internet = document.getElementById('fInternet').value;
 
   const params = new URLSearchParams({page: currentPage, limit: PAGE_SIZE, smart: 'true'});
-  if(q)       params.set('q', q);
-  if(marka)   params.set('marka', marka);
-  if(sezon)   params.set('sezon', sezon);
+  if(q)        params.set('q', q);
+  if(marka)    params.set('marka', marka);
+  if(sezon)    params.set('sezon', sezon);
   if(internet) params.set('internet_aktif', internet);
+
+  // Cancel any in-flight price fetches from previous search
+  if(priceAbortCtrl) priceAbortCtrl.abort();
+  priceAbortCtrl = new AbortController();
 
   showSkeletons();
   const t0 = Date.now();
@@ -457,11 +497,16 @@ async function runSearch(){
     renderPagination();
     updateMeta(elapsed);
     renderExpansion(d.expansion, q);
+
+    // Lazy price load after cards are rendered
+    if(d.items && d.items.length){
+      loadPrices(d.items, priceAbortCtrl.signal);
+    }
   } catch(err){
     document.getElementById('resultsGrid').innerHTML =
       '<div class="empty" style="grid-column:1/-1"><div class="empty-ico">⚠️</div>'+
       '<div class="empty-title">Arama hatası</div>'+
-      '<div class="empty-sub">'+err.message+'</div></div>';
+      '<div class="empty-sub">'+esc(err.message)+'</div></div>';
   }
 }
 
@@ -501,20 +546,11 @@ function cardHtml(p){
          onerror="this.parentElement.innerHTML='<div class=no-img>📦</div>'">`
     : `<div class="no-img">📦</div>`;
 
-  const ciro = p.brut_ciro_30g
-    ? `${fmtNum(p.brut_ciro_30g)} ₺ <span style="color:var(--muted);font-size:10px">30g</span>`
-    : (p.brut_ciro ? `${fmtNum(p.brut_ciro)} ₺` : '—');
-
   return `<div class="pcard" onclick="openProduct('${esc(p.urun_kodu)}')">
     <div class="pcard-img">${img}</div>
     <div class="pcard-body">
       <div class="pcard-name">${esc(p.urun_adi || p.urun_kodu)}</div>
-      <div class="pcard-meta">
-        ${p.marka_adi?`<span>🏷 ${esc(p.marka_adi)}</span>`:''}
-        ${p.sezon_kodu?`<span>📅 ${esc(p.sezon_kodu)}</span>`:''}
-        ${p.ana_grup_adi?`<span>📂 ${esc(p.ana_grup_adi)}</span>`:''}
-      </div>
-      <div class="pcard-ciro">${ciro}</div>
+      <div class="pcard-price loading" data-code="${esc(p.urun_kodu)}">₺ —</div>
     </div>
   </div>`;
 }
@@ -537,11 +573,43 @@ function renderExpansion(expansion, q){
     return;
   }
   const parts = [];
-  if(expansion.context) parts.push(`<span>${esc(expansion.context)}</span>`);
+  if(expansion.context)      parts.push(`<span>${esc(expansion.context)}</span>`);
   if(expansion.product_type) parts.push(`Tür: <span>${esc(expansion.product_type)}</span>`);
   if(expansion.season_hint)  parts.push(`Mevsim: <span>${esc(expansion.season_hint)}</span>`);
   bar.innerHTML = '🧠 ' + parts.join(' · ');
   bar.style.display = 'block';
+}
+
+/* ─────────────────────────────────────────
+   Lazy price loading
+───────────────────────────────────────── */
+async function loadPrices(items, signal){
+  const CONCURRENCY = 6;
+  for(let i = 0; i < items.length; i += CONCURRENCY){
+    if(signal.aborted) return;
+    const batch = items.slice(i, i + CONCURRENCY);
+    await Promise.allSettled(batch.map(p => fetchCardPrice(p.urun_kodu, signal)));
+  }
+}
+
+async function fetchCardPrice(urunKodu, signal){
+  try{
+    const r = await fetch(`${BASE}/search/product/${encodeURIComponent(urunKodu)}`, {signal});
+    if(!r.ok) return;
+    const d = await r.json();
+    const el = document.querySelector(`.pcard-price[data-code="${CSS.escape(urunKodu)}"]`);
+    if(!el) return;
+    if(d.sales_price != null){
+      el.textContent = '₺ ' + Number(d.sales_price).toLocaleString('tr-TR',
+        {minimumFractionDigits:2, maximumFractionDigits:2});
+      el.classList.remove('loading');
+    } else {
+      el.textContent = '₺ —';
+      el.classList.remove('loading');
+    }
+  } catch(e){
+    if(e.name === 'AbortError') return;
+  }
 }
 
 /* ─────────────────────────────────────────
@@ -636,6 +704,123 @@ function navigateAC(dir){
 }
 
 /* ─────────────────────────────────────────
+   Product detail modal
+───────────────────────────────────────── */
+function openProduct(urunKodu){
+  const modal = document.getElementById('productModal');
+  // reset
+  document.getElementById('pmodalImgWrap').innerHTML = '<div class="no-img">📦</div>';
+  document.getElementById('pmodalBody').innerHTML = '<div class="pmodal-loading">Yükleniyor…</div>';
+  modal.classList.add('open');
+  fetchProductDetail(urunKodu);
+}
+
+function closeProductModal(){
+  document.getElementById('productModal').classList.remove('open');
+}
+
+document.getElementById('productModal').addEventListener('click', function(e){
+  if(e.target === this) closeProductModal();
+});
+
+async function fetchProductDetail(urunKodu){
+  try{
+    const r = await fetch(`${BASE}/search/product/${encodeURIComponent(urunKodu)}`);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    renderProductModal(d);
+  } catch(err){
+    document.getElementById('pmodalBody').innerHTML =
+      `<div style="padding:24px;color:var(--red)">Yüklenemedi: ${esc(err.message)}</div>`;
+  }
+}
+
+function renderProductModal(d){
+  // Image
+  const imgWrap = document.getElementById('pmodalImgWrap');
+  if(d.default_image_url){
+    imgWrap.innerHTML = `<img src="${d.default_image_url}" alt="${esc(d.urun_adi||'')}"
+      onerror="this.parentElement.innerHTML='<div class=no-img style=min-height:360px>📦</div>'">`;
+  }
+
+  // Price
+  let priceHtml = '';
+  if(d.sales_price != null){
+    const fmtPrice = Number(d.sales_price).toLocaleString('tr-TR',
+      {minimumFractionDigits:2, maximumFractionDigits:2});
+    priceHtml = `<div class="pmodal-price">₺ ${fmtPrice}</div>`;
+  }
+
+  // Features grid
+  const feats = [];
+  if(d.marka_adi)       feats.push({l:'Marka',        v:d.marka_adi});
+  if(d.sezon_adi)       feats.push({l:'Sezon',        v:`${d.sezon_adi}${d.sezon_kodu?' ('+d.sezon_kodu+')':''}`});
+  if(d.ana_grup_adi)    feats.push({l:'Kategori',     v:d.ana_grup_adi});
+  if(d.urun_grubu_adi)  feats.push({l:'Ürün Grubu',  v:d.urun_grubu_adi});
+  if(d.tema_adi)        feats.push({l:'Tema',         v:d.tema_adi});
+  if(d.fabricmaterialname) feats.push({l:'Kumaş',    v:d.fabricmaterialname});
+  if(d.color_count > 0) feats.push({l:'Renk',         v:`${d.color_count} seçenek`});
+  feats.push({l:'İnternet', v:d.internet_aktif ? '✓ Aktif' : '✗ Pasif'});
+
+  const featsHtml = feats.length ? `
+    <div>
+      <div class="pmodal-section-title">Özellikler</div>
+      <div class="pmodal-features">
+        ${feats.map(f=>`
+          <div class="pmodal-feat">
+            <div class="pmodal-feat-label">${esc(f.l)}</div>
+            <div class="pmodal-feat-val">${esc(f.v)}</div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  // Description + material
+  let contentHtml = '';
+  const contentParts = [];
+  if(d.description && d.description.trim()){
+    contentParts.push(`<div class="pmodal-desc">${esc(d.description.trim())}</div>`);
+  }
+  if(d.material_content && d.material_content.trim()){
+    contentParts.push(`<div class="pmodal-desc" style="margin-top:8px"><strong>İçerik:</strong> ${esc(d.material_content.trim())}</div>`);
+  }
+  if(contentParts.length){
+    contentHtml = `
+      <div>
+        <div class="pmodal-section-title">Açıklama / İçerik</div>
+        ${contentParts.join('')}
+      </div>`;
+  }
+
+  // Care instructions
+  let careHtml = '';
+  if(d.care_instructions && d.care_instructions.length){
+    const items = Array.isArray(d.care_instructions) ? d.care_instructions : [d.care_instructions];
+    careHtml = `
+      <div>
+        <div class="pmodal-section-title">Bakım Talimatları</div>
+        <ul class="pmodal-care-list">
+          ${items.map(c=>`<li>${esc(String(c))}</li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  const body = document.getElementById('pmodalBody');
+  body.innerHTML = `
+    <div>
+      <div class="pmodal-urun-kodu">${esc(d.urun_kodu)}</div>
+      <div class="pmodal-name" style="margin-top:4px">${esc(d.urun_adi || d.urun_kodu)}</div>
+    </div>
+    ${priceHtml}
+    ${feats.length ? '<div class="pmodal-divider"></div>' : ''}
+    ${featsHtml}
+    ${contentParts.length ? '<div class="pmodal-divider"></div>' : ''}
+    ${contentHtml}
+    ${d.care_instructions && d.care_instructions.length ? '<div class="pmodal-divider"></div>' : ''}
+    ${careHtml}
+  `;
+}
+
+/* ─────────────────────────────────────────
    Index modal
 ───────────────────────────────────────── */
 async function openIndexModal(){
@@ -652,8 +837,7 @@ async function refreshIndexStats(){
   try{
     const r = await fetch(`${BASE}/search/status`);
     const d = await r.json();
-    const stats = document.getElementById('indexStats');
-    stats.innerHTML=`
+    document.getElementById('indexStats').innerHTML=`
       <div class="modal-stat"><span>Toplam ürün</span><span class="modal-stat-val">${d.toplam||0}</span></div>
       <div class="modal-stat"><span>Embedding'li</span><span class="modal-stat-val">${d.embedding_li||0}</span></div>
       <div class="modal-stat"><span>FTS indexli</span><span class="modal-stat-val">${d.fts_li||0}</span></div>
@@ -689,7 +873,6 @@ async function pollReindex(){
     const d = await r.json();
     const fill = document.getElementById('indexProgressFill');
     const log  = document.getElementById('indexLog');
-
     if(d.total){
       fill.style.width = Math.round(d.indexed/d.total*100)+'%';
       log.textContent = `${d.indexed} / ${d.total} ürün indexlendi…`;
@@ -710,20 +893,20 @@ async function pollReindex(){
 }
 
 /* ─────────────────────────────────────────
-   Product open (portal enrichment sayfasına yönlendir)
+   Global keyboard shortcut
 ───────────────────────────────────────── */
-function openProduct(urunKodu){
-  window.open(
-    `/api/v1/portal#enr-detail-${urunKodu}`,
-    '_blank'
-  );
-}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    closeProductModal();
+    closeIndexModal();
+    hideAC();
+  }
+});
 
 /* ─────────────────────────────────────────
    Helpers
 ───────────────────────────────────────── */
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtNum(n){ return Number(n).toLocaleString('tr-TR',{maximumFractionDigits:0}); }
 
 function showToast(msg, type='ok'){
   const t = document.getElementById('toast');
