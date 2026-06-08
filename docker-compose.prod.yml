@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
     env_file: .env.prod
     ports:
-      - "80:8000"
+      - "8080:8000"
     depends_on:
       db:
         condition: service_healthy

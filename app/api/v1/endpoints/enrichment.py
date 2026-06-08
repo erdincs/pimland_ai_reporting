@@ -811,23 +811,33 @@ async def search_products_endpoint(
     q: Optional[str] = Query(None),
     marka: Optional[str] = Query(None),
     sezon: Optional[str] = Query(None),
-    grade: Optional[str] = Query(None),
     internet_aktif: Optional[bool] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(24, ge=1, le=100),
+    smart: bool = Query(True, description="Query expansion aktif (doğal dil anlama)"),
 ) -> Dict[str, Any]:
-    """Hybrid ürün arama — FTS + semantic embedding."""
+    """Hybrid ürün arama — Query Expansion + FTS + semantic embedding."""
     from app.services.enrichment.product_search import search_products
     return await search_products(
         session,
         q=q or "",
         marka=marka,
         sezon=sezon,
-        grade=grade,
         internet_aktif=internet_aktif,
         limit=limit,
         offset=(page - 1) * limit,
+        smart=smart,
     )
+
+
+@router.get("/search/explain")
+async def explain_query(
+    q: str = Query(..., min_length=2),
+) -> Dict[str, Any]:
+    """Query expansion debug — Claude'un sorguyu nasıl anladığını gösterir."""
+    from app.services.enrichment.query_expander import expand_query
+    expansion = await expand_query(q)
+    return {"query": q, "expansion": expansion}
 
 
 @router.get("/search/status")

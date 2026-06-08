@@ -9,8 +9,6 @@
   --bg:#0f1117;--card:#1a1d27;--card2:#21253a;--border:#2a2d3e;
   --acc:#ff6b2b;--acc2:#ff8c55;--text:#e2e8f0;--muted:#64748b;
   --green:#22c55e;--blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;
-  --grade-a:#22c55e;--grade-b:#3b82f6;--grade-c:#f59e0b;
-  --grade-d:#f97316;--grade-f:#ef4444;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
@@ -71,12 +69,17 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .content{max-width:1400px;margin:0 auto;padding:0 20px 40px}
 
 /* Results meta */
-.results-meta{display:flex;align-items:center;gap:12px;padding:4px 0 16px;font-size:13px;color:var(--muted)}
+.results-meta{display:flex;align-items:center;gap:12px;padding:4px 0 10px;font-size:13px;color:var(--muted)}
 .results-meta strong{color:var(--text);font-weight:600}
 .mode-pill{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.mode-pill.hybrid_smart{background:rgba(255,107,43,.15);border:1px solid var(--acc);color:var(--acc)}
 .mode-pill.hybrid{background:rgba(59,130,246,.15);border:1px solid #3b82f6;color:#3b82f6}
 .mode-pill.fts{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#f59e0b}
 .mode-pill.filter{background:rgba(100,116,139,.15);border:1px solid var(--muted);color:var(--muted)}
+/* AI expansion context */
+.expansion-bar{padding:0 0 14px;font-size:12px;color:var(--muted);display:none;
+  line-height:1.5;border-left:2px solid var(--acc);padding-left:10px;margin-bottom:4px}
+.expansion-bar span{color:var(--text)}
 
 /* Grid */
 .grid{display:grid;
@@ -94,24 +97,12 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 .pcard-img{aspect-ratio:1;background:var(--card2);overflow:hidden;position:relative}
 .pcard-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
 .pcard:hover .pcard-img img{transform:scale(1.04)}
-.pcard-grade{position:absolute;top:8px;left:8px;
-  width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:800;color:#fff}
-.g-A{background:var(--grade-a)}
-.g-B{background:var(--grade-b)}
-.g-C{background:var(--grade-c)}
-.g-D{background:var(--grade-d)}
-.g-F{background:var(--grade-f)}
-.g-none{background:var(--border)}
-.pcard-score-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border)}
-.pcard-score-fill{height:100%;border-radius:0 0 0 0;transition:.4s}
 .pcard-body{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
 .pcard-name{font-size:13px;font-weight:600;line-height:1.3;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pcard-meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .pcard-meta span{display:flex;align-items:center;gap:2px}
 .pcard-ciro{margin-top:auto;padding-top:6px;font-size:12px;font-weight:600;color:var(--acc)}
-.pcard-score-num{margin-top:2px;font-size:11px;color:var(--muted)}
 .no-img{display:flex;align-items:center;justify-content:center;
   width:100%;height:100%;color:var(--muted);font-size:28px;background:var(--card2)}
 
@@ -240,17 +231,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     </select>
   </div>
   <div class="filter-chip">
-    <span>⭐</span>
-    <select id="fGrade" onchange="runSearch()">
-      <option value="">Tüm Grade</option>
-      <option value="A">A — Mükemmel</option>
-      <option value="B">B — İyi</option>
-      <option value="C">C — Orta</option>
-      <option value="D">D — Zayıf</option>
-      <option value="F">F — Kritik</option>
-    </select>
-  </div>
-  <div class="filter-chip">
     <span>🌐</span>
     <select id="fInternet" onchange="runSearch()">
       <option value="">İnternet: Tümü</option>
@@ -270,6 +250,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
     <span class="mode-pill" id="modePill"></span>
     <span id="elapsedInfo" style="margin-left:auto;font-size:11px"></span>
   </div>
+  <div class="expansion-bar" id="expansionBar"></div>
   <div class="grid" id="resultsGrid"></div>
   <div class="pagination" id="pagination"></div>
 </div>
@@ -435,13 +416,14 @@ document.addEventListener('click', e => {
 function clearSearch(){
   document.getElementById('searchInput').value='';
   document.getElementById('clearBtn').style.display='none';
+  document.getElementById('expansionBar').style.display='none';
   hideAC();
   currentPage = 1;
   runSearch();
 }
 
 function resetFilters(){
-  ['fMarka','fSezon','fGrade','fInternet'].forEach(id =>
+  ['fMarka','fSezon','fInternet'].forEach(id =>
     document.getElementById(id).value = ''
   );
   currentPage = 1;
@@ -452,14 +434,12 @@ async function runSearch(){
   const q      = document.getElementById('searchInput').value.trim();
   const marka  = document.getElementById('fMarka').value;
   const sezon  = document.getElementById('fSezon').value;
-  const grade  = document.getElementById('fGrade').value;
   const internet = document.getElementById('fInternet').value;
 
-  const params = new URLSearchParams({page: currentPage, limit: PAGE_SIZE});
+  const params = new URLSearchParams({page: currentPage, limit: PAGE_SIZE, smart: 'true'});
   if(q)       params.set('q', q);
   if(marka)   params.set('marka', marka);
   if(sezon)   params.set('sezon', sezon);
-  if(grade)   params.set('grade', grade);
   if(internet) params.set('internet_aktif', internet);
 
   showSkeletons();
@@ -476,6 +456,7 @@ async function runSearch(){
     renderResults(d.items || [], elapsed);
     renderPagination();
     updateMeta(elapsed);
+    renderExpansion(d.expansion, q);
   } catch(err){
     document.getElementById('resultsGrid').innerHTML =
       '<div class="empty" style="grid-column:1/-1"><div class="empty-ico">⚠️</div>'+
@@ -520,26 +501,12 @@ function cardHtml(p){
          onerror="this.parentElement.innerHTML='<div class=no-img>📦</div>'">`
     : `<div class="no-img">📦</div>`;
 
-  const grade = p.quality_grade || '';
-  const score = p.quality_score || 0;
-  const gradeClass = grade ? `g-${grade}` : 'g-none';
-  const scorePct = score;
-  const scoreColor = score>=80?'var(--green)':score>=60?'var(--blue)':score>=40?'var(--yellow)':'var(--red)';
-
   const ciro = p.brut_ciro_30g
     ? `${fmtNum(p.brut_ciro_30g)} ₺ <span style="color:var(--muted);font-size:10px">30g</span>`
     : (p.brut_ciro ? `${fmtNum(p.brut_ciro)} ₺` : '—');
 
-  const hybridScore = p.hybrid_score ? `<span title="Hybrid skor">${(p.hybrid_score*100).toFixed(1)}</span>` : '';
-
   return `<div class="pcard" onclick="openProduct('${esc(p.urun_kodu)}')">
-    <div class="pcard-img">
-      ${img}
-      ${grade ? `<div class="pcard-grade ${gradeClass}">${grade}</div>` : ''}
-      <div class="pcard-score-bar">
-        <div class="pcard-score-fill" style="width:${scorePct}%;background:${scoreColor}"></div>
-      </div>
-    </div>
+    <div class="pcard-img">${img}</div>
     <div class="pcard-body">
       <div class="pcard-name">${esc(p.urun_adi || p.urun_kodu)}</div>
       <div class="pcard-meta">
@@ -548,7 +515,6 @@ function cardHtml(p){
         ${p.ana_grup_adi?`<span>📂 ${esc(p.ana_grup_adi)}</span>`:''}
       </div>
       <div class="pcard-ciro">${ciro}</div>
-      ${score?`<div class="pcard-score-num">Puan: ${score} ${hybridScore}</div>`:''}
     </div>
   </div>`;
 }
@@ -558,10 +524,24 @@ function updateMeta(elapsed){
   meta.style.display = 'flex';
   document.getElementById('totalCount').textContent = totalItems.toLocaleString('tr-TR');
   const pill = document.getElementById('modePill');
-  const labels = {hybrid:'🔮 Hybrid', fts:'📄 Tam Metin', filter:'🔧 Filtre'};
+  const labels = {hybrid_smart:'🧠 AI Arama', hybrid:'🔮 Hybrid', fts:'📄 Tam Metin', filter:'🔧 Filtre'};
   pill.textContent = labels[lastMode] || lastMode;
   pill.className = `mode-pill ${lastMode}`;
   document.getElementById('elapsedInfo').textContent = `${elapsed}ms`;
+}
+
+function renderExpansion(expansion, q){
+  const bar = document.getElementById('expansionBar');
+  if(!expansion || !expansion.context || !q){
+    bar.style.display='none';
+    return;
+  }
+  const parts = [];
+  if(expansion.context) parts.push(`<span>${esc(expansion.context)}</span>`);
+  if(expansion.product_type) parts.push(`Tür: <span>${esc(expansion.product_type)}</span>`);
+  if(expansion.season_hint)  parts.push(`Mevsim: <span>${esc(expansion.season_hint)}</span>`);
+  bar.innerHTML = '🧠 ' + parts.join(' · ');
+  bar.style.display = 'block';
 }
 
 /* ─────────────────────────────────────────
