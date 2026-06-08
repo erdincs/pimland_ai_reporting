@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Search — Pimland</title>
+<style>
+:root{
+  --bg:#0f1117;--card:#1a1d27;--card2:#21253a;--border:#2a2d3e;
+  --acc:#ff6b2b;--acc2:#ff8c55;--text:#e2e8f0;--muted:#64748b;
+  --green:#22c55e;--blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;
+  --grade-a:#22c55e;--grade-b:#3b82f6;--grade-c:#f59e0b;
+  --grade-d:#f97316;--grade-f:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+
+/* ── Header ── */
+.hdr{display:flex;align-items:center;gap:12px;padding:16px 24px;
+  background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.hdr-logo{font-size:18px;font-weight:700;color:var(--acc);white-space:nowrap;text-decoration:none}
+.hdr-logo span{color:var(--text)}
+.hdr-back{color:var(--muted);font-size:13px;text-decoration:none;display:flex;align-items:center;gap:4px}
+.hdr-back:hover{color:var(--text)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.index-badge{font-size:11px;padding:3px 8px;border-radius:99px;
+  background:var(--card2);border:1px solid var(--border);color:var(--muted)}
+.index-badge.ready{border-color:var(--green);color:var(--green)}
+.btn{border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;
+  padding:7px 14px;transition:.15s}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn-primary{background:var(--acc);color:#fff}
+.btn-primary:hover{background:var(--acc2)}
+.btn-sm{padding:4px 10px;font-size:12px}
+
+/* ── Search hero ── */
+.hero{padding:32px 24px 20px;max-width:900px;margin:0 auto}
+.hero-title{font-size:26px;font-weight:800;margin-bottom:6px}
+.hero-title span{color:var(--acc)}
+.hero-sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+
+.search-wrap{position:relative;display:flex;align-items:center}
+.search-icon{position:absolute;left:16px;color:var(--muted);font-size:20px;pointer-events:none}
+#searchInput{width:100%;background:var(--card);border:2px solid var(--border);border-radius:14px;
+  color:var(--text);font-size:18px;padding:14px 52px 14px 48px;outline:none;transition:.2s}
+#searchInput:focus{border-color:var(--acc);box-shadow:0 0 0 4px rgba(255,107,43,.12)}
+#searchInput::placeholder{color:var(--muted)}
+.search-clear{position:absolute;right:16px;display:none;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:18px;padding:4px}
+.search-clear:hover{color:var(--text)}
+
+/* Autocomplete */
+.autocomplete-list{position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  z-index:100;overflow:hidden;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.ac-item{padding:10px 16px;font-size:14px;cursor:pointer;transition:.1s}
+.ac-item:hover,.ac-item.active{background:var(--card2);color:var(--acc)}
+
+/* ── Filters row ── */
+.filters{display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 16px;max-width:900px;margin:0 auto}
+.filter-chip{display:flex;align-items:center;gap:6px;background:var(--card);
+  border:1px solid var(--border);border-radius:99px;padding:5px 12px;cursor:pointer;
+  font-size:12px;font-weight:500;color:var(--muted);transition:.15s;white-space:nowrap}
+.filter-chip:hover{border-color:var(--acc);color:var(--acc)}
+.filter-chip select{background:transparent;border:none;color:inherit;font-size:12px;
+  cursor:pointer;outline:none;padding:0 4px}
+.filter-chip select option{background:var(--card2)}
+
+/* ── Content area ── */
+.content{max-width:1400px;margin:0 auto;padding:0 20px 40px}
+
+/* Results meta */
+.results-meta{display:flex;align-items:center;gap:12px;padding:4px 0 16px;font-size:13px;color:var(--muted)}
+.results-meta strong{color:var(--text);font-weight:600}
+.mode-pill{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.mode-pill.hybrid{background:rgba(59,130,246,.15);border:1px solid #3b82f6;color:#3b82f6}
+.mode-pill.fts{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#f59e0b}
+.mode-pill.filter{background:rgba(100,116,139,.15);border:1px solid var(--muted);color:var(--muted)}
+
+/* Grid */
+.grid{display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.grid{grid-template-columns:1fr}}
+
+/* Product card */
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;cursor:pointer;transition:.2s;display:flex;flex-direction:column}
+.pcard:hover{border-color:var(--acc);transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(255,107,43,.1)}
+.pcard-img{aspect-ratio:1;background:var(--card2);overflow:hidden;position:relative}
+.pcard-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
+.pcard:hover .pcard-img img{transform:scale(1.04)}
+.pcard-grade{position:absolute;top:8px;left:8px;
+  width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#fff}
+.g-A{background:var(--grade-a)}
+.g-B{background:var(--grade-b)}
+.g-C{background:var(--grade-c)}
+.g-D{background:var(--grade-d)}
+.g-F{background:var(--grade-f)}
+.g-none{background:var(--border)}
+.pcard-score-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border)}
+.pcard-score-fill{height:100%;border-radius:0 0 0 0;transition:.4s}
+.pcard-body{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column;gap:4px}
+.pcard-name{font-size:13px;font-weight:600;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pcard-meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.pcard-meta span{display:flex;align-items:center;gap:2px}
+.pcard-ciro{margin-top:auto;padding-top:6px;font-size:12px;font-weight:600;color:var(--acc)}
+.pcard-score-num{margin-top:2px;font-size:11px;color:var(--muted)}
+.no-img{display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;color:var(--muted);font-size:28px;background:var(--card2)}
+
+/* Loading skeletons */
+.skeleton{background:var(--card2);border-radius:8px;animation:pulse 1.5s ease-in-out infinite}
+.skeleton-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.skel-img{aspect-ratio:1;background:var(--card2);animation:pulse 1.5s ease-in-out infinite}
+.skel-body{padding:10px 12px}
+.skel-line{height:12px;border-radius:4px;background:var(--card2);
+  animation:pulse 1.5s ease-in-out infinite;margin-bottom:8px}
+.skel-line.short{width:60%}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:28px}
+.page-btn{background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;font-weight:500;transition:.15s}
+.page-btn:hover:not(:disabled){border-color:var(--acc);color:var(--acc)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-btn.active{background:var(--acc);border-color:var(--acc);color:#fff}
+.page-info{font-size:13px;color:var(--muted);padding:0 8px}
+
+/* Empty state */
+.empty{text-align:center;padding:64px 24px}
+.empty-ico{font-size:52px;opacity:.3;margin-bottom:12px}
+.empty-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.empty-sub{color:var(--muted);font-size:14px}
+
+/* Index modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+  align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:28px;width:min(480px,95vw);position:relative}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:20px;padding:4px}
+.modal-close:hover{color:var(--text)}
+.modal-stat{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.modal-stat:last-child{border:none}
+.modal-stat-val{font-weight:600;color:var(--acc)}
+.index-progress{margin:16px 0;background:var(--border);border-radius:99px;height:6px;overflow:hidden}
+.index-progress-fill{height:100%;background:var(--acc);border-radius:99px;transition:.3s;width:0}
+#indexLog{font-size:12px;color:var(--muted);margin-top:8px;min-height:20px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card2);
+  border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;
+  z-index:300;transform:translateY(8px);opacity:0;transition:.25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+
+/* Auth overlay */
+.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:500;
+  display:flex;align-items:center;justify-content:center}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:36px;width:360px;text-align:center}
+.auth-logo{font-size:24px;font-weight:800;color:var(--acc);margin-bottom:4px}
+.auth-logo span{color:var(--text)}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.auth-input{width:100%;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:15px;padding:12px 16px;
+  outline:none;margin-bottom:12px;transition:.2s}
+.auth-input:focus{border-color:var(--acc)}
+.auth-err{font-size:12px;color:var(--red);margin-bottom:10px;min-height:16px}
+.btn-auth{width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;
+  padding:12px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+.btn-auth:hover{background:var(--acc2)}
+</style>
+</head>
+<body>
+
+<!-- Auth overlay -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="auth-logo">pim<span>land</span></div>
+    <div class="auth-sub">AI Search Engine — giriş yapın</div>
+    <input id="authPw" class="auth-input" type="password" placeholder="Şifre" autocomplete="current-password"/>
+    <div class="auth-err" id="authErr"></div>
+    <button class="btn-auth" onclick="doAuth()">Giriş</button>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="hdr">
+  <a class="hdr-logo" href="/api/v1/portal">pim<span>land</span></a>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="2" stroke-linecap="round" style="color:var(--muted)">
+    <path d="M9 18l6-6-6-6"/></svg>
+  <span style="font-size:14px;font-weight:600">AI Search Engine</span>
+  <div class="hdr-right">
+    <span class="index-badge" id="indexBadge">Index yükleniyor…</span>
+    <button class="btn btn-ghost btn-sm" onclick="openIndexModal()">⚙ Index</button>
+    <a href="/api/v1/portal" class="btn btn-ghost btn-sm">Portal'a dön</a>
+  </div>
+</header>
+
+<!-- Hero / search bar -->
+<div class="hero">
+  <h1 class="hero-title">Ürün <span>AI Arama</span></h1>
+  <p class="hero-sub">Tam metin + anlamsal arama — marka, kumaş, tema, açıklama üzerinden arar</p>
+  <div class="search-wrap" id="searchWrap">
+    <span class="search-icon">🔎</span>
+    <input id="searchInput" type="text" placeholder="Ürün adı, marka, tema, kumaş…"
+      autocomplete="off" spellcheck="false"/>
+    <button class="search-clear" id="clearBtn" onclick="clearSearch()">✕</button>
+    <div class="autocomplete-list" id="acList"></div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="filters" id="filtersRow">
+  <div class="filter-chip">
+    <span>🏷</span>
+    <select id="fMarka" onchange="runSearch()">
+      <option value="">Tüm Markalar</option>
+    </select>
+  </div>
+  <div class="filter-chip">
+    <span>📅</span>
+    <select id="fSezon" onchange="runSearch()">
+      <option value="">Tüm Sezonlar</option>
+    </select>
+  </div>
+  <div class="filter-chip">
+    <span>⭐</span>
+    <select id="fGrade" onchange="runSearch()">
+      <option value="">Tüm Grade</option>
+      <option value="A">A — Mükemmel</option>
+      <option value="B">B — İyi</option>
+      <option value="C">C — Orta</option>
+      <option value="D">D — Zayıf</option>
+      <option value="F">F — Kritik</option>
+    </select>
+  </div>
+  <div class="filter-chip">
+    <span>🌐</span>
+    <select id="fInternet" onchange="runSearch()">
+      <option value="">İnternet: Tümü</option>
+      <option value="true">İnternet Aktif</option>
+      <option value="false">İnternet Pasif</option>
+    </select>
+  </div>
+  <button class="filter-chip btn-ghost" onclick="resetFilters()" style="color:var(--muted)">
+    ✕ Temizle
+  </button>
+</div>
+
+<!-- Results -->
+<div class="content">
+  <div class="results-meta" id="resultsMeta" style="display:none">
+    <strong id="totalCount">0</strong> ürün
+    <span class="mode-pill" id="modePill"></span>
+    <span id="elapsedInfo" style="margin-left:auto;font-size:11px"></span>
+  </div>
+  <div class="grid" id="resultsGrid"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Index modal -->
+<div class="modal-bg" id="indexModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeIndexModal()">✕</button>
+    <div class="modal-title">🗂 Arama Index Durumu</div>
+    <div class="modal-sub">Nightly 04:00'de otomatik güncellenir</div>
+    <div id="indexStats"></div>
+    <div class="index-progress" id="indexProgressWrap" style="display:none">
+      <div class="index-progress-fill" id="indexProgressFill"></div>
+    </div>
+    <div id="indexLog"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" onclick="triggerReindex(false)" id="reindexBtn">
+        🔄 Yeniden İndeksle
+      </button>
+      <button class="btn btn-ghost" onclick="triggerReindex(true)" id="reindexFtsBtn">
+        ⚡ FTS Sadece
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────
+   Auth
+───────────────────────────────────────── */
+const PASS = 'pimland2026';
+const AUTH_KEY = 'pimland_auth';
+
+function checkAuth(){
+  if(sessionStorage.getItem(AUTH_KEY) === PASS){
+    document.getElementById('authOverlay').style.display='none';
+    init();
+  }
+}
+function doAuth(){
+  const pw = document.getElementById('authPw').value;
+  if(pw === PASS){
+    sessionStorage.setItem(AUTH_KEY, PASS);
+    document.getElementById('authOverlay').style.display='none';
+    init();
+  } else {
+    document.getElementById('authErr').textContent = 'Şifre hatalı.';
+  }
+}
+document.getElementById('authPw').addEventListener('keydown', e => {
+  if(e.key==='Enter') doAuth();
+});
+
+/* ─────────────────────────────────────────
+   State
+───────────────────────────────────────── */
+const BASE = '/api/v1/enrichment';
+let currentPage = 1;
+const PAGE_SIZE = 24;
+let totalItems = 0;
+let lastMode = 'filter';
+let acTimeout = null;
+let reindexJobId = null;
+let reindexPoll = null;
+
+/* ─────────────────────────────────────────
+   Init
+───────────────────────────────────────── */
+async function init(){
+  await Promise.all([loadFilterOptions(), loadIndexStatus()]);
+  runSearch();
+}
+
+async function loadFilterOptions(){
+  try{
+    const r = await fetch(`${BASE}/search?limit=1`);
+    const data = await r.json();
+    // get unique markas & sezons from the full index via a dedicated query
+  } catch(e){}
+
+  // Marka ve sezon listesi için farklı bir yaklaşım: search ile limit yüksek al
+  // Basit: product_search_index'ten distinct değerleri çek (search/status + filter API)
+  // Alternatif: pim_products seasons endpoint'ini kullan
+  try{
+    const r = await fetch('/api/v1/enrichment/seasons');
+    const seasons = await r.json();
+    const fSezon = document.getElementById('fSezon');
+    seasons.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.sezon_kodu;
+      o.textContent = `${s.sezon_adi || s.sezon_kodu}`;
+      fSezon.appendChild(o);
+    });
+  } catch(e){}
+
+  // Markaları searchlist'ten çek
+  try{
+    const r = await fetch('/api/v1/enrichment/scorelist');
+    const data = await r.json();
+    const fMarka = document.getElementById('fMarka');
+    data.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m.marka_adi;
+      o.textContent = m.marka_adi;
+      fMarka.appendChild(o);
+    });
+  } catch(e){}
+}
+
+/* ─────────────────────────────────────────
+   Index status
+───────────────────────────────────────── */
+async function loadIndexStatus(){
+  try{
+    const r = await fetch(`${BASE}/search/status`);
+    const d = await r.json();
+    const badge = document.getElementById('indexBadge');
+    if(d.hazir){
+      badge.textContent = `${d.toplam} ürün indexli`;
+      badge.classList.add('ready');
+    } else {
+      badge.textContent = 'Index boş — İndeksle';
+    }
+  } catch(e){}
+}
+
+/* ─────────────────────────────────────────
+   Search
+───────────────────────────────────────── */
+let searchTimeout = null;
+
+document.getElementById('searchInput').addEventListener('input', function(){
+  const v = this.value;
+  document.getElementById('clearBtn').style.display = v ? 'block' : 'none';
+  clearTimeout(searchTimeout);
+  // Autocomplete
+  if(v.length >= 2){
+    clearTimeout(acTimeout);
+    acTimeout = setTimeout(() => fetchSuggestions(v), 250);
+  } else {
+    hideAC();
+  }
+  searchTimeout = setTimeout(() => {
+    currentPage = 1;
+    runSearch();
+  }, 400);
+});
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ clearTimeout(searchTimeout); runSearch(); hideAC(); }
+  if(e.key === 'Escape'){ hideAC(); }
+  if(e.key === 'ArrowDown'){ navigateAC(1); e.preventDefault(); }
+  if(e.key === 'ArrowUp'){ navigateAC(-1); e.preventDefault(); }
+});
+
+document.addEventListener('click', e => {
+  if(!document.getElementById('searchWrap').contains(e.target)) hideAC();
+});
+
+function clearSearch(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('clearBtn').style.display='none';
+  hideAC();
+  currentPage = 1;
+  runSearch();
+}
+
+function resetFilters(){
+  ['fMarka','fSezon','fGrade','fInternet'].forEach(id =>
+    document.getElementById(id).value = ''
+  );
+  currentPage = 1;
+  runSearch();
+}
+
+async function runSearch(){
+  const q      = document.getElementById('searchInput').value.trim();
+  const marka  = document.getElementById('fMarka').value;
+  const sezon  = document.getElementById('fSezon').value;
+  const grade  = document.getElementById('fGrade').value;
+  const internet = document.getElementById('fInternet').value;
+
+  const params = new URLSearchParams({page: currentPage, limit: PAGE_SIZE});
+  if(q)       params.set('q', q);
+  if(marka)   params.set('marka', marka);
+  if(sezon)   params.set('sezon', sezon);
+  if(grade)   params.set('grade', grade);
+  if(internet) params.set('internet_aktif', internet);
+
+  showSkeletons();
+  const t0 = Date.now();
+
+  try{
+    const r = await fetch(`${BASE}/search?${params}`);
+    const d = await r.json();
+    const elapsed = Date.now() - t0;
+
+    totalItems = d.total || 0;
+    lastMode   = d.mode  || 'filter';
+
+    renderResults(d.items || [], elapsed);
+    renderPagination();
+    updateMeta(elapsed);
+  } catch(err){
+    document.getElementById('resultsGrid').innerHTML =
+      '<div class="empty" style="grid-column:1/-1"><div class="empty-ico">⚠️</div>'+
+      '<div class="empty-title">Arama hatası</div>'+
+      '<div class="empty-sub">'+err.message+'</div></div>';
+  }
+}
+
+/* ─────────────────────────────────────────
+   Render
+───────────────────────────────────────── */
+function showSkeletons(){
+  document.getElementById('resultsMeta').style.display='none';
+  const grid = document.getElementById('resultsGrid');
+  grid.innerHTML = Array.from({length:12}).map(() => `
+    <div class="skeleton-card">
+      <div class="skel-img"></div>
+      <div class="skel-body">
+        <div class="skel-line"></div>
+        <div class="skel-line short"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('pagination').innerHTML='';
+}
+
+function renderResults(items, elapsed){
+  const grid = document.getElementById('resultsGrid');
+  if(!items.length){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1">
+      <div class="empty-ico">🔍</div>
+      <div class="empty-title">Sonuç bulunamadı</div>
+      <div class="empty-sub">Farklı anahtar kelime veya filtre deneyin</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = items.map(p => cardHtml(p)).join('');
+}
+
+function cardHtml(p){
+  const img = p.default_image_url
+    ? `<img src="${p.default_image_url}" alt="${esc(p.urun_adi)}" loading="lazy"
+         onerror="this.parentElement.innerHTML='<div class=no-img>📦</div>'">`
+    : `<div class="no-img">📦</div>`;
+
+  const grade = p.quality_grade || '';
+  const score = p.quality_score || 0;
+  const gradeClass = grade ? `g-${grade}` : 'g-none';
+  const scorePct = score;
+  const scoreColor = score>=80?'var(--green)':score>=60?'var(--blue)':score>=40?'var(--yellow)':'var(--red)';
+
+  const ciro = p.brut_ciro_30g
+    ? `${fmtNum(p.brut_ciro_30g)} ₺ <span style="color:var(--muted);font-size:10px">30g</span>`
+    : (p.brut_ciro ? `${fmtNum(p.brut_ciro)} ₺` : '—');
+
+  const hybridScore = p.hybrid_score ? `<span title="Hybrid skor">${(p.hybrid_score*100).toFixed(1)}</span>` : '';
+
+  return `<div class="pcard" onclick="openProduct('${esc(p.urun_kodu)}')">
+    <div class="pcard-img">
+      ${img}
+      ${grade ? `<div class="pcard-grade ${gradeClass}">${grade}</div>` : ''}
+      <div class="pcard-score-bar">
+        <div class="pcard-score-fill" style="width:${scorePct}%;background:${scoreColor}"></div>
+      </div>
+    </div>
+    <div class="pcard-body">
+      <div class="pcard-name">${esc(p.urun_adi || p.urun_kodu)}</div>
+      <div class="pcard-meta">
+        ${p.marka_adi?`<span>🏷 ${esc(p.marka_adi)}</span>`:''}
+        ${p.sezon_kodu?`<span>📅 ${esc(p.sezon_kodu)}</span>`:''}
+        ${p.ana_grup_adi?`<span>📂 ${esc(p.ana_grup_adi)}</span>`:''}
+      </div>
+      <div class="pcard-ciro">${ciro}</div>
+      ${score?`<div class="pcard-score-num">Puan: ${score} ${hybridScore}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function updateMeta(elapsed){
+  const meta = document.getElementById('resultsMeta');
+  meta.style.display = 'flex';
+  document.getElementById('totalCount').textContent = totalItems.toLocaleString('tr-TR');
+  const pill = document.getElementById('modePill');
+  const labels = {hybrid:'🔮 Hybrid', fts:'📄 Tam Metin', filter:'🔧 Filtre'};
+  pill.textContent = labels[lastMode] || lastMode;
+  pill.className = `mode-pill ${lastMode}`;
+  document.getElementById('elapsedInfo').textContent = `${elapsed}ms`;
+}
+
+/* ─────────────────────────────────────────
+   Pagination
+───────────────────────────────────────── */
+function renderPagination(){
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  if(totalPages <= 1){
+    document.getElementById('pagination').innerHTML='';
+    return;
+  }
+  const pages = paginator(currentPage, totalPages);
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})"
+    ${currentPage<=1?'disabled':''}>‹ Önceki</button>`;
+  pages.forEach(p => {
+    if(p === '…') html += `<span class="page-info">…</span>`;
+    else html += `<button class="page-btn ${p===currentPage?'active':''}"
+      onclick="goPage(${p})">${p}</button>`;
+  });
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})"
+    ${currentPage>=totalPages?'disabled':''}>Sonraki ›</button>`;
+  document.getElementById('pagination').innerHTML = html;
+}
+
+function paginator(cur, total){
+  if(total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  const pages = [];
+  if(cur <= 4){
+    for(let i=1;i<=5;i++) pages.push(i);
+    pages.push('…'); pages.push(total);
+  } else if(cur >= total-3){
+    pages.push(1); pages.push('…');
+    for(let i=total-4;i<=total;i++) pages.push(i);
+  } else {
+    pages.push(1,'…',cur-1,cur,cur+1,'…',total);
+  }
+  return pages;
+}
+
+function goPage(p){
+  const totalPages = Math.ceil(totalItems/PAGE_SIZE);
+  if(p<1||p>totalPages) return;
+  currentPage = p;
+  runSearch();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ─────────────────────────────────────────
+   Autocomplete
+───────────────────────────────────────── */
+let acItems = [];
+let acActive = -1;
+
+async function fetchSuggestions(q){
+  try{
+    const r = await fetch(`${BASE}/search/suggestions?q=${encodeURIComponent(q)}&limit=8`);
+    acItems = await r.json();
+    renderAC();
+  } catch(e){ hideAC(); }
+}
+
+function renderAC(){
+  const list = document.getElementById('acList');
+  if(!acItems.length){ hideAC(); return; }
+  list.innerHTML = acItems.map((s,i) =>
+    `<div class="ac-item" data-i="${i}" onclick="pickAC(${i})">${esc(s)}</div>`
+  ).join('');
+  list.style.display='block';
+  acActive=-1;
+}
+
+function hideAC(){
+  document.getElementById('acList').style.display='none';
+  acActive=-1;
+}
+
+function pickAC(i){
+  document.getElementById('searchInput').value = acItems[i];
+  document.getElementById('clearBtn').style.display='block';
+  hideAC();
+  currentPage=1;
+  runSearch();
+}
+
+function navigateAC(dir){
+  const items = document.querySelectorAll('.ac-item');
+  if(!items.length) return;
+  items[acActive]?.classList.remove('active');
+  acActive = Math.max(0, Math.min(items.length-1, acActive+dir));
+  items[acActive]?.classList.add('active');
+  document.getElementById('searchInput').value = acItems[acActive];
+}
+
+/* ─────────────────────────────────────────
+   Index modal
+───────────────────────────────────────── */
+async function openIndexModal(){
+  document.getElementById('indexModal').classList.add('open');
+  await refreshIndexStats();
+}
+
+function closeIndexModal(){
+  document.getElementById('indexModal').classList.remove('open');
+  if(reindexPoll){ clearInterval(reindexPoll); reindexPoll=null; }
+}
+
+async function refreshIndexStats(){
+  try{
+    const r = await fetch(`${BASE}/search/status`);
+    const d = await r.json();
+    const stats = document.getElementById('indexStats');
+    stats.innerHTML=`
+      <div class="modal-stat"><span>Toplam ürün</span><span class="modal-stat-val">${d.toplam||0}</span></div>
+      <div class="modal-stat"><span>Embedding'li</span><span class="modal-stat-val">${d.embedding_li||0}</span></div>
+      <div class="modal-stat"><span>FTS indexli</span><span class="modal-stat-val">${d.fts_li||0}</span></div>
+      <div class="modal-stat"><span>Son güncelleme</span>
+        <span class="modal-stat-val">${d.son_guncelleme?new Date(d.son_guncelleme).toLocaleString('tr-TR'):'—'}</span>
+      </div>`;
+  } catch(e){}
+}
+
+async function triggerReindex(skipEmb){
+  const btn = document.getElementById(skipEmb?'reindexFtsBtn':'reindexBtn');
+  btn.disabled=true;
+  btn.textContent='⏳ Başlatılıyor…';
+  try{
+    const r = await fetch(`${BASE}/search/index?skip_embeddings=${skipEmb}`, {method:'POST'});
+    const d = await r.json();
+    reindexJobId = d.job_id;
+    document.getElementById('indexProgressWrap').style.display='block';
+    document.getElementById('indexLog').textContent='Index başladı…';
+    reindexPoll = setInterval(pollReindex, 3000);
+  } catch(e){
+    showToast('Index başlatılamadı: '+e.message, 'err');
+  } finally{
+    btn.disabled=false;
+    btn.textContent = skipEmb?'⚡ FTS Sadece':'🔄 Yeniden İndeksle';
+  }
+}
+
+async function pollReindex(){
+  if(!reindexJobId) return;
+  try{
+    const r = await fetch(`${BASE}/search/index/status/${reindexJobId}`);
+    const d = await r.json();
+    const fill = document.getElementById('indexProgressFill');
+    const log  = document.getElementById('indexLog');
+
+    if(d.total){
+      fill.style.width = Math.round(d.indexed/d.total*100)+'%';
+      log.textContent = `${d.indexed} / ${d.total} ürün indexlendi…`;
+    }
+    if(d.status==='done'){
+      fill.style.width='100%';
+      log.textContent=`✅ Tamamlandı — ${d.indexed} indexlendi, ${d.skipped||0} atlandı, ${d.elapsed_ms||0}ms`;
+      clearInterval(reindexPoll); reindexPoll=null;
+      showToast('Index tamamlandı!','ok');
+      await loadIndexStatus();
+      await refreshIndexStats();
+    } else if(d.status==='failed'){
+      log.textContent='❌ Hata: '+d.error;
+      clearInterval(reindexPoll); reindexPoll=null;
+      showToast('Index başarısız','err');
+    }
+  } catch(e){}
+}
+
+/* ─────────────────────────────────────────
+   Product open (portal enrichment sayfasına yönlendir)
+───────────────────────────────────────── */
+function openProduct(urunKodu){
+  window.open(
+    `/api/v1/portal#enr-detail-${urunKodu}`,
+    '_blank'
+  );
+}
+
+/* ─────────────────────────────────────────
+   Helpers
+───────────────────────────────────────── */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtNum(n){ return Number(n).toLocaleString('tr-TR',{maximumFractionDigits:0}); }
+
+function showToast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent=msg;
+  t.className=`toast show ${type}`;
+  setTimeout(()=>{ t.className='toast'; }, 3500);
+}
+
+/* ─────────────────────────────────────────
+   Boot
+───────────────────────────────────────── */
+checkAuth();
+</script>
+</body>
+</html>

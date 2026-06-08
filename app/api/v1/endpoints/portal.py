@@ -32,6 +32,15 @@ async def portal_html() -> HTMLResponse:
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@router.get("/search", response_class=HTMLResponse)
+async def search_html() -> HTMLResponse:
+    """AI Search Engine — ayrı standalone sayfa."""
+    html_path = _STATIC / "search.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=503, detail="Search HTML not found.")
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
 # ── Data endpoints ────────────────────────────────────────────────────────────
 
 @router.get("/latest-period")

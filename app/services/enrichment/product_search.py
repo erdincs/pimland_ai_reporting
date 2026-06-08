@@ -1,15 +1,13 @@
-"""Ürün arama servisi — hybrid FTS + semantic search.
+"""Ürün arama servisi — hybrid FTS + semantic (RRF).
 
-product_search_index tablosunda:
-  - Boş sorgu: sadece metadata filtreler → brut_ciro DESC sırala
-  - FTS sorgusu: tsvector tam metin arama (hızlı)
-  - Embedding varsa: cosine benzerlik (anlamsal)
-  - İkisi birlikte varsa: ağırlıklı hybrid skor (0.4 FTS + 0.6 semantic)
+Modlar:
+  - filter : sorgu yok → filtrele + brut_ciro_30g DESC
+  - fts    : sorgu var, vector yok → plainto_tsquery('turkish', ...)
+  - hybrid : sorgu + vector → RRF (1/(k+fts_rank) + 1/(k+sem_rank)), k=60
 """
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -19,12 +17,10 @@ from app.core.logging import get_logger
 
 log = get_logger(__name__)
 
-_FTS_WEIGHT    = 0.4
-_SEMANTIC_WEIGHT = 0.6
+_RRF_K = 60
 
 
 async def _get_query_embedding(query: str) -> Optional[List[float]]:
-    """Arama sorgusunu embed et — None dönerse sadece FTS kullan."""
     try:
         from app.services.enrichment.product_indexer import _bedrock_client, _embed_sync
         loop = asyncio.get_event_loop()
@@ -33,6 +29,17 @@ async def _get_query_embedding(query: str) -> Optional[List[float]]:
     except Exception as exc:
         log.warning("product_search.embed_error", error=str(exc))
         return None
+
+
+async def _has_vector_col(session: AsyncSession) -> bool:
+    try:
+        row = (await session.execute(text("""
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name='product_search_index' AND column_name='embedding'
+        """))).scalar()
+        return row == 'USER-DEFINED'
+    except Exception:
+        return False
 
 
 def _build_where(
@@ -51,11 +58,23 @@ def _build_where(
         params["sezon"] = sezon
     if grade:
         grades = [g.strip().upper() for g in grade.split(",")]
-        conds.append(f"quality_grade = ANY(ARRAY{grades})")
+        # sqlalchemy text() placeholders — grade listesi parametre olarak geçemez,
+        # doğrudan interpolate edilir (input ANY kontrolü üstte yapılır)
+        safe_grades = ", ".join(f"'{g}'" for g in grades if g.isalpha())
+        conds.append(f"quality_grade IN ({safe_grades})")
     if internet_aktif is not None:
         conds.append("internet_aktif = :internet_aktif")
         params["internet_aktif"] = internet_aktif
     return " AND ".join(conds)
+
+
+_SELECT_COLS = """
+    urun_kodu, urun_adi, marka_adi, sezon_kodu, sezon_adi,
+    tema_adi, ana_grup_adi, urun_grubu_adi, fabricmaterialname,
+    default_image_url, quality_grade, quality_score,
+    internet_aktif, bloke,
+    brut_ciro, brut_ciro_30g, net_ciro_30g, iade_orani
+"""
 
 
 async def search_products(
@@ -68,131 +87,149 @@ async def search_products(
     limit: int = 24,
     offset: int = 0,
 ) -> Dict[str, Any]:
-    """
-    Ürün ara.
-
-    Döndürür: {total, items: [{urun_kodu, urun_adi, ...score, ...}]}
-    """
     params: Dict[str, Any] = {"limit": limit, "offset": offset}
     where = _build_where(marka, sezon, grade, internet_aktif, params)
     q_clean = (q or "").strip()
 
-    # ── 1. Sorgu yok → metadata sırala ───────────────────────────────────────
+    # ── 1. Sorgu yok → filtrele + sırala ─────────────────────────────────────
     if not q_clean:
         count_row = (await session.execute(
             text(f"SELECT COUNT(*) FROM product_search_index WHERE {where}"), params
         )).scalar() or 0
 
         rows = (await session.execute(text(f"""
-            SELECT
-                urun_kodu, urun_adi, marka_adi, sezon_kodu, sezon_adi,
-                tema_adi, ana_grup_adi, urun_grubu_adi, fabricmaterialname,
-                default_image_url, quality_grade, quality_score,
-                internet_aktif, bloke, brut_ciro
+            SELECT {_SELECT_COLS}, 0::float AS fts_score, 0::float AS sem_score,
+                   0::float AS hybrid_score
             FROM product_search_index
             WHERE {where}
-            ORDER BY brut_ciro DESC, quality_score DESC NULLS LAST
+            ORDER BY brut_ciro_30g DESC, quality_score DESC NULLS LAST
             LIMIT :limit OFFSET :offset
         """), params)).mappings().all()
 
-        return {
-            "total": count_row,
-            "mode": "filter",
-            "items": [dict(r) for r in rows],
-        }
+        return {"total": count_row, "mode": "filter", "items": _cast(rows)}
 
-    # ── 2. FTS sorgusu hazırla ────────────────────────────────────────────────
+    # ── 2. FTS sorgusu + paralel embedding ───────────────────────────────────
     params["q_fts"] = q_clean
 
-    # ── 3. Embedding al (paralel FTS ile) ────────────────────────────────────
-    embedding = await _get_query_embedding(q_clean)
+    embedding, use_vector = await asyncio.gather(
+        _get_query_embedding(q_clean),
+        _has_vector_col(session),
+    )
 
-    # embedding kolonunun vector tipinde olup olmadığını kontrol et
-    has_vector_col = False
-    try:
-        type_row = (await session.execute(text("""
-            SELECT data_type FROM information_schema.columns
-            WHERE table_name='product_search_index' AND column_name='embedding'
-        """))).scalar()
-        has_vector_col = (type_row == 'USER-DEFINED')
-    except Exception:
-        pass
-
-    if embedding is not None and has_vector_col:
-        # ── Hybrid search: FTS + semantic ─────────────────────────────────
-        params["embedding"] = "[" + ",".join(str(v) for v in embedding) + "]"
+    if embedding is not None and use_vector:
+        # ── Hybrid: RRF ───────────────────────────────────────────────────
+        params["emb"] = "[" + ",".join(str(v) for v in embedding) + "]"
+        params["k"]   = _RRF_K
 
         count_row = (await session.execute(text(f"""
-            SELECT COUNT(*) FROM product_search_index
+            SELECT COUNT(DISTINCT urun_kodu) FROM product_search_index
             WHERE {where}
               AND (
-                fts_vector @@ plainto_tsquery('simple', :q_fts)
-                OR embedding IS NOT NULL
+                fts_vector @@ plainto_tsquery('turkish', :q_fts)
+                OR (embedding IS NOT NULL AND (1 - (embedding <=> :emb::vector)) > 0.45)
               )
         """), params)).scalar() or 0
 
         rows = (await session.execute(text(f"""
-            SELECT
-                urun_kodu, urun_adi, marka_adi, sezon_kodu, sezon_adi,
-                tema_adi, ana_grup_adi, urun_grubu_adi, fabricmaterialname,
-                default_image_url, quality_grade, quality_score,
-                internet_aktif, bloke, brut_ciro,
-                COALESCE(ts_rank(fts_vector, plainto_tsquery('simple', :q_fts)), 0) AS fts_score,
-                COALESCE(1 - (embedding <=> :embedding::vector), 0)               AS sem_score,
-                (
-                  {_FTS_WEIGHT} * COALESCE(ts_rank(fts_vector, plainto_tsquery('simple', :q_fts)), 0) +
-                  {_SEMANTIC_WEIGHT} * COALESCE(1 - (embedding <=> :embedding::vector), 0)
-                ) AS hybrid_score
-            FROM product_search_index
-            WHERE {where}
-              AND (
-                fts_vector @@ plainto_tsquery('simple', :q_fts)
-                OR (embedding IS NOT NULL AND (1 - (embedding <=> :embedding::vector)) > 0.5)
-              )
+            WITH fts_ranked AS (
+                SELECT urun_kodu,
+                       ROW_NUMBER() OVER (ORDER BY ts_rank(fts_vector,
+                                          plainto_tsquery('turkish', :q_fts)) DESC) AS r
+                FROM product_search_index
+                WHERE {where}
+                  AND fts_vector @@ plainto_tsquery('turkish', :q_fts)
+            ),
+            sem_ranked AS (
+                SELECT urun_kodu,
+                       ROW_NUMBER() OVER (ORDER BY (1 - (embedding <=> :emb::vector)) DESC) AS r,
+                       (1 - (embedding <=> :emb::vector)) AS sem_score
+                FROM product_search_index
+                WHERE {where}
+                  AND embedding IS NOT NULL
+                  AND (1 - (embedding <=> :emb::vector)) > 0.45
+            ),
+            combined AS (
+                SELECT
+                    COALESCE(f.urun_kodu, s.urun_kodu) AS urun_kodu,
+                    COALESCE(1.0 / (:k + f.r), 0)      AS fts_rrf,
+                    COALESCE(1.0 / (:k + s.r), 0)      AS sem_rrf,
+                    COALESCE(s.sem_score, 0)            AS sem_score
+                FROM fts_ranked f
+                FULL OUTER JOIN sem_ranked s USING (urun_kodu)
+            )
+            SELECT p.{_SELECT_COLS.replace(chr(10),' ')},
+                   COALESCE(c.fts_rrf, 0)               AS fts_score,
+                   COALESCE(c.sem_score, 0)              AS sem_score,
+                   (c.fts_rrf + c.sem_rrf)               AS hybrid_score
+            FROM combined c
+            JOIN product_search_index p USING (urun_kodu)
             ORDER BY hybrid_score DESC
             LIMIT :limit OFFSET :offset
         """), params)).mappings().all()
 
-        mode = "hybrid"
+        return {"total": count_row, "mode": "hybrid", "items": _cast(rows)}
 
-    else:
-        # ── Sadece FTS ────────────────────────────────────────────────────
-        count_row = (await session.execute(text(f"""
-            SELECT COUNT(*) FROM product_search_index
-            WHERE {where}
-              AND fts_vector @@ plainto_tsquery('simple', :q_fts)
-        """), params)).scalar() or 0
+    # ── 3. Sadece FTS ─────────────────────────────────────────────────────────
+    count_row = (await session.execute(text(f"""
+        SELECT COUNT(*) FROM product_search_index
+        WHERE {where}
+          AND fts_vector @@ plainto_tsquery('turkish', :q_fts)
+    """), params)).scalar() or 0
 
-        rows = (await session.execute(text(f"""
-            SELECT
-                urun_kodu, urun_adi, marka_adi, sezon_kodu, sezon_adi,
-                tema_adi, ana_grup_adi, urun_grubu_adi, fabricmaterialname,
-                default_image_url, quality_grade, quality_score,
-                internet_aktif, bloke, brut_ciro,
-                ts_rank(fts_vector, plainto_tsquery('simple', :q_fts)) AS fts_score,
-                0 AS sem_score,
-                ts_rank(fts_vector, plainto_tsquery('simple', :q_fts)) AS hybrid_score
-            FROM product_search_index
-            WHERE {where}
-              AND fts_vector @@ plainto_tsquery('simple', :q_fts)
-            ORDER BY hybrid_score DESC
-            LIMIT :limit OFFSET :offset
-        """), params)).mappings().all()
+    rows = (await session.execute(text(f"""
+        SELECT {_SELECT_COLS},
+               ts_rank(fts_vector, plainto_tsquery('turkish', :q_fts)) AS fts_score,
+               0::float AS sem_score,
+               ts_rank(fts_vector, plainto_tsquery('turkish', :q_fts)) AS hybrid_score
+        FROM product_search_index
+        WHERE {where}
+          AND fts_vector @@ plainto_tsquery('turkish', :q_fts)
+        ORDER BY hybrid_score DESC
+        LIMIT :limit OFFSET :offset
+    """), params)).mappings().all()
 
-        mode = "fts"
+    return {"total": count_row, "mode": "fts", "items": _cast(rows)}
 
-    return {
-        "total": count_row,
-        "mode": mode,
-        "items": [
-            {**dict(r), "brut_ciro": float(r["brut_ciro"] or 0)}
-            for r in rows
-        ],
-    }
+
+def _cast(rows) -> List[Dict[str, Any]]:
+    out = []
+    for r in rows:
+        d = dict(r)
+        for col in ("brut_ciro", "brut_ciro_30g", "net_ciro_30g",
+                    "fts_score", "sem_score", "hybrid_score", "iade_orani"):
+            if col in d and d[col] is not None:
+                d[col] = float(d[col])
+        out.append(d)
+    return out
+
+
+async def get_suggestions(
+    session: AsyncSession,
+    q: str,
+    limit: int = 8,
+) -> List[str]:
+    """Autocomplete — marka + ürün adı prefix araması."""
+    if len(q) < 2:
+        return []
+    params = {"q": f"{q}%", "limit": limit}
+    rows = (await session.execute(text("""
+        SELECT DISTINCT val FROM (
+            SELECT marka_adi   AS val FROM product_search_index WHERE marka_adi   ILIKE :q
+            UNION ALL
+            SELECT urun_adi    AS val FROM product_search_index WHERE urun_adi    ILIKE :q
+            UNION ALL
+            SELECT tema_adi    AS val FROM product_search_index WHERE tema_adi    ILIKE :q
+            UNION ALL
+            SELECT ana_grup_adi AS val FROM product_search_index WHERE ana_grup_adi ILIKE :q
+        ) sub
+        WHERE val IS NOT NULL
+        ORDER BY val
+        LIMIT :limit
+    """), params)).all()
+    return [r[0] for r in rows]
 
 
 async def get_index_status(session: AsyncSession) -> Dict[str, Any]:
-    """Index durumu — toplam, embedding'li, son güncelleme."""
     row = (await session.execute(text("""
         SELECT
             COUNT(*) AS toplam,
@@ -203,13 +240,15 @@ async def get_index_status(session: AsyncSession) -> Dict[str, Any]:
     """))).mappings().first()
 
     if not row or not row["toplam"]:
-        return {"toplam": 0, "embedding_li": 0, "fts_li": 0, "son_guncelleme": None, "hazir": False}
+        return {"toplam": 0, "embedding_li": 0, "fts_li": 0,
+                "son_guncelleme": None, "hazir": False}
 
     toplam = int(row["toplam"])
     return {
         "toplam":        toplam,
         "embedding_li":  int(row["embedding_li"]),
         "fts_li":        int(row["fts_li"]),
-        "son_guncelleme": row["son_guncelleme"].isoformat() if row["son_guncelleme"] else None,
+        "son_guncelleme": (row["son_guncelleme"].isoformat()
+                           if row["son_guncelleme"] else None),
         "hazir":         toplam > 0,
     }

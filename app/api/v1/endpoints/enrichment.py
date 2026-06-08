@@ -884,6 +884,17 @@ async def get_reindex_job_status(job_id: str) -> Dict[str, Any]:
     return json.loads(raw)
 
 
+@router.get("/search/suggestions")
+async def get_search_suggestions(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    q: str = Query("", min_length=2),
+    limit: int = Query(8, ge=1, le=20),
+) -> List[str]:
+    """Autocomplete öneri — marka, ürün adı, tema prefix araması."""
+    from app.services.enrichment.product_search import get_suggestions
+    return await get_suggestions(session, q=q, limit=limit)
+
+
 @router.delete("/story/{story_id}")
 async def delete_story(
     story_id: int,

@@ -1,16 +1,17 @@
-"""Ürün arama indexleyici — pim_products → product_search_index.
+"""Ürün arama indexleyici — pim_products + enrichment_quality → product_search_index.
 
 Her ürün için:
-  1. search_text belgesi oluşturur (ad + marka + sezon + tema + kategori + kumaş)
-  2. AWS Bedrock Titan Embed v2 ile 1024 boyutlu embedding üretir
-  3. product_search_index tablosuna UPSERT yapar
-  4. fts_vector kolonunu SQL ile günceller
+  1. search_text belgesi oluşturur (temel + zengin MCP verisi detail_json'dan)
+  2. pimland_hash hesaplar → delta indexing (sadece değişenler)
+  3. AWS Bedrock Titan Embed v2 ile embedding üretir (pgvector mevcut ise)
+  4. UPSERT yapar — fts_vector GENERATED ALWAYS AS ile otomatik güncellenir
 
 Nightly job (04:00) + manuel tetikleme (POST /enrichment/search/index).
 """
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import time
 from typing import Any, Dict, List, Optional
@@ -24,10 +25,10 @@ from app.core.logging import get_logger
 
 log = get_logger(__name__)
 
-_EMBED_MODEL = "amazon.titan-embed-text-v2:0"
-_EMBED_DIMS  = 1024
-_BATCH_CONCURRENT = 8   # eş zamanlı Bedrock çağrısı
-_UPSERT_CHUNK = 200     # tek seferde UPSERT edilen satır sayısı
+_EMBED_MODEL      = "amazon.titan-embed-text-v2:0"
+_EMBED_DIMS       = 1024
+_BATCH_CONCURRENT = 8
+_UPSERT_CHUNK     = 200
 
 
 # ── Bedrock embedding ─────────────────────────────────────────────────────────
@@ -41,7 +42,6 @@ def _bedrock_client():
 
 
 def _embed_sync(text: str, client) -> Optional[List[float]]:
-    """Tek metni embed et (senkron — executor içinde çalışır)."""
     try:
         body = json.dumps({
             "inputText": text[:8000],
@@ -49,10 +49,8 @@ def _embed_sync(text: str, client) -> Optional[List[float]]:
             "normalize": True,
         })
         resp = client.invoke_model(
-            modelId=_EMBED_MODEL,
-            body=body,
-            contentType="application/json",
-            accept="application/json",
+            modelId=_EMBED_MODEL, body=body,
+            contentType="application/json", accept="application/json",
         )
         return json.loads(resp["body"].read())["embedding"]
     except Exception as exc:
@@ -69,25 +67,149 @@ async def _embed_async(text: str, client, sem: asyncio.Semaphore) -> Optional[Li
 # ── Search text builder ───────────────────────────────────────────────────────
 
 def _build_search_text(row: Dict[str, Any]) -> str:
-    parts = [
-        row.get("urun_adi") or "",
-        row.get("marka_adi") or "",
-        row.get("sezon_adi") or "",
-        row.get("sezon_kodu") or "",
-        row.get("tema_adi") or "",
-        row.get("ana_grup_adi") or "",
-        row.get("urun_grubu_adi") or "",
-        row.get("fabricmaterialname") or "",
+    """Hem pim_products hem detail_json'dan zengin arama belgesi oluştur."""
+    parts: List[str] = []
+
+    # Temel kimlik (pim_products)
+    if row.get("marka_adi"):       parts.append(row["marka_adi"])
+    if row.get("urun_adi"):        parts.append(row["urun_adi"])
+    if row.get("sezon_adi"):       parts.append(row["sezon_adi"])
+    if row.get("tema_adi"):        parts.append(f"Tema: {row['tema_adi']}")
+    if row.get("ana_grup_adi"):    parts.append(row["ana_grup_adi"])
+    if row.get("urun_grubu_adi"):  parts.append(row["urun_grubu_adi"])
+    if row.get("fabricmaterialname"): parts.append(f"Kumaş: {row['fabricmaterialname']}")
+
+    # Zengin veri: enrichment_quality.detail_json
+    detail: Dict = row.get("detail_json") or {}
+
+    if detail.get("description"):
+        parts.append(detail["description"])
+
+    if detail.get("fabricMaterialName"):
+        parts.append(f"Kumaş: {detail['fabricMaterialName']}")
+
+    # Kumaş içerik (barcodes'dan)
+    for b in (detail.get("barcodes") or [])[:1]:
+        mat = b.get("mainMaterialContent", "")
+        if mat:
+            parts.append(f"İçerik: {mat}")
+            break
+
+    if detail.get("fitName"):
+        parts.append(f"Kalıp: {detail['fitName']}")
+
+    # Ürün hikayeleri
+    for s in (detail.get("productStories") or [])[:2]:
+        txt = s.get("storyText") or ""
+        if txt:
+            parts.append(txt[:200])
+
+    # E-ticaret etiketleri
+    for i in range(1, 5):
+        tag = detail.get(f"ecomTag{i}")
+        if tag:
+            parts.append(tag)
+
+    if detail.get("notes"):
+        parts.append(f"Not: {detail['notes'][:200]}")
+
+    # Bakım talimatları
+    care_names = [
+        c.get("instructionName", "")
+        for c in (detail.get("washingAndCareInstructions") or [])[:3]
+        if c.get("instructionName")
     ]
-    return " ".join(p for p in parts if p).strip()
+    if care_names:
+        parts.append("Bakım: " + ", ".join(care_names))
+
+    return " | ".join(p for p in parts if p).strip()
+
+
+def _compute_hash(row: Dict[str, Any]) -> str:
+    """Delta indexing için kararlı hash — anahtar alanlar değişince farklı döner."""
+    detail: Dict = row.get("detail_json") or {}
+    key = {
+        "urun_adi":    row.get("urun_adi"),
+        "marka_adi":   row.get("marka_adi"),
+        "sezon_kodu":  row.get("sezon_kodu"),
+        "tema_adi":    row.get("tema_adi"),
+        "ana_grup":    row.get("ana_grup_adi"),
+        "kumaş":       row.get("fabricmaterialname"),
+        "description": detail.get("description"),
+        "fabricMat":   detail.get("fabricMaterialName"),
+        "fit":         detail.get("fitName"),
+        "stories":     [s.get("storyText") for s in (detail.get("productStories") or [])[:2]],
+        "ecomTag1":    detail.get("ecomTag1"),
+        "ecomTag2":    detail.get("ecomTag2"),
+        "notes":       detail.get("notes"),
+        "internet":    row.get("internet_aktif"),
+        "bloke":       row.get("bloke"),
+        "grade":       row.get("quality_grade"),
+    }
+    return hashlib.md5(
+        json.dumps(key, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
+
+
+def _build_metadata(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Filtre için metadata JSONB."""
+    detail: Dict = row.get("detail_json") or {}
+    images = detail.get("productImages") or []
+    barcodes = detail.get("barcodes") or []
+    return {
+        "sezon":        row.get("sezon_kodu"),
+        "marka":        row.get("marka_adi"),
+        "tema":         row.get("tema_adi"),
+        "ana_grup":     row.get("ana_grup_adi"),
+        "kategori":     row.get("urun_grubu_adi"),
+        "fit":          detail.get("fitCode") or detail.get("fitName"),
+        "gorsel_sayisi": len(images),
+        "video_var":    any(img.get("type") == "video" for img in images),
+        "beden_sayisi": len([b for b in barcodes if (b.get("stock") or 0) > 0]),
+        "renk_sayisi":  len(set(b.get("colorCode", "") for b in barcodes if b.get("colorCode"))),
+    }
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────
 
+def _has_vector_type(conn) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT data_type FROM information_schema.columns
+            WHERE table_name='product_search_index' AND column_name='embedding'
+        """)
+        row = cur.fetchone()
+        return bool(row and row[0] == 'USER-DEFINED')
+
+
+def _fetch_existing_hashes(conn) -> Dict[str, str]:
+    """Mevcut tüm pimland_hash'leri çek — delta için."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT urun_kodu, pimland_hash FROM product_search_index")
+        return {r[0]: r[1] for r in cur.fetchall()}
+
+
 def _fetch_products(conn) -> List[Dict[str, Any]]:
-    """pim_products + enrichment_quality + satış toplamı çek."""
+    """pim_products + enrichment_quality (detail_json) + 30g satış verileri."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
+            WITH satis_30g AS (
+                SELECT
+                    s.urun_kodu,
+                    ROUND(SUM(s.tutar)::numeric, 2)            AS brut_ciro_30g,
+                    ROUND(SUM(s.tutar) - COALESCE(ABS(SUM(d.tutar)), 0), 2) AS net_ciro_30g,
+                    CASE WHEN SUM(s.tutar) > 0
+                         THEN ROUND(COALESCE(ABS(SUM(d.tutar)), 0) / SUM(s.tutar) * 100, 1)
+                         ELSE 0 END                            AS iade_orani
+                FROM incorta_satis s
+                LEFT JOIN incorta_depo_iade d ON d.urun_kodu = s.urun_kodu
+                    AND d.yil = s.yil AND d.ay = s.ay
+                WHERE (s.yil * 100 + s.ay) >= (
+                    SELECT MAX(yil * 100 + ay) - 1
+                    FROM incorta_satis
+                )
+                GROUP BY s.urun_kodu
+            )
             SELECT
                 p.urun_kodu,
                 p.urun_adi,
@@ -104,46 +226,37 @@ def _fetch_products(conn) -> List[Dict[str, Any]]:
                 p.bloke,
                 eq.quality_grade,
                 eq.quality_score,
-                COALESCE(s.brut_ciro, 0) AS brut_ciro
+                eq.detail_json,
+                COALESCE(s.brut_ciro, 0)     AS brut_ciro,
+                COALESCE(g.brut_ciro_30g, 0) AS brut_ciro_30g,
+                COALESCE(g.net_ciro_30g, 0)  AS net_ciro_30g,
+                COALESCE(g.iade_orani, 0)    AS iade_orani
             FROM pim_products p
             LEFT JOIN enrichment_quality eq ON eq.urun_kodu = p.urun_kodu
             LEFT JOIN (
                 SELECT urun_kodu, SUM(tutar) AS brut_ciro
-                FROM incorta_satis
-                WHERE yil IN (2025, 2026)
+                FROM incorta_satis WHERE yil IN (2025, 2026)
                 GROUP BY urun_kodu
             ) s ON s.urun_kodu = p.urun_kodu
+            LEFT JOIN satis_30g g ON g.urun_kodu = p.urun_kodu
             ORDER BY p.urun_kodu
         """)
         return [dict(r) for r in cur.fetchall()]
 
 
-def _has_vector_type(conn) -> bool:
-    """embedding kolonunun vector (pgvector) tipinde olup olmadığını kontrol et."""
-    with conn.cursor() as cur:
-        cur.execute("""
-            SELECT data_type FROM information_schema.columns
-            WHERE table_name='product_search_index' AND column_name='embedding'
-        """)
-        row = cur.fetchone()
-        return bool(row and row[0] == 'USER-DEFINED')
-
-
 def _format_embedding(embedding: Optional[List[float]], use_vector: bool) -> Optional[str]:
-    """Embedding'i DB kolonuna uygun formata çevir."""
     if embedding is None:
         return None
     if use_vector:
-        # pgvector expects '[x,y,z]' string format
         return "[" + ",".join(str(v) for v in embedding) + "]"
-    # TEXT kolonu — JSON array string
     return json.dumps(embedding)
 
 
 def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
-    """Bir batch ürünü UPSERT et (embedding dahil)."""
     emb_cast = "%s::vector" if use_vector else "%s"
-    template = f"(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,{emb_cast},NOW())"
+    template = (
+        f"(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,{emb_cast},NOW())"
+    )
 
     with conn.cursor() as cur:
         values = [
@@ -155,8 +268,12 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 r["default_image_url"],
                 r["quality_grade"], r["quality_score"],
                 r["internet_aktif"], r["bloke"],
-                float(r["brut_ciro"]) if r["brut_ciro"] else 0.0,
+                float(r.get("brut_ciro") or 0),
                 r["search_text"],
+                r["pimland_hash"],
+                json.dumps(r.get("metadata") or {}),
+                float(r.get("brut_ciro_30g") or 0),
+                float(r.get("net_ciro_30g") or 0),
                 _format_embedding(r["embedding"], use_vector),
             )
             for r in rows
@@ -173,9 +290,9 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 quality_grade, quality_score,
                 internet_aktif, bloke,
                 brut_ciro,
-                search_text,
-                embedding,
-                last_indexed_at
+                search_text, pimland_hash, metadata,
+                brut_ciro_30g, net_ciro_30g,
+                embedding, last_indexed_at
             ) VALUES %s
             ON CONFLICT (urun_kodu) DO UPDATE SET
                 urun_adi           = EXCLUDED.urun_adi,
@@ -194,6 +311,10 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
                 bloke              = EXCLUDED.bloke,
                 brut_ciro          = EXCLUDED.brut_ciro,
                 search_text        = EXCLUDED.search_text,
+                pimland_hash       = EXCLUDED.pimland_hash,
+                metadata           = EXCLUDED.metadata,
+                brut_ciro_30g      = EXCLUDED.brut_ciro_30g,
+                net_ciro_30g       = EXCLUDED.net_ciro_30g,
                 embedding          = EXCLUDED.embedding,
                 last_indexed_at    = NOW()
             """,
@@ -203,22 +324,11 @@ def _upsert_batch(conn, rows: List[Dict[str, Any]], use_vector: bool) -> None:
         conn.commit()
 
 
-def _update_fts(conn) -> None:
-    """tsvector kolonunu search_text'ten güncelle."""
-    with conn.cursor() as cur:
-        cur.execute("""
-            UPDATE product_search_index
-            SET fts_vector = to_tsvector('simple', COALESCE(search_text,''))
-            WHERE fts_vector IS NULL
-               OR last_indexed_at > NOW() - INTERVAL '10 minutes'
-        """)
-        conn.commit()
-
-
 def _create_ivfflat_index_if_needed(conn) -> None:
-    """ivfflat index — en az 100 satır gerektiriyor, ilk indexlemeden sonra oluştur."""
     with conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM product_search_index WHERE embedding IS NOT NULL")
+        cur.execute(
+            "SELECT COUNT(*) FROM product_search_index WHERE embedding IS NOT NULL"
+        )
         count = cur.fetchone()[0]
         if count < 100:
             return
@@ -243,15 +353,17 @@ def _create_ivfflat_index_if_needed(conn) -> None:
 async def run_indexer(
     progress_cb=None,
     skip_embeddings: bool = False,
+    force_reindex: bool = False,
 ) -> Dict[str, Any]:
     """
-    Tüm ürünleri indexle.
+    Ürün arama indexini oluştur / güncelle.
 
-    progress_cb(current, total) — opsiyonel ilerleme callback'i.
-    skip_embeddings=True — embedding olmadan sadece FTS indexler (hızlı, test için).
+    force_reindex=False (varsayılan) → sadece değişen ürünleri işle (delta).
+    force_reindex=True               → tüm ürünleri yeniden indexle.
+    skip_embeddings=True             → embedding olmadan sadece FTS indexler.
     """
     t0 = time.perf_counter()
-    log.info("indexer.started")
+    log.info("indexer.started", force=force_reindex, skip_emb=skip_embeddings)
 
     conn = psycopg2.connect(
         host=settings.postgres_host, port=settings.postgres_port,
@@ -260,31 +372,39 @@ async def run_indexer(
     )
 
     try:
-        products = _fetch_products(conn)
-        total = len(products)
-        log.info("indexer.products_fetched", count=total)
+        products   = _fetch_products(conn)
+        total      = len(products)
+        use_vector = _has_vector_type(conn)
+        existing   = {} if force_reindex else _fetch_existing_hashes(conn)
+
+        log.info("indexer.fetched", total=total, use_vector=use_vector,
+                 existing=len(existing))
 
         if not products:
-            return {"status": "done", "indexed": 0, "elapsed_ms": 0, "errors": 0}
-
-        use_vector = _has_vector_type(conn)
-        log.info("indexer.embedding_mode", use_vector=use_vector)
+            return {"status": "done", "indexed": 0, "skipped": 0,
+                    "errors": 0, "elapsed_ms": 0}
 
         if not skip_embeddings and use_vector:
             bedrock = _bedrock_client()
-            sem = asyncio.Semaphore(_BATCH_CONCURRENT)
+            sem     = asyncio.Semaphore(_BATCH_CONCURRENT)
 
-        errors = 0
-        processed = 0
+        indexed = skipped = errors = 0
+        pending: List[Dict[str, Any]] = []
 
-        # Embedding + search_text üret
-        for i in range(0, total, _UPSERT_CHUNK):
-            chunk = products[i: i + _UPSERT_CHUNK]
+        for r in products:
+            r["search_text"] = _build_search_text(r)
+            r["pimland_hash"] = _compute_hash(r)
+            r["metadata"]    = _build_metadata(r)
+            r["embedding"]   = None
 
-            # Search text her zaman üret
-            for r in chunk:
-                r["search_text"] = _build_search_text(r)
-                r["embedding"] = None
+            if not force_reindex and existing.get(r["urun_kodu"]) == r["pimland_hash"]:
+                skipped += 1
+                continue
+            pending.append(r)
+
+        # Embedding + UPSERT — chunk bazlı
+        for i in range(0, len(pending), _UPSERT_CHUNK):
+            chunk = pending[i: i + _UPSERT_CHUNK]
 
             if not skip_embeddings and use_vector:
                 embeddings = await asyncio.gather(*[
@@ -296,24 +416,26 @@ async def run_indexer(
                         errors += 1
 
             _upsert_batch(conn, chunk, use_vector)
-            processed += len(chunk)
+            indexed += len(chunk)
 
             if progress_cb:
-                progress_cb(processed, total)
+                progress_cb(indexed + skipped, total)
 
-            log.info("indexer.chunk_done", processed=processed, total=total)
+            log.info("indexer.chunk_done",
+                     indexed=indexed, skipped=skipped, total=total)
 
-        _update_fts(conn)
-        if not skip_embeddings:
+        if not skip_embeddings and use_vector:
             _create_ivfflat_index_if_needed(conn)
 
         elapsed = round((time.perf_counter() - t0) * 1000)
-        log.info("indexer.completed", indexed=processed, errors=errors, elapsed_ms=elapsed)
+        log.info("indexer.completed",
+                 indexed=indexed, skipped=skipped, errors=errors, elapsed_ms=elapsed)
 
         return {
-            "status": "done",
-            "indexed": processed,
-            "errors": errors,
+            "status":     "done",
+            "indexed":    indexed,
+            "skipped":    skipped,
+            "errors":     errors,
             "elapsed_ms": elapsed,
         }
 
