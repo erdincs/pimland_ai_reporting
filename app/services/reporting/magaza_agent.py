@@ -6,6 +6,7 @@ Kaynak: mv_magaza_satis_ozet (hızlı) → incorta_magaza_performans (fallback).
 from __future__ import annotations
 
 import json
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -56,6 +57,12 @@ magaza_tam_sira, bolgeler ve aylik_trend verileri mevcut; şunları devretme:
 - Bölge karşılaştırması
 - MDO/OBF/sepet analizi
 
+## Sıralama kuralı (ÖNEMLİ)
+Kullanıcı "sıralama", "listele", "en iyi", "en kötü", "kaçıncı" gibi kelimeler kullandığında:
+- magaza_tam_sira listesini kullan
+- İlk 10-20 mağazayı tablo formatında göster (Sıra | Mağaza | Ciro | Hedef% | MDO)
+- "dağılım" veya "özet" yerine MUTLAKA gerçek sıralama listesi ver
+
 ## Yanıt kuralları
 - Türkçe · yönetici tonu · jargon yok
 - Sayılarda Türk formatı: 1.234.567 ₺ · %14,7
@@ -77,6 +84,30 @@ magaza_tam_sira, bolgeler ve aylik_trend verileri mevcut; şunları devretme:
 
 
 # ── Veri çekici ───────────────────────────────────────────────────────────────
+
+_AY_MAP = {
+    "ocak": 1, "şubat": 2, "subat": 2, "mart": 3, "nisan": 4,
+    "mayıs": 5, "mayis": 5, "haziran": 6, "temmuz": 7,
+    "ağustos": 8, "agustos": 8, "eylül": 9, "eylul": 9,
+    "ekim": 10, "kasım": 11, "kasim": 11, "aralık": 12, "aralik": 12,
+}
+
+
+def _extract_ay_from_question(question: str, ay: Optional[int]) -> Optional[int]:
+    """Filtrede ay yoksa sorudan Türkçe ay adı veya rakam çıkarmaya çalış."""
+    if ay:
+        return ay
+    q = question.lower()
+    for k, v in _AY_MAP.items():
+        if k in q:
+            return v
+    m = re.search(r'\bay\s*(\d{1,2})\b|\b(\d{1,2})[.\s]*ay\b', q)
+    if m:
+        n = int(m.group(1) or m.group(2))
+        if 1 <= n <= 12:
+            return n
+    return None
+
 
 def _fv(v: Any) -> float:
     if v is None or str(v).strip() in ('--', ''):
@@ -303,6 +334,8 @@ async def run_magaza_agent(
     yil    = int(filters.get("yil", 2026))
     ay_raw = filters.get("ay")
     ay     = int(ay_raw) if ay_raw else None
+    # Filtrede ay yoksa sorudan otomatik çıkar (örn. "Mayıs ayı sıralaması")
+    ay     = _extract_ay_from_question(question, ay)
     bolge  = filters.get("bolge") or None
     magaza = filters.get("magaza") or None
 
