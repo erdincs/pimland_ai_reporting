@@ -214,6 +214,20 @@ body.searched .content{display:block;animation:fadeUp .3s ease .2s both}
   padding:6px 10px;border-left:2px solid var(--acc);color:var(--text);line-height:1.4}
 .pmodal-loading{padding:32px;text-align:center;color:var(--muted);font-size:14px}
 
+/* Stok */
+.pmodal-stock-badge{display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;margin-bottom:12px}
+.pmodal-stock-badge.in-stock{background:rgba(34,197,94,.12);color:var(--green)}
+.pmodal-stock-badge.out-of-stock{background:rgba(239,68,68,.12);color:var(--red)}
+.pmodal-stock-sizes{display:flex;flex-wrap:wrap;gap:6px}
+.pmodal-size-chip{display:flex;flex-direction:column;align-items:center;
+  padding:6px 10px;border-radius:8px;min-width:44px;text-align:center;
+  background:var(--card2);border:1px solid var(--border);transition:.15s}
+.pmodal-size-chip.has-stock{border-color:var(--green)}
+.pmodal-size-chip .sz-code{font-size:12px;font-weight:700}
+.pmodal-size-chip .sz-qty{font-size:10px;color:var(--muted);margin-top:2px}
+.pmodal-size-chip.has-stock .sz-qty{color:var(--green)}
+
 /* Toast */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--card2);
   border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;
@@ -858,6 +872,31 @@ function renderProductModal(d){
       </div>`;
   }
 
+  // Stock
+  let stockHtml = '';
+  if(d.stock_total != null){
+    const inStock = d.stock_total > 0;
+    const badgeCls = inStock ? 'in-stock' : 'out-of-stock';
+    const badgeTxt = inStock ? `● Stokta &nbsp;·&nbsp; ${d.stock_total} adet` : '● Stok Yok';
+    const sizeEntries = Object.entries(d.stock_by_size || {});
+    let sizesHtml = '';
+    if(sizeEntries.length){
+      sizesHtml = `<div class="pmodal-stock-sizes">
+        ${sizeEntries.map(([sz, qty]) => `
+          <div class="pmodal-size-chip ${qty > 0 ? 'has-stock' : ''}">
+            <span class="sz-code">${esc(sz)}</span>
+            <span class="sz-qty">${qty}</span>
+          </div>`).join('')}
+      </div>`;
+    }
+    stockHtml = `
+      <div>
+        <div class="pmodal-section-title">Stok</div>
+        <div class="pmodal-stock-badge ${badgeCls}">${badgeTxt}</div>
+        ${sizesHtml}
+      </div>`;
+  }
+
   const body = document.getElementById('pmodalBody');
   body.innerHTML = `
     <div>
@@ -867,6 +906,8 @@ function renderProductModal(d){
     ${priceHtml}
     ${feats.length ? '<div class="pmodal-divider"></div>' : ''}
     ${featsHtml}
+    ${stockHtml ? '<div class="pmodal-divider"></div>' : ''}
+    ${stockHtml}
     ${contentParts.length ? '<div class="pmodal-divider"></div>' : ''}
     ${contentHtml}
     ${d.care_instructions && d.care_instructions.length ? '<div class="pmodal-divider"></div>' : ''}

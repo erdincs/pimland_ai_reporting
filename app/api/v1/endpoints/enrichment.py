@@ -967,51 +967,88 @@ async def get_search_product_detail(
         result["care_instructions"] = []
         result["material_content"] = None
 
-    # 3. MCP: satış fiyatı
+    # 3. MCP: satış fiyatı + stok (paralel)
     result["sales_price"] = None
     result["sales_currency"] = "TRY"
+    result["stock_total"] = None
+    result["stock_by_size"] = {}
     try:
-        from app.connectors.pimland_live import _get_token, _call_tool
+        import asyncio as _asyncio
+        from app.connectors.pimland_live import _get_token, _call_tool, _listify_result
         async with httpx.AsyncClient(timeout=20) as client:
             token = await _get_token(client)
-            prices_raw = await _call_tool(
-                client, token,
-                "post_api_Product_get_product_sales_prices",
-                {"stockCode": urun_kodu},
-            )
-        prices: List[Dict] = []
-        if isinstance(prices_raw, list):
-            prices = prices_raw
-        elif isinstance(prices_raw, dict):
-            for k in ("items", "data", "result", "prices"):
-                if isinstance(prices_raw.get(k), list):
-                    prices = prices_raw[k]
-                    break
 
-        rpitl = next((p for p in prices if p.get("priceTypeCode") == "RPITL"), None)
-        chosen = rpitl or (prices[0] if prices else None)
-        if chosen:
-            result["sales_price"] = chosen.get("price")
-            result["sales_currency"] = chosen.get("currencyCode", "TRY")
-
-        # MCP detayından içerik/bakım (enrichment yoksa)
-        if not (eq and eq["detail_json"]):
-            from app.connectors.pimland_live import _listify_result
-            details_raw = await _call_tool(
-                client, token,
-                "post_api_Product_get_products_by_filter",
-                {"stockCode": urun_kodu, "pageSize": 5, "pageNumber": 1},
+            # Paralel: fiyat + stok
+            prices_raw, stocks_raw = await _asyncio.gather(
+                _call_tool(client, token, "post_api_Product_get_product_sales_prices",
+                           {"stockCode": urun_kodu}),
+                _call_tool(client, token, "post_api_Product_get_product_stocks",
+                           {"stockCode": urun_kodu}),
             )
-            det_items = _listify_result(details_raw, urun_kodu)
-            if det_items:
-                det = det_items[0]
-                result["description"] = result["description"] or det.get("description")
-                care = det.get("washingAndCareInstructions") or []
-                if care:
-                    result["care_instructions"] = list(care)
-                mat = det.get("mainMaterialContent") or []
-                if mat:
-                    result["material_content"] = mat[0] if len(mat) == 1 else ", ".join(mat)
+
+            # Fiyat parse
+            prices: List[Dict] = []
+            if isinstance(prices_raw, list):
+                prices = prices_raw
+            elif isinstance(prices_raw, dict):
+                for k in ("items", "data", "result", "prices"):
+                    if isinstance(prices_raw.get(k), list):
+                        prices = prices_raw[k]
+                        break
+            rpitl = next((p for p in prices if p.get("priceTypeCode") == "RPITL"), None)
+            chosen = rpitl or (prices[0] if prices else None)
+            if chosen:
+                result["sales_price"] = chosen.get("price")
+                result["sales_currency"] = chosen.get("currencyCode", "TRY")
+
+            # Stok parse — beden × adet
+            stocks_list: List[Dict] = []
+            if isinstance(stocks_raw, list):
+                stocks_list = stocks_raw
+            elif isinstance(stocks_raw, dict):
+                for k in ("items", "data", "result", "stocks"):
+                    if isinstance(stocks_raw.get(k), list):
+                        stocks_list = stocks_raw[k]
+                        break
+            size_stock: Dict[str, int] = {}
+            total_stock = 0
+            for s in stocks_list:
+                if not isinstance(s, dict):
+                    continue
+                size = (s.get("sizeCode") or s.get("sizeName") or
+                        s.get("size") or s.get("code") or "").strip()
+                qty = 0
+                for qty_key in ("stock", "quantity", "qty", "stockQuantity", "amount"):
+                    v = s.get(qty_key)
+                    if v is not None:
+                        try:
+                            qty = int(float(v))
+                        except (ValueError, TypeError):
+                            pass
+                        break
+                total_stock += qty
+                if size:
+                    size_stock[size] = size_stock.get(size, 0) + qty
+            result["stock_total"] = total_stock
+            result["stock_by_size"] = size_stock
+
+            # MCP detayından içerik/bakım (enrichment yoksa)
+            if not (eq and eq["detail_json"]):
+                details_raw = await _call_tool(
+                    client, token,
+                    "post_api_Product_get_products_by_filter",
+                    {"stockCode": urun_kodu, "pageSize": 5, "pageNumber": 1},
+                )
+                det_items = _listify_result(details_raw, urun_kodu)
+                if det_items:
+                    det = det_items[0]
+                    result["description"] = result["description"] or det.get("description")
+                    care = det.get("washingAndCareInstructions") or []
+                    if care:
+                        result["care_instructions"] = list(care)
+                    mat = det.get("mainMaterialContent") or []
+                    if mat:
+                        result["material_content"] = mat[0] if len(mat) == 1 else ", ".join(mat)
     except Exception as exc:
         log.warning("search_product_detail.mcp_failed", urun_kodu=urun_kodu, error=str(exc))
 
