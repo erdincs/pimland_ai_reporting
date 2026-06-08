@@ -4,11 +4,12 @@ Kritik düzeltmeleri kapsar:
 - Incorta API operator büyük harf ("IN", "BETWEEN")
 - Incorta API type "dimension" (integer/string değil)
 - Response parsing: content.data (data değil)
+- Gönderilen istem (request body): Authorization, pagination, prompts yapısı
 """
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -126,6 +127,76 @@ def test_fetch_pages_pagination():
         result = _fetch_pages("test_tool", "Bearer tok", [], 5)
 
     assert len(result) == 8
+
+
+# ── _fetch_pages — gönderilen istem (request body) ───────────────────────────
+
+def test_fetch_pages_request_body_structure():
+    """POST body'si Authorization, pagination ve prompts içermeli."""
+    mock_resp = _mock_response({"headers": {"totalRows": 1},
+                                "data": [[2026, 5, "ADL", "SKU1", "", "", "", 1.0, 1]]})
+    prompts = [{"field": "CALC.Year", "operator": "IN", "values": [2026], "type": "dimension"}]
+
+    with patch("sync.sources.incorta_sync.httpx.Client") as MockClient:
+        instance = MockClient.return_value.__enter__.return_value
+        instance.post.return_value = mock_resp
+        _fetch_pages("my_tool", "Bearer TOKEN", prompts, 5000)
+
+    _, kwargs = instance.post.call_args
+    body = kwargs["json"]
+    assert "Authorization" in body,  "Authorization body'de olmalı"
+    assert "pagination"    in body,  "pagination body'de olmalı"
+    assert "prompts"       in body,  "prompts body'de olmalı"
+
+
+def test_fetch_pages_request_authorization_value():
+    """Authorization değeri token olarak iletilmeli."""
+    mock_resp = _mock_response({"headers": {"totalRows": 0}, "data": []})
+    token = "Bearer TEST_TOKEN_123"
+
+    with patch("sync.sources.incorta_sync.httpx.Client") as MockClient:
+        instance = MockClient.return_value.__enter__.return_value
+        instance.post.return_value = mock_resp
+        _fetch_pages("tool", token, [], 5000)
+
+    _, kwargs = instance.post.call_args
+    assert kwargs["json"]["Authorization"] == token
+
+
+def test_fetch_pages_request_pagination_startrow():
+    """İlk istemde startRow=0, ikincide pageSize kadar artmalı."""
+    page1 = [[2026, 5, "ADL", f"SKU{i}", "", "", "", 1.0, 1] for i in range(3)]
+    page2 = [[2026, 5, "ADL", f"SKU{i}", "", "", "", 1.0, 1] for i in range(3, 5)]
+
+    responses = [
+        _mock_response({"headers": {"totalRows": 5}, "data": page1}),
+        _mock_response({"headers": {"totalRows": 5}, "data": page2}),
+    ]
+
+    with patch("sync.sources.incorta_sync.httpx.Client") as MockClient:
+        instance = MockClient.return_value.__enter__.return_value
+        instance.post.side_effect = responses
+        _fetch_pages("tool", "tok", [], 3)
+
+    calls = instance.post.call_args_list
+    assert calls[0][1]["json"]["pagination"]["startRow"] == 0
+    assert calls[1][1]["json"]["pagination"]["startRow"] == 3
+
+
+def test_fetch_pages_request_url():
+    """MCP execute URL'si doğru tool adını içermeli."""
+    mock_resp = _mock_response({"headers": {"totalRows": 0}, "data": []})
+
+    with patch("sync.sources.incorta_sync.httpx.Client") as MockClient:
+        instance = MockClient.return_value.__enter__.return_value
+        instance.post.return_value = mock_resp
+        _fetch_pages("post_api_v2_adl_be9a751b", "tok", [], 5000)
+
+    url = instance.post.call_args[0][0]
+    assert "post_api_v2_adl_be9a751b" in url
+    assert "30002" in url
+    assert "/tools/" in url
+    assert "/execute" in url
 
 
 # ── _last_n_months ────────────────────────────────────────────────────────────
