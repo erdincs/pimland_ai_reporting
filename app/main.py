@@ -32,109 +32,101 @@ async def lifespan(app: FastAPI):
     # Hikaye yazıcı tablosunu oluştur (idempotent)
     from app.db.session import engine
     from sqlalchemy import text as _text
-    async with engine.begin() as conn:
-        await conn.execute(_text("""
-            CREATE TABLE IF NOT EXISTS product_stories (
-                id SERIAL PRIMARY KEY,
-                urun_kodu TEXT NOT NULL,
-                urun_adi  TEXT,
-                marka_adi TEXT,
-                kanal     TEXT NOT NULL,
-                ton       TEXT NOT NULL DEFAULT 'sade_net',
-                story     TEXT NOT NULL,
-                karakter_sayisi INTEGER,
-                durum     TEXT NOT NULL DEFAULT 'taslak',
-                created_at TIMESTAMPTZ DEFAULT NOW(),
-                approved_at TIMESTAMPTZ
-            )
-        """))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_urun_kod ON product_stories(urun_kodu)"))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_kanal    ON product_stories(kanal)"))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_ps_durum    ON product_stories(durum)"))
-        # Mağaza Performans (Incorta) tablosu
-        await conn.execute(_text("""
-            CREATE TABLE IF NOT EXISTS incorta_magaza_performans (
-                id          SERIAL PRIMARY KEY,
-                yil         INTEGER NOT NULL,
-                ay          INTEGER NOT NULL,
-                bolge_muduru TEXT,
-                magaza      TEXT NOT NULL,
-                hedef       DOUBLE PRECISION DEFAULT 0,
-                net_ciro    DOUBLE PRECISION DEFAULT 0,
-                hedef_orani DOUBLE PRECISION DEFAULT 0,
-                ziyaretci   DOUBLE PRECISION DEFAULT 0,
-                mdo         DOUBLE PRECISION DEFAULT 0,
-                sepet       DOUBLE PRECISION DEFAULT 0,
-                obf         DOUBLE PRECISION DEFAULT 0,
-                net_adet    DOUBLE PRECISION DEFAULT 0,
-                sync_updated_at TIMESTAMPTZ DEFAULT NOW()
-            )
-        """))
-    # idx_imp_* indexleri ayrı transaction'larda (IF NOT EXISTS bazen unique constraint hatasına yol açıyor)
-    for _idx_sql in [
-        "CREATE INDEX IF NOT EXISTS idx_imp_yil_ay  ON incorta_magaza_performans(yil, ay)",
-        "CREATE INDEX IF NOT EXISTS idx_imp_bolge   ON incorta_magaza_performans(bolge_muduru)",
-        "CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)",
-    ]:
+    async def _ddl(sql: str) -> None:
+        """Her DDL'i kendi transaction'ında çalıştır, hata olursa geç (idempotent)."""
         try:
             async with engine.begin() as _c:
-                await _c.execute(_text(_idx_sql))
+                await _c.execute(_text(sql))
         except Exception:
-            pass  # index already exists
-    async with engine.begin() as conn:
-        # Mağaza satış özet materialized view (raporlama agent hızlı yol)
-        await conn.execute(_text("""
-            CREATE MATERIALIZED VIEW IF NOT EXISTS mv_magaza_satis_ozet AS
-            SELECT
-                yil::integer AS yil,
-                ay::integer  AS ay,
-                bolge_muduru,
-                magaza,
-                SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) AS toplam_hedef,
-                SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END) AS toplam_ciro,
-                SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) AS toplam_ziyaretci,
-                SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) AS toplam_adet,
-                CASE WHEN SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) > 0
-                     THEN SUM(CASE WHEN mdo::text NOT IN ('--','') THEN mdo::float ELSE 0 END
-                              * CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
-                          / SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
-                     ELSE 0 END AS ort_mdo,
-                CASE WHEN SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) > 0
-                     THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
-                          / SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END)
-                     ELSE 0 END AS ort_obf,
-                CASE WHEN SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) > 0
-                     THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
-                          / SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END)
-                     ELSE 0 END AS hedef_oran
-            FROM incorta_magaza_performans
-            WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
-            GROUP BY yil::integer, ay::integer, bolge_muduru, magaza
-            WITH DATA
-        """))
-        await conn.execute(_text(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_mag_pk "
-            "ON mv_magaza_satis_ozet (yil, ay, bolge_muduru, magaza)"
-        ))
-        # Sıralama yönetimi tablosu
-        await conn.execute(_text("""
-            CREATE TABLE IF NOT EXISTS siralama_gecmisi (
-                id          SERIAL PRIMARY KEY,
-                job_id      TEXT NOT NULL UNIQUE,
-                sezon_kodu  TEXT NOT NULL,
-                marka_adi   TEXT NOT NULL,
-                kategori    TEXT NOT NULL,
-                toplam_urun INTEGER NOT NULL DEFAULT 0,
-                onayli      BOOLEAN NOT NULL DEFAULT FALSE,
-                onay_tarihi TIMESTAMPTZ,
-                onaylayan   TEXT,
-                siralama_json JSONB NOT NULL DEFAULT '[]',
-                ozet_json     JSONB,
-                created_at  TIMESTAMPTZ DEFAULT NOW()
-            )
-        """))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_job    ON siralama_gecmisi(job_id)"))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_sir_sezon  ON siralama_gecmisi(sezon_kodu, marka_adi, kategori)"))
+            pass
+
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS product_stories (
+            id SERIAL PRIMARY KEY,
+            urun_kodu TEXT NOT NULL,
+            urun_adi  TEXT,
+            marka_adi TEXT,
+            kanal     TEXT NOT NULL,
+            ton       TEXT NOT NULL DEFAULT 'sade_net',
+            story     TEXT NOT NULL,
+            karakter_sayisi INTEGER,
+            durum     TEXT NOT NULL DEFAULT 'taslak',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            approved_at TIMESTAMPTZ
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_ps_urun_kod ON product_stories(urun_kodu)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_ps_kanal    ON product_stories(kanal)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_ps_durum    ON product_stories(durum)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS incorta_magaza_performans (
+            id          SERIAL PRIMARY KEY,
+            yil         INTEGER NOT NULL,
+            ay          INTEGER NOT NULL,
+            bolge_muduru TEXT,
+            magaza      TEXT NOT NULL,
+            hedef       DOUBLE PRECISION DEFAULT 0,
+            net_ciro    DOUBLE PRECISION DEFAULT 0,
+            hedef_orani DOUBLE PRECISION DEFAULT 0,
+            ziyaretci   DOUBLE PRECISION DEFAULT 0,
+            mdo         DOUBLE PRECISION DEFAULT 0,
+            sepet       DOUBLE PRECISION DEFAULT 0,
+            obf         DOUBLE PRECISION DEFAULT 0,
+            net_adet    DOUBLE PRECISION DEFAULT 0,
+            sync_updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_imp_yil_ay  ON incorta_magaza_performans(yil, ay)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_imp_bolge   ON incorta_magaza_performans(bolge_muduru)")
+    await _ddl("CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)")
+    await _ddl("""
+        CREATE MATERIALIZED VIEW IF NOT EXISTS mv_magaza_satis_ozet AS
+        SELECT
+            yil::integer AS yil,
+            ay::integer  AS ay,
+            bolge_muduru,
+            magaza,
+            SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) AS toplam_hedef,
+            SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END) AS toplam_ciro,
+            SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) AS toplam_ziyaretci,
+            SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) AS toplam_adet,
+            CASE WHEN SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END) > 0
+                 THEN SUM(CASE WHEN mdo::text NOT IN ('--','') THEN mdo::float ELSE 0 END
+                          * CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
+                      / SUM(CASE WHEN ziyaretci::text NOT IN ('--','') THEN ziyaretci::float ELSE 0 END)
+                 ELSE 0 END AS ort_mdo,
+            CASE WHEN SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END) > 0
+                 THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
+                      / SUM(CASE WHEN net_adet::text NOT IN ('--','') THEN net_adet::float ELSE 0 END)
+                 ELSE 0 END AS ort_obf,
+            CASE WHEN SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) > 0
+                 THEN SUM(CASE WHEN net_ciro::text NOT IN ('--','') THEN net_ciro::float ELSE 0 END)
+                      / SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END)
+                 ELSE 0 END AS hedef_oran
+        FROM incorta_magaza_performans
+        WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
+        GROUP BY yil::integer, ay::integer, bolge_muduru, magaza
+        WITH DATA
+    """)
+    await _ddl("CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_mag_pk ON mv_magaza_satis_ozet (yil, ay, bolge_muduru, magaza)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS siralama_gecmisi (
+            id          SERIAL PRIMARY KEY,
+            job_id      TEXT NOT NULL UNIQUE,
+            sezon_kodu  TEXT NOT NULL,
+            marka_adi   TEXT NOT NULL,
+            kategori    TEXT NOT NULL,
+            toplam_urun INTEGER NOT NULL DEFAULT 0,
+            onayli      BOOLEAN NOT NULL DEFAULT FALSE,
+            onay_tarihi TIMESTAMPTZ,
+            onaylayan   TEXT,
+            siralama_json JSONB NOT NULL DEFAULT '[]',
+            ozet_json     JSONB,
+            created_at  TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_sir_job    ON siralama_gecmisi(job_id)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_sir_sezon  ON siralama_gecmisi(sezon_kodu, marka_adi, kategori)")
     # Mağaza satış cache'ini arka planda ısıt
     import asyncio as _asyncio
     async def _warm_magaza():
