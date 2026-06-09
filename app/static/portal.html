@@ -748,9 +748,25 @@ body,
       <div class="nav-item nav-sub" onclick="showEnrPage('performance')" id="nav-enr-performance">
         <span class="nav-icon" style="font-size:12px">📈</span><span class="nav-text">Zenginleştirme Performansı</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showEnrPage('vision')" id="nav-enr-vision">
+        <span class="nav-icon" style="font-size:12px">👁️</span><span class="nav-text">Görsel Analiz</span>
+      </div>
     </div>
 
     <!-- ── DİĞER ────────────────────────────────────────────────────── -->
+    <div class="nav-group-hdr open" id="grp-yonetim" onclick="toggleNavGroup('yonetim')">
+      <span>📋 YÖNETİM</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body open" id="grpb-yonetim">
+      <div class="nav-item nav-sub" onclick="showSection('daily-brief')" id="nav-daily-brief">
+        <span class="nav-icon">☀️</span><span class="nav-text">Günlük Brief</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('brief-profil')" id="nav-brief-profil">
+        <span class="nav-icon">⚙️</span><span class="nav-text">Brief Profilleri</span>
+      </div>
+    </div>
+
     <div class="nav-group-hdr" id="grp-other" onclick="toggleNavGroup('other')">
       <span>⚙️ DİĞER</span>
       <span class="g-arrow">▶</span>
@@ -2006,7 +2022,104 @@ body,
 
       </div><!-- /enr-page-performance -->
 
+      <!-- ── GÖRSEL ANALİZ ── -->
+      <div id="enr-page-vision" style="display:none;flex:1;overflow:hidden;min-height:0;flex-direction:column">
+
+        <!-- Tab bar -->
+        <div style="display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);padding:0 0 0 230px">
+          <button id="vatab-analiz" onclick="switchVisionTab('analiz')"
+            style="background:none;border:none;border-bottom:2px solid var(--orange);color:var(--t1);padding:9px 18px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+            👁️ Görsel Analiz
+          </button>
+          <button id="vatab-kayitlar" onclick="switchVisionTab('kayitlar')"
+            style="background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);padding:9px 18px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">
+            📋 Kaydedilmiş
+          </button>
+        </div>
+
+        <!-- MAIN BODY -->
+        <div style="display:flex;flex:1;overflow:hidden;min-height:0">
+
+          <!-- LEFT: Ürün Seçimi -->
+          <div style="width:230px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
+            <div style="padding:10px 10px 8px;border-bottom:1px solid var(--border);flex-shrink:0">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:7px">ÜRÜN SEÇİMİ</div>
+              <input id="va-search" placeholder="Ürün adı veya kodu..."
+                oninput="clearTimeout(window._vaSearchT);window._vaSearchT=setTimeout(()=>vaLoadProducts(1),350)"
+                style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:6px 9px;border-radius:6px;font-family:inherit;font-size:11px;outline:none;margin-bottom:6px">
+              <select id="va-season-sel" onchange="vaLoadProducts(1)"
+                style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 7px;border-radius:5px;font-family:inherit;font-size:11px;margin-bottom:5px">
+                <option value="">Tüm Sezonlar</option>
+              </select>
+              <select id="va-marka-sel" onchange="vaLoadProducts(1)"
+                style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 7px;border-radius:5px;font-family:inherit;font-size:11px">
+                <option value="">Tüm Markalar</option>
+                <option value="adL">adL</option>
+                <option value="Love My Body">Love My Body</option>
+              </select>
+            </div>
+            <div style="padding:6px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <span id="va-sel-count" style="font-size:11px;color:var(--t2)">0 seçili</span>
+              <div style="display:flex;gap:5px">
+                <button onclick="vaSelectAll()" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;font-family:inherit">Tümü</button>
+                <button onclick="vaClearAll()" style="background:none;border:1px solid var(--border);color:var(--t3);font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;font-family:inherit">Temizle</button>
+              </div>
+            </div>
+            <div id="va-product-list" style="overflow-y:auto;flex:1;padding:3px 0"></div>
+            <div id="va-list-pagination" style="padding:6px 10px;border-top:1px solid var(--border);display:flex;gap:4px;justify-content:center;flex-shrink:0"></div>
+          </div>
+
+          <!-- CENTER: Analiz paneli -->
+          <div id="vapanel-analiz" style="flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
+            <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)">
+              <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.6px">
+                SEÇİLİ ÜRÜNLER (<span id="va-sel-count-c">0</span>)
+              </span>
+              <button id="va-analyze-btn" onclick="vaAnalyzeAll()"
+                style="background:var(--orange);border:none;color:#fff;font-size:12px;font-weight:700;padding:6px 16px;border-radius:7px;cursor:pointer;font-family:inherit;opacity:.5;transition:opacity .15s">
+                Resme Göre Oluştur (<span id="va-analyze-count">0</span>)
+              </button>
+            </div>
+            <div id="va-cards-wrap" style="overflow-y:auto;flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:12px">
+              <div id="va-empty-msg" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--t4);gap:8px">
+                <div style="font-size:32px">👁️</div>
+                <div style="font-size:12px">Sol panelden ürün seçin</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTER: Kaydedilmiş paneli -->
+          <div id="vapanel-kayitlar" style="flex:1;display:none;flex-direction:column;overflow:hidden;background:var(--bg)">
+            <div style="display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;background:var(--bg2)">
+              <select id="vsa-durum-sel" onchange="loadVisionSaved(1)"
+                style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 9px;border-radius:6px;font-family:inherit;font-size:11px">
+                <option value="">Tüm Durumlar</option>
+                <option value="taslak">Taslak</option>
+                <option value="onaylandi">Onaylandi</option>
+              </select>
+              <input id="vsa-q" type="text" placeholder="Stok kodu / ürün adı ara..."
+                style="flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 9px;border-radius:6px;font-family:inherit;font-size:11px;outline:none"
+                oninput="clearTimeout(window._vsaTimer);window._vsaTimer=setTimeout(()=>loadVisionSaved(1),400)">
+              <span id="vsa-total" style="font-size:11px;color:var(--t4)"></span>
+            </div>
+            <div id="vsa-list" style="overflow-y:auto;flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:10px"></div>
+            <div id="vsa-pager" style="display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border);flex-shrink:0;align-items:center"></div>
+          </div>
+
+        </div><!-- /MAIN BODY -->
+      </div><!-- /enr-page-vision -->
+
     </div><!-- /section-enrichment -->
+
+    <!-- ── GÜNLÜK BRIEF ──────────────────────────────────────────────────── -->
+    <div class="section" id="section-daily-brief" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
+      <iframe id="iframe-daily-brief" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
+    </div>
+
+    <!-- ── BRIEF PROFİLLERİ ──────────────────────────────────────────────── -->
+    <div class="section" id="section-brief-profil" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
+      <iframe id="iframe-brief-profil" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
+    </div>
 
     <!-- Enrichment ürün detay modalı — section dışında (overflow:hidden bypass) -->
     <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
@@ -2265,6 +2378,14 @@ function loadSection(id){
   else if(id==='magaza-karsilastirma')loadDKarsilastirma();
   else if(id==='monitoring'){initMonitoring();}
   else if(id==='enrichment'){toggleEnrMenu();return;}
+  else if(id==='daily-brief'){
+    const f=document.getElementById('iframe-daily-brief');
+    if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/daily-brief';}
+  }
+  else if(id==='brief-profil'){
+    const f=document.getElementById('iframe-brief-profil');
+    if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/brief-profilleri';}
+  }
   if(id!=='monitoring') stopMonitoring();
 }
 
@@ -4266,6 +4387,7 @@ function toggleTheme(){
   html.setAttribute('data-theme',next);
   localStorage.setItem('pimland-theme',next);
   updateHamburgerTheme();
+  document.querySelectorAll('iframe').forEach(f=>{try{f.contentWindow.postMessage({type:'theme',value:next},'*');}catch(e){}});
 }
 function applyThemeBtn(){
   updateHamburgerTheme();
@@ -4438,7 +4560,7 @@ function showEnrPage(page){
   // Enrichment grubunu aç
   _openNavGroup('enrichment');
   // Sayfalar
-  ['dashboard','scorelist','products','story','story-archive','performance'].forEach(p=>{
+  ['dashboard','scorelist','products','story','story-archive','performance','vision'].forEach(p=>{
     const el=document.getElementById('enr-page-'+p);
     if(el) el.style.display = p===page?'flex':'none';
     const nb=document.getElementById('nav-enr-'+p);
@@ -4447,10 +4569,11 @@ function showEnrPage(page){
   document.getElementById('enr-page-title').textContent = {
     dashboard:'📊 Dashboard', scorelist:'📋 Ürün Skor Listesi',
     products:'🔍 Ürün Listesi', story:'✍️ Hikaye Yazıcı', 'story-archive':'📚 Hikaye Arşivi',
+    vision:'👁️ Görsel Analiz',
   }[page]||'✨ Ürün Zenginleştirme';
-  // Story / Performance sayfalarında ortak üst bar gizli
+  // Story / Performance / Vision sayfalarında ortak üst bar gizli
   const topbar=document.getElementById('enr-topbar');
-  if(topbar) topbar.style.display=(page==='story'||page==='story-archive'||page==='performance')?'none':'flex';
+  if(topbar) topbar.style.display=(page==='story'||page==='story-archive'||page==='performance'||page==='vision')?'none':'flex';
   if(page==='dashboard')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadEnrichmentDashboard()); }
   if(page==='scorelist')      { loadEnrMarkas().then(()=>loadEnrichmentSeasons()).then(()=>loadScoreList()); }
   if(page==='products'){
@@ -4465,6 +4588,7 @@ function showEnrPage(page){
   if(page==='story')         swInit();
   if(page==='story-archive') swaLoad();
   if(page==='performance')   loadEnrPerformance();
+  if(page==='vision')        visionPageInit();
 }
 
 async function onEnrFilterChange(){
@@ -5148,7 +5272,9 @@ const _SECTION_GROUP = {
   'magaza-performans':'satis',
   'magaza-donemseel':'satis',
   'magaza-karsilastirma':'satis',
-  monitoring:'other'
+  monitoring:'other',
+  'daily-brief':'yonetim',
+  'brief-profil':'yonetim'
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -6016,6 +6142,409 @@ function _renderPerfPotential(d){
     </div>`).join('');
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GÖRSEL ANALİZ (va* / vision*)
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _VA = {
+  selectedCodes: new Set(),
+  productMap: {},      // kod → product row
+  plmMap: {},          // kod → {product, image_urls}
+  visionMap: {},       // kod → vision analysis result
+  page: 1, total: 0,
+  products: [],
+};
+
+const _VISION_ALAN_LABELS = {
+  fabricMaterialName:'Kumaş/Materyal', fabricPatternName: 'Desen',
+  armLengthName:     'Kol Boyu',       collarTypeName:    'Yaka Tipi',
+  productLengthName: 'Ürün Uzunluğu',  cuttingName:       'Kesim',
+  beltLengthName:    'Bel Yüksekliği', fitName:           'Kalıp',
+  thicknessTypeName: 'Kalınlık',       styleName:         'Stil',
+  ecomTag3Name:      'E-Tic. Etiketi 3', ecomTag4Name:    'E-Tic. Etiketi 4',
+};
+
+function switchVisionTab(tab){
+  ['analiz','kayitlar'].forEach(t=>{
+    document.getElementById(`vapanel-${t}`).style.display = t===tab ? 'flex' : 'none';
+    const btn=document.getElementById(`vatab-${t}`);
+    if(btn){ btn.style.borderBottomColor=t===tab?'var(--orange)':'transparent'; btn.style.color=t===tab?'var(--t1)':'var(--t3)'; }
+  });
+  if(tab==='kayitlar') loadVisionSaved(1);
+}
+
+async function visionPageInit(){
+  const topbar=document.getElementById('enr-topbar');
+  if(topbar) topbar.style.display='none';
+  const sel=document.getElementById('va-season-sel');
+  if(sel && sel.options.length<=1){
+    const seasons=await fetch(`${API}/enrichment/story/seasons`).then(r=>r.json()).catch(()=>[]);
+    (seasons||[]).forEach(s=>{
+      sel.insertAdjacentHTML('beforeend',`<option value="${s.sezon_kodu}">${s.sezon_kodu} ${s.sezon_adi||''}</option>`);
+    });
+  }
+  vaLoadProducts(1);
+}
+
+async function vaLoadProducts(page){
+  page=page||1; _VA.page=page;
+  const q=(document.getElementById('va-search')||{}).value||'';
+  const sezon=(document.getElementById('va-season-sel')||{}).value||'';
+  const marka=(document.getElementById('va-marka-sel')||{}).value||'';
+  const params=new URLSearchParams({page,limit:30});
+  if(q) params.set('q',q);
+  if(sezon) params.set('sezon',sezon);
+  if(marka) params.set('marka',marka);
+  const wrap=document.getElementById('va-product-list');
+  wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--t3);font-size:11px">Yükleniyor...</div>';
+  try{
+    const d=await fetch(`${API}/enrichment/story/products?${params}`).then(r=>r.json());
+    _VA.total=d.total||0; _VA.products=d.items||[];
+    vaRenderList(_VA.products);
+    vaRenderPagination(_VA.total,page,30);
+  }catch(e){
+    wrap.innerHTML=`<div style="padding:12px;color:var(--red);font-size:11px">Hata: ${e.message}</div>`;
+  }
+}
+
+function vaRenderList(items){
+  const wrap=document.getElementById('va-product-list');
+  if(!items.length){wrap.innerHTML='<div style="padding:12px;text-align:center;color:var(--t3);font-size:11px">Ürün bulunamadı</div>';return;}
+  wrap.innerHTML=items.map(p=>{
+    const sel=_VA.selectedCodes.has(p.urun_kodu);
+    const gc=p.quality_grade==='A'?'var(--green)':p.quality_grade==='B'?'var(--teal)':p.quality_grade==='C'?'var(--yellow)':'var(--red)';
+    return `<div class="va-prow${sel?' va-prow-sel':''}" data-kod="${p.urun_kodu}"
+      onclick="vaToggleProduct('${p.urun_kodu}')"
+      style="display:flex;align-items:center;gap:7px;padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--border);${sel?'background:rgba(255,107,43,.08)':''}">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();vaToggleProduct('${p.urun_kodu}')"
+        style="accent-color:var(--orange);cursor:pointer;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.urun_adi}</div>
+        <div style="font-size:10px;color:var(--t3)">${p.urun_kodu}</div>
+      </div>
+      ${p.quality_grade?`<span style="font-size:10px;font-weight:700;color:${gc};flex-shrink:0">${p.quality_grade}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function vaRenderPagination(total,page,limit){
+  const pages=Math.ceil((total||0)/limit);
+  const wrap=document.getElementById('va-list-pagination');
+  if(pages<=1){wrap.innerHTML='';return;}
+  wrap.innerHTML=`
+    <button onclick="vaLoadProducts(${page-1})" ${page<=1?'disabled':''}
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">‹</button>
+    <span style="font-size:11px;color:var(--t3)">${page}/${pages}</span>
+    <button onclick="vaLoadProducts(${page+1})" ${page>=pages?'disabled':''}
+      style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:11px">›</button>`;
+}
+
+async function vaToggleProduct(kod){
+  if(_VA.selectedCodes.has(kod)){
+    _VA.selectedCodes.delete(kod);
+    delete _VA.productMap[kod];
+    const card=document.getElementById(`va-card-${kod}`);
+    if(card) card.remove();
+  } else {
+    const p=_VA.products.find(x=>x.urun_kodu===kod)||_VA.productMap[kod];
+    if(!p) return;
+    _VA.selectedCodes.add(kod);
+    _VA.productMap[kod]=p;
+    await vaAddCard(kod, p);
+  }
+  const row=document.querySelector(`.va-prow[data-kod="${kod}"]`);
+  if(row){
+    const sel=_VA.selectedCodes.has(kod);
+    row.style.background=sel?'rgba(255,107,43,.08)':'';
+    const cb=row.querySelector('input[type=checkbox]');
+    if(cb) cb.checked=sel;
+  }
+  vaUpdateSelCount();
+}
+
+async function vaAddCard(kod, p){
+  const wrap=document.getElementById('va-cards-wrap');
+  const empty=document.getElementById('va-empty-msg');
+  if(empty) empty.style.display='none';
+  // Skeleton card
+  const card=document.createElement('div');
+  card.id=`va-card-${kod}`;
+  card.style.cssText='background:var(--bg2);border-radius:10px;border:1px solid var(--border);overflow:hidden;flex-shrink:0';
+  card.innerHTML=`<div style="padding:12px;color:var(--t4);font-size:11px">PLM verileri yükleniyor...</div>`;
+  wrap.appendChild(card);
+  // PLM verilerini çek
+  try{
+    const info=await fetch(`${API}/enrichment/vision/product/${encodeURIComponent(kod)}`).then(r=>r.json());
+    _VA.plmMap[kod]=info;
+    vaRenderCard(kod);
+  }catch(e){
+    card.innerHTML=`<div style="padding:12px;color:var(--red);font-size:11px">Hata: ${e.message}</div>`;
+  }
+}
+
+function vaRenderCard(kod){
+  const card=document.getElementById(`va-card-${kod}`);
+  if(!card) return;
+  const plm=_VA.plmMap[kod]||{};
+  const vision=_VA.visionMap[kod]||null;
+  const product=plm.product||{};
+  const imgs=(plm.image_urls||[]).slice(0,3);
+  const urunAdi=product.description||_VA.productMap[kod]?.urun_adi||'';
+  const guven=vision?Math.round((vision.guven_skoru||0)*100):null;
+  const guvenColor=guven==null?'':(guven>=80?'var(--green)':guven>=50?'var(--yellow)':'var(--red)');
+  const oneri=vision?(vision.oneri||{}):{};
+  const uyus=vision?(vision.uyusmazlik||[]):[];
+  const eks=vision?(vision.eksik||[]):[];
+
+  const infoChips=[];
+  if(product.brandName) infoChips.push(`<span style="font-size:9px;background:rgba(255,107,43,.12);color:var(--orange);padding:1px 7px;border-radius:3px;font-weight:600">${product.brandName}</span>`);
+  if(product.seasonCode) infoChips.push(`<span style="font-size:9px;background:var(--bg2);color:var(--t3);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${product.seasonCode}${product.seasonName?' · '+product.seasonName:''}</span>`);
+  if(product.productGroupName) infoChips.push(`<span style="font-size:9px;background:var(--bg2);color:var(--t2);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${product.productGroupName}</span>`);
+  if(product.productTypeName) infoChips.push(`<span style="font-size:9px;background:var(--bg2);color:var(--t3);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${product.productTypeName}</span>`);
+
+  const thS='padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--t4);text-align:left';
+
+  function makeRows(fields){
+    return fields.map(field=>{
+      const label=_VISION_ALAN_LABELS[field]||field;
+      const mev=product[field]||'';
+      const oner=oneri[field]||'';
+      const isUyus=mev&&oner&&mev.toLowerCase().trim()!==oner.toLowerCase().trim();
+      const isEksik=!mev&&oner;
+      const mevCell=mev?`<span style="color:${isUyus?'var(--orange)':'var(--t1)'}">${mev}</span>`:`<span style="color:var(--t4)">—</span>`;
+      const onerCell=vision
+        ?(oner?`<span style="color:${isUyus?'var(--red)':isEksik?'var(--green)':'var(--t2)'};font-weight:600">${oner}</span>`:`<span style="color:var(--t4)">—</span>`)
+        :`<span style="color:var(--t4)">—</span>`;
+      const rowBg=isUyus?'rgba(239,68,68,.06)':isEksik?'rgba(34,197,94,.04)':'';
+      return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
+        <td style="padding:4px 8px;font-size:10px;color:var(--t3);white-space:nowrap;width:108px">${label}</td>
+        <td style="padding:4px 8px;font-size:10px">${mevCell}</td>
+        <td style="padding:4px 8px;font-size:10px">${onerCell}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const LEFT_ATTRS=['fabricMaterialName','fabricPatternName','armLengthName','collarTypeName','productLengthName','cuttingName'];
+  const RIGHT_ATTRS=['beltLengthName','fitName','thicknessTypeName','styleName','ecomTag3Name','ecomTag4Name'];
+
+  card.innerHTML=`
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;background:var(--bg3)">
+      ${imgs.length?`<div style="display:flex;gap:4px;flex-shrink:0">
+        ${imgs.map(u=>`<img src="${u}" style="width:44px;height:58px;object-fit:cover;border-radius:5px;border:1px solid var(--border)" onerror="this.style.display='none'">`).join('')}
+      </div>`:''}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:700;color:var(--t1);font-family:monospace">${kod}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${urunAdi}</div>
+        ${infoChips.length?`<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${infoChips.join('')}</div>`:''}
+        ${vision?`<div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:${guvenColor}">Güven: %${guven}</span>
+          ${uyus.length?`<span style="font-size:10px;color:var(--red)">${uyus.length} uyumsuzluk</span>`:''}
+          ${eks.length?`<span style="font-size:10px;color:var(--yellow)">${eks.length} eksik</span>`:''}
+          ${vision.notlar?`<span style="font-size:10px;color:var(--t4);font-style:italic">${vision.notlar}</span>`:''}
+        </div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:flex-start">
+        <button onclick="vaAnalyzeSingle('${kod}')" id="va-btn-${kod}"
+          style="background:var(--orange);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">
+          ${vision?'Yenile':'Resme Göre Oluştur'}
+        </button>
+        ${vision?`<button onclick="vaSaveResult('${kod}')"
+          style="background:var(--green);color:#fff;border:none;padding:5px 12px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">Kaydet</button>`:''}
+        <button onclick="vaToggleProduct('${kod}')"
+          style="background:none;border:1px solid var(--border);color:var(--t3);padding:5px 8px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer">×</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr">
+      <table style="border-collapse:collapse">
+        <thead><tr style="background:var(--bg3)">
+          <th style="${thS};width:108px">ÖZELLİK</th>
+          <th style="${thS}">MEVCUT</th>
+          <th style="${thS}">ÖNERİLEN</th>
+        </tr></thead>
+        <tbody>${makeRows(LEFT_ATTRS)}</tbody>
+      </table>
+      <table style="border-collapse:collapse;border-left:1px solid var(--border)">
+        <thead><tr style="background:var(--bg3)">
+          <th style="${thS};width:108px">ÖZELLİK</th>
+          <th style="${thS}">MEVCUT</th>
+          <th style="${thS}">ÖNERİLEN</th>
+        </tr></thead>
+        <tbody>${makeRows(RIGHT_ATTRS)}</tbody>
+      </table>
+    </div>`;
+}
+
+async function vaAnalyzeSingle(kod){
+  const btn=document.getElementById(`va-btn-${kod}`);
+  if(btn){ btn.textContent='Analiz ediliyor...'; btn.disabled=true; }
+  try{
+    const d=await fetch(`${API}/enrichment/vision/analyze/${encodeURIComponent(kod)}`,{method:'POST'}).then(r=>r.json());
+    _VA.visionMap[kod]=d;
+    vaRenderCard(kod);
+  }catch(e){
+    if(btn){ btn.textContent='Hata — tekrar dene'; btn.disabled=false; }
+  }
+}
+
+async function vaAnalyzeAll(){
+  const codes=[..._VA.selectedCodes];
+  for(const kod of codes) await vaAnalyzeSingle(kod);
+}
+
+function vaSelectAll(){
+  _VA.products.forEach(p=>{ if(!_VA.selectedCodes.has(p.urun_kodu)) vaToggleProduct(p.urun_kodu); });
+}
+
+function vaClearAll(){
+  [..._VA.selectedCodes].forEach(kod=>vaToggleProduct(kod));
+}
+
+function vaUpdateSelCount(){
+  const n=_VA.selectedCodes.size;
+  const el1=document.getElementById('va-sel-count'); if(el1) el1.textContent=`${n} seçili`;
+  const el2=document.getElementById('va-sel-count-c'); if(el2) el2.textContent=n;
+  const el3=document.getElementById('va-analyze-count'); if(el3) el3.textContent=n;
+  const btn=document.getElementById('va-analyze-btn'); if(btn) btn.style.opacity=n?'1':'.5';
+  const empty=document.getElementById('va-empty-msg');
+  if(empty) empty.style.display=n?'none':'flex';
+}
+
+async function vaSaveResult(kod){
+  const d=_VA.visionMap[kod];
+  if(!d){ alert('Önce analiz edin'); return; }
+  try{
+    const r=await fetch(`${API}/enrichment/vision/save`,{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)
+    }).then(x=>x.json());
+    if(r.id) alert(`✓ ${r.action==='updated'?'Güncellendi':'Kaydedildi'} — ID: ${r.id}`);
+    else alert(`Hata: ${JSON.stringify(r)}`);
+  }catch(e){ alert(`Kayıt hatası: ${e.message}`); }
+}
+
+// Kaydedilmiş listesi
+let _vsaPage=1, _vsaTotal=0;
+
+async function loadVisionSaved(page){
+  page=page||1; _vsaPage=page;
+  const durum=(document.getElementById('vsa-durum-sel')||{}).value||'';
+  const q=(document.getElementById('vsa-q')||{}).value||'';
+  const el=document.getElementById('vsa-list');
+  const pager=document.getElementById('vsa-pager');
+  if(!el) return;
+  el.innerHTML='<div style="color:var(--t4);font-size:11px">Yükleniyor...</div>';
+  try{
+    const params=new URLSearchParams({page,limit:20});
+    if(durum) params.set('durum',durum);
+    if(q) params.set('q',q);
+    const d=await fetch(`${API}/enrichment/vision/saved?${params}`).then(r=>r.json());
+    _vsaTotal=d.total||0;
+    const items=d.items||[];
+    const totalEl=document.getElementById('vsa-total'); if(totalEl) totalEl.textContent=`${_vsaTotal} kayıt`;
+    if(!items.length){ el.innerHTML='<div style="color:var(--t4);font-size:11px">Kayıt bulunamadı</div>'; if(pager) pager.innerHTML=''; return; }
+    const CDN_P='https://img-adl.sm.mncdn.com/cdnimages/products';
+    el.innerHTML=items.map(item=>{
+      const durumColor=item.durum==='onaylandi'?'var(--green)':'var(--yellow)';
+      const guven=Math.round((item.guven_skoru||0)*100);
+      const guvenColor=guven>=80?'var(--green)':guven>=50?'var(--yellow)':'var(--red)';
+      const tarih=(item.created_at||'').slice(0,10);
+      const imgUrl=item.first_color_code?`${CDN_P}/${item.urun_kodu}_${item.first_color_code}_1.jpg`:'';
+
+      const infoChips=[];
+      if(item.marka_adi) infoChips.push(`<span style="font-size:9px;background:rgba(255,107,43,.12);color:var(--orange);padding:1px 7px;border-radius:3px;font-weight:600">${item.marka_adi}</span>`);
+      if(item.sezon_kodu) infoChips.push(`<span style="font-size:9px;background:var(--bg3);color:var(--t3);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${item.sezon_kodu}${item.sezon_adi?' · '+item.sezon_adi:''}</span>`);
+      if(item.urun_grubu_adi) infoChips.push(`<span style="font-size:9px;background:var(--bg3);color:var(--t2);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${item.urun_grubu_adi}</span>`);
+      if(item.ana_grup_adi) infoChips.push(`<span style="font-size:9px;background:var(--bg3);color:var(--t3);padding:1px 7px;border-radius:3px;border:1px solid var(--border)">${item.ana_grup_adi}</span>`);
+
+      const LEFT_SAVED=[
+        ['Kumaş/Materyal', item.fabricmaterialname],
+        ['Desen',          item.fabric_pattern_name],
+        ['Kol Boyu',       item.arm_length_name],
+        ['Yaka Tipi',      item.collar_type_name],
+        ['Ürün Uzunluğu',  item.product_length_name],
+        ['Kesim',          item.cutting_name],
+      ];
+      const RIGHT_SAVED=[
+        ['Bel Yüksekliği', item.belt_length_name],
+        ['Kalıp',          item.fit_name],
+        ['Kalınlık',       item.thickness_type_name],
+        ['Stil',           item.style_name],
+        ['E-Tic. Et. 3',   item.ecom_tag3_name],
+        ['E-Tic. Et. 4',   item.ecom_tag4_name],
+      ];
+      const thS='padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--t4);text-align:left';
+      function savedRows(pairs){
+        return pairs.map(([lbl,val])=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:4px 8px;font-size:10px;color:var(--t3);white-space:nowrap;width:110px">${lbl}</td>
+          <td style="padding:4px 8px;font-size:10px;${val?'color:var(--t1);font-weight:500':'color:var(--t4)'}">${val||'—'}</td>
+        </tr>`).join('');
+      }
+
+      return `<div style="background:var(--bg2);border-radius:10px;border:1px solid var(--border);overflow:hidden">
+        <div style="padding:10px 12px;background:var(--bg3);display:flex;align-items:flex-start;gap:10px">
+          ${imgUrl?`<img src="${imgUrl}" style="width:44px;height:58px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">`:''}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:700;color:var(--t1);font-family:monospace">${item.urun_kodu}</span>
+              <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:10px;background:rgba(255,255,255,.07);color:${durumColor}">${item.durum}</span>
+              <span style="font-size:10px;font-weight:700;color:${guvenColor}">%${guven}</span>
+              <span style="font-size:10px;color:var(--t4)">${tarih}</span>
+            </div>
+            <div style="font-size:11px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.urun_adi||''}</div>
+            ${infoChips.length?`<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${infoChips.join('')}</div>`:''}
+          </div>
+          <div style="display:flex;gap:5px;flex-shrink:0">
+            ${item.durum==='taslak'?`<button onclick="approveVisionAttr(${item.id})"
+              style="background:var(--green);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">Onayla</button>`:''}
+            <button onclick="deleteVisionAttr(${item.id})"
+              style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.25);padding:4px 10px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer">Sil</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+          <table style="border-collapse:collapse">
+            <thead><tr style="background:var(--bg3)">
+              <th style="${thS};width:110px">ÖZELLİK</th>
+              <th style="${thS}">DEĞER</th>
+            </tr></thead>
+            <tbody>${savedRows(LEFT_SAVED)}</tbody>
+          </table>
+          <table style="border-collapse:collapse;border-left:1px solid var(--border)">
+            <thead><tr style="background:var(--bg3)">
+              <th style="${thS};width:110px">ÖZELLİK</th>
+              <th style="${thS}">DEĞER</th>
+            </tr></thead>
+            <tbody>${savedRows(RIGHT_SAVED)}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+    const totalPages=Math.ceil(_vsaTotal/20);
+    if(pager){
+      pager.innerHTML='';
+      if(totalPages>1){
+        if(page>1) pager.insertAdjacentHTML('beforeend',`<button onclick="loadVisionSaved(${page-1})" style="background:var(--bg3);color:var(--t1);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer">← Önceki</button>`);
+        pager.insertAdjacentHTML('beforeend',`<span style="font-size:11px;color:var(--t3)">${page}/${totalPages}</span>`);
+        if(page<totalPages) pager.insertAdjacentHTML('beforeend',`<button onclick="loadVisionSaved(${page+1})" style="background:var(--bg3);color:var(--t1);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer">Sonraki →</button>`);
+      }
+    }
+  }catch(e){ el.innerHTML=`<div style="color:var(--red);font-size:11px">Hata: ${e.message}</div>`; }
+}
+
+async function approveVisionAttr(id){
+  try{
+    const r=await fetch(`${API}/enrichment/vision/saved/${id}/approve`,{method:'POST'}).then(x=>x.json());
+    if(r.id) loadVisionSaved(_vsaPage);
+    else alert(`Hata: ${JSON.stringify(r)}`);
+  }catch(e){ alert(`Hata: ${e.message}`); }
+}
+
+async function deleteVisionAttr(id){
+  if(!confirm('Bu kayıt silinsin mi?')) return;
+  try{
+    await fetch(`${API}/enrichment/vision/saved/${id}`,{method:'DELETE'});
+    loadVisionSaved(_vsaPage);
+  }catch(e){ alert(`Hata: ${e.message}`); }
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SIRALAMA YÖNETİMİ (sir*)

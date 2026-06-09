@@ -33,12 +33,12 @@ async def lifespan(app: FastAPI):
     from app.db.session import engine
     from sqlalchemy import text as _text
     async def _ddl(sql: str) -> None:
-        """Her DDL'i kendi transaction'ında çalıştır, hata olursa geç (idempotent)."""
+        """Her DDL'i kendi transaction'ında çalıştır, hata olursa logla ve geç."""
         try:
             async with engine.begin() as _c:
                 await _c.execute(_text(sql))
-        except Exception:
-            pass
+        except Exception as _e:
+            log.warning("ddl.failed", error=str(_e), sql_preview=sql[:80])
 
     await _ddl("""
         CREATE TABLE IF NOT EXISTS product_stories (
@@ -127,8 +127,175 @@ async def lifespan(app: FastAPI):
     """)
     await _ddl("CREATE INDEX IF NOT EXISTS idx_sir_job    ON siralama_gecmisi(job_id)")
     await _ddl("CREATE INDEX IF NOT EXISTS idx_sir_sezon  ON siralama_gecmisi(sezon_kodu, marka_adi, kategori)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS product_vision_attrs (
+            id                  SERIAL PRIMARY KEY,
+            urun_kodu           TEXT NOT NULL,
+            urun_adi            TEXT,
+            fabric_pattern_name TEXT,
+            arm_length_name     TEXT,
+            collar_type_name    TEXT,
+            product_length_name TEXT,
+            cutting_name        TEXT,
+            belt_length_name    TEXT,
+            fit_name            TEXT,
+            thickness_type_name TEXT,
+            style_name          TEXT,
+            ecom_tag3_name      TEXT,
+            ecom_tag4_name      TEXT,
+            guven_skoru         FLOAT,
+            notlar              TEXT,
+            gorsel_sayisi       INTEGER,
+            uyusmazlik_json     JSONB NOT NULL DEFAULT '[]',
+            eksik_json          JSONB NOT NULL DEFAULT '[]',
+            durum               TEXT NOT NULL DEFAULT 'taslak',
+            created_at          TIMESTAMPTZ DEFAULT NOW(),
+            approved_at         TIMESTAMPTZ
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_pva_urun_kodu ON product_vision_attrs(urun_kodu)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_pva_durum     ON product_vision_attrs(durum)")
+    # ── Daily Brief tabloları ─────────────────────────────────────────────────
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_profiles (
+            id               SERIAL PRIMARY KEY,
+            profile_id       TEXT UNIQUE NOT NULL,
+            name             TEXT NOT NULL,
+            role             TEXT,
+            owner_email      TEXT,
+            timezone         TEXT DEFAULT 'Europe/Istanbul',
+            schedule_time    TIME DEFAULT '06:00',
+            active_days      JSONB DEFAULT '[1,2,3,4,5]',
+            is_active        BOOLEAN DEFAULT true,
+            send_email       BOOLEAN DEFAULT true,
+            tone             TEXT DEFAULT 'yonetici',
+            length           TEXT DEFAULT 'ozet',
+            format           TEXT DEFAULT 'mixed',
+            top_insight_count INTEGER DEFAULT 3,
+            tenant_id        TEXT NOT NULL DEFAULT 'upagon',
+            created_at       TIMESTAMPTZ DEFAULT NOW(),
+            updated_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bp_tenant ON brief_profiles(tenant_id, is_active)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_questions (
+            id               SERIAL PRIMARY KEY,
+            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id) ON DELETE CASCADE,
+            question_text    TEXT NOT NULL,
+            agent            TEXT NOT NULL,
+            importance       TEXT DEFAULT 'orta',
+            is_cross_domain  BOOLEAN DEFAULT false,
+            trigger_days     JSONB,
+            trigger_dates    TEXT,
+            sort_order       INTEGER DEFAULT 0,
+            is_active        BOOLEAN DEFAULT true,
+            created_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bq_profile ON brief_questions(profile_id, sort_order)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_question_library (
+            id               SERIAL PRIMARY KEY,
+            category         TEXT NOT NULL,
+            question_text    TEXT NOT NULL,
+            agent            TEXT NOT NULL,
+            importance       TEXT DEFAULT 'orta',
+            is_cross_domain  BOOLEAN DEFAULT false,
+            description      TEXT,
+            usage_count      INTEGER DEFAULT 0,
+            is_active        BOOLEAN DEFAULT true
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bql_cat ON brief_question_library(category, is_active)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_checklist_items (
+            id               SERIAL PRIMARY KEY,
+            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id) ON DELETE CASCADE,
+            text             TEXT NOT NULL,
+            priority         TEXT DEFAULT 'med',
+            trigger_rule     TEXT,
+            sort_order       INTEGER DEFAULT 0,
+            is_active        BOOLEAN DEFAULT true,
+            created_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_history (
+            id               SERIAL PRIMARY KEY,
+            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id),
+            brief_date       DATE NOT NULL,
+            generated_at     TIMESTAMPTZ DEFAULT NOW(),
+            generation_ms    INTEGER,
+            top_insights     JSONB,
+            kpi_data         JSONB,
+            qa_results       JSONB,
+            checklist_state  JSONB,
+            actions          JSONB,
+            agent_metadata   JSONB,
+            estimated_cost   NUMERIC(8,4),
+            tenant_id        TEXT NOT NULL DEFAULT 'upagon',
+            UNIQUE (profile_id, brief_date)
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bh_lookup ON brief_history(profile_id, brief_date DESC)")
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_checklist_state (
+            id               SERIAL PRIMARY KEY,
+            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id) ON DELETE CASCADE,
+            item_id          INTEGER NOT NULL REFERENCES brief_checklist_items(id),
+            check_date       DATE NOT NULL,
+            is_done          BOOLEAN DEFAULT false,
+            done_at          TIMESTAMPTZ,
+            UNIQUE (profile_id, item_id, check_date)
+        )
+    """)
+    # Soru kütüphanesini seed et (boşsa)
+    async def _seed_question_library() -> None:
+        try:
+            async with engine.begin() as _sc:
+                cnt = (await _sc.execute(_text("SELECT COUNT(*) FROM brief_question_library"))).scalar()
+                if cnt and cnt > 0:
+                    return
+                seed_sql = """
+INSERT INTO brief_question_library (category, question_text, agent, importance, is_cross_domain, description) VALUES
+('satis','Dün toplam ciro hedefin neresinde? Hangi bölgeler hedefi aştı, hangileri altında kaldı?','satis','kritik',false,'Günlük hedef tutturma + bölge kırılımı'),
+('satis','Mağaza ziyaretçi ve MDO trendi son 7 gün nasıl? Düşüş gösteren mağazaların ortak özellikleri?','satis','yuksek',false,'Mağaza dönüşüm trend analizi'),
+('satis','Bu ayın en iyi ve en kötü 5 mağazası hangileri?','satis','orta',false,'Performans sıralaması'),
+('satis','OBF en yüksek hangi mağazada, nedeni nedir?','satis','orta',false,'Sepet büyüklüğü analizi'),
+('satis','Bölge müdürü bazında performans sıralaması?','satis','orta',false,'Yönetici karne'),
+('satis','Hangi mağazalarda ziyaretçi var ama dönüşüm yok?','satis','yuksek',false,'Kayıp fırsat tespiti'),
+('eticaret','E-ticarette dünkü dönüşüm oranı geçen haftaya göre nasıl? Hangi kanallar öne çıkıyor?','eticaret','yuksek',false,'Günlük e-ticaret performans'),
+('eticaret','En çok satan 10 ürün hangileri, hangi kanalda?','eticaret','orta',false,'Top performers'),
+('eticaret','İade oranı en yüksek 5 ürün ve beden dağılımı?','eticaret','yuksek',false,'İade analizi'),
+('eticaret','Hangi kanalın iade oranı diğerlerine göre anormal?','eticaret','yuksek',false,'Kanal kıyaslama'),
+('eticaret','Sepet terk oranı son 7 günde nasıl gidiyor?','eticaret','orta',false,'Funnel analizi'),
+('eticaret','Trafik kaynaklarına göre dönüşüm farkı?','eticaret','orta',false,'Marketing ROI'),
+('urun','A-grade ürünlerden stok seviyesi kritik olanlar hangileri?','urun_yonetimi','orta',false,'Stok kritik uyarısı'),
+('urun','Bu hafta enrichment yapılan ürün sayısı ve grade dağılımı?','urun_yonetimi','dusuk',false,'Enrichment ilerlemesi'),
+('urun','Grade F ürünlerden bu hafta zenginleştirilecekler?','urun_yonetimi','orta',false,'İş listesi'),
+('urun','Sıralama değişikliği yapılan ürünler ve performans etkisi?','urun_yonetimi','orta',false,'Sıralama etkisi'),
+('urun','Yeni eklenen ürünler ve enrichment durumu?','urun_yonetimi','orta',false,'Yeni ürün takibi'),
+('cross','İade oranı yüksek ürünlerin enrichment kalite puanı düşük mü? Hangi ürünlere müdahale etmeliyim?','kiyaslama','yuksek',true,'İade × Enrichment korelasyonu'),
+('cross','Mağazada çok satan ama e-ticarette az satan ürünler var mı?','kiyaslama','orta',true,'Kanal asimetrisi'),
+('cross','Enrichment puanı artırılan ürünlerde satış arttı mı, iade düştü mü?','kiyaslama','orta',true,'Zenginleştirme ROI'),
+('cross','Görsel analizi yapılan ürünlerin satış performansı diğerlerine göre?','kiyaslama','orta',true,'Vision impact'),
+('risk','Bu hafta dikkat etmem gereken en önemli 3 risk?','kiyaslama','kritik',true,'Top risk listesi'),
+('risk','Anormal düşüş gösteren ürün veya mağaza var mı?','kiyaslama','yuksek',true,'Anomali tespiti'),
+('risk','Beklenmeyen sapmalar (satış/iade/dönüşüm)?','kiyaslama','yuksek',true,'Sapma analizi'),
+('risk','Hangi konularda karar vermem bekleniyor?','kiyaslama','kritik',true,'Karar bekleyen konular'),
+('stratejik','Bu haftanın 3 önceliği ne olmalı?','kiyaslama','kritik',true,'Haftalık planlama'),
+('stratejik','Geçen aya göre büyüme nerede, hangi alanlarda?','kiyaslama','yuksek',true,'Büyüme analizi'),
+('stratejik','Sezon performansı planın neresinde gidiyor?','kiyaslama','yuksek',true,'Sezonsal takip'),
+('stratejik','Hangi kategoriler büyüyor, hangileri daralıyor?','kiyaslama','orta',true,'Kategori trendi')
+                """
+                await _sc.execute(_text(seed_sql))
+                log.info("brief_question_library.seeded")
+        except Exception as _e:
+            log.warning("brief_question_library.seed_failed", error=str(_e))
     # Mağaza satış cache'ini arka planda ısıt
     import asyncio as _asyncio
+    _asyncio.create_task(_seed_question_library())
     async def _warm_magaza():
         try:
             from app.api.v1.endpoints.magaza_satis import _fetch_mcp_data

@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pimland · Daily Brief Profil Yönetimi</title>
+<script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;
+  --border:#2a2a3a;--border2:#333348;
+  --t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;
+  --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
+  --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;
+  --border:#dcdce8;--border2:#c4c4d8;
+  --t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-dot{width:7px;height:7px;background:var(--orange);border-radius:50%;box-shadow:0 0 6px var(--orange)}
+.brand-name{font-size:13px;font-weight:600}
+.brand-mod{font-size:10px;color:var(--t3);padding:2px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--t3)}
+.topbar-link{color:var(--t2);text-decoration:none;padding:5px 10px;border-radius:5px;border:1px solid var(--border);font-size:11px;transition:all .15s}
+.topbar-link:hover{background:var(--bg3);color:var(--t1)}
+.topbar-link.active{background:rgba(255,107,43,.1);color:var(--orange);border-color:rgba(255,107,43,.3)}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;height:100vh}
+.layout{display:grid;grid-template-columns:280px 1fr;flex:1;overflow:hidden}
+
+/* SOL: Profil Listesi */
+.left-panel{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3)}
+.btn-add{background:var(--orange);color:#fff;border:none;padding:5px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit}
+.btn-add:hover{background:#e55a20}
+
+.profil-list{flex:1;overflow-y:auto;padding:8px 0}
+.profil-item{display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;position:relative}
+.profil-item:hover{background:var(--bg3)}
+.profil-item.active{background:rgba(255,107,43,.06);border-left:2px solid var(--orange);padding-left:14px}
+.profil-avatar{width:32px;height:32px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;color:var(--orange)}
+.profil-info{flex:1;min-width:0}
+.profil-name{font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profil-rol{font-size:10px;color:var(--t3);margin-top:1px}
+.profil-meta{display:flex;gap:8px;margin-top:5px;font-size:10px;color:var(--t3)}
+.profil-meta span{display:flex;align-items:center;gap:3px}
+.profil-status{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:13px}
+.profil-status.pasif{background:var(--t4)}
+
+/* SAĞ: Editor */
+.editor{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.editor-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.editor-title{display:flex;align-items:center;gap:10px}
+.editor-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,107,43,.1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--orange)}
+.editor-name h2{font-size:16px;font-weight:600;color:var(--t1);margin:0}
+.editor-name .sub{font-size:11px;color:var(--t3);margin-top:2px}
+.editor-actions{display:flex;gap:8px}
+.btn-sec{padding:6px 12px;background:transparent;color:var(--t2);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-sec:hover{border-color:var(--border2);color:var(--t1)}
+.btn-pri{padding:6px 14px;background:var(--orange);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-pri:hover{background:#e55a20}
+
+/* TABS */
+.tabs{display:flex;gap:0;padding:0 24px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)}
+.tab{padding:10px 16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.tab:hover{color:var(--t2)}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+.tab-content{flex:1;overflow-y:auto;padding:24px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:760px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.form-input,.form-select,.form-textarea{background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:13px;padding:8px 11px;border-radius:6px;outline:none;font-family:inherit;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--orange)}
+.form-textarea{min-height:60px;resize:vertical}
+.form-hint{font-size:10px;color:var(--t3);margin-top:2px}
+
+.section{margin-bottom:24px;max-width:760px}
+.section-title{font-size:12px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+.day-toggle{display:flex;gap:5px}
+.day-btn{padding:8px 12px;background:var(--bg2);border:1px solid var(--border);color:var(--t3);border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;transition:all .12s;min-width:40px;text-align:center}
+.day-btn:hover{border-color:var(--border2);color:var(--t2)}
+.day-btn.selected{background:rgba(255,107,43,.1);border-color:var(--orange);color:var(--orange)}
+
+.toggle-switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.toggle-switch input{display:none}
+.switch-track{width:32px;height:18px;background:var(--bg4);border-radius:9px;position:relative;transition:background .15s}
+.switch-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--t2);border-radius:50%;transition:all .15s}
+.toggle-switch input:checked + .switch-track{background:var(--orange)}
+.toggle-switch input:checked + .switch-track::after{left:16px;background:#fff}
+
+/* SORULAR */
+.soru-toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.soru-search{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:12px;padding:7px 11px;border-radius:5px;outline:none;font-family:inherit}
+.soru-search::placeholder{color:var(--t3)}
+
+.soru-list{display:flex;flex-direction:column;gap:8px;max-width:900px}
+.soru-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;transition:border-color .15s}
+.soru-card:hover{border-color:var(--border2)}
+.soru-handle{color:var(--t4);cursor:grab;font-size:14px;padding-top:2px}
+.soru-content{flex:1;min-width:0}
+.soru-text{font-size:13px;color:var(--t1);margin-bottom:6px;line-height:1.5}
+.soru-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.soru-tag{font-size:9px;padding:2px 7px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.tag-agent-satis{background:rgba(0,194,168,.12);color:var(--teal)}
+.tag-agent-eticaret{background:rgba(59,130,246,.12);color:var(--blue)}
+.tag-agent-urun{background:rgba(245,158,11,.12);color:var(--yellow)}
+.tag-agent-kiyaslama{background:rgba(168,85,247,.12);color:var(--purple)}
+.tag-onem-kritik{background:rgba(239,68,68,.12);color:var(--red)}
+.tag-onem-yuksek{background:rgba(255,107,43,.12);color:var(--orange)}
+.tag-onem-orta{background:rgba(245,158,11,.12);color:var(--yellow)}
+.tag-onem-dusuk{background:var(--bg4);color:var(--t3)}
+.tag-cross{background:rgba(168,85,247,.12);color:var(--purple)}
+.soru-actions{display:flex;gap:4px;flex-shrink:0}
+.btn-icon{width:24px;height:24px;background:transparent;border:1px solid var(--border);color:var(--t3);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:inherit}
+.btn-icon:hover{border-color:var(--border2);color:var(--t1)}
+.btn-icon.danger:hover{color:var(--red);border-color:var(--red)}
+
+/* SORU KÜTÜPHANESİ MODAL FEEL */
+.kutuphane-bar{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.kutuphane-title{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.kutuphane-pills{display:flex;flex-wrap:wrap;gap:5px}
+.kutuphane-pill{background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;font-family:inherit}
+.kutuphane-pill:hover{background:var(--bg4);border-color:var(--border2);color:var(--t1)}
+.kutuphane-pill.added{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:var(--green)}
+
+/* KONTROL LİSTESİ */
+.kontrol-list{display:flex;flex-direction:column;gap:6px;max-width:760px}
+.kontrol-item{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;display:flex;align-items:center;gap:10px}
+.kontrol-checkbox{width:14px;height:14px;border:1px solid var(--border2);border-radius:3px;flex-shrink:0}
+.kontrol-text{flex:1;font-size:12px;color:var(--t1)}
+.kontrol-tetik{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace}
+
+/* PREVIEW (sağ taraf) */
+.preview-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:16px;max-width:760px}
+.preview-title{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.preview-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.preview-stat{background:var(--bg3);border-radius:5px;padding:8px 10px}
+.preview-stat-lbl{font-size:9px;text-transform:uppercase;color:var(--t3);letter-spacing:.4px}
+.preview-stat-val{font-size:16px;font-weight:600;color:var(--t1);margin-top:2px}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Tone seçimi */
+.tone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:600px}
+.tone-card{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:12px;cursor:pointer;transition:all .12s}
+.tone-card:hover{border-color:var(--border2)}
+.tone-card.selected{border-color:var(--orange);background:rgba(255,107,43,.04)}
+.tone-name{font-size:12px;font-weight:600;color:var(--t1)}
+.tone-desc{font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">Pimland</span>
+    <span class="brand-mod">Daily Brief</span>
+  </div>
+  <div class="topbar-right">
+    <a href="/api/v1/portal/yonetim/brief-profilleri" class="topbar-link active">Profil Yönetimi</a>
+    <a href="/api/v1/portal/yonetim/daily-brief" class="topbar-link">Brief Önizleme</a>
+    <a href="#" class="topbar-link">Geçmiş</a>
+    <a href="/api/v1/portal" style="font-size:11px;color:var(--t3);text-decoration:none;padding:5px 10px;border:1px solid var(--border);border-radius:5px;margin-left:4px">← Portal</a>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SOL: PROFİL LİSTESİ -->
+<div class="left-panel">
+  <div class="panel-header">
+    <span class="panel-title">Profiller (4)</span>
+    <button class="btn-add">+ Yeni</button>
+  </div>
+  <div class="profil-list">
+    <div class="profil-item active">
+      <div class="profil-avatar">EÖ</div>
+      <div class="profil-info">
+        <div class="profil-name">CEO Briefing</div>
+        <div class="profil-rol">Erdinç Özaydın · Genel Müdür</div>
+        <div class="profil-meta">
+          <span>📋 12 soru</span>
+          <span>⏰ 06:00</span>
+        </div>
+      </div>
+      <div class="profil-status"></div>
+    </div>
+
+    <div class="profil-item">
+      <div class="profil-avatar">SM</div>
+      <div class="profil-info">
+        <div class="profil-name">Satış Müdürü Brief</div>
+        <div class="profil-rol">Mağaza Operasyon</div>
+        <div class="profil-meta">
+          <span>📋 8 soru</span>
+          <span>⏰ 07:30</span>
+        </div>
+      </div>
+      <div class="profil-status"></div>
+    </div>
+
+    <div class="profil-item">
+      <div class="profil-avatar">EM</div>
+      <div class="profil-info">
+        <div class="profil-name">E-Ticaret Müdürü</div>
+        <div class="profil-rol">Online Satış</div>
+        <div class="profil-meta">
+          <span>📋 10 soru</span>
+          <span>⏰ 08:00</span>
+        </div>
+      </div>
+      <div class="profil-status"></div>
+    </div>
+
+    <div class="profil-item">
+      <div class="profil-avatar">ÜM</div>
+      <div class="profil-info">
+        <div class="profil-name">Ürün Yönetimi</div>
+        <div class="profil-rol">Pasif · Henüz aktif değil</div>
+        <div class="profil-meta">
+          <span>📋 6 soru</span>
+          <span>⏰ —</span>
+        </div>
+      </div>
+      <div class="profil-status pasif"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SAĞ: EDITOR -->
+<div class="editor">
+  <div class="editor-header">
+    <div class="editor-title">
+      <div class="editor-avatar">EÖ</div>
+      <div class="editor-name">
+        <h2>CEO Briefing</h2>
+        <div class="sub">Erdinç Özaydın · Genel Müdür · Aktif</div>
+      </div>
+    </div>
+    <div class="editor-actions">
+      <button class="btn-sec">↗ Önizle</button>
+      <button class="btn-sec">Çoğalt</button>
+      <button class="btn-pri">Kaydet</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this, 'temel')">Temel Bilgiler</div>
+    <div class="tab" data-tab-label="sorular" onclick="switchTab(this, 'sorular')">Sorular (12)</div>
+    <div class="tab" data-tab-label="kontrol" onclick="switchTab(this, 'kontrol')">Kontrol Listesi (5)</div>
+    <div class="tab" onclick="switchTab(this, 'sunum')">Sunum Tercihleri</div>
+  </div>
+
+  <div class="tab-content">
+
+    <!-- TAB 1: TEMEL BİLGİLER -->
+    <div class="tab-pane active" id="temel">
+      <div class="section">
+        <div class="section-title">Profil Bilgileri</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Profil Adı</label>
+            <input class="form-input" data-field="name" value="CEO Briefing">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rol / Pozisyon</label>
+            <input class="form-input" data-field="role" value="Genel Müdür">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sahip (Email)</label>
+            <input class="form-input" data-field="email" value="erdinc@pimland.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zaman Dilimi</label>
+            <select class="form-select">
+              <option>Europe/Istanbul (UTC+3)</option>
+              <option>Europe/London (UTC+0)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Zamanlama</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Üretim Saati</label>
+            <input class="form-input" type="time" data-field="schedule_time" value="06:00">
+            <div class="form-hint">Brief bu saatte üretilir, yönetici sabah açtığında hazır olur</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Gönderimi</label>
+            <label class="toggle-switch">
+              <input type="checkbox" data-field="send_email" checked>
+              <span class="switch-track"></span>
+              <span style="font-size:12px;color:var(--t2)">Brief hazır olunca email at</span>
+            </label>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Aktif Günler</label>
+            <div class="day-toggle">
+              <button class="day-btn selected">Pzt</button>
+              <button class="day-btn selected">Sal</button>
+              <button class="day-btn selected">Çar</button>
+              <button class="day-btn selected">Per</button>
+              <button class="day-btn selected">Cum</button>
+              <button class="day-btn">Cmt</button>
+              <button class="day-btn">Paz</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-card">
+        <div class="preview-title">Bu Profilin İstatistikleri</div>
+        <div class="preview-stats">
+          <div class="preview-stat">
+            <div class="preview-stat-lbl">Aktif Sorular</div>
+            <div class="preview-stat-val" data-stat="questions">12</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-lbl">Ort. Üretim Süresi</div>
+            <div class="preview-stat-val">14 sn</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-lbl">Son 30 Gün</div>
+            <div class="preview-stat-val">21 brief</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: SORULAR -->
+    <div class="tab-pane" id="sorular">
+      <!-- Soru Kütüphanesi -->
+      <div class="kutuphane-bar">
+        <div class="kutuphane-title">📚 Soru Kütüphanesinden Hızlı Ekle</div>
+        <div class="kutuphane-pills">
+          <button class="kutuphane-pill added">✓ Dün toplam ciro</button>
+          <button class="kutuphane-pill added">✓ Hedef gerçekleşme</button>
+          <button class="kutuphane-pill added">✓ Hedef altı mağazalar</button>
+          <button class="kutuphane-pill">+ İade oranı trendi</button>
+          <button class="kutuphane-pill">+ Stok kritik ürünler</button>
+          <button class="kutuphane-pill">+ Bu hafta beklenen</button>
+          <button class="kutuphane-pill">+ Anormal sapmalar</button>
+          <button class="kutuphane-pill">+ Enrichment durumu</button>
+          <button class="kutuphane-pill">+ Tüm kütüphane (50+)</button>
+        </div>
+      </div>
+
+      <div class="soru-toolbar">
+        <input class="soru-search" placeholder="Sorularda ara...">
+        <button class="btn-sec" onclick="addCustomQuestion()">+ Özel Soru Ekle</button>
+      </div>
+
+      <div class="soru-list">
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">Dün toplam ciro hedefin neresinde? Hangi bölgeler hedefi aştı, hangileri altında kaldı?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-satis">Satış</span>
+              <span class="soru-tag tag-onem-kritik">Kritik</span>
+              <span style="font-size:10px;color:var(--t3)">Her gün</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">E-ticarette dünkü dönüşüm oranı geçen haftaya göre nasıl? Hangi kanallar öne çıkıyor?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-eticaret">E-Ticaret</span>
+              <span class="soru-tag tag-onem-yuksek">Yüksek</span>
+              <span style="font-size:10px;color:var(--t3)">Her gün</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">İade oranı yüksek ürünlerin enrichment kalite puanı düşük mü? Hangi ürünlere müdahale etmeliyim?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-kiyaslama">Kıyaslama</span>
+              <span class="soru-tag tag-cross">Çapraz</span>
+              <span class="soru-tag tag-onem-yuksek">Yüksek</span>
+              <span style="font-size:10px;color:var(--t3)">Pzt, Çar, Cum</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">A-grade ürünlerden stok seviyesi kritik olanlar hangileri? Üretim/temin kararı gereken ürünler?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-urun">Ürün</span>
+              <span class="soru-tag tag-onem-orta">Orta</span>
+              <span style="font-size:10px;color:var(--t3)">Her gün</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">Bu hafta dikkat etmem gereken en önemli 3 risk nedir? Hangi konulara karar vermem lazım?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-kiyaslama">Kıyaslama</span>
+              <span class="soru-tag tag-cross">Çapraz</span>
+              <span class="soru-tag tag-onem-kritik">Kritik</span>
+              <span style="font-size:10px;color:var(--t3)">Sadece Pazartesi</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+        <div class="soru-card">
+          <div class="soru-handle">⋮⋮</div>
+          <div class="soru-content">
+            <div class="soru-text">Mağaza ziyaretçi/MDO trendi son 7 gün nasıl? Düşüş gösteren mağazaların ortak özellikleri?</div>
+            <div class="soru-meta">
+              <span class="soru-tag tag-agent-satis">Satış</span>
+              <span class="soru-tag tag-onem-orta">Orta</span>
+              <span style="font-size:10px;color:var(--t3)">Her gün</span>
+            </div>
+          </div>
+          <div class="soru-actions">
+            <button class="btn-icon">✎</button>
+            <button class="btn-icon danger">×</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: KONTROL LİSTESİ -->
+    <div class="tab-pane" id="kontrol">
+      <div class="section">
+        <div class="section-title">Sabit Hatırlatmalar</div>
+        <div class="kontrol-list">
+          <div class="kontrol-item">
+            <div class="kontrol-checkbox"></div>
+            <span class="kontrol-text">Mağaza müdürleriyle haftalık görüşme</span>
+            <span class="kontrol-tetik">çarşamba 10:00</span>
+            <button class="btn-icon">✎</button>
+          </div>
+          <div class="kontrol-item">
+            <div class="kontrol-checkbox"></div>
+            <span class="kontrol-text">E-ticaret kampanya raporu kontrolü</span>
+            <span class="kontrol-tetik">cuma</span>
+            <button class="btn-icon">✎</button>
+          </div>
+          <div class="kontrol-item">
+            <div class="kontrol-checkbox"></div>
+            <span class="kontrol-text">Aylık finansal kapanış raporu</span>
+            <span class="kontrol-tetik">her ayın 3'ü</span>
+            <button class="btn-icon">✎</button>
+          </div>
+          <div class="kontrol-item">
+            <div class="kontrol-checkbox"></div>
+            <span class="kontrol-text">Sezon değerlendirme toplantısı hazırlığı</span>
+            <span class="kontrol-tetik">sezon sonu</span>
+            <button class="btn-icon">✎</button>
+          </div>
+          <div class="kontrol-item">
+            <div class="kontrol-checkbox"></div>
+            <span class="kontrol-text">Bölge müdürleri performans değerlendirme</span>
+            <span class="kontrol-tetik">çeyrek sonu</span>
+            <button class="btn-icon">✎</button>
+          </div>
+        </div>
+        <button class="btn-sec" style="margin-top:14px" onclick="addChecklistItem()">+ Yeni Hatırlatma Ekle</button>
+      </div>
+    </div>
+
+    <!-- TAB 4: SUNUM TERCİHLERİ -->
+    <div class="tab-pane" id="sunum">
+      <div class="section">
+        <div class="section-title">Ton Seçimi</div>
+        <div class="tone-grid">
+          <div class="tone-card selected" data-tone="yonetici">
+            <div class="tone-name">🎩 Yönetici</div>
+            <div class="tone-desc">Yüksek seviye, stratejik, kısa cümleler. Karar odaklı.</div>
+          </div>
+          <div class="tone-card" data-tone="operasyonel">
+            <div class="tone-name">⚙️ Operasyonel</div>
+            <div class="tone-desc">Detaylı veri, somut sayılar, eyleme dönük öneriler.</div>
+          </div>
+          <div class="tone-card" data-tone="analitik">
+            <div class="tone-name">📊 Analitik</div>
+            <div class="tone-desc">Trend analizi, derinlemesine veri yorumu, what-if.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Uzunluk ve Format</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Brief Uzunluğu</label>
+            <select class="form-select" data-field="length">
+              <option value="kisa">Kısa (~100 kelime)</option>
+              <option value="ozet" selected>Özet (~300 kelime)</option>
+              <option value="detay">Detaylı (~600 kelime)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Format</label>
+            <select class="form-select" data-field="format">
+              <option value="mixed" selected>Anlatı + Madde karışık</option>
+              <option value="bullet">Sadece madde</option>
+              <option value="narrative">Sadece anlatı</option>
+              <option value="table">Tablo ağırlıklı</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Top Insight Sayısı</label>
+            <input class="form-input" type="number" data-field="top_n" value="3" min="1" max="10">
+            <div class="form-hint">Brief'in en üstünde gösterilecek AI insight sayısı</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+const API = '/api/v1/daily-brief';
+let _currentProfile = null;
+let _allProfiles = [];
+let _library = {};
+
+// Iframe içinde açıldıysa topbar'ı gizle
+if(window.self !== window.top){
+  document.querySelector('.topbar').style.display='none';
+}
+// Portal'dan tema değişikliğini senkronize et
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='theme'){
+    document.documentElement.setAttribute('data-theme',e.data.value||'dark');
+  }
+});
+
+function switchTab(btn, paneId){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+// ── Profil Listesi ────────────────────────────────────────────────────────────
+
+async function loadProfiles(){
+  try {
+    const r = await fetch(`${API}/profiles`);
+    const data = await r.json();
+    _allProfiles = data.profiles || [];
+    renderProfileList();
+    if(_allProfiles.length > 0) selectProfile(_allProfiles[0].id);
+    else renderEmptyEditor();
+  } catch(e){ console.error('loadProfiles',e); }
+}
+
+function renderProfileList(){
+  const list = document.querySelector('.profil-list');
+  const cnt = _currentProfile?.profile?.id;
+  if(_allProfiles.length === 0){
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--t3);font-size:11px">Henüz profil yok<br><button onclick="showNewProfileModal()" class="btn-add" style="margin-top:12px">+ Yeni Profil</button></div>`;
+    document.querySelector('.panel-title').textContent = 'Profiller (0)';
+    return;
+  }
+  document.querySelector('.panel-title').textContent = `Profiller (${_allProfiles.length})`;
+  list.innerHTML = _allProfiles.map(p => {
+    const av = (p.name||'P').replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ]/g,'').substring(0,2).toUpperCase() || p.name.substring(0,2).toUpperCase();
+    return `<div class="profil-item ${p.id===cnt?'active':''}" onclick="selectProfile(${p.id})">
+      <div class="profil-avatar">${av}</div>
+      <div class="profil-info">
+        <div class="profil-name">${p.name}</div>
+        <div class="profil-rol">${p.role||''} ${p.is_active?'':'· Pasif'}</div>
+        <div class="profil-meta">
+          <span>📋 ${p.question_count||0} soru</span>
+          <span>⏰ ${(p.schedule_time||'--').substring(0,5)}</span>
+        </div>
+      </div>
+      <div class="profil-status ${p.is_active?'':'pasif'}"></div>
+    </div>`;
+  }).join('');
+}
+
+async function selectProfile(profileId){
+  try {
+    const r = await fetch(`${API}/profiles/${profileId}`);
+    if(!r.ok) return;
+    _currentProfile = await r.json();
+    renderProfileList();
+    renderEditor();
+  } catch(e){ console.error('selectProfile',e); }
+}
+
+// ── Editor ────────────────────────────────────────────────────────────────────
+
+function renderEditor(){
+  if(!_currentProfile) return;
+  const p = _currentProfile.profile;
+  const questions = _currentProfile.questions || [];
+  const checklist = _currentProfile.checklist || [];
+
+  // Header
+  const av = (p.name||'P').replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ]/g,'').substring(0,2).toUpperCase() || p.name.substring(0,2).toUpperCase();
+  document.querySelector('.editor-avatar').textContent = av;
+  document.querySelector('.editor-name h2').textContent = p.name;
+  document.querySelector('.editor-name .sub').textContent = `${p.role||''} · ${p.is_active?'Aktif':'Pasif'}`;
+
+  // Temel tab
+  document.querySelector('[data-field="name"]').value = p.name||'';
+  document.querySelector('[data-field="role"]').value = p.role||'';
+  document.querySelector('[data-field="email"]').value = p.owner_email||'';
+  document.querySelector('[data-field="schedule_time"]').value = (p.schedule_time||'06:00').substring(0,5);
+  document.querySelector('[data-field="send_email"]').checked = !!p.send_email;
+
+  // Aktif günler
+  const activeDays = p.active_days || [1,2,3,4,5];
+  document.querySelectorAll('.day-btn').forEach((b,i) => {
+    b.classList.toggle('selected', activeDays.includes(i+1));
+  });
+
+  // Stats
+  document.querySelector('[data-stat="questions"]').textContent = questions.length;
+
+  // Tabs
+  document.querySelector('[data-tab-label="sorular"]').textContent = `Sorular (${questions.length})`;
+  document.querySelector('[data-tab-label="kontrol"]').textContent = `Kontrol Listesi (${checklist.length})`;
+
+  // Sorular tab
+  renderQuestions(questions);
+
+  // Kontrol tab
+  renderChecklist(checklist);
+
+  // Sunum
+  document.querySelectorAll('.tone-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.tone === p.tone);
+  });
+  document.querySelector('[data-field="length"]').value = p.length||'ozet';
+  document.querySelector('[data-field="format"]').value = p.format||'mixed';
+  document.querySelector('[data-field="top_n"]').value = p.top_insight_count||3;
+
+  // Library pills
+  loadLibraryPills(questions);
+}
+
+function renderEmptyEditor(){
+  document.querySelector('.editor').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:16px;color:var(--t3)">
+      <div style="font-size:32px">📋</div>
+      <div style="font-size:14px;font-weight:600;color:var(--t1)">Profil seçin veya oluşturun</div>
+      <button onclick="showNewProfileModal()" class="btn-add">+ Yeni Profil Oluştur</button>
+    </div>`;
+}
+
+// ── Sorular ───────────────────────────────────────────────────────────────────
+
+const AGENT_TAG = {satis:'tag-agent-satis',eticaret:'tag-agent-eticaret',urun_yonetimi:'tag-agent-urun',kiyaslama:'tag-agent-kiyaslama'};
+const AGENT_LBL = {satis:'Satış',eticaret:'E-Ticaret',urun_yonetimi:'Ürün',kiyaslama:'Kıyaslama'};
+const IMP_TAG   = {kritik:'tag-onem-kritik',yuksek:'tag-onem-yuksek',orta:'tag-onem-orta',dusuk:'tag-onem-dusuk'};
+const IMP_LBL   = {kritik:'Kritik',yuksek:'Yüksek',orta:'Orta',dusuk:'Düşük'};
+
+function renderQuestions(questions){
+  const list = document.querySelector('.soru-list');
+  if(!questions.length){
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--t3);font-size:12px">Henüz soru eklenmedi. Kütüphaneden ekleyin veya özel soru yazın.</div>`;
+    return;
+  }
+  list.innerHTML = questions.map(q => `
+    <div class="soru-card" data-qid="${q.id}">
+      <div class="soru-handle">⋮⋮</div>
+      <div class="soru-content">
+        <div class="soru-text">${q.question_text}</div>
+        <div class="soru-meta">
+          <span class="soru-tag ${AGENT_TAG[q.agent]||''}">${AGENT_LBL[q.agent]||q.agent}</span>
+          <span class="soru-tag ${IMP_TAG[q.importance]||''}">${IMP_LBL[q.importance]||q.importance}</span>
+          ${q.is_cross_domain?'<span class="soru-tag tag-cross">Çapraz</span>':''}
+        </div>
+      </div>
+      <div class="soru-actions">
+        <button class="btn-icon danger" onclick="deleteQuestion(${q.id})" title="Sil">×</button>
+      </div>
+    </div>`).join('');
+}
+
+async function deleteQuestion(qid){
+  if(!confirm('Bu soruyu silmek istiyor musunuz?')) return;
+  await fetch(`${API}/questions/${qid}`,{method:'DELETE'});
+  await selectProfile(_currentProfile.profile.id);
+}
+
+// ── Kontrol Listesi ────────────────────────────────────────────────────────────
+
+function renderChecklist(checklist){
+  const list = document.querySelector('.kontrol-list');
+  if(!checklist.length){
+    list.innerHTML = `<div style="padding:16px;color:var(--t3);font-size:11px">Henüz hatırlatma eklenmedi.</div>`;
+    return;
+  }
+  list.innerHTML = checklist.map(c => `
+    <div class="kontrol-item" data-cid="${c.id}">
+      <div class="kontrol-checkbox"></div>
+      <span class="kontrol-text">${c.text}</span>
+      <span class="kontrol-tetik">${c.trigger_rule||''}</span>
+      <button class="btn-icon danger" onclick="deleteChecklistItem(${c.id})" title="Sil">×</button>
+    </div>`).join('');
+}
+
+async function deleteChecklistItem(itemId){
+  await fetch(`${API}/checklist/${itemId}`,{method:'DELETE'});
+  await selectProfile(_currentProfile.profile.id);
+}
+
+async function addChecklistItem(){
+  const txt = prompt('Hatırlatma metni:');
+  if(!txt) return;
+  const rule = prompt('Tetikleme kuralı (örn: çarşamba, her_gun, ay_basi) — boş bırakabilirsiniz:') || null;
+  await fetch(`${API}/profiles/${_currentProfile.profile.id}/checklist`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:txt.trim(),trigger_rule:rule})
+  });
+  await selectProfile(_currentProfile.profile.id);
+}
+
+// ── Soru Kütüphanesi ──────────────────────────────────────────────────────────
+
+async function loadLibraryPills(currentQuestions){
+  try {
+    const r = await fetch(`${API}/library/questions`);
+    const data = await r.json();
+    _library = data.library || {};
+    const addedTexts = new Set(currentQuestions.map(q=>q.question_text));
+    const pills = document.querySelector('.kutuphane-pills');
+    if(!pills) return;
+    const allItems = Object.values(_library).flat().slice(0,10);
+    pills.innerHTML = allItems.map(item => {
+      const isAdded = addedTexts.has(item.question_text);
+      return `<button class="kutuphane-pill ${isAdded?'added':''}"
+        onclick="${isAdded?'':('addFromLibrary('+item.id+')')}"
+        title="${item.description||''}"
+        ${isAdded?'disabled':''}>
+        ${isAdded?'✓ ':''+ '+ '}${item.question_text.substring(0,35)}${item.question_text.length>35?'…':''}
+      </button>`;
+    }).join('');
+  } catch(e){ console.warn('loadLibraryPills',e); }
+}
+
+async function addFromLibrary(libItemId){
+  const item = Object.values(_library).flat().find(q=>q.id===libItemId);
+  if(!item || !_currentProfile) return;
+  await fetch(`${API}/profiles/${_currentProfile.profile.id}/questions`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      question_text:   item.question_text,
+      agent:           item.agent,
+      importance:      item.importance,
+      is_cross_domain: item.is_cross_domain,
+      library_id:      item.id,
+    })
+  });
+  await selectProfile(_currentProfile.profile.id);
+}
+
+async function addCustomQuestion(){
+  const txt = prompt('Soru metni:');
+  if(!txt) return;
+  const agents = ['satis','eticaret','urun_yonetimi','kiyaslama'];
+  const agent = prompt(`Agent seçin (${agents.join('/')}):`) || 'satis';
+  if(!agents.includes(agent)){ alert('Geçersiz agent.'); return; }
+  await fetch(`${API}/profiles/${_currentProfile.profile.id}/questions`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({question_text:txt.trim(),agent,importance:'orta'})
+  });
+  await selectProfile(_currentProfile.profile.id);
+}
+
+// ── Kaydet ────────────────────────────────────────────────────────────────────
+
+async function saveProfile(){
+  if(!_currentProfile) return;
+  const activeDays = [];
+  document.querySelectorAll('.day-btn').forEach((b,i)=>{ if(b.classList.contains('selected')) activeDays.push(i+1); });
+  const selectedTone = document.querySelector('.tone-card.selected')?.dataset.tone || 'yonetici';
+  const updates = {
+    name:              document.querySelector('[data-field="name"]').value,
+    role:              document.querySelector('[data-field="role"]').value,
+    owner_email:       document.querySelector('[data-field="email"]').value,
+    schedule_time:     document.querySelector('[data-field="schedule_time"]').value,
+    send_email:        document.querySelector('[data-field="send_email"]').checked,
+    active_days:       activeDays,
+    tone:              selectedTone,
+    length:            document.querySelector('[data-field="length"]').value,
+    format:            document.querySelector('[data-field="format"]').value,
+    top_insight_count: parseInt(document.querySelector('[data-field="top_n"]').value)||3,
+  };
+  const btn = document.querySelector('.btn-pri');
+  btn.textContent = 'Kaydediliyor...';
+  try {
+    await fetch(`${API}/profiles/${_currentProfile.profile.id}`,{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(updates)
+    });
+    await loadProfiles();
+    btn.textContent='✓ Kaydedildi';
+    setTimeout(()=>btn.textContent='Kaydet',2000);
+  } catch(e){
+    btn.textContent='Kaydet';
+    alert('Kaydetme hatası: '+e.message);
+  }
+}
+
+// ── Yeni Profil ───────────────────────────────────────────────────────────────
+
+async function showNewProfileModal(){
+  const name = prompt('Profil adı (örn: CEO Briefing):');
+  if(!name) return;
+  const role = prompt('Rol (örn: Genel Müdür):') || '';
+  const email = prompt('Email:') || '';
+  const r = await fetch(`${API}/profiles`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,role,owner_email:email,tenant_id:'upagon'})
+  });
+  const data = await r.json();
+  await loadProfiles();
+  if(data.id) selectProfile(data.id);
+}
+
+// ── Brief Önizleme ────────────────────────────────────────────────────────────
+
+function previewBrief(){
+  if(!_currentProfile) return;
+  const url = `/api/v1/portal/yonetim/daily-brief?profile=${_currentProfile.profile.id}`;
+  window.open(url,'_blank');
+}
+
+// ── Day toggle / tone-card (existing init) ────────────────────────────────────
+document.querySelectorAll('.day-btn').forEach(b=>b.addEventListener('click',()=>b.classList.toggle('selected')));
+document.querySelectorAll('.tone-card').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('.tone-card').forEach(x=>x.classList.remove('selected'));
+  c.classList.add('selected');
+}));
+
+document.querySelector('.btn-add').addEventListener('click', showNewProfileModal);
+document.querySelector('.btn-pri').addEventListener('click', saveProfile);
+document.querySelector('.btn-sec:first-of-type').addEventListener('click', previewBrief);
+
+document.addEventListener('DOMContentLoaded', loadProfiles);
+</script>
+</body>
+</html>

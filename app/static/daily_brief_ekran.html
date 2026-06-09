@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pimland · Günlük Brief — CEO</title>
+<script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;
+  --border:#2a2a3a;--border2:#333348;
+  --t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;
+  --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
+  --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;
+  --border:#dcdce8;--border2:#c4c4d8;
+  --t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc;
+}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.6;overflow-x:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-dot{width:7px;height:7px;background:var(--orange);border-radius:50%;box-shadow:0 0 6px var(--orange)}
+.brand-name{font-size:13px;font-weight:600}
+.brand-mod{font-size:10px;color:var(--t3);padding:2px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--t3)}
+.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--t2);padding:5px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+.btn-refresh:hover{border-color:var(--border2);color:var(--t1)}
+
+/* CONTAINER */
+.container{max-width:920px;margin:0 auto;padding:32px 32px 80px}
+
+/* HEADER */
+.brief-header{margin-bottom:24px}
+.greeting{font-size:24px;font-weight:600;color:var(--t1);margin-bottom:6px}
+.greeting .name{color:var(--orange)}
+.date-line{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:12px}
+.date-line .sep{color:var(--t4)}
+.date-line .live{display:flex;align-items:center;gap:5px}
+.date-line .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TOP INSIGHTS - Eye-catcher */
+.top-insights{background:linear-gradient(135deg,rgba(255,107,43,.06),rgba(168,85,247,.04));border:1px solid rgba(255,107,43,.18);border-radius:14px;padding:20px 22px;margin-bottom:28px}
+.insights-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.insights-icon{width:28px;height:28px;background:rgba(255,107,43,.12);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.insights-title{font-size:14px;font-weight:600;color:var(--t1)}
+.insights-sub{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.insight-list{display:flex;flex-direction:column;gap:11px}
+.insight-item{display:flex;gap:11px;align-items:flex-start}
+.insight-num{width:22px;height:22px;background:var(--orange);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.insight-text{font-size:13px;line-height:1.55;color:var(--t1)}
+.insight-text strong{color:var(--orange);font-weight:600}
+.insight-text .red{color:var(--red);font-weight:500}
+.insight-text .green{color:var(--green);font-weight:500}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:14px 16px}
+.kpi-lbl{font-size:10px;text-transform:uppercase;color:var(--t3);letter-spacing:.5px;margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:700;color:var(--t1);font-family:'Inter',sans-serif}
+.kpi-delta{font-size:11px;margin-top:3px;display:flex;align-items:center;gap:3px}
+.kpi-delta.up{color:var(--green)}
+.kpi-delta.down{color:var(--red)}
+
+/* SECTION */
+.section{margin-bottom:28px}
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-num{width:22px;height:22px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--t2)}
+.section-name{font-size:14px;font-weight:600;color:var(--t1)}
+.section-tag{font-size:9px;padding:2px 7px;border-radius:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.tag-satis{background:rgba(0,194,168,.12);color:var(--teal)}
+.tag-eticaret{background:rgba(59,130,246,.12);color:var(--blue)}
+.tag-urun{background:rgba(245,158,11,.12);color:var(--yellow)}
+.tag-cross{background:rgba(168,85,247,.12);color:var(--purple)}
+
+.qa-card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:16px 18px;margin-bottom:10px}
+.qa-question{font-size:12px;color:var(--t3);font-weight:500;margin-bottom:10px;display:flex;align-items:flex-start;gap:6px}
+.qa-question::before{content:'❯';color:var(--orange);font-weight:700}
+.qa-answer{font-size:13px;line-height:1.7;color:var(--t1)}
+.qa-answer strong{color:var(--t1);font-weight:600}
+.qa-answer .num{color:var(--orange);font-weight:600;font-family:'DM Mono',monospace}
+.qa-answer .red{color:var(--red);font-weight:500}
+.qa-answer .green{color:var(--green);font-weight:500}
+.qa-answer ul{margin:8px 0 0 18px;padding:0}
+.qa-answer ul li{margin-bottom:5px}
+.qa-detail{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.qa-tag-row{display:flex;gap:5px;align-items:center}
+.qa-tag{font-size:9px;padding:2px 6px;border-radius:3px;background:var(--bg3);color:var(--t3);border:1px solid var(--border)}
+.qa-link{font-size:11px;color:var(--orange);cursor:pointer;text-decoration:none}
+.qa-link:hover{text-decoration:underline}
+
+/* KONTROL LİSTESİ */
+.kontrol-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:28px}
+.kontrol-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.kontrol-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--t1)}
+.kontrol-icon{width:24px;height:24px;background:rgba(59,130,246,.12);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.kontrol-progress{font-size:11px;color:var(--t3)}
+.kontrol-list{display:flex;flex-direction:column;gap:8px}
+.kontrol-row{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background .12s}
+.kontrol-row:hover{background:var(--bg3)}
+.kontrol-cb{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
+.kontrol-row.done .kontrol-cb{background:var(--green);border-color:var(--green);color:#fff}
+.kontrol-row.done .kontrol-text{color:var(--t3);text-decoration:line-through}
+.kontrol-text{flex:1;font-size:12px;color:var(--t1)}
+.kontrol-time{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace}
+.kontrol-priority{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0}
+.priority-high{background:var(--red)}
+.priority-med{background:var(--yellow)}
+.priority-low{background:var(--t4)}
+
+/* AKSİYON ÖNERİLERİ */
+.aksiyon-section{background:linear-gradient(135deg,rgba(0,194,168,.04),rgba(34,197,94,.03));border:1px solid rgba(0,194,168,.18);border-radius:10px;padding:18px 20px;margin-bottom:28px}
+.aksiyon-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--t1);margin-bottom:14px}
+.aksiyon-icon{width:24px;height:24px;background:rgba(0,194,168,.15);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.aksiyon-list{display:flex;flex-direction:column;gap:10px}
+.aksiyon-card{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:12px 14px}
+.aksiyon-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.aksiyon-content{flex:1}
+.aksiyon-baslik{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.aksiyon-desc{font-size:11px;color:var(--t2);line-height:1.5}
+.aksiyon-btn{background:transparent;border:1px solid var(--border);color:var(--t2);padding:5px 11px;border-radius:5px;font-size:10px;cursor:pointer;font-family:inherit;font-weight:600;flex-shrink:0;white-space:nowrap}
+.aksiyon-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+/* FOOTER */
+.brief-footer{text-align:center;padding:20px 0;color:var(--t3);font-size:11px;border-top:1px solid var(--border);margin-top:32px}
+.brief-footer .meta{display:flex;justify-content:center;gap:12px;margin-top:6px}
+.brief-footer .meta span{display:flex;align-items:center;gap:4px}
+
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">Pimland</span>
+    <span class="brand-mod">Günlük Brief</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-refresh">↻ Yenile</button>
+    <span style="color:var(--t4)">|</span>
+    <span>CEO Briefing</span>
+    <span style="color:var(--t4)">|</span>
+    <a href="/api/v1/portal" style="font-size:11px;color:var(--t3);text-decoration:none;padding:5px 10px;border:1px solid var(--border);border-radius:5px">← Portal</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="brief-header">
+    <div class="greeting">Günaydın, <span class="name">Erdinç</span></div>
+    <div class="date-line">
+      <span>9 Haziran 2026, Salı</span>
+      <span class="sep">·</span>
+      <span class="live"><span class="live-dot"></span>Brief 06:00'da üretildi</span>
+      <span class="sep">·</span>
+      <span>14 saniyede 5 agent koordine edildi</span>
+    </div>
+  </div>
+
+  <!-- TOP INSIGHTS -->
+  <div class="top-insights">
+    <div class="insights-header">
+      <div class="insights-icon">💡</div>
+      <div>
+        <div class="insights-title">Bugünkü Üst Düzey Insight'lar</div>
+        <div class="insights-sub">Yapay zeka tarafından üretildi · 5 agent verisinden</div>
+      </div>
+    </div>
+    <div class="insight-list">
+      <div class="insight-item">
+        <div class="insight-num">1</div>
+        <div class="insight-text">
+          <strong>Mayıs ayı hedef tutturma %93</strong> — son 6 ayın en yüksek oranı. Ancak <span class="red">Karadeniz bölgesinde MDO %18 düştü</span>, bu yönde acil müdahale gerekebilir.
+        </div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-num">2</div>
+        <div class="insight-text">
+          E-ticarette dünkü dönüşüm %3.2 — <span class="green">geçen haftaya göre +%0.4</span>. Ama iade oranı %19'a yükseldi. <strong>İade-iyi-satış paradoksu</strong> 12446983000 (Dantel Elbise) ve 11545979000 (Kolsuz Tuvit Bluz) ürünlerinde belirgin.
+        </div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-num">3</div>
+        <div class="insight-text">
+          <span class="red">3 A-grade ürün</span> stok kritik seviyede: 12444067003, 12446986000, 11546723000. Bu ürünlerin haftalık ortalama satışı 47 adet — mevcut stokla <strong>3 günden az</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-lbl">Dün Net Ciro</div>
+      <div class="kpi-val">₺4.2M</div>
+      <div class="kpi-delta up">▲ %8.3 (önceki gün)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Mayıs Hedef</div>
+      <div class="kpi-val">%93</div>
+      <div class="kpi-delta up">▲ 6 ayın zirvesi</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">E-Tic. Dönüşüm</div>
+      <div class="kpi-val">%3.2</div>
+      <div class="kpi-delta up">▲ %0.4</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">İade Oranı</div>
+      <div class="kpi-val">%19</div>
+      <div class="kpi-delta down">▼ +%2.1</div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: SATIŞ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-num">1</div>
+      <div class="section-name">Mağaza Satış Durumu</div>
+      <div class="section-tag tag-satis">Satış Agent</div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question">Dün toplam ciro hedefin neresinde? Hangi bölgeler hedefi aştı, hangileri altında kaldı?</div>
+      <div class="qa-answer">
+        Dün toplam <span class="num">₺4.2M</span> net ciro yapıldı — günlük hedefin <span class="green">%112'si</span>. Mayıs ay genelinde ise <span class="num">%93</span> ile son 6 ayın en yüksek tutturma oranındayız.
+        <ul>
+          <li><span class="green">▲ Hedefi aşan bölgeler:</span> Marmara (%118), Ege (%109), İç Anadolu (%104)</li>
+          <li><span class="red">▼ Hedef altı bölgeler:</span> Karadeniz (%76 — kritik düşüş), Güneydoğu (%84)</li>
+          <li>En yüksek cirolu 3 mağaza: <strong>Forum İstanbul</strong> (₺318K), <strong>Cevahir AVM</strong> (₺295K), <strong>İzmir Optimum</strong> (₺267K)</li>
+        </ul>
+      </div>
+      <div class="qa-detail">
+        <div class="qa-tag-row">
+          <span class="qa-tag">Veri: incorta_magaza_satis</span>
+          <span class="qa-tag">5 mağaza özet</span>
+        </div>
+        <a href="#" class="qa-link">Detaylı raporu aç →</a>
+      </div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question">Mağaza ziyaretçi/MDO trendi son 7 gün nasıl? Düşüş gösteren mağazaların ortak özellikleri?</div>
+      <div class="qa-answer">
+        Son 7 günde toplam ziyaretçi <span class="num">+%4</span> artmasına rağmen ortalama MDO <span class="red">%2.8 düştü</span>. Bu pattern özellikle <strong>Karadeniz bölgesinde</strong> belirgin — ziyaretçi sayısı geçen haftaya göre +%6 artmış ama dönüşüm %18 düşmüş. Olası nedenler: stok yetersizliği veya yeni sezon ürünlerinin gecikmesi.
+        <ul>
+          <li>En çok MDO düşüşü: <strong>Trabzon Forum</strong> (-%24), <strong>Samsun Piazza</strong> (-%21), <strong>Ordu City</strong> (-%19)</li>
+        </ul>
+      </div>
+      <div class="qa-detail">
+        <div class="qa-tag-row">
+          <span class="qa-tag">7 günlük trend</span>
+          <span class="qa-tag">22 mağaza analiz</span>
+        </div>
+        <a href="#" class="qa-link">Mağaza karşılaştırması →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: E-TİCARET -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-num">2</div>
+      <div class="section-name">E-Ticaret Performansı</div>
+      <div class="section-tag tag-eticaret">E-Ticaret Agent</div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question">E-ticarette dünkü dönüşüm oranı geçen haftaya göre nasıl? Hangi kanallar öne çıkıyor?</div>
+      <div class="qa-answer">
+        Dün dönüşüm <span class="num">%3.2</span> — geçen Salı'ya göre <span class="green">+%0.4</span> iyileşme. Toplam <span class="num">₺687K</span> ciro, <span class="num">847</span> sipariş. Sepet ortalaması <span class="num">₺811</span> ile son 30 günün üzerinde.
+        <ul>
+          <li>En güçlü kanal: <strong>ADL.com.tr</strong> (₺412K, %4.1 dönüşüm)</li>
+          <li>Trendyol mağazası: ₺178K (%2.8 dönüşüm)</li>
+          <li>Hepsiburada: ₺67K (%1.9 — geçen haftaya göre düşüş)</li>
+        </ul>
+      </div>
+      <div class="qa-detail">
+        <div class="qa-tag-row">
+          <span class="qa-tag">Veri: Incorta sales API</span>
+          <span class="qa-tag">4 kanal</span>
+        </div>
+        <a href="#" class="qa-link">Kanal kıyaslaması →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: ÇAPRAZ ANALİZ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-num">3</div>
+      <div class="section-name">Çapraz Analizler</div>
+      <div class="section-tag tag-cross">Kıyaslama</div>
+    </div>
+
+    <div class="qa-card">
+      <div class="qa-question">İade oranı yüksek ürünlerin enrichment kalite puanı düşük mü? Hangi ürünlere müdahale etmeliyim?</div>
+      <div class="qa-answer">
+        Evet, <strong>güçlü bir korelasyon var</strong>. İade oranı %25 üzerinde olan 18 üründen <span class="num">14'ünün</span> enrichment grade'i C veya altında. Bu ürünlerde ortak sorun: <span class="red">eksik veya yanlış görsel özellikler</span> (kalıp, kumaş kalınlığı, kol detayı).
+        <ul>
+          <li><strong>12446983000</strong> — Dantel Elbise: İade %38, Grade D, fitName boş</li>
+          <li><strong>11545979000</strong> — Kolsuz Tuvit Bluz: İade %31, Grade C, ecomTag3/4 boş</li>
+          <li><strong>12444067003</strong> — Beachwear Elbise: İade %29, Grade D, thicknessTypeName yanlış</li>
+        </ul>
+      </div>
+      <div class="qa-detail">
+        <div class="qa-tag-row">
+          <span class="qa-tag">Çapraz: İade × Enrichment</span>
+          <span class="qa-tag">18 ürün analiz</span>
+        </div>
+        <a href="#" class="qa-link">Görsel Analizör'de aç →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONTROL LİSTESİ -->
+  <div class="kontrol-section">
+    <div class="kontrol-header">
+      <div class="kontrol-title">
+        <div class="kontrol-icon">📋</div>
+        Bugünkü Kontrol Listesi
+      </div>
+      <div class="kontrol-progress">1 / 5 tamamlandı</div>
+    </div>
+    <div class="kontrol-list">
+      <div class="kontrol-row done">
+        <div class="kontrol-priority priority-low"></div>
+        <div class="kontrol-cb">✓</div>
+        <div class="kontrol-text">Sabah brifingini oku</div>
+        <div class="kontrol-time">06:00</div>
+      </div>
+      <div class="kontrol-row">
+        <div class="kontrol-priority priority-high"></div>
+        <div class="kontrol-cb"></div>
+        <div class="kontrol-text">Karadeniz bölge müdürü ile MDO düşüşü görüşmesi</div>
+        <div class="kontrol-time">10:00 · acil</div>
+      </div>
+      <div class="kontrol-row">
+        <div class="kontrol-priority priority-med"></div>
+        <div class="kontrol-cb"></div>
+        <div class="kontrol-text">Mağaza müdürleri haftalık görüşmesi</div>
+        <div class="kontrol-time">14:00</div>
+      </div>
+      <div class="kontrol-row">
+        <div class="kontrol-priority priority-med"></div>
+        <div class="kontrol-cb"></div>
+        <div class="kontrol-text">3 kritik stoklu ürün için üretim/temin kararı</div>
+        <div class="kontrol-time">bugün</div>
+      </div>
+      <div class="kontrol-row">
+        <div class="kontrol-priority priority-low"></div>
+        <div class="kontrol-cb"></div>
+        <div class="kontrol-text">E-ticaret kampanya raporu (Cuma hazırlanacak)</div>
+        <div class="kontrol-time">cuma</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AKSİYON ÖNERİLERİ -->
+  <div class="aksiyon-section">
+    <div class="aksiyon-title">
+      <div class="aksiyon-icon">🎯</div>
+      AI'nın Bugün İçin Önerdiği Aksiyonlar
+    </div>
+    <div class="aksiyon-list">
+      <div class="aksiyon-card">
+        <div class="aksiyon-row">
+          <div class="aksiyon-content">
+            <div class="aksiyon-baslik">Karadeniz bölgesinde acil saha analizi başlat</div>
+            <div class="aksiyon-desc">MDO %18 düşüşü 3 ardışık gündür sürüyor. Trabzon, Samsun, Ordu mağazalarında stok kontrolü + müşteri geri bildirimi toplanmalı.</div>
+          </div>
+          <button class="aksiyon-btn">Toplantı oluştur</button>
+        </div>
+      </div>
+
+      <div class="aksiyon-card">
+        <div class="aksiyon-row">
+          <div class="aksiyon-content">
+            <div class="aksiyon-baslik">14 düşük-grade ürün için görsel analiz batch'i çalıştır</div>
+            <div class="aksiyon-desc">İade-enrichment korelasyonu çok güçlü. Görsel Analizör 14 ürünü 2-3 saatte tamamen zenginleştirebilir, iade oranı %15-20 düşebilir (tahmini).</div>
+          </div>
+          <button class="aksiyon-btn">Başlat ↗</button>
+        </div>
+      </div>
+
+      <div class="aksiyon-card">
+        <div class="aksiyon-row">
+          <div class="aksiyon-content">
+            <div class="aksiyon-baslik">Stok kritik 3 A-grade ürün için üretim onayı</div>
+            <div class="aksiyon-desc">12444067003, 12446986000, 11546723000 — mevcut stokla 3 günden az. Toplam beklenen ciro kaybı ₺245K/hafta.</div>
+          </div>
+          <button class="aksiyon-btn">Karar ver →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="brief-footer">
+    Bu brief Pimland AI tarafından oluşturuldu
+    <div class="meta">
+      <span>📊 12 soru yanıtlandı</span>
+      <span>·</span>
+      <span>🤖 5 agent koordine edildi</span>
+      <span>·</span>
+      <span>⏱ 14 saniyede üretildi</span>
+      <span>·</span>
+      <span>💰 ₺0.18 tahmini maliyet</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '/api/v1/daily-brief';
+const PROFILE_ID = parseInt(new URLSearchParams(location.search).get('profile') || '1');
+let _briefData = null;
+let _profileInfo = null;
+
+// Iframe içinde açıldıysa topbar'ı gizle
+if(window.self !== window.top){
+  document.querySelector('.topbar').style.display='none';
+}
+// Portal'dan tema değişikliğini senkronize et
+window.addEventListener('message',function(e){
+  if(e.data&&e.data.type==='theme'){
+    document.documentElement.setAttribute('data-theme',e.data.value||'dark');
+  }
+});
+
+const AGENT_LABELS = {satis:'Satış Agent',eticaret:'E-Ticaret Agent',kiyaslama:'Kıyaslama',urun_yonetimi:'Ürün Yönetimi'};
+const AGENT_TAGS   = {satis:'tag-satis',eticaret:'tag-eticaret',kiyaslama:'tag-cross',urun_yonetimi:'tag-urun'};
+const IMP_ORDER    = {kritik:1,yuksek:2,orta:3,dusuk:4};
+
+async function loadBrief(){
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const r = await fetch(`${API}/briefs/${PROFILE_ID}/${today}`);
+    if(r.status === 404){
+      document.querySelector('.container').innerHTML =
+        `<div style="text-align:center;padding:80px 20px;color:var(--t3)">
+           <div style="font-size:32px;margin-bottom:16px">☀️</div>
+           <div style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:8px">Brief henüz üretilmedi</div>
+           <div style="font-size:12px;margin-bottom:24px">Bugün için brief oluşturmak ister misiniz?</div>
+           <button onclick="generateBrief()" style="background:var(--orange);color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+             ✨ Brief Üret
+           </button>
+         </div>`;
+      return;
+    }
+    if(!r.ok) throw new Error(await r.text());
+    _briefData = await r.json();
+    renderBrief(_briefData);
+  } catch(e) {
+    console.error(e);
+    document.querySelector('.container').innerHTML =
+      `<div style="text-align:center;padding:80px;color:var(--red)">Brief yüklenemedi: ${e.message}</div>`;
+  }
+}
+
+async function generateBrief(){
+  const cont = document.querySelector('.container');
+  cont.innerHTML = `<div style="text-align:center;padding:80px;color:var(--t2)">
+    <div style="font-size:24px;margin-bottom:16px;animation:spin 1.5s linear infinite;display:inline-block">⟳</div>
+    <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:8px">Brief üretiliyor...</div>
+    <div style="font-size:11px;color:var(--t3)">Agent'lar paralel çalışıyor, ~30-60 saniye</div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+  try {
+    const r = await fetch(`${API}/briefs/${PROFILE_ID}/generate`,{method:'POST'});
+    if(!r.ok) throw new Error(await r.text());
+    _briefData = (await r.json()).brief ? (await r.json()) : await r.json();
+    await loadBrief();
+  } catch(e){
+    document.querySelector('.container').innerHTML =
+      `<div style="text-align:center;padding:80px;color:var(--red)">Üretim hatası: ${e.message}<br><button onclick="loadBrief()" style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:8px 16px;border-radius:5px;cursor:pointer">Tekrar dene</button></div>`;
+  }
+}
+
+function renderBrief(data){
+  const brief = data.brief || data;
+  const topInsights = brief.top_insights || data.top_insights || [];
+  const qaResults   = brief.qa_results   || data.qa_results   || [];
+  const actions     = brief.actions      || data.actions      || [];
+  const checklist   = brief.checklist_state || data.checklist_state || [];
+
+  // --- HEADER ---
+  if(_profileInfo) document.querySelector('.name').textContent = _profileInfo.name || 'Yönetici';
+  const dateEl = document.querySelector('.date-line');
+  if(dateEl){
+    const d = new Date(); const days=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+    const months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    dateEl.innerHTML = `<span>${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${days[d.getDay()]}</span>
+      <span class="sep">·</span>
+      <span class="live"><span class="live-dot"></span>Brief ${data.generation_ms ? Math.round(data.generation_ms/1000)+'sn' : '—'}'de üretildi</span>
+      <span class="sep">·</span>
+      <span>${data.soru_sayisi||qaResults.length||0} soru · ${data.agent_count||0} agent</span>`;
+  }
+
+  // --- TOP INSIGHTS ---
+  const insightList = document.querySelector('.insight-list');
+  if(insightList && topInsights.length){
+    insightList.innerHTML = topInsights.map(i => `
+      <div class="insight-item">
+        <div class="insight-num">${i.num}</div>
+        <div class="insight-text">${i.text}</div>
+      </div>`).join('');
+  }
+
+  // --- KPI ROW ---
+  const kpi = brief.kpi_data || data.kpi_data || {};
+  const kpiRow = document.querySelector('.kpi-row');
+  if(kpiRow && Object.keys(kpi).length){
+    const fmt = v => v ? (v>1000000 ? '₺'+(v/1000000).toFixed(1)+'M' : v>1000 ? '₺'+(v/1000).toFixed(0)+'K' : v) : '—';
+    kpiRow.innerHTML = [
+      {lbl:'Net Ciro', val: fmt(kpi.ciro), delta:''},
+      {lbl:'Hedef Oran', val: kpi.hedef ? '%'+(kpi.hedef*100).toFixed(0) : '—', delta:''},
+      {lbl:'E-Tic. Dönüşüm', val: kpi.donusum ? '%'+kpi.donusum : '—', delta:''},
+      {lbl:'İade Oranı', val: kpi.iade ? '%'+kpi.iade : '—', delta:''},
+    ].map(k=>`<div class="kpi-card"><div class="kpi-lbl">${k.lbl}</div><div class="kpi-val">${k.val}</div></div>`).join('');
+  }
+
+  // --- QA SECTIONS ---
+  const agentGroups = {};
+  qaResults.forEach(q => { (agentGroups[q.agent] = agentGroups[q.agent]||[]).push(q); });
+  const sectionsHtml = Object.entries(agentGroups).map(([agent,qs],i)=>`
+    <div class="section">
+      <div class="section-title">
+        <div class="section-num">${i+1}</div>
+        <div class="section-name">${AGENT_LABELS[agent]||agent}</div>
+        <div class="section-tag ${AGENT_TAGS[agent]||''}">${agent}</div>
+      </div>
+      ${qs.map(q=>`
+        <div class="qa-card">
+          <div class="qa-question">${q.question}</div>
+          <div class="qa-answer">${(q.answer||'').replace(/\n/g,'<br>')}</div>
+          <div class="qa-detail">
+            <div class="qa-tag-row">
+              <span class="qa-tag">${agent}</span>
+              <span class="qa-tag">${q.importance}</span>
+              ${q.is_cross?'<span class="qa-tag">çapraz</span>':''}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  // --- CHECKLIST ---
+  let clHtml = '';
+  if(Array.isArray(checklist) && checklist.length){
+    const priorities = {high:'priority-high',med:'priority-med',low:'priority-low'};
+    clHtml = `<div class="kontrol-section">
+      <div class="kontrol-header">
+        <div class="kontrol-title"><div class="kontrol-icon">📋</div> Bugünkü Kontrol Listesi</div>
+        <div class="kontrol-progress" id="kl-progress"></div>
+      </div>
+      <div class="kontrol-list" id="kl-list">
+        ${checklist.map(c=>`
+          <div class="kontrol-row ${c.is_done?'done':''}" data-pid="${c.profile_id||PROFILE_ID}" data-iid="${c.id||c.item_id}" onclick="toggleChecklist(this)">
+            <div class="kontrol-priority ${priorities[c.priority||'med']||'priority-med'}"></div>
+            <div class="kontrol-cb">${c.is_done?'✓':''}</div>
+            <div class="kontrol-text">${c.text||''}</div>
+            <div class="kontrol-time">${c.trigger_rule||''}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+    updateChecklistProgress();
+  }
+
+  // --- ACTIONS ---
+  let actsHtml = '';
+  if(actions.length){
+    actsHtml = `<div class="aksiyon-section">
+      <div class="aksiyon-title"><div class="aksiyon-icon">🎯</div> AI'nın Bugün İçin Önerdiği Aksiyonlar</div>
+      <div class="aksiyon-list">
+        ${actions.map(a=>`
+          <div class="aksiyon-card">
+            <div class="aksiyon-row">
+              <div class="aksiyon-content">
+                <div class="aksiyon-baslik">${a.title}</div>
+                <div class="aksiyon-desc">${a.description}</div>
+              </div>
+              <button class="aksiyon-btn">${a.button_text||'Başlat'}</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // --- FOOTER ---
+  const footerHtml = `<div class="brief-footer">
+    Bu brief Pimland AI tarafından oluşturuldu
+    <div class="meta">
+      <span>📊 ${qaResults.length} soru yanıtlandı</span>
+      <span>·</span>
+      <span>🤖 ${data.agent_count||0} agent koordine edildi</span>
+      <span>·</span>
+      <span>⏱ ${data.generation_ms ? Math.round(data.generation_ms/1000)+'sn' : '—'}</span>
+    </div>
+  </div>`;
+
+  // Inject all dynamic content
+  const container = document.querySelector('.container');
+  const header = container.querySelector('.brief-header');
+  const insBlock = container.querySelector('.top-insights');
+  const kpiBlock = container.querySelector('.kpi-row');
+
+  // Remove everything after kpi-row, then add new content
+  let el = kpiBlock.nextElementSibling;
+  while(el){ const nx=el.nextElementSibling; el.remove(); el=nx; }
+  kpiBlock.insertAdjacentHTML('afterend', sectionsHtml + clHtml + actsHtml + footerHtml);
+
+  // Re-attach checklist click listeners after DOM update
+  document.querySelectorAll('.kontrol-row').forEach(row=>row.addEventListener('click',()=>toggleChecklist(row)));
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress(){
+  const done = document.querySelectorAll('.kontrol-row.done').length;
+  const total = document.querySelectorAll('.kontrol-row').length;
+  const el = document.getElementById('kl-progress') || document.querySelector('.kontrol-progress');
+  if(el) el.textContent = `${done} / ${total} tamamlandı`;
+}
+
+async function toggleChecklist(row){
+  row.classList.toggle('done');
+  const cb = row.querySelector('.kontrol-cb');
+  cb.textContent = row.classList.contains('done') ? '✓' : '';
+  updateChecklistProgress();
+  try {
+    await fetch(`${API}/checklist/toggle`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        profile_id: parseInt(row.dataset.pid||PROFILE_ID),
+        item_id:    parseInt(row.dataset.iid||0),
+        is_done:    row.classList.contains('done'),
+      })
+    });
+  } catch(e){ console.warn('checklist toggle failed',e); }
+}
+
+document.querySelector('.btn-refresh').addEventListener('click', async ()=>{
+  document.querySelector('.btn-refresh').textContent='⟳ Üretiliyor...';
+  try {
+    const r = await fetch(`${API}/briefs/${PROFILE_ID}/generate`,{method:'POST'});
+    if(r.ok) await loadBrief();
+  } catch(e){ console.error(e); }
+  document.querySelector('.btn-refresh').textContent='↻ Yenile';
+});
+
+// Load profile name
+fetch(`${API}/profiles/${PROFILE_ID}`).then(r=>r.ok?r.json():null).then(d=>{
+  if(d) _profileInfo = d.profile;
+}).catch(()=>{});
+
+document.addEventListener('DOMContentLoaded', loadBrief);
+</script>
+</body>
+</html>

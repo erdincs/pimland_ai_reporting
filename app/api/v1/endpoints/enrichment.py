@@ -1146,6 +1146,301 @@ async def get_overview_by_field(
     ]
 
 
+# ── Vision Analyzer endpoints ─────────────────────────────────────────────────
+
+def _build_product_from_db(row: Any) -> tuple[Dict[str, Any], List[str]]:
+    """pim_products + enrichment_quality satırından vision dict + URL listesi üretir."""
+    from app.services.enrichment.vision_analyzer import get_image_urls_from_colors
+    stock_code = row["urun_kodu"]
+    colors = [c.strip() for c in (row.get("color_codes") or "").split(",") if c.strip()]
+    if not colors and row.get("first_color_code"):
+        colors = [row["first_color_code"]]
+    dj = row.get("detail_json") or {}
+    satis = dj.get("satis", {}) if isinstance(dj, dict) else {}
+    def _tag(name):
+        v = satis.get(name)
+        return (v or {}).get("deger") if isinstance(v, dict) else None
+    product = {
+        "stockCode":        stock_code,
+        "description":      row.get("urun_adi"),
+        "brandName":        row.get("marka_adi"),
+        "seasonCode":       row.get("sezon_kodu"),
+        "seasonName":       row.get("sezon_adi"),
+        "productGroupName": row.get("urun_grubu_adi"),
+        "productTypeName":  row.get("ana_grup_adi"),
+        "fabricMaterialName": row.get("fabricmaterialname"),
+        "fabricPatternName": None, "armLengthName": None, "collarTypeName": None,
+        "productLengthName": None, "cuttingName": None, "beltLengthName": None,
+        "fitName": None, "thicknessTypeName": None, "styleName": None,
+        "ecomTag1Name": _tag("E-Ticaret Etiketi 1"),
+        "ecomTag2Name": _tag("E-Ticaret Etiketi 2"),
+        "ecomTag3Name": _tag("E-Ticaret Etiketi 3"),
+        "ecomTag4Name": _tag("E-Ticaret Etiketi 4"),
+    }
+    urls = get_image_urls_from_colors(stock_code, colors, max_per_color=3)
+    return product, urls
+
+
+@router.post("/vision/analyze/{stock_code}")
+async def analyze_single(
+    stock_code: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """Tek ürün görsel analizi — pim_products + cdnimages CDN."""
+    from fastapi import HTTPException
+    from app.services.enrichment.vision_analyzer import analyze_product_images
+    row = (await session.execute(text("""
+        SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_kodu, p.sezon_adi,
+               p.ana_grup_adi, p.urun_grubu_adi,
+               p.color_codes, p.first_color_code, p.fabricmaterialname,
+               e.detail_json
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.urun_kodu = :uk
+    """), {"uk": stock_code})).mappings().first()
+    if not row:
+        raise HTTPException(404, "Ürün bulunamadı")
+    product, urls = _build_product_from_db(row)
+    result = await analyze_product_images(product, image_urls=urls)
+    result["image_urls"] = urls
+    return result
+
+
+@router.get("/vision/product/{stock_code}")
+async def get_vision_product_info(
+    stock_code: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """PLM özelliklerini + görsel URL'lerini döndürür — analiz yapmadan."""
+    from fastapi import HTTPException
+    row = (await session.execute(text("""
+        SELECT p.urun_kodu, p.urun_adi, p.marka_adi, p.sezon_kodu, p.sezon_adi,
+               p.ana_grup_adi, p.urun_grubu_adi,
+               p.color_codes, p.first_color_code, p.fabricmaterialname,
+               e.detail_json
+        FROM pim_products p
+        LEFT JOIN enrichment_quality e ON e.urun_kodu = p.urun_kodu
+        WHERE p.urun_kodu = :uk
+    """), {"uk": stock_code})).mappings().first()
+    if not row:
+        raise HTTPException(404, "Ürün bulunamadı")
+    product, urls = _build_product_from_db(row)
+    return {"stock_code": stock_code, "product": product, "image_urls": urls}
+
+
+@router.get("/vision/images/{stock_code}")
+async def get_image_urls_debug(
+    stock_code: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> Dict[str, Any]:
+    """Görsel URL'lerini listele — CDN erişim testi için."""
+    from fastapi import HTTPException
+    from app.services.enrichment.vision_analyzer import get_image_urls_from_colors
+    row = (await session.execute(text("""
+        SELECT urun_kodu, urun_adi, color_codes, first_color_code
+        FROM pim_products WHERE urun_kodu = :uk
+    """), {"uk": stock_code})).mappings().first()
+    if not row:
+        raise HTTPException(404, "Ürün bulunamadı")
+    colors = [c.strip() for c in (row["color_codes"] or "").split(",") if c.strip()]
+    if not colors and row["first_color_code"]:
+        colors = [row["first_color_code"]]
+    urls = get_image_urls_from_colors(stock_code, colors, max_per_color=4)
+    return {"stock_code": stock_code, "urun_adi": row["urun_adi"], "colors": colors, "image_urls": urls}
+
+
+@router.post("/vision/batch")
+async def vision_batch(
+    sezon: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    limit: int = Query(default=10, le=50),
+) -> Dict[str, Any]:
+    """Sezon bazında toplu görsel analiz — düşük kaliteli ürünlerden başlar."""
+    from app.services.enrichment.vision_analyzer import analyze_product_images
+
+    rows = (await session.execute(text("""
+        SELECT p.urun_kodu, p.urun_adi, p.ana_grup_adi, p.urun_grubu_adi,
+               p.color_codes, p.first_color_code, p.fabricmaterialname,
+               e.detail_json, e.quality_score
+        FROM enrichment_quality e
+        JOIN pim_products p ON p.urun_kodu = e.urun_kodu
+        WHERE e.sezon_kodu = :sezon
+        ORDER BY e.quality_score ASC LIMIT :lim
+    """), {"sezon": sezon, "lim": limit})).mappings().all()
+
+    results = []
+    for row in rows:
+        product, urls = _build_product_from_db(row)
+        try:
+            r = await analyze_product_images(product, image_urls=urls)
+            r["image_urls"] = urls
+            results.append(r)
+        except Exception as e:
+            results.append({"stock_code": row["urun_kodu"], "hata": str(e)})
+
+    return {
+        "sezon":             sezon,
+        "analiz_edilen":     len(results),
+        "toplam_uyusmazlik": sum(len(r.get("uyusmazlik", [])) for r in results if "hata" not in r),
+        "toplam_eksik":      sum(len(r.get("eksik", [])) for r in results if "hata" not in r),
+        "results":           results,
+    }
+
+
+# ── Vision Attr Kayıt / Liste / Onayla ────────────────────────────────────────
+
+@router.post("/vision/save")
+async def save_vision_attrs(
+    body: Dict[str, Any],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Görsel analizinden çıkarılan özellikleri DB'ye kaydet (taslak)."""
+    from fastapi import HTTPException
+    import json as _json
+    stock_code = body.get("stock_code") or body.get("stockCode")
+    if not stock_code:
+        raise HTTPException(400, "stock_code gerekli")
+    c = body.get("cikarilan", {})
+    urun_adi = (body.get("mevcut_pimland") or {}).get("description")
+
+    existing = (await session.execute(text("""
+        SELECT id FROM product_vision_attrs
+        WHERE urun_kodu=:uk AND durum='taslak'
+        ORDER BY created_at DESC LIMIT 1
+    """), {"uk": stock_code})).scalar()
+
+    vals = {
+        "uk":   stock_code,
+        "ua":   urun_adi,
+        "fpn":  c.get("fabricPatternName"),
+        "aln":  c.get("armLengthName"),
+        "ctn":  c.get("collarTypeName"),
+        "pln":  c.get("productLengthName"),
+        "cn":   c.get("cuttingName"),
+        "bln":  c.get("beltLengthName"),
+        "fn":   c.get("fitName"),
+        "ttn":  c.get("thicknessTypeName"),
+        "sn":   c.get("styleName"),
+        "et3":  c.get("ecomTag3Name"),
+        "et4":  c.get("ecomTag4Name"),
+        "gs":   body.get("guven_skoru"),
+        "notl": body.get("notlar"),
+        "gsy":  body.get("gorsel_sayisi"),
+        "uyj":  _json.dumps(body.get("uyusmazlik", []), ensure_ascii=False),
+        "ekj":  _json.dumps(body.get("eksik", []), ensure_ascii=False),
+    }
+
+    if existing:
+        await session.execute(text("""
+            UPDATE product_vision_attrs SET
+                urun_adi=:ua, fabric_pattern_name=:fpn, arm_length_name=:aln,
+                collar_type_name=:ctn, product_length_name=:pln, cutting_name=:cn,
+                belt_length_name=:bln, fit_name=:fn, thickness_type_name=:ttn,
+                style_name=:sn, ecom_tag3_name=:et3, ecom_tag4_name=:et4,
+                guven_skoru=:gs, notlar=:notl, gorsel_sayisi=:gsy,
+                uyusmazlik_json=CAST(:uyj AS JSONB), eksik_json=CAST(:ekj AS JSONB),
+                created_at=NOW()
+            WHERE id=:id
+        """), {**vals, "id": existing})
+        vid = existing
+    else:
+        vid = (await session.execute(text("""
+            INSERT INTO product_vision_attrs
+                (urun_kodu, urun_adi, fabric_pattern_name, arm_length_name,
+                 collar_type_name, product_length_name, cutting_name, belt_length_name,
+                 fit_name, thickness_type_name, style_name, ecom_tag3_name, ecom_tag4_name,
+                 guven_skoru, notlar, gorsel_sayisi, uyusmazlik_json, eksik_json, durum)
+            VALUES (:uk,:ua,:fpn,:aln,:ctn,:pln,:cn,:bln,:fn,:ttn,:sn,:et3,:et4,
+                    :gs,:notl,:gsy,CAST(:uyj AS JSONB),CAST(:ekj AS JSONB),'taslak')
+            RETURNING id
+        """), vals)).scalar()
+
+    await session.commit()
+    return {"id": vid, "urun_kodu": stock_code, "durum": "taslak", "action": "updated" if existing else "created"}
+
+
+@router.get("/vision/saved")
+async def get_saved_vision_attrs(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    durum: Optional[str] = Query(None),
+    q: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(30, ge=1, le=100),
+) -> Dict[str, Any]:
+    """Kaydedilmiş görsel özellik listesi."""
+    conditions: List[str] = []
+    params: Dict[str, Any] = {"offset": (page - 1) * limit, "limit": limit}
+    if durum:
+        conditions.append("durum=:durum"); params["durum"] = durum
+    if q:
+        conditions.append("(urun_kodu ILIKE :q OR urun_adi ILIKE :q)"); params["q"] = f"%{q}%"
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    total = (await session.execute(
+        text(f"SELECT COUNT(*) FROM product_vision_attrs {where}"), params
+    )).scalar() or 0
+
+    rows = (await session.execute(text(f"""
+        SELECT v.id, v.urun_kodu, v.urun_adi,
+               v.fabric_pattern_name, v.arm_length_name, v.collar_type_name,
+               v.product_length_name, v.cutting_name, v.belt_length_name,
+               v.fit_name, v.thickness_type_name, v.style_name,
+               v.ecom_tag3_name, v.ecom_tag4_name,
+               v.guven_skoru, v.gorsel_sayisi,
+               v.uyusmazlik_json, v.eksik_json,
+               v.durum, v.created_at, v.approved_at,
+               p.marka_adi, p.sezon_kodu, p.sezon_adi,
+               p.urun_grubu_adi, p.ana_grup_adi,
+               p.first_color_code, p.fabricmaterialname
+        FROM product_vision_attrs v
+        LEFT JOIN pim_products p ON p.urun_kodu = v.urun_kodu
+        {where}
+        ORDER BY v.created_at DESC
+        LIMIT :limit OFFSET :offset
+    """), params)).mappings().all()
+
+    items = []
+    for r in rows:
+        d = dict(r)
+        d["created_at"]  = d["created_at"].isoformat()  if d.get("created_at")  else None
+        d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
+        items.append(d)
+
+    return {"total": total, "page": page, "limit": limit, "items": items}
+
+
+@router.post("/vision/saved/{vid}/approve")
+async def approve_vision_attrs(
+    vid: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Görsel özellik kaydını onayla."""
+    row = (await session.execute(text("""
+        UPDATE product_vision_attrs
+        SET durum='onaylandi', approved_at=NOW()
+        WHERE id=:id
+        RETURNING id, urun_kodu, durum, approved_at
+    """), {"id": vid})).mappings().first()
+    await session.commit()
+    if not row:
+        from fastapi import HTTPException
+        raise HTTPException(404, f"Kayıt #{vid} bulunamadı")
+    d = dict(row)
+    d["approved_at"] = d["approved_at"].isoformat() if d.get("approved_at") else None
+    return d
+
+
+@router.delete("/vision/saved/{vid}")
+async def delete_vision_attrs(
+    vid: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Dict[str, Any]:
+    """Görsel özellik kaydını sil."""
+    await session.execute(text("DELETE FROM product_vision_attrs WHERE id=:id"), {"id": vid})
+    await session.commit()
+    return {"deleted": vid}
+
+
 # ── GET /performance — Zenginleştirme × Satış Performansı Dashboard ───────────
 
 @router.get("/performance")
