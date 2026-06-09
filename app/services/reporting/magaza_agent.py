@@ -284,12 +284,23 @@ async def _fetch_magaza_context(
 async def _fetch_aylik_trend(
     session: AsyncSession,
     yil: int,
+    bolge: Optional[str] = None,
+    magaza: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Yıl boyunca aylık ağ geneli ciro/hedef/ziyaretçi trendi."""
+    """Yıl boyunca aylık ciro/hedef/ziyaretçi trendi. bolge/magaza filtresi uygulanır."""
     AY_ADI = {1:"Ocak",2:"Şubat",3:"Mart",4:"Nisan",5:"Mayıs",6:"Haziran",
               7:"Temmuz",8:"Ağustos",9:"Eylül",10:"Ekim",11:"Kasım",12:"Aralık"}
+    conds = ["yil = :yil", "magaza IS NOT NULL", "TRIM(magaza) <> ''"]
+    params: Dict[str, Any] = {"yil": yil}
+    if bolge:
+        conds.append("bolge_muduru ILIKE :bolge")
+        params["bolge"] = f"%{bolge}%"
+    if magaza:
+        conds.append("magaza ILIKE :magaza")
+        params["magaza"] = f"%{magaza}%"
+    where = " AND ".join(conds)
     try:
-        rows = (await session.execute(text("""
+        rows = (await session.execute(text(f"""
             SELECT ay::integer AS ay,
                    ROUND(SUM(CASE WHEN net_ciro::text  NOT IN ('--','') THEN net_ciro::float  ELSE 0 END)::numeric) AS ciro,
                    ROUND(SUM(CASE WHEN hedef::text     NOT IN ('--','') THEN hedef::float     ELSE 0 END)::numeric) AS hedef,
@@ -300,9 +311,9 @@ async def _fetch_aylik_trend(
                              / SUM(CASE WHEN hedef::text NOT IN ('--','') THEN hedef::float ELSE 0 END) * 100
                         ELSE 0 END)::numeric, 1) AS hedef_oran_pct
             FROM incorta_magaza_performans
-            WHERE yil = :yil AND magaza IS NOT NULL AND TRIM(magaza) <> ''
+            WHERE {where}
             GROUP BY ay::integer ORDER BY ay::integer
-        """), {"yil": yil})).mappings().all()
+        """), params)).mappings().all()
         return [
             {
                 "ay": r["ay"],
@@ -351,8 +362,8 @@ async def run_magaza_agent(
             "a2a_signal": None,
         }
 
-    # Aylık trend ekle (dönemsel bölümler için)
-    ctx["aylik_trend"] = await _fetch_aylik_trend(session, yil)
+    # Aylık trend — bolge/magaza filtresi varsa sadece o bölgenin trendi
+    ctx["aylik_trend"] = await _fetch_aylik_trend(session, yil, bolge, magaza)
 
     # Sistem prompt'u oluştur
     filtreler_str = json.dumps(ctx["filtre"], ensure_ascii=False)
