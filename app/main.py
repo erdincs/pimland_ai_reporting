@@ -69,11 +69,19 @@ async def lifespan(app: FastAPI):
                 net_adet    DOUBLE PRECISION DEFAULT 0,
                 sync_updated_at TIMESTAMPTZ DEFAULT NOW()
             )
-        """
-        ))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_yil_ay    ON incorta_magaza_performans(yil, ay)"))
-        await conn.execute(_text("CREATE INDEX IF NOT EXISTS idx_imp_bolge     ON incorta_magaza_performans(bolge_muduru)"))
-        await conn.execute(_text("CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)"))
+        """))
+    # idx_imp_* indexleri ayrı transaction'larda (IF NOT EXISTS bazen unique constraint hatasına yol açıyor)
+    for _idx_sql in [
+        "CREATE INDEX IF NOT EXISTS idx_imp_yil_ay  ON incorta_magaza_performans(yil, ay)",
+        "CREATE INDEX IF NOT EXISTS idx_imp_bolge   ON incorta_magaza_performans(bolge_muduru)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)",
+    ]:
+        try:
+            async with engine.begin() as _c:
+                await _c.execute(_text(_idx_sql))
+        except Exception:
+            pass  # index already exists
+    async with engine.begin() as conn:
         # Mağaza satış özet materialized view (raporlama agent hızlı yol)
         await conn.execute(_text("""
             CREATE MATERIALIZED VIEW IF NOT EXISTS mv_magaza_satis_ozet AS
