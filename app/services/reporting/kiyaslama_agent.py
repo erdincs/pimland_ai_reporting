@@ -27,8 +27,21 @@ Her satırda: yıl, ay, toplam ciro, hedef, ziyaretçi, ortalama MDO (%), OBF, m
 async def run_kiyaslama_agent(session: AsyncSession, question: str,
                                filters: Dict, history: List) -> Dict[str, Any]:
     t0 = time.perf_counter()
+    bolge  = (filters.get("bolge") or "").strip() or None
+    magaza = (filters.get("magaza") or "").strip() or None
+
+    conds = ["magaza IS NOT NULL", "TRIM(magaza) <> ''"]
+    params: Dict[str, Any] = {}
+    if bolge:
+        conds.append("bolge_muduru ILIKE :bolge")
+        params["bolge"] = f"%{bolge}%"
+    if magaza:
+        conds.append("magaza ILIKE :magaza")
+        params["magaza"] = f"%{magaza}%"
+    where = " AND ".join(conds)
+
     try:
-        r = await session.execute(text("""
+        r = await session.execute(text(f"""
             SELECT
                 yil::integer AS yil,
                 ay::integer  AS ay,
@@ -54,10 +67,10 @@ async def run_kiyaslama_agent(session: AsyncSession, question: str,
                 ) AS ort_obf,
                 COUNT(DISTINCT magaza) AS magaza_sayisi
             FROM incorta_magaza_performans
-            WHERE magaza IS NOT NULL AND TRIM(magaza) <> ''
+            WHERE {where}
             GROUP BY yil::integer, ay::integer
             ORDER BY yil, ay
-        """))
+        """), params or None)
         rows = [{k: _to_native(v) for k, v in row.items()} for row in r.mappings().all()]
     except Exception:
         rows = []
