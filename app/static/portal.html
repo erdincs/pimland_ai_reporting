@@ -765,6 +765,9 @@ body,
       <div class="nav-item nav-sub" onclick="showSection('brief-profil')" id="nav-brief-profil">
         <span class="nav-icon">⚙️</span><span class="nav-text">Brief Profilleri</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showSection('soru-havuzu')" id="nav-soru-havuzu">
+        <span class="nav-icon">📚</span><span class="nav-text">Soru Havuzu</span>
+      </div>
     </div>
 
     <div class="nav-group-hdr" id="grp-other" onclick="toggleNavGroup('other')">
@@ -2121,6 +2124,10 @@ body,
       <iframe id="iframe-brief-profil" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
     </div>
 
+    <div class="section" id="section-soru-havuzu" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
+      <iframe id="iframe-soru-havuzu" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
+    </div>
+
     <!-- Enrichment ürün detay modalı — section dışında (overflow:hidden bypass) -->
     <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
       <div class="enr-modal-box" id="enr-modal-box"></div>
@@ -2385,6 +2392,10 @@ function loadSection(id){
   else if(id==='brief-profil'){
     const f=document.getElementById('iframe-brief-profil');
     if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/brief-profilleri';}
+  }
+  else if(id==='soru-havuzu'){
+    const f=document.getElementById('iframe-soru-havuzu');
+    if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/soru-havuzu';}
   }
   if(id!=='monitoring') stopMonitoring();
 }
