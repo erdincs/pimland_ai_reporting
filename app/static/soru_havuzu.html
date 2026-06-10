@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pimland · Soru Havuzu Yönetimi</title>
+<script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;
+  --border:#2a2a3a;--border2:#333348;
+  --t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;
+  --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
+  --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;
+  --border:#dcdce8;--border2:#c4c4d8;
+  --t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-dot{width:7px;height:7px;background:var(--orange);border-radius:50%}
+.brand-name{font-size:13px;font-weight:600}
+.brand-mod{font-size:9px;color:var(--t3);padding:2px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.topbar-nav{display:flex;align-items:center;gap:6px}
+.topbar-link{color:var(--t2);text-decoration:none;padding:4px 10px;border-radius:5px;border:1px solid var(--border);font-size:11px;transition:all .15s}
+.topbar-link:hover{background:var(--bg3);color:var(--t1)}
+.topbar-link.active{background:rgba(255,107,43,.1);color:var(--orange);border-color:rgba(255,107,43,.3)}
+
+.app{display:flex;flex-direction:column;height:100vh}
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* SOL SIDEBAR */
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
+.sb-section{padding:10px 0}
+.sb-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:4px 14px 6px}
+.sb-item{display:flex;align-items:center;gap:7px;padding:7px 14px;cursor:pointer;transition:background .1s;border-radius:0}
+.sb-item:hover{background:var(--bg3)}
+.sb-item.active{background:rgba(255,107,43,.08);border-left:2px solid var(--orange);padding-left:12px}
+.sb-item-emoji{font-size:13px;flex-shrink:0}
+.sb-item-label{font-size:11px;color:var(--t2);flex:1;min-width:0}
+.sb-item.active .sb-item-label{color:var(--t1);font-weight:600}
+.sb-item-cnt{font-size:9px;color:var(--t3);background:var(--bg4);padding:1px 5px;border-radius:3px;flex-shrink:0}
+.sb-divider{height:1px;background:var(--border);margin:4px 0}
+
+/* STATS BAR */
+.stats-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:14px;align-items:center;flex-shrink:0}
+.stat-chip{display:flex;align-items:center;gap:5px;font-size:11px}
+.stat-num{font-size:14px;font-weight:700;font-family:'DM Mono',monospace}
+.stat-label{color:var(--t3);font-size:10px}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.stat-sep{width:1px;height:20px;background:var(--border)}
+.stat-chip.available .stat-dot{background:var(--green)}
+.stat-chip.available .stat-num{color:var(--green)}
+.stat-chip.partial .stat-dot{background:var(--yellow)}
+.stat-chip.partial .stat-num{color:var(--yellow)}
+.stat-chip.integration .stat-dot{background:var(--red)}
+.stat-chip.integration .stat-num{color:var(--red)}
+
+/* FİLTRE BAR */
+.filter-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.search-box{flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:12px;padding:6px 10px;border-radius:5px;outline:none;font-family:inherit}
+.search-box::placeholder{color:var(--t3)}
+.search-box:focus{border-color:var(--orange)}
+.filter-sel{background:var(--bg3);border:1px solid var(--border);color:var(--t2);font-size:11px;padding:5px 8px;border-radius:5px;outline:none;font-family:inherit;cursor:pointer}
+.filter-sel:focus{border-color:var(--orange)}
+.btn-add{background:var(--orange);color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit;white-space:nowrap}
+.btn-add:hover{background:#e55a20}
+
+/* ANA ALAN */
+.main{flex:1;overflow-y:auto;padding:16px 20px}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* KATEGORİ GRUBU */
+.cat-group{margin-bottom:24px}
+.cat-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cat-code-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(255,107,43,.1);color:var(--orange);border:1px solid rgba(255,107,43,.25);font-family:'DM Mono',monospace}
+.cat-title{font-size:13px;font-weight:600;color:var(--t1)}
+.cat-agent{font-size:10px;color:var(--t3);margin-left:auto;font-style:italic}
+.cat-count{font-size:10px;color:var(--t3);background:var(--bg4);padding:2px 6px;border-radius:3px}
+
+/* SORU KART */
+.q-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:7px;display:flex;gap:12px;align-items:flex-start;transition:border-color .12s}
+.q-card:hover{border-color:var(--border2)}
+.q-left{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;width:48px}
+.q-code{font-size:10px;font-weight:700;color:var(--t2);font-family:'DM Mono',monospace;background:var(--bg3);border:1px solid var(--border);padding:2px 4px;border-radius:3px;text-align:center}
+.q-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.q-status.available{background:var(--green)}
+.q-status.partial{background:var(--yellow)}
+.q-status.integration_needed{background:var(--red)}
+.q-body{flex:1;min-width:0}
+.q-text{font-size:12px;color:var(--t1);line-height:1.55;margin-bottom:8px}
+.q-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.2px}
+.tag-kritik{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.tag-yuksek{background:rgba(255,107,43,.10);color:var(--orange);border:1px solid rgba(255,107,43,.2)}
+.tag-orta{background:rgba(245,158,11,.08);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
+.tag-daily{background:rgba(0,194,168,.08);color:var(--teal);border:1px solid rgba(0,194,168,.2)}
+.tag-weekly{background:rgba(59,130,246,.08);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.tag-monthly{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.tag-cross{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.tag-agent{background:var(--bg4);color:var(--t2);border:1px solid var(--border)}
+.q-sources{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
+.src-chip{font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--border);padding:1px 6px;border-radius:3px;font-family:'DM Mono',monospace}
+.q-constraint{font-size:10px;color:var(--yellow);background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:4px;padding:4px 8px;margin-top:5px;line-height:1.4}
+.q-constraint::before{content:'⚠ ';font-weight:700}
+.q-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.btn-sm-pri{background:var(--orange);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-sm-pri:hover{background:#e55a20}
+.btn-sm-sec{background:transparent;border:1px solid var(--border);color:var(--t2);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit}
+.btn-sm-sec:hover{border-color:var(--border2);color:var(--t1)}
+.btn-sm-danger{background:transparent;border:1px solid var(--border);color:var(--red);padding:4px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit}
+.btn-sm-danger:hover{background:rgba(239,68,68,.07)}
+
+/* DURUM ETİKETLERİ */
+.status-label{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.2px}
+.status-available{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.status-partial{background:rgba(245,158,11,.1);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
+.status-integration_needed{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* BOŞLUK */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:12px;color:var(--t3)}
+.empty-icon{font-size:40px}
+.empty-title{font-size:13px;font-weight:600;color:var(--t2)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-bg.hidden{display:none}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:14px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.modal-close:hover{background:var(--bg3);color:var(--t1)}
+.modal-body{flex:1;overflow-y:auto;padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);color:var(--t1);font-size:12px;padding:7px 10px;border-radius:5px;outline:none;font-family:inherit;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--orange)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-hint{font-size:10px;color:var(--t3)}
+
+/* BRIEF'E EKLE MODAL */
+.profile-select-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+.profile-select-item{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;cursor:pointer;transition:all .1s}
+.profile-select-item:hover{border-color:var(--border2);background:var(--bg4)}
+.profile-select-item.selected{border-color:var(--orange);background:rgba(255,107,43,.04)}
+.psi-name{font-size:12px;font-weight:600;color:var(--t1)}
+.psi-role{font-size:10px;color:var(--t3);margin-top:2px}
+.schedule-select-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;margin-top:10px}
+.schedule-select-item{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.schedule-select-item:hover{border-color:var(--border2)}
+.schedule-select-item.selected{border-color:var(--orange);background:rgba(255,107,43,.04)}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">Pimland</span>
+    <span class="brand-mod">Soru Havuzu</span>
+  </div>
+  <div class="topbar-nav">
+    <a href="/api/v1/portal/yonetim/brief-profilleri" class="topbar-link">Profil Yönetimi</a>
+    <a href="/api/v1/portal/yonetim/soru-havuzu" class="topbar-link active">Soru Havuzu</a>
+    <a href="/api/v1/portal" style="font-size:11px;color:var(--t3);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:5px;margin-left:4px">← Portal</a>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SOL SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-section">
+    <div class="sb-title">Departman</div>
+    <div class="sb-item active" data-dept="" onclick="selectDept(this, '')">
+      <span class="sb-item-emoji">🏢</span>
+      <span class="sb-item-label">Tümü</span>
+      <span class="sb-item-cnt" id="cnt-all">—</span>
+    </div>
+    <div class="sb-item" data-dept="eticaret" onclick="selectDept(this, 'eticaret')">
+      <span class="sb-item-emoji">🛒</span>
+      <span class="sb-item-label">E-Ticaret</span>
+      <span class="sb-item-cnt" id="cnt-eticaret">—</span>
+    </div>
+    <div class="sb-item" style="opacity:.45;cursor:not-allowed" title="Yakında">
+      <span class="sb-item-emoji">🏪</span>
+      <span class="sb-item-label">Mağaza Satış</span>
+      <span class="sb-item-cnt">—</span>
+    </div>
+    <div class="sb-item" style="opacity:.45;cursor:not-allowed" title="Yakında">
+      <span class="sb-item-emoji">📦</span>
+      <span class="sb-item-label">Ürün Yönetimi</span>
+      <span class="sb-item-cnt">—</span>
+    </div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-title">Kategori</div>
+    <div id="sidebar-cats"></div>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-title">Veri Durumu</div>
+    <div class="sb-item" data-status="" onclick="selectStatus(this, '')">
+      <span class="sb-item-emoji">📊</span>
+      <span class="sb-item-label">Tümü</span>
+    </div>
+    <div class="sb-item" data-status="available" onclick="selectStatus(this, 'available')">
+      <span style="width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block"></span>
+      <span class="sb-item-label">Yanıtlanabilir</span>
+      <span class="sb-item-cnt" id="cnt-available">—</span>
+    </div>
+    <div class="sb-item" data-status="partial" onclick="selectStatus(this, 'partial')">
+      <span style="width:8px;height:8px;background:var(--yellow);border-radius:50%;display:inline-block"></span>
+      <span class="sb-item-label">Kısmi</span>
+      <span class="sb-item-cnt" id="cnt-partial">—</span>
+    </div>
+    <div class="sb-item" data-status="integration_needed" onclick="selectStatus(this, 'integration_needed')">
+      <span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block"></span>
+      <span class="sb-item-label">Entegrasyon Gerekli</span>
+      <span class="sb-item-cnt" id="cnt-integration">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- ANA ALAN -->
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+  <!-- STATS -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-chip">
+      <span class="stat-num" id="st-total">—</span>
+      <span class="stat-label">toplam soru</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-chip available">
+      <span class="stat-dot"></span>
+      <span class="stat-num" id="st-available">—</span>
+      <span class="stat-label">yanıtlanabilir</span>
+    </div>
+    <div class="stat-chip partial">
+      <span class="stat-dot"></span>
+      <span class="stat-num" id="st-partial">—</span>
+      <span class="stat-label">kısmi</span>
+    </div>
+    <div class="stat-chip integration">
+      <span class="stat-dot"></span>
+      <span class="stat-num" id="st-integration">—</span>
+      <span class="stat-label">entegrasyon gerekli</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-chip" style="margin-left:auto;gap:6px">
+      <span style="font-size:10px;color:var(--t3)">Frekans:</span>
+      <span id="st-daily" style="font-size:10px;color:var(--teal)">—</span><span style="font-size:10px;color:var(--t3)">günlük ·</span>
+      <span id="st-weekly" style="font-size:10px;color:var(--blue)">—</span><span style="font-size:10px;color:var(--t3)">haftalık ·</span>
+      <span id="st-monthly" style="font-size:10px;color:var(--purple)">—</span><span style="font-size:10px;color:var(--t3)">aylık</span>
+    </div>
+  </div>
+
+  <!-- FİLTRE BAR -->
+  <div class="filter-bar">
+    <input class="search-box" id="search-box" placeholder="Soru ara..." oninput="debouncedLoad()">
+    <select class="filter-sel" id="f-freq" onchange="loadQuestions()">
+      <option value="">Tüm Frekanslar</option>
+      <option value="daily">Günlük</option>
+      <option value="weekly">Haftalık</option>
+      <option value="monthly">Aylık</option>
+    </select>
+    <select class="filter-sel" id="f-imp" onchange="loadQuestions()">
+      <option value="">Tüm Öncelikler</option>
+      <option value="kritik">Kritik</option>
+      <option value="yuksek">Yüksek</option>
+      <option value="orta">Orta</option>
+    </select>
+    <button class="btn-add" onclick="openAddModal()">+ Soru Ekle</button>
+  </div>
+
+  <!-- SORULAR -->
+  <div class="main" id="main-content">
+    <div class="empty-state">
+      <div class="empty-icon">⏳</div>
+      <div class="empty-title">Yükleniyor...</div>
+    </div>
+  </div>
+
+</div><!-- /main area -->
+</div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: YENİ SORU EKLE                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-bg hidden" id="modal-add">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="add-modal-title">Yeni Soru Ekle</span>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Soru Metni *</label>
+          <textarea class="form-textarea" id="aq-text" rows="3" placeholder="Brief'te sorulacak soruyu yazın..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori Kodu</label>
+          <select class="form-select" id="aq-catcode">
+            <option value="A">A — Satış Performansı</option>
+            <option value="B">B — Ürün ve Katalog</option>
+            <option value="C">C — Müşteri Deneyimi</option>
+            <option value="D">D — Pazarlama ve Kanal</option>
+            <option value="E">E — Operasyon ve Lojistik</option>
+            <option value="F">F — Katalog Kalitesi / PIM</option>
+            <option value="G">G — Ekip Yönetimi</option>
+            <option value="H">H — Rekabet ve Pazar</option>
+            <option value="I">I — Teknoloji ve Site Sağlığı</option>
+            <option value="J">J — Stratejik ve Finansal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Soru Kodu</label>
+          <input class="form-input" id="aq-code" placeholder="örn: A16">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Agent</label>
+          <select class="form-select" id="aq-agent">
+            <option value="eticaret">EticaretAgent</option>
+            <option value="urun_yonetimi">EnrichmentAgent</option>
+            <option value="kiyaslama">KiyaslamaAgent</option>
+            <option value="satis">SatışAgent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Öncelik</label>
+          <select class="form-select" id="aq-imp">
+            <option value="kritik">Kritik</option>
+            <option value="yuksek">Yüksek</option>
+            <option value="orta" selected>Orta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frekans</label>
+          <select class="form-select" id="aq-freq">
+            <option value="daily">Günlük</option>
+            <option value="weekly">Haftalık</option>
+            <option value="monthly">Aylık</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Veri Durumu</label>
+          <select class="form-select" id="aq-status">
+            <option value="available">🟢 Yanıtlanabilir</option>
+            <option value="partial">🟡 Kısmi</option>
+            <option value="integration_needed">🔴 Entegrasyon Gerekli</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Veri Kaynakları</label>
+          <input class="form-input" id="aq-sources" placeholder="incorta_satis, pim, enrichment_quality (virgülle ayır)">
+          <span class="form-hint">Virgülle ayrılmış kaynak listesi</span>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Kısıt / Not</label>
+          <textarea class="form-textarea" id="aq-constraint" rows="2" placeholder="Mevcut sınırlamalar veya ⚠️ notlar..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm-sec" onclick="closeAddModal()" style="padding:6px 14px;font-size:11px">İptal</button>
+      <button class="btn-add" onclick="submitAdd()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: BRIEF'E EKLE                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal-bg hidden" id="modal-brief-add">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hdr">
+      <span class="modal-title">Brief'e Ekle</span>
+      <button class="modal-close" onclick="closeBriefModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px;padding:8px 10px;background:var(--bg3);border-radius:5px;border:1px solid var(--border)" id="brief-add-q-preview"></div>
+      <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Profil Seç</div>
+      <div class="profile-select-list" id="profile-select-list"></div>
+      <div id="schedule-select-wrap" style="display:none;margin-top:12px">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Zamanlama Seç</div>
+        <div class="schedule-select-list" id="schedule-select-list"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm-sec" onclick="closeBriefModal()" style="padding:6px 14px;font-size:11px">İptal</button>
+      <button class="btn-add" onclick="confirmBriefAdd()" id="btn-confirm-brief">Ekle</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1/daily-brief';
+
+if(window.self !== window.top){
+  document.querySelector('.topbar').style.display = 'none';
+}
+window.addEventListener('message', e => {
+  if(e.data?.type === 'theme')
+    document.documentElement.setAttribute('data-theme', e.data.value || 'dark');
+});
+
+// ── Durum ─────────────────────────────────────────────────────────────────────
+let _dept = '';
+let _category = '';
+let _status = '';
+let _stats = null;
+let _allProfiles = [];
+let _briefAddQuestion = null;
+let _selectedProfileId = null;
+let _selectedScheduleId = null;
+let _editingId = null;
+
+const FREQ_LABEL = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık'};
+const FREQ_TAG = {daily:'tag-daily', weekly:'tag-weekly', monthly:'tag-monthly'};
+const IMP_TAG = {kritik:'tag-kritik', yuksek:'tag-yuksek', orta:'tag-orta'};
+const STATUS_LABEL = {available:'Yanıtlanabilir', partial:'Kısmi', integration_needed:'Entegrasyon Gerekli'};
+const STATUS_CLS = {available:'status-available', partial:'status-partial', integration_needed:'status-integration_needed'};
+const CAT_EMOJIS = {A:'📈',B:'📦',C:'👥',D:'📢',E:'🚚',F:'🔍',G:'👤',H:'🏆',I:'⚙️',J:'🎯'};
+
+// ── Yükle ─────────────────────────────────────────────────────────────────────
+async function init(){
+  await Promise.all([loadStats(), loadQuestions(), loadProfiles()]);
+}
+
+async function loadStats(){
+  try {
+    const d = await fetch(`${API}/library/stats`).then(r => r.json());
+    _stats = d;
+    const dept = d.by_department?.[0] || {};
+    const total = d.by_department?.reduce((s,r)=>s+(parseInt(r.total)||0),0) || 0;
+    const available = d.by_department?.reduce((s,r)=>s+(parseInt(r.available)||0),0) || 0;
+    const partial = d.by_department?.reduce((s,r)=>s+(parseInt(r.partial)||0),0) || 0;
+    const integration = d.by_department?.reduce((s,r)=>s+(parseInt(r.integration_needed)||0),0) || 0;
+    const daily = d.by_department?.reduce((s,r)=>s+(parseInt(r.daily)||0),0) || 0;
+    const weekly = d.by_department?.reduce((s,r)=>s+(parseInt(r.weekly)||0),0) || 0;
+    const monthly = d.by_department?.reduce((s,r)=>s+(parseInt(r.monthly)||0),0) || 0;
+    document.getElementById('st-total').textContent = total;
+    document.getElementById('st-available').textContent = available;
+    document.getElementById('st-partial').textContent = partial;
+    document.getElementById('st-integration').textContent = integration;
+    document.getElementById('st-daily').textContent = daily;
+    document.getElementById('st-weekly').textContent = weekly;
+    document.getElementById('st-monthly').textContent = monthly;
+    document.getElementById('cnt-all').textContent = total;
+    document.getElementById('cnt-eticaret').textContent = 122;
+    document.getElementById('cnt-available').textContent = available;
+    document.getElementById('cnt-partial').textContent = partial;
+    document.getElementById('cnt-integration').textContent = integration;
+    renderSidebarCats(d.by_category || []);
+  } catch(e){ console.error('loadStats', e); }
+}
+
+function renderSidebarCats(cats){
+  const el = document.getElementById('sidebar-cats');
+  el.innerHTML = [
+    `<div class="sb-item ${!_category?'':''}" onclick="selectCat(this, '')" data-cat="">
+      <span class="sb-item-emoji">📋</span>
+      <span class="sb-item-label">Tüm Kategoriler</span>
+    </div>`
+  ].concat(cats.map(c => `
+    <div class="sb-item ${_category===c.category_code?'active':''}" onclick="selectCat(this,'${c.category_code}')" data-cat="${c.category_code}">
+      <span class="sb-item-emoji">${CAT_EMOJIS[c.category_code]||'📄'}</span>
+      <span class="sb-item-label">${c.category_code}. ${(c.category||'').replace(/^[A-Z]\. /,'').substring(0,22)}</span>
+      <span class="sb-item-cnt">${c.cnt}</span>
+    </div>`
+  )).join('');
+}
+
+async function loadProfiles(){
+  try {
+    const d = await fetch(`${API}/profiles`).then(r => r.json());
+    _allProfiles = d.profiles || [];
+  } catch(e){}
+}
+
+async function loadQuestions(){
+  const q = document.getElementById('search-box')?.value || '';
+  const freq = document.getElementById('f-freq')?.value || '';
+  const imp = document.getElementById('f-imp')?.value || '';
+  const params = new URLSearchParams();
+  if(_dept) params.set('department', _dept);
+  if(_category) params.set('category', _category);
+  if(_status) params.set('data_status', _status);
+  if(freq) params.set('frequency', freq);
+  if(imp) params.set('importance', imp);
+  if(q) params.set('q', q);
+  try {
+    const d = await fetch(`${API}/library/questions?${params}`).then(r => r.json());
+    renderQuestions(d.library || {}, d.total || 0);
+  } catch(e){ console.error('loadQuestions', e); }
+}
+
+function renderQuestions(library, total){
+  const main = document.getElementById('main-content');
+  const cats = Object.entries(library);
+  if(!cats.length){
+    main.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Soru bulunamadı</div>
+    </div>`;
+    return;
+  }
+  main.innerHTML = cats.map(([catName, qs]) => {
+    const catCode = qs[0]?.category_code || '';
+    const agentLabel = qs[0]?.agent_label || '';
+    return `<div class="cat-group" id="cat-${catCode}">
+      <div class="cat-header">
+        <span class="cat-code-badge">${catCode||'?'}</span>
+        <span class="cat-title">${catName}</span>
+        <span class="cat-count">${qs.length} soru</span>
+        <span class="cat-agent">${agentLabel}</span>
+      </div>
+      ${qs.map(q => renderQCard(q)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderQCard(q){
+  const sources = (q.data_sources || []);
+  const statusLabel = STATUS_LABEL[q.data_status] || q.data_status;
+  const statusCls = STATUS_CLS[q.data_status] || '';
+  return `<div class="q-card" data-qid="${q.id}">
+    <div class="q-left">
+      <span class="q-code">${q.question_code||'—'}</span>
+      <span class="q-status ${q.data_status||'available'}" title="${statusLabel}"></span>
+    </div>
+    <div class="q-body">
+      <div class="q-text">${q.question_text}</div>
+      <div class="q-tags">
+        <span class="tag ${IMP_TAG[q.importance]||''}">${q.importance||'orta'}</span>
+        <span class="tag ${FREQ_TAG[q.frequency]||'tag-daily'}">${FREQ_LABEL[q.frequency]||q.frequency}</span>
+        <span class="status-label ${statusCls}">${statusLabel}</span>
+        ${q.is_cross_domain?'<span class="tag tag-cross">Çapraz</span>':''}
+        <span class="tag tag-agent">${q.agent_label||q.agent}</span>
+      </div>
+      ${sources.length?`<div class="q-sources">${sources.map(s=>`<span class="src-chip">${s}</span>`).join('')}</div>`:''}
+      ${q.constraints_note?`<div class="q-constraint">${q.constraints_note}</div>`:''}
+    </div>
+    <div class="q-actions">
+      <button class="btn-sm-pri" onclick="openBriefAddModal(${q.id})" title="Brief'e ekle">+ Brief'e</button>
+      <button class="btn-sm-sec" onclick="openEditModal(${q.id})" title="Düzenle">✏</button>
+      <button class="btn-sm-danger" onclick="deleteQuestion(${q.id})" title="Sil">×</button>
+    </div>
+  </div>`;
+}
+
+// ── FİLTRELER ─────────────────────────────────────────────────────────────────
+
+function selectDept(el, dept){
+  _dept = dept;
+  document.querySelectorAll('[data-dept]').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  loadQuestions();
+}
+
+function selectCat(el, cat){
+  _category = cat;
+  document.querySelectorAll('[data-cat]').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  loadQuestions();
+}
+
+function selectStatus(el, status){
+  _status = status;
+  document.querySelectorAll('[data-status]').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  loadQuestions();
+}
+
+let _debTimer;
+function debouncedLoad(){ clearTimeout(_debTimer); _debTimer = setTimeout(loadQuestions, 280); }
+
+// ── EKLE / DÜZENLE MODAL ──────────────────────────────────────────────────────
+
+function openAddModal(){
+  _editingId = null;
+  document.getElementById('add-modal-title').textContent = 'Yeni Soru Ekle';
+  document.getElementById('aq-text').value = '';
+  document.getElementById('aq-code').value = '';
+  document.getElementById('aq-sources').value = '';
+  document.getElementById('aq-constraint').value = '';
+  document.getElementById('aq-status').value = 'available';
+  document.getElementById('aq-imp').value = 'orta';
+  document.getElementById('aq-freq').value = 'daily';
+  document.getElementById('modal-add').classList.remove('hidden');
+  document.getElementById('aq-text').focus();
+}
+
+function openEditModal(qid){
+  const card = document.querySelector(`[data-qid="${qid}"]`);
+  if(!card) return;
+  const text = card.querySelector('.q-text')?.textContent || '';
+  _editingId = qid;
+  document.getElementById('add-modal-title').textContent = 'Soruyu Düzenle';
+  document.getElementById('aq-text').value = text;
+  document.getElementById('modal-add').classList.remove('hidden');
+  document.getElementById('aq-text').focus();
+}
+
+function closeAddModal(){
+  document.getElementById('modal-add').classList.add('hidden');
+  _editingId = null;
+}
+
+async function submitAdd(){
+  const text = document.getElementById('aq-text').value.trim();
+  if(!text){ alert('Soru metni boş olamaz'); return; }
+  const sourcesRaw = document.getElementById('aq-sources').value;
+  const sources = sourcesRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const catCode = document.getElementById('aq-catcode').value;
+  const catLabels = {A:'Satış Performansı',B:'Ürün ve Katalog Yönetimi',C:'Müşteri Deneyimi',D:'Pazarlama ve Kanal Yönetimi',E:'Operasyon ve Lojistik',F:'Katalog Kalitesi ve PIM',G:'Ekip Yönetimi ve Süreç Kontrolü',H:'Rekabet ve Pazar',I:'Teknoloji ve Site Sağlığı',J:'Stratejik ve Finansal'};
+  const payload = {
+    question_text:    text,
+    question_code:    document.getElementById('aq-code').value.trim() || null,
+    category_code:    catCode,
+    category:         catLabels[catCode] || catCode,
+    agent:            document.getElementById('aq-agent').value,
+    importance:       document.getElementById('aq-imp').value,
+    frequency:        document.getElementById('aq-freq').value,
+    data_status:      document.getElementById('aq-status').value,
+    data_sources:     sources,
+    constraints_note: document.getElementById('aq-constraint').value.trim() || null,
+    department:       _dept || 'eticaret',
+  };
+  if(_editingId){
+    await fetch(`${API}/library/questions/${_editingId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } else {
+    await fetch(`${API}/library/questions`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  }
+  closeAddModal();
+  await Promise.all([loadStats(), loadQuestions()]);
+}
+
+async function deleteQuestion(qid){
+  if(!confirm('Bu soruyu havuzdan silmek istiyor musunuz?')) return;
+  await fetch(`${API}/library/questions/${qid}`, {method:'DELETE'});
+  await Promise.all([loadStats(), loadQuestions()]);
+}
+
+// ── BRIEF'E EKLE ──────────────────────────────────────────────────────────────
+
+function openBriefAddModal(qid){
+  const card = document.querySelector(`[data-qid="${qid}"]`);
+  if(!card) return;
+  _briefAddQuestion = { id: qid, text: card.querySelector('.q-text')?.textContent || '' };
+  _selectedProfileId = null;
+  _selectedScheduleId = null;
+  document.getElementById('brief-add-q-preview').textContent = _briefAddQuestion.text;
+  document.getElementById('schedule-select-wrap').style.display = 'none';
+  const list = document.getElementById('profile-select-list');
+  if(!_allProfiles.length){
+    list.innerHTML = '<div style="padding:12px;color:var(--t3);font-size:11px">Henüz profil yok. Önce profil oluşturun.</div>';
+  } else {
+    list.innerHTML = _allProfiles.map(p => `
+      <div class="profile-select-item" data-pid="${p.id}" onclick="selectProfileForBrief(${p.id})">
+        <div class="psi-name">${p.name}</div>
+        <div class="psi-role">${p.role||''} · ${p.schedule_count||0} zamanlama</div>
+      </div>`).join('');
+  }
+  document.getElementById('modal-brief-add').classList.remove('hidden');
+}
+
+async function selectProfileForBrief(pid){
+  _selectedProfileId = pid;
+  _selectedScheduleId = null;
+  document.querySelectorAll('.profile-select-item').forEach(e => {
+    e.classList.toggle('selected', parseInt(e.dataset.pid) === pid);
+  });
+  try {
+    const d = await fetch(`${API}/profiles/${pid}`).then(r=>r.json());
+    const scheds = d.schedules || [];
+    const wrap = document.getElementById('schedule-select-wrap');
+    const list = document.getElementById('schedule-select-list');
+    if(scheds.length){
+      const FREQ_ICONS = {daily:'☀️',weekly:'📅',monthly:'📊',adhoc:'⚡'};
+      list.innerHTML = scheds.map(s => `
+        <div class="schedule-select-item" data-sid="${s.id}" onclick="selectSchedule(${s.id})">
+          <span>${FREQ_ICONS[s.frequency_type]||'📋'}</span>
+          <span style="font-size:11px;font-weight:600;color:var(--t1)">${s.name}</span>
+          <span style="font-size:10px;color:var(--t3);margin-left:auto">${s.question_count||0} soru</span>
+        </div>`).join('');
+      wrap.style.display = '';
+    } else {
+      wrap.style.display = 'none';
+    }
+  } catch(e){}
+}
+
+function selectSchedule(sid){
+  _selectedScheduleId = sid;
+  document.querySelectorAll('.schedule-select-item').forEach(e => {
+    e.classList.toggle('selected', parseInt(e.dataset.sid) === sid);
+  });
+}
+
+async function confirmBriefAdd(){
+  if(!_selectedScheduleId){ alert('Önce bir zamanlama seçin'); return; }
+  if(!_briefAddQuestion) return;
+  const card = document.querySelector(`[data-qid="${_briefAddQuestion.id}"]`);
+  const agentEl = card?.querySelector('.tag-agent');
+  const agentText = (agentEl?.textContent||'').toLowerCase();
+  const agentMap = {eticaret:'eticaret', urun:'urun_yonetimi', kiyaslama:'kiyaslama', satis:'satis'};
+  let agent = 'eticaret';
+  for(const [k,v] of Object.entries(agentMap)){
+    if(agentText.includes(k)){ agent = v; break; }
+  }
+  await fetch(`${API}/schedules/${_selectedScheduleId}/questions`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      question_text: _briefAddQuestion.text,
+      agent,
+      importance: card?.querySelector('.tag')?.textContent?.toLowerCase() || 'orta',
+    })
+  });
+  closeBriefModal();
+  alert('✓ Soru zamanlamaya eklendi');
+}
+
+function closeBriefModal(){
+  document.getElementById('modal-brief-add').classList.add('hidden');
+  _briefAddQuestion = null;
+  _selectedProfileId = null;
+  _selectedScheduleId = null;
+}
+
+// ── BAŞLAT ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

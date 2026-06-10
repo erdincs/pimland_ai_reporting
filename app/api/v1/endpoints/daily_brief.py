@@ -583,24 +583,152 @@ async def delete_schedule(
 async def list_question_library(
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
     category: Optional[str] = None,
+    department: Optional[str] = None,
+    data_status: Optional[str] = None,
+    frequency: Optional[str] = None,
+    importance: Optional[str] = None,
+    q: Optional[str] = None,
 ) -> dict:
+    where = ["is_active = true"]
+    params: Dict[str, Any] = {}
     if category:
-        rows = (await session.execute(text("""
-            SELECT * FROM brief_question_library
-            WHERE is_active = true AND category = :cat
-            ORDER BY usage_count DESC, id
-        """), {"cat": category})).mappings().all()
-    else:
-        rows = (await session.execute(text("""
-            SELECT * FROM brief_question_library
-            WHERE is_active = true
-            ORDER BY category, usage_count DESC, id
-        """))).mappings().all()
+        where.append("category_code = :cat"); params["cat"] = category
+    if department:
+        where.append("department = :dept"); params["dept"] = department
+    if data_status:
+        where.append("data_status = :ds"); params["ds"] = data_status
+    if frequency:
+        where.append("frequency = :freq"); params["freq"] = frequency
+    if importance:
+        where.append("importance = :imp"); params["imp"] = importance
+    if q:
+        where.append("question_text ILIKE :q"); params["q"] = f"%{q}%"
+
+    rows = (await session.execute(text(f"""
+        SELECT * FROM brief_question_library
+        WHERE {' AND '.join(where)}
+        ORDER BY category_code, sort_order, id
+    """), params)).mappings().all()
 
     grouped: Dict[str, List] = {}
     for r in rows:
-        grouped.setdefault(r["category"], []).append(dict(r))
+        grouped.setdefault(r["category"] or r["category_code"] or "Diğer", []).append(dict(r))
     return {"library": grouped, "total": len(rows)}
+
+
+@router.get("/library/stats")
+async def library_stats(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> dict:
+    rows = (await session.execute(text("""
+        SELECT
+            department,
+            COUNT(*) FILTER (WHERE is_active) AS total,
+            COUNT(*) FILTER (WHERE data_status = 'available' AND is_active) AS available,
+            COUNT(*) FILTER (WHERE data_status = 'partial' AND is_active) AS partial,
+            COUNT(*) FILTER (WHERE data_status = 'integration_needed' AND is_active) AS integration_needed,
+            COUNT(*) FILTER (WHERE frequency = 'daily' AND is_active) AS daily,
+            COUNT(*) FILTER (WHERE frequency = 'weekly' AND is_active) AS weekly,
+            COUNT(*) FILTER (WHERE frequency = 'monthly' AND is_active) AS monthly
+        FROM brief_question_library
+        GROUP BY department
+    """))).mappings().all()
+
+    cat_rows = (await session.execute(text("""
+        SELECT category_code, category, COUNT(*) AS cnt,
+               COUNT(*) FILTER (WHERE data_status = 'available') AS available,
+               COUNT(*) FILTER (WHERE data_status = 'partial') AS partial,
+               COUNT(*) FILTER (WHERE data_status = 'integration_needed') AS integration_needed
+        FROM brief_question_library
+        WHERE is_active = true
+        GROUP BY category_code, category
+        ORDER BY category_code
+    """))).mappings().all()
+
+    return {
+        "by_department": [dict(r) for r in rows],
+        "by_category": [dict(r) for r in cat_rows],
+    }
+
+
+@router.post("/library/questions")
+async def create_library_question(
+    payload: dict,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    result = await session.execute(text("""
+        INSERT INTO brief_question_library
+          (question_code, category_code, category, department, agent, agent_label,
+           question_text, importance, frequency, data_status, data_sources,
+           constraints_note, is_cross_domain, sort_order)
+        VALUES
+          (:code, :cat_code, :category, :dept, :agent, :agent_label,
+           :text, :imp, :freq, :status, CAST(:sources AS JSONB),
+           :constraint, :cross, :sort)
+        RETURNING id
+    """), {
+        "code":        payload.get("question_code"),
+        "cat_code":    payload.get("category_code"),
+        "category":    payload.get("category", ""),
+        "dept":        payload.get("department", "eticaret"),
+        "agent":       payload.get("agent", "eticaret"),
+        "agent_label": payload.get("agent_label"),
+        "text":        payload["question_text"],
+        "imp":         payload.get("importance", "orta"),
+        "freq":        payload.get("frequency", "daily"),
+        "status":      payload.get("data_status", "available"),
+        "sources":     _j(payload.get("data_sources", [])),
+        "constraint":  payload.get("constraints_note"),
+        "cross":       payload.get("is_cross_domain", False),
+        "sort":        payload.get("sort_order", 0),
+    })
+    new_id = result.scalar()
+    await session.commit()
+    return {"id": new_id, "message": "Soru eklendi"}
+
+
+@router.put("/library/questions/{lib_id}")
+async def update_library_question(
+    lib_id: int,
+    payload: dict,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    _ALLOWED = {
+        "question_text", "importance", "frequency", "data_status",
+        "data_sources", "constraints_note", "agent", "agent_label",
+        "category", "category_code", "department", "is_cross_domain",
+        "sort_order", "is_active", "question_code",
+    }
+    updates = {k: v for k, v in payload.items() if k in _ALLOWED}
+    if not updates:
+        return {"message": "Güncelleme yok"}
+    parts, params = [], {"lid": lib_id}
+    for key, value in updates.items():
+        if key == "data_sources":
+            parts.append("data_sources = CAST(:data_sources AS JSONB)")
+            params["data_sources"] = _j(value)
+        else:
+            parts.append(f"{key} = :{key}")
+            params[key] = value
+    await session.execute(
+        text(f"UPDATE brief_question_library SET {', '.join(parts)} WHERE id = :lid"),
+        params,
+    )
+    await session.commit()
+    return {"message": "Soru güncellendi"}
+
+
+@router.delete("/library/questions/{lib_id}")
+async def delete_library_question(
+    lib_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    await session.execute(
+        text("DELETE FROM brief_question_library WHERE id = :lid"),
+        {"lid": lib_id},
+    )
+    await session.commit()
+    return {"message": "Soru silindi"}
 
 
 @router.post("/schedules/{schedule_id}/questions")

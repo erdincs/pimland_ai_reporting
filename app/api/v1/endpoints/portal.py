@@ -46,6 +46,13 @@ async def brief_profiles_html() -> HTMLResponse:
     return HTMLResponse(content=p.read_text(encoding="utf-8"))
 
 
+@router.get("/yonetim/soru-havuzu", response_class=HTMLResponse)
+async def soru_havuzu_html() -> HTMLResponse:
+    """Soru Havuzu Yönetimi — teknik admin ekranı."""
+    p = _STATIC / "soru_havuzu.html"
+    return HTMLResponse(content=p.read_text(encoding="utf-8"))
+
+
 @router.get("/search", response_class=HTMLResponse)
 async def search_html() -> HTMLResponse:
     """AI Search Engine — ayrı standalone sayfa."""
