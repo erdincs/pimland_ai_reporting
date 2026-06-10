@@ -1,4 +1,4 @@
-"""Daily Brief Orchestrator — agent sorularını paralel çalıştırır, DB'ye yazar."""
+"""Daily Brief Orchestrator — schedule sorularını paralel çalıştırır, DB'ye yazar."""
 from __future__ import annotations
 
 import asyncio
@@ -20,17 +20,17 @@ from app.services.reporting.utils.date_context import get_date_context
 _AGENTS_WITH_TON = {"satis", "eticaret", "urun_yonetimi"}
 
 _AGENT_FUNCS = {
-    "satis":          run_magaza_agent,
-    "eticaret":       run_eticaret_agent,
-    "kiyaslama":      run_kiyaslama_agent,
-    "urun_yonetimi":  run_urun_yonetimi_agent,
+    "satis":         run_magaza_agent,
+    "eticaret":      run_eticaret_agent,
+    "kiyaslama":     run_kiyaslama_agent,
+    "urun_yonetimi": run_urun_yonetimi_agent,
 }
 
 _DEFAULT_FILTERS: Dict[str, Any] = {"yil": 2026}
 
 
 async def generate_brief(
-    profile_id: int,
+    schedule_id: int,
     session: AsyncSession,
     target_date: Optional[date] = None,
 ) -> dict:
@@ -38,28 +38,32 @@ async def generate_brief(
     if not target_date:
         target_date = date.today()
 
-    row = (await session.execute(
-        text("SELECT * FROM brief_profiles WHERE id = :pid"),
-        {"pid": profile_id},
-    )).mappings().first()
-    if not row:
-        return {"hata": "Profil bulunamadı"}
-    profile = dict(row)
-    if not profile.get("is_active"):
-        return {"hata": "Profil pasif"}
+    # Zamanlama + profil bilgisi
+    row = (await session.execute(text("""
+        SELECT s.*, p.id AS profile_id, p.name AS profile_name,
+               p.timezone, p.tenant_id, p.is_active AS profile_active
+        FROM brief_schedules s
+        JOIN brief_profiles p ON p.id = s.profile_id
+        WHERE s.id = :sid
+    """), {"sid": schedule_id})).mappings().first()
 
-    q_rows = (await session.execute(
-        text("""
-            SELECT * FROM brief_questions
-            WHERE profile_id = :pid AND is_active = true
-            ORDER BY
-              CASE importance
-                WHEN 'kritik' THEN 1 WHEN 'yuksek' THEN 2 WHEN 'orta' THEN 3 ELSE 4
-              END,
-              sort_order
-        """),
-        {"pid": profile_id},
-    )).mappings().all()
+    if not row:
+        return {"hata": "Zamanlama bulunamadı"}
+    schedule = dict(row)
+    if not schedule.get("is_active") or not schedule.get("profile_active"):
+        return {"hata": "Zamanlama veya profil pasif"}
+
+    profile_id = schedule["profile_id"]
+
+    q_rows = (await session.execute(text("""
+        SELECT * FROM brief_questions
+        WHERE schedule_id = :sid AND is_active = true
+        ORDER BY
+          CASE importance
+            WHEN 'kritik' THEN 1 WHEN 'yuksek' THEN 2 WHEN 'orta' THEN 3 ELSE 4
+          END,
+          sort_order
+    """), {"sid": schedule_id})).mappings().all()
     questions = [dict(q) for q in q_rows]
 
     weekday = target_date.isoweekday()
@@ -74,7 +78,7 @@ async def generate_brief(
 
     date_ctx = get_date_context()
     tasks = [
-        _run_agent_questions(agent_name, qs, session, date_ctx, profile)
+        _run_agent_questions(agent_name, qs, session, date_ctx, schedule)
         for agent_name, qs in grouped.items()
         if agent_name in _AGENT_FUNCS
     ]
@@ -86,7 +90,6 @@ async def generate_brief(
     except asyncio.TimeoutError:
         results = []
 
-    # Agents only read; rollback resets any aborted transaction state
     await session.rollback()
 
     all_answers: List[Dict] = []
@@ -100,22 +103,20 @@ async def generate_brief(
             "sure_ms":     r["duration_ms"],
         }
 
-    cl_rows = (await session.execute(
-        text("""
-            SELECT ci.*, cs.is_done, cs.done_at
-            FROM brief_checklist_items ci
-            LEFT JOIN brief_checklist_state cs
-              ON cs.item_id = ci.id AND cs.check_date = :chk
-            WHERE ci.profile_id = :pid AND ci.is_active = true
-            ORDER BY ci.sort_order
-        """),
-        {"pid": profile_id, "chk": target_date},
-    )).mappings().all()
+    # Profil düzeyindeki checklist
+    cl_rows = (await session.execute(text("""
+        SELECT ci.*, cs.is_done, cs.done_at
+        FROM brief_checklist_items ci
+        LEFT JOIN brief_checklist_state cs
+          ON cs.item_id = ci.id AND cs.check_date = :chk
+        WHERE ci.profile_id = :pid AND ci.is_active = true
+        ORDER BY ci.sort_order
+    """), {"pid": profile_id, "chk": target_date})).mappings().all()
     checklist = [dict(c) for c in cl_rows]
 
     from app.services.daily_brief.composer import compose_brief
     composed = await compose_brief(
-        profile=profile,
+        profile=schedule,
         answers=all_answers,
         checklist=checklist,
         date_context=date_ctx,
@@ -125,16 +126,16 @@ async def generate_brief(
 
     await session.execute(text("""
         INSERT INTO brief_history
-          (profile_id, brief_date, generation_ms,
+          (schedule_id, profile_id, brief_date, generation_ms,
            top_insights, kpi_data, qa_results,
            checklist_state, actions, agent_metadata,
            estimated_cost, tenant_id)
         VALUES
-          (:pid, :bdate, :gen_ms,
+          (:sid, :pid, :bdate, :gen_ms,
            CAST(:top_ins AS JSONB), CAST(:kpi AS JSONB), CAST(:qa AS JSONB),
            CAST(:cl AS JSONB), CAST(:acts AS JSONB), CAST(:meta AS JSONB),
            :cost, :tenant)
-        ON CONFLICT (profile_id, brief_date) DO UPDATE SET
+        ON CONFLICT (schedule_id, brief_date) DO UPDATE SET
           generated_at    = NOW(),
           generation_ms   = EXCLUDED.generation_ms,
           top_insights    = EXCLUDED.top_insights,
@@ -144,6 +145,7 @@ async def generate_brief(
           actions         = EXCLUDED.actions,
           agent_metadata  = EXCLUDED.agent_metadata
     """), {
+        "sid":     schedule_id,
         "pid":     profile_id,
         "bdate":   target_date,
         "gen_ms":  gen_ms,
@@ -154,11 +156,12 @@ async def generate_brief(
         "acts":    json.dumps(composed.get("actions", [])),
         "meta":    json.dumps(agent_meta),
         "cost":    float(composed.get("estimated_cost", 0)),
-        "tenant":  profile.get("tenant_id", "upagon"),
+        "tenant":  schedule.get("tenant_id", "upagon"),
     })
     await session.commit()
 
     return {
+        "schedule_id":   schedule_id,
         "profile_id":    profile_id,
         "brief_date":    str(target_date),
         "generation_ms": gen_ms,
@@ -173,11 +176,11 @@ async def _run_agent_questions(
     questions: List[Dict],
     session: AsyncSession,
     date_ctx: str,
-    profile: dict,
+    schedule: dict,
 ) -> dict:
     t0 = time.perf_counter()
     fn = _AGENT_FUNCS[agent_name]
-    ton = profile.get("tone", "yonetici")
+    ton = schedule.get("tone", "yonetici")
     answers = []
 
     for q in questions:

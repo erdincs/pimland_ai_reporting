@@ -1,4 +1,4 @@
-"""Daily Brief — profil yönetim ve brief üretim endpoint'leri."""
+"""Daily Brief — profil + zamanlama yönetimi ve brief üretim endpoint'leri."""
 from __future__ import annotations
 
 import json
@@ -16,18 +16,23 @@ router = APIRouter(prefix="/daily-brief", tags=["Daily Brief"])
 
 _TENANT = "upagon"
 
+_FREQ_LABELS = {
+    "daily":     "Günlük",
+    "weekly":    "Haftalık",
+    "monthly":   "Aylık",
+    "adhoc":     "Manuel",
+    "threshold": "Eşik Bazlı",
+}
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def _j(v: Any) -> str:
-    """Python object → JSON string for CAST(:x AS JSONB)."""
     if v is None:
         return "null"
     return json.dumps(v, default=str)
 
 
 def _t(v: Any):
-    """String '07:00' → datetime.time for asyncpg TIME columns."""
     from datetime import time as dt_time
     if v is None:
         return None
@@ -35,6 +40,246 @@ def _t(v: Any):
         return v
     h, m = str(v).split(":")[:2]
     return dt_time(int(h), int(m))
+
+
+# ── Rol şablonları ─────────────────────────────────────────────────────────────
+
+_TEMPLATES: Dict[str, Dict] = {
+    "ceo": {
+        "key":         "ceo",
+        "label":       "CEO / Genel Müdür",
+        "description": "Stratejik bakış, risk odaklı. Satış + kıyaslama ağırlıklı.",
+        "tone":        "yonetici",
+        "icon":        "🎩",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "06:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "yonetici",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Dün toplam ciro hedefin neresinde? Hangi bölgeler hedefi aştı, hangileri altında kaldı?", "agent": "satis", "importance": "kritik"},
+                    {"question_text": "Günlük satış trendi son 7 gün nasıl? Hafta başından bu yana kümülatif durum?", "agent": "satis", "importance": "kritik"},
+                    {"question_text": "Hangi mağazalar sürekli hedef altında kalıyor? Müdahale gereken noktalar?", "agent": "satis", "importance": "yuksek"},
+                    {"question_text": "E-ticarette dünkü performans — ciro, sipariş ve dönüşüm oranı nasıl?", "agent": "eticaret", "importance": "yuksek"},
+                    {"question_text": "En çok satan ürün grupları hangileri? Stok kritik olan ürün var mı?", "agent": "urun_yonetimi", "importance": "orta"},
+                ],
+            },
+            {
+                "name":          "Haftalık Özet",
+                "frequency_type": "weekly",
+                "schedule_time": "07:00",
+                "active_days":   [1],
+                "tone":          "yonetici",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Bu hafta dikkat etmem gereken en önemli 3 risk nedir? Hangi konulara karar vermem lazım?", "agent": "kiyaslama", "importance": "kritik"},
+                    {"question_text": "Sezon başından bu yana hedef gerçekleşme oranı nedir? Trende göre ay sonu tahmini?", "agent": "kiyaslama", "importance": "yuksek"},
+                    {"question_text": "İade oranı yüksek ürünlerin enrichment kalite puanı düşük mü? Hangilerine müdahale etmeliyim?", "agent": "kiyaslama", "importance": "orta", "is_cross_domain": True},
+                    {"question_text": "Mağaza verimliliği (MDO) trendi nasıl? Öne çıkan mağazalar?", "agent": "satis", "importance": "orta"},
+                ],
+            },
+            {
+                "name":          "Aylık Rapor",
+                "frequency_type": "monthly",
+                "schedule_time": "08:00",
+                "active_days":   [1],
+                "tone":          "analitik",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Bu ay hedef vs gerçekleşme oranı nedir? Hangi segment öne çıktı?", "agent": "kiyaslama", "importance": "kritik"},
+                    {"question_text": "Aylık iade oranı ve trend analizi — hangi kategori öne çıkıyor?", "agent": "kiyaslama", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Bölge müdürleriyle haftalık görüşme", "trigger_rule": "çarşamba", "priority": "high"},
+            {"text": "Sezon hedef değerlendirme toplantısı hazırlığı", "trigger_rule": "ay_sonu", "priority": "med"},
+        ],
+    },
+    "satis_muduru": {
+        "key":         "satis_muduru",
+        "label":       "Satış Müdürü",
+        "description": "Mağaza operasyonları, hedef takibi, MDO analizi.",
+        "tone":        "operasyonel",
+        "icon":        "🏪",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "07:30",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "operasyonel",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Dünkü mağaza satışları — hedef vs gerçekleşme bölge bazında nasıl?", "agent": "satis", "importance": "kritik"},
+                    {"question_text": "Hangi mağazalar hedefin altında kaldı? Ortak özellik veya neden var mı?", "agent": "satis", "importance": "kritik"},
+                    {"question_text": "Günlük ortalama sepet tutarı ve MDO trendi son 7 gün nasıl?", "agent": "satis", "importance": "yuksek"},
+                    {"question_text": "Stok kritik olan veya tükenmek üzere olan ürünler hangileri?", "agent": "urun_yonetimi", "importance": "yuksek"},
+                    {"question_text": "İade oranı mağazalar arasında nasıl farklılaşıyor?", "agent": "satis", "importance": "orta"},
+                ],
+            },
+            {
+                "name":          "Haftalık Hedef Takibi",
+                "frequency_type": "weekly",
+                "schedule_time": "07:30",
+                "active_days":   [1],
+                "tone":          "operasyonel",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Haftalık hedef gerçekleşme oranı ve ay sonu projeksiyonu nedir?", "agent": "kiyaslama", "importance": "kritik"},
+                    {"question_text": "En iyi performans gösteren mağazaların ortak özelliği nedir?", "agent": "satis", "importance": "orta"},
+                    {"question_text": "Kampanya dönemlerinde mağaza trafiği ve dönüşüm oranı değişimi?", "agent": "satis", "importance": "dusuk"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Mağaza müdürleriyle haftalık brifing", "trigger_rule": "pazartesi", "priority": "high"},
+            {"text": "Ay sonu hedef kapanış raporunu gönder", "trigger_rule": "ay_sonu", "priority": "high"},
+        ],
+    },
+    "eticaret_muduru": {
+        "key":         "eticaret_muduru",
+        "label":       "E-Ticaret Müdürü",
+        "description": "Online satış, dönüşüm, kanal analizi, iade yönetimi.",
+        "tone":        "analitik",
+        "icon":        "🛒",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "08:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "analitik",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Dünkü e-ticaret cirosu, sipariş adedi ve dönüşüm oranı nedir?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Kanal performansı nasıl? Web, mobil ve marketplace karşılaştırması?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Sepet terk oranı ve son 7 günlük trendi nasıl?", "agent": "eticaret", "importance": "yuksek"},
+                    {"question_text": "En çok satan ve sepete eklenip satın alınmayan ürünler hangileri?", "agent": "eticaret", "importance": "yuksek"},
+                ],
+            },
+            {
+                "name":          "Haftalık Performans",
+                "frequency_type": "weekly",
+                "schedule_time": "09:00",
+                "active_days":   [5],
+                "tone":          "analitik",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Online iade oranı kategoriye göre nasıl farklılaşıyor?", "agent": "kiyaslama", "importance": "yuksek"},
+                    {"question_text": "Aktif kampanyaların dönüşüme etkisi nedir? Hangi kampanya öne çıkıyor?", "agent": "eticaret", "importance": "orta"},
+                    {"question_text": "Enrichment kalitesi düşük ürünlerin online performansı nasıl etkileniyor?", "agent": "kiyaslama", "importance": "orta", "is_cross_domain": True},
+                ],
+            },
+            {
+                "name":          "Acil Durum",
+                "frequency_type": "adhoc",
+                "schedule_time": "09:00",
+                "active_days":   [1, 2, 3, 4, 5, 6, 7],
+                "tone":          "operasyonel",
+                "length":        "kisa",
+                "questions": [
+                    {"question_text": "Kritik performans düşüşü: Bugün hangi kanal veya kategori anormal sapma gösteriyor?", "agent": "eticaret", "importance": "kritik"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Haftalık e-ticaret performans raporu hazırla", "trigger_rule": "cuma", "priority": "high"},
+            {"text": "Kampanya optimizasyon toplantısı", "trigger_rule": "çarşamba", "priority": "med"},
+        ],
+    },
+    "urun_yoneticisi": {
+        "key":         "urun_yoneticisi",
+        "label":       "Ürün Yöneticisi",
+        "description": "PLM kalite, zenginleştirme, görsel ve içerik takibi.",
+        "tone":        "operasyonel",
+        "icon":        "📦",
+        "schedules": [
+            {
+                "name":          "Günlük Kalite Takibi",
+                "frequency_type": "daily",
+                "schedule_time": "09:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "operasyonel",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Enrichment kalitesi düşük (D/F grade) ürünler hangileri? Öncelikli aksiyon listesi?", "agent": "urun_yonetimi", "importance": "kritik"},
+                    {"question_text": "Eksik görsel veya içerik bulunan ürünler ve öncelik sıralaması nasıl?", "agent": "urun_yonetimi", "importance": "kritik"},
+                    {"question_text": "Bu sezon yeni eklenen ürünlerin kalite durumu nedir?", "agent": "urun_yonetimi", "importance": "yuksek"},
+                ],
+            },
+            {
+                "name":          "Haftalık Analiz",
+                "frequency_type": "weekly",
+                "schedule_time": "10:00",
+                "active_days":   [1],
+                "tone":          "analitik",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "İade oranı yüksek ürünlerin PLM kalite puanıyla ilişkisi nedir?", "agent": "kiyaslama", "importance": "yuksek", "is_cross_domain": True},
+                    {"question_text": "Hangi kategorilerde en fazla kalite sorunu görülüyor? Trend analizi?", "agent": "urun_yonetimi", "importance": "orta"},
+                    {"question_text": "E-ticaret etiketi eksik ürünler listesi ve tamamlanma yüzdesi?", "agent": "urun_yonetimi", "importance": "orta"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Haftalık enrichment raporu takibi", "trigger_rule": "pazartesi", "priority": "high"},
+            {"text": "Yeni sezon ürün kalite değerlendirmesi", "trigger_rule": "sezon_basi", "priority": "high"},
+        ],
+    },
+    "bos": {
+        "key":         "bos",
+        "label":       "Boş Başlangıç",
+        "description": "Soru olmadan başla, kendin özelleştir.",
+        "tone":        "yonetici",
+        "icon":        "📄",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "07:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "yonetici",
+                "length":        "ozet",
+                "questions": [],
+            },
+        ],
+        "checklist": [],
+    },
+}
+
+
+# ── ŞABLONLAR ─────────────────────────────────────────────────────────────────
+
+@router.get("/templates")
+async def list_templates() -> dict:
+    """Rol bazlı profil şablonları — zamanlama + soru önizlemesi."""
+    return {
+        "templates": [
+            {
+                "key":         t["key"],
+                "label":       t["label"],
+                "description": t["description"],
+                "tone":        t["tone"],
+                "icon":        t["icon"],
+                "schedule_count": len(t["schedules"]),
+                "schedules_preview": [
+                    {
+                        "name":           s["name"],
+                        "frequency_type": s["frequency_type"],
+                        "frequency_label": _FREQ_LABELS.get(s["frequency_type"], s["frequency_type"]),
+                        "schedule_time":  s["schedule_time"],
+                        "question_count": len(s["questions"]),
+                    }
+                    for s in t["schedules"]
+                ],
+            }
+            for t in _TEMPLATES.values()
+        ]
+    }
 
 
 # ── PROFIL CRUD ───────────────────────────────────────────────────────────────
@@ -50,13 +295,15 @@ async def list_profiles(
         where += " AND p.is_active = true"
 
     rows = (await session.execute(text(f"""
-        SELECT p.*,
-               (SELECT COUNT(*) FROM brief_questions q
-                WHERE q.profile_id = p.id AND q.is_active = true) AS question_count,
-               (SELECT COUNT(*) FROM brief_checklist_items c
-                WHERE c.profile_id = p.id AND c.is_active = true) AS checklist_count,
-               (SELECT generated_at FROM brief_history h
-                WHERE h.profile_id = p.id ORDER BY brief_date DESC LIMIT 1) AS last_brief_at
+        SELECT
+            p.id, p.profile_id, p.name, p.role, p.owner_email,
+            p.timezone, p.is_active, p.created_at, p.updated_at,
+            (SELECT COUNT(*) FROM brief_schedules s
+             WHERE s.profile_id = p.id AND s.is_active = true) AS schedule_count,
+            (SELECT COUNT(*) FROM brief_checklist_items c
+             WHERE c.profile_id = p.id AND c.is_active = true) AS checklist_count,
+            (SELECT MAX(h.generated_at) FROM brief_history h
+             WHERE h.profile_id = p.id) AS last_brief_at
         FROM brief_profiles p
         {where}
         ORDER BY p.created_at
@@ -77,10 +324,13 @@ async def get_profile(
     if not profile:
         raise HTTPException(404, "Profil bulunamadı")
 
-    questions = (await session.execute(text("""
-        SELECT * FROM brief_questions
-        WHERE profile_id = :pid AND is_active = true
-        ORDER BY sort_order, id
+    schedules = (await session.execute(text("""
+        SELECT s.*,
+               (SELECT COUNT(*) FROM brief_questions q
+                WHERE q.schedule_id = s.id AND q.is_active = true) AS question_count
+        FROM brief_schedules s
+        WHERE s.profile_id = :pid
+        ORDER BY s.created_at
     """), {"pid": profile_id})).mappings().all()
 
     checklist = (await session.execute(text("""
@@ -89,9 +339,15 @@ async def get_profile(
         ORDER BY sort_order, id
     """), {"pid": profile_id})).mappings().all()
 
+    sched_list = []
+    for s in schedules:
+        d = dict(s)
+        d["frequency_label"] = _FREQ_LABELS.get(d.get("frequency_type", "daily"), "Günlük")
+        sched_list.append(d)
+
     return {
         "profile":   dict(profile),
-        "questions": [dict(q) for q in questions],
+        "schedules": sched_list,
         "checklist": [dict(c) for c in checklist],
     }
 
@@ -101,35 +357,82 @@ async def create_profile(
     payload: dict,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> dict:
+    """Profil oluştur. template_key verilirse şablon zamanlamaları + sorular seed edilir."""
     pid = payload.get("profile_id") or f"profile_{int(time.time())}"
     result = await session.execute(text("""
         INSERT INTO brief_profiles
-            (profile_id, name, role, owner_email, timezone,
-             schedule_time, active_days, send_email,
-             tone, length, format, top_insight_count, tenant_id)
+            (profile_id, name, role, owner_email, timezone, tenant_id)
         VALUES
-            (:profile_id, :name, :role, :owner_email, :timezone,
-             :schedule_time, CAST(:active_days AS JSONB), :send_email,
-             :tone, :length, :fmt, :top_n, :tenant)
+            (:profile_id, :name, :role, :owner_email, :timezone, :tenant)
         RETURNING id
     """), {
-        "profile_id":    pid,
-        "name":          payload["name"],
-        "role":          payload.get("role"),
-        "owner_email":   payload.get("owner_email"),
-        "timezone":      payload.get("timezone", "Europe/Istanbul"),
-        "schedule_time": _t(payload.get("schedule_time", "06:00")),
-        "active_days":   _j(payload.get("active_days", [1, 2, 3, 4, 5])),
-        "send_email":    payload.get("send_email", True),
-        "tone":          payload.get("tone", "yonetici"),
-        "length":        payload.get("length", "ozet"),
-        "fmt":           payload.get("format", "mixed"),
-        "top_n":         payload.get("top_insight_count", 3),
-        "tenant":        payload.get("tenant_id", _TENANT),
+        "profile_id":  pid,
+        "name":        payload["name"],
+        "role":        payload.get("role"),
+        "owner_email": payload.get("owner_email"),
+        "timezone":    payload.get("timezone", "Europe/Istanbul"),
+        "tenant":      payload.get("tenant_id", _TENANT),
     })
     new_id = result.scalar()
+
+    template_key = payload.get("template_key", "bos")
+    tmpl = _TEMPLATES.get(template_key, _TEMPLATES["bos"])
+
+    for sched in tmpl["schedules"]:
+        s_result = await session.execute(text("""
+            INSERT INTO brief_schedules
+                (profile_id, name, frequency_type, schedule_time,
+                 active_days, send_email, tone, length, format, top_insight_count)
+            VALUES
+                (:pid, :name, :freq, :stime,
+                 CAST(:days AS JSONB), :email, :tone, :length, :fmt, :topn)
+            RETURNING id
+        """), {
+            "pid":    new_id,
+            "name":   sched["name"],
+            "freq":   sched["frequency_type"],
+            "stime":  _t(sched.get("schedule_time", "07:00")),
+            "days":   _j(sched.get("active_days", [1, 2, 3, 4, 5])),
+            "email":  sched.get("send_email", True),
+            "tone":   sched.get("tone", tmpl["tone"]),
+            "length": sched.get("length", "ozet"),
+            "fmt":    sched.get("format", "mixed"),
+            "topn":   sched.get("top_insight_count", 3),
+        })
+        sched_id = s_result.scalar()
+
+        for i, q in enumerate(sched.get("questions", [])):
+            await session.execute(text("""
+                INSERT INTO brief_questions
+                    (schedule_id, question_text, agent, importance,
+                     is_cross_domain, trigger_days, sort_order)
+                VALUES (:sid, :qtxt, :agent, :imp, :cross,
+                        CAST(:tdays AS JSONB), :sord)
+            """), {
+                "sid":   sched_id,
+                "qtxt":  q["question_text"],
+                "agent": q["agent"],
+                "imp":   q.get("importance", "orta"),
+                "cross": q.get("is_cross_domain", False),
+                "tdays": _j(q.get("trigger_days")),
+                "sord":  i,
+            })
+
+    for i, item in enumerate(tmpl.get("checklist", [])):
+        await session.execute(text("""
+            INSERT INTO brief_checklist_items
+                (profile_id, text, priority, trigger_rule, sort_order)
+            VALUES (:pid, :txt, :pri, :rule, :sord)
+        """), {
+            "pid":  new_id,
+            "txt":  item["text"],
+            "pri":  item.get("priority", "med"),
+            "rule": item.get("trigger_rule"),
+            "sord": i,
+        })
+
     await session.commit()
-    return {"id": new_id, "message": "Profil oluşturuldu"}
+    return {"id": new_id, "message": "Profil oluşturuldu", "template": template_key}
 
 
 @router.put("/profiles/{profile_id}")
@@ -138,30 +441,12 @@ async def update_profile(
     payload: dict,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> dict:
-    _ALLOWED = {
-        "name", "role", "owner_email", "timezone", "schedule_time",
-        "active_days", "is_active", "send_email", "tone", "length",
-        "format", "top_insight_count",
-    }
+    _ALLOWED = {"name", "role", "owner_email", "timezone", "is_active"}
     updates = {k: v for k, v in payload.items() if k in _ALLOWED}
     if not updates:
         return {"message": "Güncelleme yok"}
-
-    parts, params = [], {"pid": profile_id}
-    for key, value in updates.items():
-        if key == "active_days":
-            parts.append("active_days = CAST(:active_days AS JSONB)")
-            params["active_days"] = _j(value)
-        elif key == "schedule_time":
-            parts.append("schedule_time = :schedule_time")
-            params["schedule_time"] = _t(value)
-        elif key == "format":
-            parts.append("format = :fmt")
-            params["fmt"] = value
-        else:
-            parts.append(f"{key} = :{key}")
-            params[key] = value
-
+    parts = [f"{k} = :{k}" for k in updates]
+    params = {**updates, "pid": profile_id}
     await session.execute(
         text(f"UPDATE brief_profiles SET {', '.join(parts)}, updated_at = NOW() WHERE id = :pid"),
         params,
@@ -181,6 +466,115 @@ async def delete_profile(
     )
     await session.commit()
     return {"message": "Profil silindi"}
+
+
+# ── ZAMANLAMA CRUD ────────────────────────────────────────────────────────────
+
+@router.get("/schedules/{schedule_id}")
+async def get_schedule(
+    schedule_id: int,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> dict:
+    s = (await session.execute(
+        text("SELECT * FROM brief_schedules WHERE id = :sid"),
+        {"sid": schedule_id},
+    )).mappings().first()
+    if not s:
+        raise HTTPException(404, "Zamanlama bulunamadı")
+
+    questions = (await session.execute(text("""
+        SELECT * FROM brief_questions
+        WHERE schedule_id = :sid AND is_active = true
+        ORDER BY sort_order, id
+    """), {"sid": schedule_id})).mappings().all()
+
+    d = dict(s)
+    d["frequency_label"] = _FREQ_LABELS.get(d.get("frequency_type", "daily"), "Günlük")
+    return {
+        "schedule":  d,
+        "questions": [dict(q) for q in questions],
+    }
+
+
+@router.post("/profiles/{profile_id}/schedules")
+async def create_schedule(
+    profile_id: int,
+    payload: dict,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    result = await session.execute(text("""
+        INSERT INTO brief_schedules
+            (profile_id, name, frequency_type, schedule_time,
+             active_days, send_email, tone, length, format, top_insight_count)
+        VALUES
+            (:pid, :name, :freq, :stime,
+             CAST(:days AS JSONB), :email, :tone, :length, :fmt, :topn)
+        RETURNING id
+    """), {
+        "pid":    profile_id,
+        "name":   payload.get("name", _FREQ_LABELS.get(payload.get("frequency_type", "daily"), "Brief")),
+        "freq":   payload.get("frequency_type", "daily"),
+        "stime":  _t(payload.get("schedule_time", "07:00")),
+        "days":   _j(payload.get("active_days", [1, 2, 3, 4, 5])),
+        "email":  payload.get("send_email", True),
+        "tone":   payload.get("tone", "yonetici"),
+        "length": payload.get("length", "ozet"),
+        "fmt":    payload.get("format", "mixed"),
+        "topn":   payload.get("top_insight_count", 3),
+    })
+    new_id = result.scalar()
+    await session.commit()
+    return {"id": new_id, "message": "Zamanlama oluşturuldu"}
+
+
+@router.put("/schedules/{schedule_id}")
+async def update_schedule(
+    schedule_id: int,
+    payload: dict,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    _ALLOWED = {
+        "name", "frequency_type", "schedule_time", "active_days",
+        "is_active", "send_email", "tone", "length", "format", "top_insight_count",
+    }
+    updates = {k: v for k, v in payload.items() if k in _ALLOWED}
+    if not updates:
+        return {"message": "Güncelleme yok"}
+
+    parts, params = [], {"sid": schedule_id}
+    for key, value in updates.items():
+        if key == "active_days":
+            parts.append("active_days = CAST(:active_days AS JSONB)")
+            params["active_days"] = _j(value)
+        elif key == "schedule_time":
+            parts.append("schedule_time = :schedule_time")
+            params["schedule_time"] = _t(value)
+        elif key == "format":
+            parts.append("format = :fmt")
+            params["fmt"] = value
+        else:
+            parts.append(f"{key} = :{key}")
+            params[key] = value
+
+    await session.execute(
+        text(f"UPDATE brief_schedules SET {', '.join(parts)}, updated_at = NOW() WHERE id = :sid"),
+        params,
+    )
+    await session.commit()
+    return {"message": "Zamanlama güncellendi"}
+
+
+@router.delete("/schedules/{schedule_id}")
+async def delete_schedule(
+    schedule_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    await session.execute(
+        text("DELETE FROM brief_schedules WHERE id = :sid"),
+        {"sid": schedule_id},
+    )
+    await session.commit()
+    return {"message": "Zamanlama silindi"}
 
 
 # ── SORU YÖNETİMİ ─────────────────────────────────────────────────────────────
@@ -206,37 +600,35 @@ async def list_question_library(
     grouped: Dict[str, List] = {}
     for r in rows:
         grouped.setdefault(r["category"], []).append(dict(r))
-
     return {"library": grouped, "total": len(rows)}
 
 
-@router.post("/profiles/{profile_id}/questions")
+@router.post("/schedules/{schedule_id}/questions")
 async def add_question(
-    profile_id: int,
+    schedule_id: int,
     payload: dict,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> dict:
     next_order = (await session.execute(text("""
         SELECT COALESCE(MAX(sort_order), 0) + 1
-        FROM brief_questions WHERE profile_id = :pid
-    """), {"pid": profile_id})).scalar() or 1
+        FROM brief_questions WHERE schedule_id = :sid
+    """), {"sid": schedule_id})).scalar() or 1
 
-    tdays = payload.get("trigger_days")
     result = await session.execute(text("""
         INSERT INTO brief_questions
-            (profile_id, question_text, agent, importance,
+            (schedule_id, question_text, agent, importance,
              is_cross_domain, trigger_days, sort_order)
         VALUES
-            (:pid, :qtxt, :agent, :importance,
+            (:sid, :qtxt, :agent, :importance,
              :is_cross, CAST(:tdays AS JSONB), :sord)
         RETURNING id
     """), {
-        "pid":       profile_id,
+        "sid":       schedule_id,
         "qtxt":      payload["question_text"],
         "agent":     payload["agent"],
         "importance": payload.get("importance", "orta"),
         "is_cross":  payload.get("is_cross_domain", False),
-        "tdays":     _j(tdays),
+        "tdays":     _j(payload.get("trigger_days")),
         "sord":      next_order,
     })
     new_id = result.scalar()
@@ -244,8 +636,7 @@ async def add_question(
     if payload.get("library_id"):
         await session.execute(text("""
             UPDATE brief_question_library
-            SET usage_count = usage_count + 1
-            WHERE id = :lid
+            SET usage_count = usage_count + 1 WHERE id = :lid
         """), {"lid": payload["library_id"]})
 
     await session.commit()
@@ -359,14 +750,12 @@ async def toggle_checklist_item(
     today = date.today()
     is_done = bool(payload.get("is_done", False))
     done_at = datetime.utcnow() if is_done else None
-
     await session.execute(text("""
         INSERT INTO brief_checklist_state
             (profile_id, item_id, check_date, is_done, done_at)
         VALUES (:pid, :iid, :chk, :is_done, :done_at)
         ON CONFLICT (profile_id, item_id, check_date) DO UPDATE SET
-            is_done = EXCLUDED.is_done,
-            done_at = EXCLUDED.done_at
+            is_done = EXCLUDED.is_done, done_at = EXCLUDED.done_at
     """), {
         "pid":     payload["profile_id"],
         "iid":     payload["item_id"],
@@ -378,31 +767,47 @@ async def toggle_checklist_item(
     return {"ok": True}
 
 
-# ── BRIEF OKUMA / ÜRETME ──────────────────────────────────────────────────────
+# ── BRIEF ÜRETME / OKUMA ──────────────────────────────────────────────────────
 
-@router.get("/briefs/{profile_id}/{brief_date}")
-async def get_brief(
-    profile_id: int,
+@router.post("/schedules/{schedule_id}/generate")
+async def generate_brief_for_schedule(
+    schedule_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    from app.services.daily_brief.orchestrator import generate_brief
+    result = await generate_brief(schedule_id, session)
+    if "hata" in result:
+        raise HTTPException(400, result["hata"])
+    return result
+
+
+@router.get("/schedules/{schedule_id}/brief/{brief_date}")
+async def get_brief_for_schedule(
+    schedule_id: int,
     brief_date: str,
     session: Annotated[AsyncSession, Depends(get_readonly_session)],
 ) -> dict:
     row = (await session.execute(text("""
         SELECT * FROM brief_history
-        WHERE profile_id = :pid AND brief_date = :bdate
-    """), {"pid": profile_id, "bdate": date.fromisoformat(brief_date)})).mappings().first()
-
+        WHERE schedule_id = :sid AND brief_date = :bdate
+    """), {"sid": schedule_id, "bdate": date.fromisoformat(brief_date)})).mappings().first()
     if not row:
         raise HTTPException(404, "Brief bulunamadı — önce üret")
     return dict(row)
 
 
-@router.post("/briefs/{profile_id}/generate")
-async def generate_brief_endpoint(
+@router.get("/profiles/{profile_id}/history")
+async def get_profile_history(
     profile_id: int,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    limit: int = Query(default=30, le=100),
 ) -> dict:
-    from app.services.daily_brief.orchestrator import generate_brief
-    result = await generate_brief(profile_id, session)
-    if "hata" in result:
-        raise HTTPException(400, result["hata"])
-    return result
+    rows = (await session.execute(text("""
+        SELECT h.*, s.name AS schedule_name, s.frequency_type
+        FROM brief_history h
+        LEFT JOIN brief_schedules s ON s.id = h.schedule_id
+        WHERE h.profile_id = :pid
+        ORDER BY h.brief_date DESC, h.generated_at DESC
+        LIMIT :lim
+    """), {"pid": profile_id, "lim": limit})).mappings().all()
+    return {"history": [dict(r) for r in rows]}

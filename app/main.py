@@ -156,6 +156,7 @@ async def lifespan(app: FastAPI):
     await _ddl("CREATE INDEX IF NOT EXISTS idx_pva_urun_kodu ON product_vision_attrs(urun_kodu)")
     await _ddl("CREATE INDEX IF NOT EXISTS idx_pva_durum     ON product_vision_attrs(durum)")
     # ── Daily Brief tabloları ─────────────────────────────────────────────────
+    # brief_profiles: sadece kişi/rol bilgisi (zamanlama brief_schedules'da)
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_profiles (
             id               SERIAL PRIMARY KEY,
@@ -164,36 +165,48 @@ async def lifespan(app: FastAPI):
             role             TEXT,
             owner_email      TEXT,
             timezone         TEXT DEFAULT 'Europe/Istanbul',
-            schedule_time    TIME DEFAULT '06:00',
-            active_days      JSONB DEFAULT '[1,2,3,4,5]',
             is_active        BOOLEAN DEFAULT true,
-            send_email       BOOLEAN DEFAULT true,
-            tone             TEXT DEFAULT 'yonetici',
-            length           TEXT DEFAULT 'ozet',
-            format           TEXT DEFAULT 'mixed',
-            top_insight_count INTEGER DEFAULT 3,
             tenant_id        TEXT NOT NULL DEFAULT 'upagon',
             created_at       TIMESTAMPTZ DEFAULT NOW(),
             updated_at       TIMESTAMPTZ DEFAULT NOW()
         )
     """)
     await _ddl("CREATE INDEX IF NOT EXISTS idx_bp_tenant ON brief_profiles(tenant_id, is_active)")
+    # brief_schedules: bir profil altında birden fazla gönderim planı
+    await _ddl("""
+        CREATE TABLE IF NOT EXISTS brief_schedules (
+            id               SERIAL PRIMARY KEY,
+            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id) ON DELETE CASCADE,
+            name             TEXT NOT NULL,
+            frequency_type   TEXT NOT NULL DEFAULT 'daily',
+            schedule_time    TIME DEFAULT '07:00',
+            active_days      JSONB DEFAULT '[1,2,3,4,5]',
+            send_email       BOOLEAN DEFAULT true,
+            tone             TEXT DEFAULT 'yonetici',
+            length           TEXT DEFAULT 'ozet',
+            format           TEXT DEFAULT 'mixed',
+            top_insight_count INTEGER DEFAULT 3,
+            is_active        BOOLEAN DEFAULT true,
+            created_at       TIMESTAMPTZ DEFAULT NOW(),
+            updated_at       TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bs_profile ON brief_schedules(profile_id, is_active)")
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_questions (
             id               SERIAL PRIMARY KEY,
-            profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id) ON DELETE CASCADE,
+            schedule_id      INTEGER NOT NULL REFERENCES brief_schedules(id) ON DELETE CASCADE,
             question_text    TEXT NOT NULL,
             agent            TEXT NOT NULL,
             importance       TEXT DEFAULT 'orta',
             is_cross_domain  BOOLEAN DEFAULT false,
             trigger_days     JSONB,
-            trigger_dates    TEXT,
             sort_order       INTEGER DEFAULT 0,
             is_active        BOOLEAN DEFAULT true,
             created_at       TIMESTAMPTZ DEFAULT NOW()
         )
     """)
-    await _ddl("CREATE INDEX IF NOT EXISTS idx_bq_profile ON brief_questions(profile_id, sort_order)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bq_schedule ON brief_questions(schedule_id, sort_order)")
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_question_library (
             id               SERIAL PRIMARY KEY,
@@ -208,6 +221,7 @@ async def lifespan(app: FastAPI):
         )
     """)
     await _ddl("CREATE INDEX IF NOT EXISTS idx_bql_cat ON brief_question_library(category, is_active)")
+    # brief_checklist_items: profil düzeyinde (kişiye ait, zamanlama bağımsız)
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_checklist_items (
             id               SERIAL PRIMARY KEY,
@@ -223,6 +237,7 @@ async def lifespan(app: FastAPI):
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_history (
             id               SERIAL PRIMARY KEY,
+            schedule_id      INTEGER REFERENCES brief_schedules(id) ON DELETE SET NULL,
             profile_id       INTEGER NOT NULL REFERENCES brief_profiles(id),
             brief_date       DATE NOT NULL,
             generated_at     TIMESTAMPTZ DEFAULT NOW(),
@@ -235,10 +250,11 @@ async def lifespan(app: FastAPI):
             agent_metadata   JSONB,
             estimated_cost   NUMERIC(8,4),
             tenant_id        TEXT NOT NULL DEFAULT 'upagon',
-            UNIQUE (profile_id, brief_date)
+            UNIQUE (schedule_id, brief_date)
         )
     """)
-    await _ddl("CREATE INDEX IF NOT EXISTS idx_bh_lookup ON brief_history(profile_id, brief_date DESC)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bh_lookup ON brief_history(schedule_id, brief_date DESC)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_bh_profile ON brief_history(profile_id, brief_date DESC)")
     await _ddl("""
         CREATE TABLE IF NOT EXISTS brief_checklist_state (
             id               SERIAL PRIMARY KEY,
