@@ -164,6 +164,45 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .schedule-select-item:hover{border-color:var(--border2)}
 .schedule-select-item.selected{border-color:var(--orange);background:rgba(255,107,43,.04)}
 
+/* SEKME */
+.tab-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:2px;flex-shrink:0}
+.tab-btn{padding:10px 14px;font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:inherit;outline:none}
+.tab-btn:hover{color:var(--t2)}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* VERİ KAYNAKLARI */
+.vk-view{flex:1;overflow-y:auto;padding:20px}
+.vk-view::-webkit-scrollbar{width:4px}
+.vk-view::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.vk-section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.vk-section-hdr-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+.vk-section-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.vk-section-hdr-cnt{font-size:10px;color:var(--t3);background:var(--bg4);padding:1px 7px;border-radius:3px;flex-shrink:0}
+.vk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:28px}
+.vk-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.vk-card.connected{border-left:3px solid var(--green)}
+.vk-card.missing-p0{border-left:3px solid var(--red)}
+.vk-card.missing-p1{border-left:3px solid var(--orange)}
+.vk-card.missing-p2{border-left:3px solid var(--yellow)}
+.vk-card.missing-p3{border-left:3px solid var(--t4)}
+.vk-card-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+.vk-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.vk-status-dot.connected{background:var(--green)}
+.vk-status-dot.missing{background:var(--red)}
+.vk-card-name{font-size:12px;font-weight:600;color:var(--t1);flex:1}
+.priority-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:3px;letter-spacing:.3px;flex-shrink:0}
+.priority-p0{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.priority-p1{background:rgba(255,107,43,.12);color:var(--orange);border:1px solid rgba(255,107,43,.25)}
+.priority-p2{background:rgba(245,158,11,.10);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
+.priority-p3{background:rgba(100,100,140,.12);color:var(--t2);border:1px solid var(--border)}
+.vk-chips{display:flex;flex-wrap:wrap;gap:4px}
+.vk-conn-chip{font-size:9px;color:var(--t2);background:var(--bg3);border:1px solid var(--border);padding:1px 7px;border-radius:3px;font-family:'DM Mono',monospace}
+.vk-q-chip{font-size:9px;font-weight:600;color:var(--red);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);padding:1px 7px;border-radius:3px}
+.vk-note{font-size:10px;color:var(--t2);margin-top:7px;line-height:1.45;padding:5px 8px;background:var(--bg3);border-radius:4px;border:1px solid var(--border)}
+.vk-summary-bar{display:flex;gap:12px;align-items:center;margin-bottom:20px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;flex-wrap:wrap}
+.vk-sum-item{display:flex;align-items:center;gap:6px;font-size:11px}
+.vk-sum-dot{width:8px;height:8px;border-radius:50%}
+
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 </style>
 </head>
@@ -275,8 +314,14 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
     </div>
   </div>
 
+  <!-- SEKME BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-sorular" onclick="switchTab('sorular')">📋 Sorular</button>
+    <button class="tab-btn" id="tab-veri-kaynaklar" onclick="switchTab('veri-kaynaklar')">🔌 Veri Kaynakları</button>
+  </div>
+
   <!-- FİLTRE BAR -->
-  <div class="filter-bar">
+  <div class="filter-bar" id="filter-bar">
     <input class="search-box" id="search-box" placeholder="Soru ara..." oninput="debouncedLoad()">
     <select class="filter-sel" id="f-freq" onchange="loadQuestions()">
       <option value="">Tüm Frekanslar</option>
@@ -300,6 +345,193 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <div class="empty-title">Yükleniyor...</div>
     </div>
   </div>
+
+  <!-- VERİ KAYNAKLARI -->
+  <div class="vk-view" id="vk-view" style="display:none">
+
+    <!-- Özet -->
+    <div class="vk-summary-bar">
+      <div class="vk-sum-item"><span class="vk-sum-dot" style="background:var(--green)"></span><strong>11</strong>&nbsp;bağlı kaynak</div>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div class="vk-sum-item"><span class="vk-sum-dot" style="background:var(--red)"></span><strong>17</strong>&nbsp;eksik entegrasyon</div>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div class="vk-sum-item" style="color:var(--red)"><strong>~55</strong>&nbsp;soru entegrasyon bekliyor</div>
+      <div style="margin-left:auto;font-size:10px;color:var(--t3)">Öncelik: P0 kritik → P3 düşük</div>
+    </div>
+
+    <!-- Bağlı Kaynaklar -->
+    <div class="vk-section-hdr">
+      <span class="vk-section-hdr-title">✅ Bağlı Kaynaklar</span>
+      <span class="vk-section-hdr-cnt">11 kaynak</span>
+    </div>
+    <div class="vk-grid">
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">E-ticaret Satış (günlük)</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Incorta</span><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">incorta_satis</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">E-ticaret İade</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Incorta</span><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">incorta_depo_iade</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">E-ticaret İptal</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Incorta</span><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">incorta_iptal_siparis</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">GA4 Analytics (özet)</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Incorta</span><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">incorta_analytics</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Ürün Kataloğu (PIM)</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Pimland MCP</span><span class="vk-conn-chip">pim_products</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Stok API</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Pimland MCP</span><span class="vk-conn-chip">get_product_stocks</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Ürün Fiyatları</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">Pimland MCP</span><span class="vk-conn-chip">get_product_erp_prices</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Enrichment Kalitesi</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">enrichment_quality</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Görsel Analiz Kuyruğu</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">image_analysis_queue</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Kategori Sıralama</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">category_ranking</span></div>
+      </div>
+      <div class="vk-card connected">
+        <div class="vk-card-top"><span class="vk-status-dot connected"></span><span class="vk-card-name">Hedef Tablosu</span></div>
+        <div class="vk-chips"><span class="vk-conn-chip">RDS</span><span class="vk-conn-chip">hedef_tablosu</span><span style="font-size:9px;color:var(--teal);padding:1px 5px;background:rgba(0,194,168,.08);border:1px solid rgba(0,194,168,.2);border-radius:3px">YENİ</span></div>
+      </div>
+    </div>
+
+    <!-- Eksik Entegrasyonlar -->
+    <div class="vk-section-hdr">
+      <span class="vk-section-hdr-title">🔴 Eksik Entegrasyonlar</span>
+      <span class="vk-section-hdr-cnt">17 kaynak · ~55 soru bekliyor</span>
+    </div>
+
+    <!-- P0 -->
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span class="priority-badge priority-p0">P0</span>
+      <span style="font-size:10px;color:var(--t3)">Kritik — hemen entegre edilmeli</span>
+    </div>
+    <div class="vk-grid" style="margin-bottom:20px">
+      <div class="vk-card missing-p0">
+        <div class="vk-card-top">
+          <span class="vk-status-dot missing"></span>
+          <span class="vk-card-name">Meta / Facebook Reklam</span>
+          <span class="priority-badge priority-p0">P0</span>
+        </div>
+        <div class="vk-chips"><span class="vk-q-chip">~6 soru</span><span class="vk-conn-chip">Facebook Ads MCP</span></div>
+        <div class="vk-note">MCP bağlı, henüz aktifleştirilmedi. ROAS, harcama, kampanya performansı soruları bekliyor.</div>
+      </div>
+    </div>
+
+    <!-- P1 -->
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span class="priority-badge priority-p1">P1</span>
+      <span style="font-size:10px;color:var(--t3)">Yüksek — bu sprint içinde planlanmalı</span>
+    </div>
+    <div class="vk-grid" style="margin-bottom:20px">
+      <div class="vk-card missing-p1">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Google Ads</span><span class="priority-badge priority-p1">P1</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">~4 soru</span><span class="vk-conn-chip">Google Ads API</span></div>
+        <div class="vk-note">Tıklama, harcama, kalite skoru, dönüşüm oranı metrikleri.</div>
+      </div>
+      <div class="vk-card missing-p1">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">GA4 Detaylı Analitik</span><span class="priority-badge priority-p1">P1</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">~8 soru</span><span class="vk-conn-chip">GA4 API</span></div>
+        <div class="vk-note">Mevcut Incorta bağlantısı sadece özet veri. Sayfa bazında, funnel, cohort verileri eksik.</div>
+      </div>
+      <div class="vk-card missing-p1">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Fiyat Değişim Logu</span><span class="priority-badge priority-p1">P1</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">3 soru</span><span class="vk-conn-chip">RDS — yeni tablo</span></div>
+        <div class="vk-note">Fiyat geçmişi tablosu oluşturulmalı; değişim trendi sorularını karşılar.</div>
+      </div>
+      <div class="vk-card missing-p1">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Sipariş Bazlı Veri</span><span class="priority-badge priority-p1">P1</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">2 soru</span><span class="vk-conn-chip">Pimland MCP</span></div>
+        <div class="vk-note">Sipariş detayı (müşteri, zaman, ürün kırılımı) için mevcut MCP tool'u test edilmeli.</div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span class="priority-badge priority-p2">P2</span>
+      <span style="font-size:10px;color:var(--t3)">Orta — sonraki çeyrek</span>
+    </div>
+    <div class="vk-grid" style="margin-bottom:20px">
+      <div class="vk-card missing-p2">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">CRM / Müşteri Verisi</span><span class="priority-badge priority-p2">P2</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">~8 soru</span><span class="vk-conn-chip">CRM API</span></div>
+        <div class="vk-note">Müşteri segmentasyonu, LTV, tekrar satın alma sorularını karşılar.</div>
+      </div>
+      <div class="vk-card missing-p2">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Kargo / Lojistik</span><span class="priority-badge priority-p2">P2</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">10 soru</span><span class="vk-conn-chip">Kargo API</span></div>
+        <div class="vk-note">Teslimat süresi, geç kargo, desi ağırlık optimizasyonu. En çok soru bekleyen 2. kaynak.</div>
+      </div>
+      <div class="vk-card missing-p2">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">E-posta Pazarlama</span><span class="priority-badge priority-p2">P2</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">3 soru</span><span class="vk-conn-chip">ESP API</span></div>
+        <div class="vk-note">Açılma oranı, tıklama, dönüşüm — e-posta kampanya etkinliği.</div>
+      </div>
+      <div class="vk-card missing-p2">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Google Search Console</span><span class="priority-badge priority-p2">P2</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">2 soru</span><span class="vk-conn-chip">GSC API</span></div>
+        <div class="vk-note">Organik tıklama, sıralama, impression metrikleri.</div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span class="priority-badge priority-p3">P3</span>
+      <span style="font-size:10px;color:var(--t3)">Düşük — backlog</span>
+    </div>
+    <div class="vk-grid" style="margin-bottom:20px">
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Görev Yönetimi</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">4 soru</span><span class="vk-conn-chip">Jira / Asana</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Pazar Yeri Panelleri</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">2 soru</span><span class="vk-conn-chip">Trendyol / HB API</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Ödeme Sistemi</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">1 soru</span><span class="vk-conn-chip">Payment API</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Sosyal Medya Analytics</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">2 soru</span><span class="vk-conn-chip">Meta / TikTok API</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Rekabet Takip</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">7 soru</span><span class="vk-conn-chip">Scraper / 3rd party</span></div>
+        <div class="vk-note">En çok soru bekleyen P3 kaynağı. Rakip fiyat/stok takibi.</div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">NPS / Anket</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">1 soru</span><span class="vk-conn-chip">Survey tool</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Ürün Yorumları</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">1 soru</span><span class="vk-conn-chip">Review API</span></div>
+      </div>
+      <div class="vk-card missing-p3">
+        <div class="vk-card-top"><span class="vk-status-dot missing"></span><span class="vk-card-name">Site Monitoring</span><span class="priority-badge priority-p3">P3</span></div>
+        <div class="vk-chips"><span class="vk-q-chip">4 soru</span><span class="vk-conn-chip">Uptime / Perf tool</span></div>
+      </div>
+    </div>
+
+  </div><!-- /vk-view -->
 
 </div><!-- /main area -->
 </div><!-- /layout -->
@@ -754,6 +986,16 @@ function closeBriefModal(){
   _briefAddQuestion = null;
   _selectedProfileId = null;
   _selectedScheduleId = null;
+}
+
+// ── SEKME ─────────────────────────────────────────────────────────────────────
+function switchTab(tab){
+  const isVK = tab === 'veri-kaynaklar';
+  document.getElementById('tab-sorular').classList.toggle('active', !isVK);
+  document.getElementById('tab-veri-kaynaklar').classList.toggle('active', isVK);
+  document.getElementById('filter-bar').style.display = isVK ? 'none' : '';
+  document.getElementById('main-content').style.display = isVK ? 'none' : '';
+  document.getElementById('vk-view').style.display = isVK ? '' : 'none';
 }
 
 // ── BAŞLAT ────────────────────────────────────────────────────────────────────
