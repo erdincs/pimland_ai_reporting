@@ -1,8 +1,15 @@
-"""E-Ticaret Satış Agent — ADL/LMB online kanallar, SKU performansı, iade analizi."""
+"""E-Ticaret Satış Agent — ADL/LMB online kanallar, SKU performansı, iade analizi.
+
+Granülarite desteği:
+  gunluk  — mv_ecom_gunluk   (incorta_ecommerce_gunluk kaynaklı, 2025-günümüz)
+  haftalik — mv_ecom_haftalik (haftalık agregat, aynı kaynak)
+  aylik   — incorta_satis + incorta_depo_iade + incorta_iptal_siparis (varsayılan)
+"""
 from __future__ import annotations
 
 import json
 import time
+from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -47,16 +54,21 @@ ETICARET_SYSTEM = """\
 Sen Pimland'ın online satış kanalları için E-Ticaret Agent'ısın.
 Aşağıdaki tüm konularda UZMANSIN ve doğrudan yanıt verirsin:
 
-  • Executive / KPI  — net/brüt ciro, iade/iptal oranı, OBF, MoM değişim
-  • Genel Bakış       — aylık trend, kanal dağılımı, büyüme ivmesi
+  • Executive / KPI  — net/brüt ciro, iade/iptal oranı, OBF, MoM/WoW/DoD değişim
+  • Genel Bakış       — trend, kanal dağılımı, büyüme ivmesi
   • Kategori Analizi  — ürün grubu bazında ciro/iade/pay
   • Ürün Performansı  — top/riskli ürünler, SKU detayı, iade oranı
   • İade Analizi      — kanal/ürün/beden bazında iade, sebep analizi
   • Renk Analizi      — renk bazında satış/iade dağılımı
-  • Ürün Satış        — belirli SKU veya ürün grubu odaklı analiz
 
 Kapsam: ADL ve LMB markalarının online kanalları —
 Trendyol, ADL Web/App, HepsiBurada, Boyner, LovemyBody, TY ADL AZ, TY LMB AZ
+
+## Veri granülaritesi
+  • Günlük  : incorta_ecommerce_gunluk kaynaklı — "bugün", "dün", "günlük" sorguları
+  • Haftalık: incorta_ecommerce_gunluk haftalık agregat — "bu hafta", "geçen hafta"
+  • Aylık   : incorta_satis tam veri — varsayılan granülarite (tarihsel/yıllık analizler)
+Aktif granülarite: {granularite}
 
 ## Kapsam dışı
 - Fiziksel mağaza sorusu: [KAPSAM_DIŞI: MAGAZA_AGENT]
@@ -96,7 +108,9 @@ def _fv(v: Any) -> float:
     except Exception: return 0.0
 
 
-# ── Veri çekiciler (paralel çalışır) ─────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# AYLIK veri çekiciler (incorta_satis + incorta_depo_iade)
+# ══════════════════════════════════════════════════════════════════════════════
 
 async def _fetch_kpi(session: AsyncSession, yil: int, ay: Optional[int],
                      kanal: Optional[str]) -> Dict[str, Any]:
@@ -191,7 +205,6 @@ async def _fetch_trend(session: AsyncSession, yil: int, kanal: Optional[str]) ->
     if kanal:
         where_parts.append("s.satis_kanali = :kanal"); params["kanal"] = kanal
     where_s = "WHERE " + " AND ".join(where_parts)
-    where_d = where_s.replace("s.", "d.")
 
     AY_ADI = {1:"Ocak",2:"Şubat",3:"Mart",4:"Nisan",5:"Mayıs",6:"Haziran",
               7:"Temmuz",8:"Ağustos",9:"Eylül",10:"Ekim",11:"Kasım",12:"Aralık"}
@@ -390,6 +403,184 @@ async def _fetch_analytics(session: AsyncSession, yil: int, ay: Optional[int]) -
         return {}
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GÜNLÜK veri çekiciler (mv_ecom_gunluk)
+# ══════════════════════════════════════════════════════════════════════════════
+
+async def _fetch_gunluk_kpi(session: AsyncSession, gun: str,
+                             kanal: Optional[str]) -> Dict[str, Any]:
+    """Belirli bir günün e-ticaret KPI'sı (mv_ecom_gunluk)."""
+    where_parts = ["gun = :gun"]
+    params: Dict[str, Any] = {"gun": gun}
+    if kanal:
+        where_parts.append("satis_kanali = :kanal"); params["kanal"] = kanal
+    where = "WHERE " + " AND ".join(where_parts)
+    try:
+        r = (await session.execute(text(f"""
+            SELECT COALESCE(SUM(brut_ciro),0)  AS brut,
+                   COALESCE(SUM(iade_ciro),0)  AS iade,
+                   COALESCE(SUM(iptal_ciro),0) AS iptal,
+                   COALESCE(SUM(brut_adet),0)::bigint AS brut_adet
+            FROM mv_ecom_gunluk {where}
+        """), params)).mappings().first()
+        brut = _fv(r["brut"]); iade = _fv(r["iade"]); iptal = _fv(r["iptal"])
+        net = brut - iade - iptal
+        return {
+            "gun": gun,
+            "brut_ciro": round(brut), "iade_ciro": round(iade),
+            "iptal_ciro": round(iptal), "net_ciro": round(net),
+            "brut_adet": int(r["brut_adet"]),
+            "iade_oran_pct": round(iade / brut * 100, 1) if brut else 0,
+            "iptal_oran_pct": round(iptal / brut * 100, 1) if brut else 0,
+        }
+    except Exception as e:
+        log.warning("eticaret.gunluk_kpi_error", error=str(e))
+        return {}
+
+
+async def _fetch_son30gun_trend(session: AsyncSession,
+                                 kanal: Optional[str]) -> List[Dict]:
+    """Son 30 günlük günlük ciro trendi (mv_ecom_gunluk)."""
+    params: Dict[str, Any] = {}
+    kanal_cond = "AND satis_kanali = :kanal" if kanal else ""
+    if kanal:
+        params["kanal"] = kanal
+    try:
+        rows = (await session.execute(text(f"""
+            SELECT gun,
+                   COALESCE(SUM(brut_ciro),0)  AS brut,
+                   COALESCE(SUM(iade_ciro),0)  AS iade,
+                   COALESCE(SUM(brut_adet),0)::bigint AS adet
+            FROM mv_ecom_gunluk
+            WHERE gun >= CURRENT_DATE - INTERVAL '30 days' {kanal_cond}
+            GROUP BY gun ORDER BY gun
+        """), params)).mappings().all()
+        return [
+            {"tarih": str(r["gun"]), "brut_ciro": int(r["brut"]),
+             "iade_ciro": int(r["iade"]),
+             "net_ciro": int(r["brut"]) - int(r["iade"]),
+             "adet": int(r["adet"])}
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("eticaret.son30gun_error", error=str(e))
+        return []
+
+
+async def _fetch_gunluk_kanal(session: AsyncSession, gun: str) -> List[Dict]:
+    """Belirli bir günde kanal bazlı dağılım (mv_ecom_gunluk)."""
+    try:
+        rows = (await session.execute(text("""
+            SELECT satis_kanali,
+                   COALESCE(SUM(brut_ciro),0)  AS brut,
+                   COALESCE(SUM(iade_ciro),0)  AS iade,
+                   COALESCE(SUM(brut_adet),0)::bigint AS adet
+            FROM mv_ecom_gunluk
+            WHERE gun = :gun AND satis_kanali IS NOT NULL
+            GROUP BY satis_kanali ORDER BY brut DESC LIMIT 15
+        """), {"gun": gun})).mappings().all()
+        return [
+            {"kanal": r["satis_kanali"],
+             "brut_ciro": int(r["brut"]), "iade_ciro": int(r["iade"]),
+             "net_ciro": int(r["brut"]) - int(r["iade"]),
+             "adet": int(r["adet"])}
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("eticaret.gunluk_kanal_error", error=str(e))
+        return []
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HAFTALIK veri çekiciler (mv_ecom_haftalik)
+# ══════════════════════════════════════════════════════════════════════════════
+
+async def _fetch_haftalik_trend(session: AsyncSession, yil: int,
+                                 kanal: Optional[str]) -> List[Dict]:
+    """Yıl boyunca haftalık e-ticaret ciro trendi (mv_ecom_haftalik)."""
+    params: Dict[str, Any] = {"yil": yil}
+    kanal_cond = "AND satis_kanali = :kanal" if kanal else ""
+    if kanal:
+        params["kanal"] = kanal
+    try:
+        rows = (await session.execute(text(f"""
+            SELECT yil, hafta, hafta_basi,
+                   COALESCE(SUM(brut_ciro),0)  AS brut,
+                   COALESCE(SUM(iade_ciro),0)  AS iade,
+                   COALESCE(SUM(brut_adet),0)::bigint AS adet
+            FROM mv_ecom_haftalik
+            WHERE yil = :yil {kanal_cond}
+            GROUP BY yil, hafta, hafta_basi
+            ORDER BY hafta_basi
+        """), params)).mappings().all()
+        return [
+            {"yil": int(r["yil"]), "hafta": int(r["hafta"]),
+             "hafta_basi": str(r["hafta_basi"])[:10],
+             "brut_ciro": int(r["brut"]), "iade_ciro": int(r["iade"]),
+             "net_ciro": int(r["brut"]) - int(r["iade"]),
+             "adet": int(r["adet"])}
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("eticaret.haftalik_trend_error", error=str(e))
+        return []
+
+
+async def _fetch_son8hafta_kanal(session: AsyncSession,
+                                  kanal: Optional[str]) -> List[Dict]:
+    """Son 8 haftada kanal bazlı haftalık trend (mv_ecom_haftalik)."""
+    params: Dict[str, Any] = {}
+    kanal_cond = "AND satis_kanali = :kanal" if kanal else ""
+    if kanal:
+        params["kanal"] = kanal
+    try:
+        rows = (await session.execute(text(f"""
+            SELECT hafta_basi, satis_kanali,
+                   COALESCE(SUM(brut_ciro),0) AS brut,
+                   COALESCE(SUM(iade_ciro),0) AS iade
+            FROM mv_ecom_haftalik
+            WHERE hafta_basi >= DATE_TRUNC('week', CURRENT_DATE) - INTERVAL '8 weeks'
+              AND satis_kanali IS NOT NULL {kanal_cond}
+            GROUP BY hafta_basi, satis_kanali
+            ORDER BY hafta_basi DESC, brut DESC
+        """), params)).mappings().all()
+        return [
+            {"hafta_basi": str(r["hafta_basi"])[:10],
+             "kanal": r["satis_kanali"],
+             "brut_ciro": int(r["brut"]), "iade_ciro": int(r["iade"]),
+             "net_ciro": int(r["brut"]) - int(r["iade"])}
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("eticaret.son8hafta_error", error=str(e))
+        return []
+
+
+# ── Granülarite tespiti ───────────────────────────────────────────────────────
+
+_GUNLUK_ANAHTAR = ("bugün", "bu gün", "bugünkü", "dün", "dünkü", "günlük",
+                   "today", "yesterday")
+_HAFTALIK_ANAHTAR = ("bu hafta", "bu haftaki", "geçen hafta", "haftalık",
+                     "hafta bazında", "weekly")
+
+
+def _detect_granularity(question: str, filters: Dict[str, Any]) -> tuple[str, Optional[str]]:
+    """Soru + filtrelerden granülarite ve (varsa) hedef günü döner."""
+    gun_filter = filters.get("gun") or None
+    if gun_filter:
+        return "gunluk", str(gun_filter)
+
+    q = question.lower()
+    if any(k in q for k in _GUNLUK_ANAHTAR):
+        hedef_gun = str(date.today() - timedelta(days=1)) if "dün" in q else str(date.today())
+        return "gunluk", hedef_gun
+
+    if filters.get("hafta") or any(k in q for k in _HAFTALIK_ANAHTAR):
+        return "haftalik", None
+
+    return "aylik", None
+
+
 # ── Ana fonksiyon ─────────────────────────────────────────────────────────────
 
 async def run_eticaret_agent(
@@ -399,7 +590,7 @@ async def run_eticaret_agent(
     history: List[Dict[str, Any]],
     ton: str = "analitik",
 ) -> Dict[str, Any]:
-    """E-Ticaret Agent — tüm veri katmanlarını paralel çekip LLM'e gönderir."""
+    """E-Ticaret Agent — granülariteye göre doğru veri katmanını çekip LLM'e gönderir."""
     t0 = time.perf_counter()
 
     yil    = int(filters.get("yil", 2026))
@@ -407,28 +598,64 @@ async def run_eticaret_agent(
     ay     = int(ay_raw) if ay_raw else None
     kanal  = filters.get("satiskanali") or filters.get("kanal") or None
 
-    # Sıralı çek (asyncpg tek bağlantıda paralel sorgu desteklemiyor)
-    def _safe(v): return v if not isinstance(v, Exception) else {}
+    granularite, hedef_gun = _detect_granularity(question, filters)
 
-    kpi          = await _fetch_kpi(session, yil, ay, kanal)
-    kanal_ozeti  = await _fetch_kanal(session, yil, ay)
-    trend        = await _fetch_trend(session, yil, kanal)
-    top_urun     = await _fetch_top_urunler(session, yil, ay, kanal)
-    riskli       = await _fetch_riskli_urunler(session, yil, ay, kanal)
-    kategori     = await _fetch_kategori(session, yil, ay, kanal)
-    analytics    = await _fetch_analytics(session, yil, ay)
+    # ── Günlük yol ───────────────────────────────────────────────────────────
+    if granularite == "gunluk":
+        gun = hedef_gun or str(date.today())
+        gunluk_kpi   = await _fetch_gunluk_kpi(session, gun, kanal)
+        gunluk_kanal = await _fetch_gunluk_kanal(session, gun)
+        son30gun     = await _fetch_son30gun_trend(session, kanal)
 
-    ctx: Dict[str, Any] = {
-        "donem":       f"{yil}" + (f" Ay:{ay}" if ay else " YTD"),
-        "filtre":      {"yil": yil, "ay": ay, "kanal": kanal},
-        "kpi":         _safe(kpi),
-        "kanal_ozeti": _safe(kanal_ozeti) if isinstance(kanal_ozeti, list) else [],
-        "aylik_trend": _safe(trend) if isinstance(trend, list) else [],
-        "top_10_urun": _safe(top_urun) if isinstance(top_urun, list) else [],
-        "riskli_urunler": _safe(riskli) if isinstance(riskli, list) else [],
-        "kategori_ozeti": _safe(kategori) if isinstance(kategori, list) else [],
-        "web_analytics":  _safe(analytics),
-    }
+        ctx: Dict[str, Any] = {
+            "donem":       f"Günlük: {gun}",
+            "granularite": "gunluk",
+            "filtre":      {"gun": gun, "kanal": kanal},
+            "kpi":         gunluk_kpi,
+            "kanal_dagilimi": gunluk_kanal,
+            "son_30_gun_trend": son30gun,
+            "veri_kaynagi": "incorta_ecommerce_gunluk (mv_ecom_gunluk)",
+        }
+
+    # ── Haftalık yol ─────────────────────────────────────────────────────────
+    elif granularite == "haftalik":
+        haftalik_trend  = await _fetch_haftalik_trend(session, yil, kanal)
+        son8hafta_kanal = await _fetch_son8hafta_kanal(session, kanal)
+
+        ctx = {
+            "donem":        f"Haftalık: {yil}",
+            "granularite":  "haftalik",
+            "filtre":       {"yil": yil, "kanal": kanal},
+            "haftalik_trend": haftalik_trend,
+            "son_8_hafta_kanal": son8hafta_kanal,
+            "veri_kaynagi": "incorta_ecommerce_gunluk (mv_ecom_haftalik)",
+        }
+
+    # ── Aylık yol (varsayılan) ────────────────────────────────────────────────
+    else:
+        kpi          = await _fetch_kpi(session, yil, ay, kanal)
+        kanal_ozeti  = await _fetch_kanal(session, yil, ay)
+        trend        = await _fetch_trend(session, yil, kanal)
+        top_urun     = await _fetch_top_urunler(session, yil, ay, kanal)
+        riskli       = await _fetch_riskli_urunler(session, yil, ay, kanal)
+        kategori     = await _fetch_kategori(session, yil, ay, kanal)
+        analytics    = await _fetch_analytics(session, yil, ay)
+
+        def _safe(v): return v if not isinstance(v, Exception) else {}
+
+        ctx = {
+            "donem":          f"{yil}" + (f" Ay:{ay}" if ay else " YTD"),
+            "granularite":    "aylik",
+            "filtre":         {"yil": yil, "ay": ay, "kanal": kanal},
+            "kpi":            _safe(kpi),
+            "kanal_ozeti":    _safe(kanal_ozeti) if isinstance(kanal_ozeti, list) else [],
+            "aylik_trend":    _safe(trend) if isinstance(trend, list) else [],
+            "top_10_urun":    _safe(top_urun) if isinstance(top_urun, list) else [],
+            "riskli_urunler": _safe(riskli) if isinstance(riskli, list) else [],
+            "kategori_ozeti": _safe(kategori) if isinstance(kategori, list) else [],
+            "web_analytics":  _safe(analytics),
+            "veri_kaynagi":   "incorta_satis + incorta_depo_iade",
+        }
 
     filtreler_str = json.dumps(ctx["filtre"], ensure_ascii=False)
     veri_str      = json.dumps(ctx, ensure_ascii=False, indent=2)
@@ -436,6 +663,7 @@ async def run_eticaret_agent(
 
     system = get_date_context() + "\n\n" + ETICARET_SYSTEM.format(
         sektor_normlari=SEKTOR_NORMLARI,
+        granularite=granularite,
         filtreler=filtreler_str,
         veri_ozeti=veri_str,
         ton_eki=ton_eki,
@@ -458,13 +686,14 @@ async def run_eticaret_agent(
             a2a = {"hedef_agent": m.group(1), "soru": m.group(2).strip()}
 
     elapsed = round((time.perf_counter() - t0) * 1000, 1)
-    log.info("eticaret_agent.done", elapsed_ms=elapsed, a2a=a2a,
-             donem=ctx["donem"], kanal_sayisi=len(ctx["kanal_ozeti"]))
+    log.info("eticaret_agent.done", elapsed_ms=elapsed, granularite=granularite,
+             a2a=a2a, donem=ctx["donem"])
 
     return {
         "answer":      answer,
         "elapsed_ms":  elapsed,
         "agent":       "ETICARET_AGENT",
+        "granularite": granularite,
         "a2a_signal":  a2a,
-        "veri_ozeti":  {"donem": ctx["donem"], "kpi": ctx["kpi"]},
+        "veri_ozeti":  {"donem": ctx["donem"], "kpi": ctx.get("kpi", {})},
     }

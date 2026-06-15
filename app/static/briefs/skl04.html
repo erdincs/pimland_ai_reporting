@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKL-04 · Pazarlama Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--border:#2a2a3a;--border2:#333348;--t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;--orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;--pink:#ec4899}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(13,13,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px}
+.topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--orange)}.topbar .brand{font-weight:600;font-size:14px}.topbar .module{font-size:11px;color:var(--t3);margin-left:4px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}.topbar .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}.topbar .date{font-size:11px;color:var(--t2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:860px;margin:0 auto;padding:24px}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-num{width:24px;height:24px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--orange)}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.kpi{background:var(--bg2);padding:14px;text-align:center}.kpi:hover{background:var(--bg3)}
+.kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:4px}
+.kpi .value{font-size:18px;font-weight:700}.kpi .delta{font-size:10px;margin-top:3px}
+.ch-card{display:flex;align-items:stretch;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.ch-main{flex:1;padding:16px 20px}.ch-side{width:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--border);padding:12px}
+.ch-name{font-size:12px;font-weight:600;margin-bottom:4px}.ch-ciro{font-size:18px;font-weight:700;color:var(--teal);margin-bottom:2px}
+.ch-meta{font-size:10px;color:var(--t3);margin-bottom:8px}.ch-share{font-size:12px;color:var(--t2)}
+.pending{display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:12px;background:var(--bg3);border:1px dashed var(--border2);margin-bottom:12px}
+.pending-icon{font-size:20px;flex-shrink:0}.pending-text{font-size:12px;color:var(--t2);flex:1}
+.pending-tag{font-size:9px;font-weight:700;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:rgba(59,130,246,.12);color:var(--blue)}
+.decision{background:linear-gradient(135deg,rgba(255,107,43,.06),rgba(255,107,43,.02));border:1px solid rgba(255,107,43,.15);border-radius:12px;padding:16px 20px}
+.dec-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,107,43,.08);font-size:12px}
+.dec-item:last-child{border-bottom:none}.dec-arrow{color:var(--orange);font-weight:700;flex-shrink:0}
+.dec-who{font-size:10px;color:var(--blue);background:rgba(59,130,246,.08);padding:1px 6px;border-radius:3px;margin-left:4px}
+.footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--t4)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .4s ease forwards;opacity:0}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}
+.loading{color:var(--t4);font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="dot"></div><span class="brand">Pimland Reporting</span>
+  <span class="module">· SKL-04 Pazarlama Brief</span>
+  <div class="right"><div class="pulse"></div><span class="date" id="topbar-date">Yükleniyor…</span></div>
+</div>
+
+<div class="container">
+
+  <div class="kpi-strip anim d1" id="kpi-strip">
+    <div class="kpi"><div class="label">Toplam Net Ciro</div><div class="value" id="kpi-net" style="color:var(--teal)">—</div><div class="delta" id="kpi-net-d">—</div></div>
+    <div class="kpi"><div class="label">Kanal 1 Payı</div><div class="value" id="kpi-c1">—</div><div class="delta" id="kpi-c1-d">—</div></div>
+    <div class="kpi"><div class="label">Kanal 2 Payı</div><div class="value" id="kpi-c2">—</div><div class="delta" id="kpi-c2-d">—</div></div>
+    <div class="kpi"><div class="label">Kanal 3 Payı</div><div class="value" id="kpi-c3">—</div><div class="delta" id="kpi-c3-d">—</div></div>
+  </div>
+
+  <div class="section anim d2">
+    <div class="section-header"><div class="section-num">1</div><div class="section-title">Kanal Performansı — Dün</div></div>
+    <div id="channels-section"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d3">
+    <div class="section-header"><div class="section-num">2</div><div class="section-title">Trafik Kalitesi (Analytics)</div></div>
+    <div id="analytics-section"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d4">
+    <div class="section-header"><div class="section-num">3</div><div class="section-title">Kampanya Durumu</div></div>
+    <div class="pending">
+      <div class="pending-icon">📡</div>
+      <div class="pending-text">
+        <strong>Meta Ads / GA4 entegrasyonu bekleniyor.</strong><br>
+        Aktifleştirildiğinde bu bölümde kampanya harcama, ROAS, bütçe doluluk ve trafik kalitesi otomatik görünecek.
+      </div>
+      <div class="pending-tag">Bekleniyor</div>
+    </div>
+  </div>
+
+  <div class="section anim d5">
+    <div class="section-header"><div class="section-num">4</div><div class="section-title">Bugün Karar Gerektiren</div></div>
+    <div class="decision" id="kararlar-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="footer">
+    <span id="footer-sync">Veri: Incorta E-Ticaret · Analytics: Bekleniyor</span>
+    <span>Pimland AI Reporting v1.0 · SKL-04</span>
+  </div>
+</div>
+
+<script>
+const KANAL_COLORS_MAP = {'adl.com.tr':'orange','Trendyol':'teal','Hepsiburada':'blue','LovemyBody':'purple','Boyner':'yellow'};
+const COLOR_VAR = {'orange':'var(--orange)','teal':'var(--teal)','blue':'var(--blue)','purple':'var(--purple)','yellow':'var(--yellow)','green':'var(--green)','red':'var(--red)'};
+
+function wowColor(v) { return v === null ? 'var(--t3)' : v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--t3)'; }
+function wowTxt(v) { return v === null ? '—' : `${v>0?'↑':'↓'} %${Math.abs(v).toFixed(1)} WoW`; }
+
+fetch('/api/v1/eticaret-brief/skl04/data')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('topbar-date').textContent =
+      new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) + ' · 07:30';
+
+    // KPI strip
+    document.getElementById('kpi-net').textContent = d.total_net_fmt;
+    const kpiIds = ['kpi-c1','kpi-c2','kpi-c3'];
+    d.kanallar.slice(0,3).forEach((ch, i) => {
+      const el = document.getElementById(kpiIds[i]);
+      const label = el.previousElementSibling;
+      if (label) label.textContent = ch.kanal;
+      el.textContent = `%${ch.share}`;
+      el.style.color = COLOR_VAR[KANAL_COLORS_MAP[ch.kanal]||'teal'] || 'var(--t1)';
+      const delta = document.getElementById(kpiIds[i]+'-d');
+      if (delta) { delta.textContent = wowTxt(ch.wow); delta.style.color = wowColor(ch.wow); }
+    });
+
+    // Kanal kartları
+    const alertKanallar = d.kanallar.filter(c => c.wow !== null && c.wow < -5);
+    document.getElementById('channels-section').innerHTML = d.kanallar.map(ch => {
+      const color = COLOR_VAR[KANAL_COLORS_MAP[ch.kanal]||'teal'] || 'var(--teal)';
+      const wowC = ch.wow !== null && ch.wow < -5;
+      const borderStyle = wowC ? 'border-color:rgba(239,68,68,.2)' : '';
+      const alertBadge = wowC ? `<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(239,68,68,.1);color:var(--red);margin-left:4px">${Math.abs(ch.wow).toFixed(1)}% DÜŞÜŞ</span>` : '';
+      return `<div class="ch-card" style="${borderStyle}">
+        <div class="ch-main">
+          <div class="ch-name">${ch.kanal} ${alertBadge}</div>
+          <div class="ch-ciro" style="color:${wowC?'var(--yellow)':color}">${ch.net_fmt}</div>
+          <div class="ch-meta">Toplam cirodaki payı: %${ch.share} · WoW: <span style="color:${wowColor(ch.wow)}">${wowTxt(ch.wow)}</span></div>
+        </div>
+        <div class="ch-side" style="${wowC?'background:rgba(239,68,68,.03)':''}">
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:6px">WoW</div>
+          <div style="font-size:20px;font-weight:700;color:${wowColor(ch.wow)}">${ch.wow===null?'—':`${ch.wow>0?'↑':'↓'} %${Math.abs(ch.wow).toFixed(1)}`}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Analytics
+    if (d.has_analytics && d.analytics.length > 0) {
+      document.getElementById('analytics-section').innerHTML = `<div class="card"><table style="width:100%;border-collapse:collapse">
+        <thead><tr style="font-size:10px;color:var(--t3);text-transform:uppercase">
+          <th style="text-align:left;padding:6px;border-bottom:1px solid var(--border)">Kaynak</th>
+          <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">Oturum</th>
+          <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">Ciro</th>
+          <th style="text-align:right;padding:6px;border-bottom:1px solid var(--border)">CVR %</th>
+        </tr></thead>
+        <tbody>${d.analytics.map(a => `<tr>
+          <td style="padding:8px 6px;font-size:12px;border-bottom:1px solid var(--bg4)">${a.kaynak}</td>
+          <td style="padding:8px 6px;font-size:11px;text-align:right;font-family:monospace;border-bottom:1px solid var(--bg4);color:var(--t2)">${a.sess.toLocaleString('tr-TR')}</td>
+          <td style="padding:8px 6px;font-size:11px;text-align:right;font-family:monospace;border-bottom:1px solid var(--bg4)">${(a.ciro/1000).toFixed(1)}K ₺</td>
+          <td style="padding:8px 6px;font-size:11px;text-align:right;font-family:monospace;border-bottom:1px solid var(--bg4);color:var(--teal)">%${a.cvr}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    } else {
+      document.getElementById('analytics-section').innerHTML = `
+        <div class="card" style="border-color:rgba(245,158,11,.15);background:rgba(245,158,11,.04)">
+          <div style="font-size:12px;color:var(--yellow)">⚠ Analytics verisi mevcut değil — GA4 / Incorta entegrasyonu bekleniyor.</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:6px">Aktifleştirildiğinde organik/ücretli/direkt trafik dağılımı ve dönüşüm oranları burada görünecek.</div>
+        </div>`;
+    }
+
+    // Kararlar
+    document.getElementById('kararlar-card').innerHTML = d.kararlar.map(k => `
+      <div class="dec-item">
+        <span class="dec-arrow">→</span>
+        <span>${k.text} <span class="dec-who">${k.who}</span></span>
+      </div>`).join('');
+
+    document.getElementById('footer-sync').textContent = `Son güncelleme: ${new Date().toLocaleTimeString('tr-TR')} · Analytics: ${d.has_analytics ? 'Mevcut' : 'Bekleniyor'}`;
+  })
+  .catch(e => console.error('SKL-04 error:', e));
+</script>
+</body>
+</html>

@@ -3,114 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pimland · Daily Brief Profil Yönetimi</title>
+<title>Pimland · Brief Builder</title>
 <script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;
-  --border:#2a2a3a;--border2:#333348;
-  --t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;
-  --orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;
-  --red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
-}
-[data-theme="light"]{
-  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;
-  --border:#dcdce8;--border2:#c4c4d8;
-  --t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc;
-}
+:root{--bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--border:#2a2a3a;--border2:#333348;--t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;--orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7}
+[data-theme="light"]{--bg:#f2f2f7;--bg2:#ffffff;--bg3:#f0f0f5;--bg4:#e6e6ef;--border:#dcdce8;--border2:#c4c4d8;--t1:#18182a;--t2:#4a4a6a;--t3:#8888a8;--t4:#aaaacc}
+*{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
 
 /* TOPBAR */
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.brand{display:flex;align-items:center;gap:8px}
-.brand-dot{width:7px;height:7px;background:var(--orange);border-radius:50%}
-.brand-name{font-size:13px;font-weight:600}
-.brand-mod{font-size:9px;color:var(--t3);padding:2px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
-.topbar-nav{display:flex;align-items:center;gap:6px;font-size:11px}
+.topbar{position:sticky;top:0;z-index:100;height:48px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar .dot{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.topbar .brand{font-weight:600;font-size:13px}
+.topbar .mod{font-size:9px;color:var(--t3);padding:2px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.topbar-nav{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px}
 .topbar-link{color:var(--t2);text-decoration:none;padding:4px 10px;border-radius:5px;border:1px solid var(--border);font-size:11px;transition:all .15s}
 .topbar-link:hover{background:var(--bg3);color:var(--t1)}
 .topbar-link.active{background:rgba(255,107,43,.1);color:var(--orange);border-color:rgba(255,107,43,.3)}
 
-/* ANA LAYOUT: Sol profil | Orta zamanlama | Sağ editor */
+/* LAYOUT */
 .app{display:flex;flex-direction:column;height:100vh}
-.layout{display:grid;grid-template-columns:240px 260px 1fr;flex:1;overflow:hidden}
+.layout{display:flex;flex:1;overflow:hidden}
 
-/* PANEL ORTAK */
-.panel{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.panel-hdr{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.panel-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3)}
-.panel-body{flex:1;overflow-y:auto;padding:6px 0}
-.panel-body::-webkit-scrollbar{width:3px}
-.panel-body::-webkit-scrollbar-thumb{background:var(--border)}
+/* SIDEBAR */
+.sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border)}
+.sb-section{padding:12px}
+.sb-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t4);margin-bottom:8px;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
+.sb-item:hover{background:var(--bg3)}
+.sb-item.active{background:var(--bg4);border-color:var(--border2)}
+.sb-item .sb-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.sb-item .sb-info{flex:1;min-width:0}
+.sb-item .sb-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-item .sb-meta{font-size:10px;color:var(--t3)}
+.sb-item .sb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sb-divider{height:1px;background:var(--border);margin:4px 12px}
+.sb-add{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;color:var(--orange);font-size:12px;font-weight:500;transition:background .15s;border-radius:8px;margin:4px 8px}
+.sb-add:hover{background:var(--bg3)}
+.sb-footer{padding:10px 14px;border-top:1px solid var(--border);font-size:10px;color:var(--t4)}
 
-/* PROFIL LİSTESİ */
-.profil-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative}
-.profil-item:hover{background:var(--bg3)}
-.profil-item.active{background:rgba(255,107,43,.06);border-left:2px solid var(--orange);padding-left:12px}
-.profil-av{width:30px;height:30px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:var(--orange)}
-.profil-info{flex:1;min-width:0}
-.profil-name{font-size:12px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.profil-rol{font-size:10px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.profil-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
-.profil-dot.pasif{background:var(--t4)}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.main-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-title-wrap{display:flex;align-items:center;gap:12px}
+.main-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.main-titles h2{font-size:15px;font-weight:600;color:var(--t1)}
+.main-titles .sub{font-size:10px;color:var(--t3)}
+.main-actions{display:flex;gap:6px}
 
-/* ZAMANLAMA LİSTESİ */
-.sched-item{display:flex;align-items:flex-start;gap:9px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.sched-item:hover{background:var(--bg3)}
-.sched-item.active{background:rgba(255,107,43,.06);border-left:2px solid var(--orange);padding-left:12px}
-.sched-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-.sched-icon.daily{background:rgba(0,194,168,.12)}
-.sched-icon.weekly{background:rgba(59,130,246,.12)}
-.sched-icon.monthly{background:rgba(168,85,247,.12)}
-.sched-icon.adhoc{background:rgba(245,158,11,.12)}
-.sched-icon.threshold{background:rgba(239,68,68,.12)}
-.sched-info{flex:1;min-width:0}
-.sched-name{font-size:11px;font-weight:600;color:var(--t1)}
-.sched-meta{font-size:10px;color:var(--t3);margin-top:2px}
-.sched-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:3px}
-.badge-daily{background:rgba(0,194,168,.12);color:var(--teal)}
-.badge-weekly{background:rgba(59,130,246,.12);color:var(--blue)}
-.badge-monthly{background:rgba(168,85,247,.12);color:var(--purple)}
-.badge-adhoc{background:rgba(245,158,11,.12);color:var(--yellow)}
-
-/* EDITOR */
-.editor{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.editor-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg2)}
-.editor-title-wrap{display:flex;align-items:center;gap:10px}
-.editor-icon{width:36px;height:36px;border-radius:8px;background:rgba(255,107,43,.1);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.editor-titles h2{font-size:14px;font-weight:600;color:var(--t1);margin:0}
-.editor-titles .sub{font-size:10px;color:var(--t3);margin-top:1px}
-.editor-actions{display:flex;gap:6px}
+/* SCHED SELECTOR */
+.sched-selector{background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 24px;display:flex;align-items:center;gap:6px;flex-shrink:0;min-height:36px}
+.sched-chip{font-size:10px;font-weight:600;padding:3px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;color:var(--t2);transition:all .12s}
+.sched-chip:hover{border-color:var(--border2);color:var(--t1)}
+.sched-chip.active{background:rgba(255,107,43,.1);border-color:var(--orange);color:var(--orange)}
+.sched-selector-label{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.5px;margin-right:4px}
 
 /* TABS */
-.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);padding:0 20px}
-.tab{padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;flex-shrink:0}
+.tab{padding:10px 16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
 .tab:hover{color:var(--t2)}
 .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
 
-.tab-content{flex:1;overflow-y:auto;padding:20px}
+.tab-area{flex:1;overflow-y:auto;padding:24px}
+.tab-area::-webkit-scrollbar{width:4px}
+.tab-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .tab-pane{display:none}
 .tab-pane.active{display:block}
 
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card:hover{border-color:var(--border2)}
+.card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+
 /* FORM */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:680px}
-.form-group{display:flex;flex-direction:column;gap:5px}
-.form-group.full{grid-column:1/-1}
-.form-label{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
-.form-input,.form-select{background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:12px;padding:7px 10px;border-radius:5px;outline:none;font-family:inherit;width:100%}
+.form-group{margin-bottom:18px}
+.form-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:6px;font-weight:600;display:block}
+.form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--t1);font-size:12px;font-family:inherit;outline:none;transition:border-color .15s}
 .form-input:focus,.form-select:focus{border-color:var(--orange)}
-.form-hint{font-size:10px;color:var(--t3)}
+.form-input::placeholder{color:var(--t4)}
+textarea.form-input{min-height:90px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.form-hint{font-size:10px;color:var(--t3);margin-top:4px}
 
-.section{margin-bottom:20px;max-width:680px}
-.section-title{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+/* STATS BAR */
+.stats-bar{display:flex;gap:16px;margin-bottom:20px}
+.stat{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2)}
+.stat-dot{width:8px;height:8px;border-radius:2px}
 
-.day-toggle{display:flex;gap:4px}
-.day-btn{padding:6px 10px;background:var(--bg2);border:1px solid var(--border);color:var(--t3);border-radius:4px;cursor:pointer;font-size:10px;font-weight:600;font-family:inherit;min-width:36px;text-align:center;transition:all .1s}
-.day-btn.selected{background:rgba(255,107,43,.1);border-color:var(--orange);color:var(--orange)}
+/* TONE CARDS */
+.tone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tone-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all .12s}
+.tone-card:hover{border-color:var(--border2)}
+.tone-card.selected{border-color:var(--orange);background:rgba(255,107,43,.06)}
+.tone-name{font-size:11px;font-weight:600;color:var(--t1)}
+.tone-desc{font-size:10px;color:var(--t3);margin-top:3px;line-height:1.4}
 
+/* SCHEDULE DAYS */
+.sched-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.sched-day{text-align:center;padding:8px 4px;border-radius:6px;cursor:pointer;border:1px solid var(--border);transition:all .15s;font-size:11px}
+.sched-day:hover{border-color:var(--border2)}
+.sched-day.active{background:var(--orange);border-color:var(--orange);color:white;font-weight:600}
+.sched-day .day-label{font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:2px}
+.sched-day.active .day-label{color:rgba(255,255,255,.7)}
+
+/* TOGGLE */
 .toggle-switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .toggle-switch input{display:none}
 .sw-track{width:30px;height:16px;background:var(--bg4);border-radius:8px;position:relative;transition:background .15s}
@@ -118,22 +119,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .toggle-switch input:checked + .sw-track{background:var(--orange)}
 .toggle-switch input:checked + .sw-track::after{left:16px;background:#fff}
 
-/* TONE */
-.tone-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:500px}
-.tone-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer;transition:all .12s}
-.tone-card:hover{border-color:var(--border2)}
-.tone-card.selected{border-color:var(--orange);background:rgba(255,107,43,.04)}
-.tone-name{font-size:11px;font-weight:600;color:var(--t1)}
-.tone-desc{font-size:10px;color:var(--t3);margin-top:3px;line-height:1.4}
-
 /* SORULAR */
-.soru-toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
-.soru-search{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:6px 10px;border-radius:5px;outline:none;font-family:inherit}
+.soru-toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.soru-search{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:11px;padding:7px 10px;border-radius:6px;outline:none;font-family:inherit}
 .soru-search::placeholder{color:var(--t3)}
-.soru-list{display:flex;flex-direction:column;gap:6px;max-width:860px}
-.soru-card{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.soru-list{display:flex;flex-direction:column;gap:6px}
+.soru-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
 .soru-card:hover{border-color:var(--border2)}
-.soru-handle{color:var(--t4);cursor:grab;font-size:13px;padding-top:1px;flex-shrink:0}
 .soru-content{flex:1;min-width:0}
 .soru-text{font-size:12px;color:var(--t1);margin-bottom:5px;line-height:1.5}
 .soru-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
@@ -152,36 +144,60 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .btn-icon:hover{border-color:var(--border2);color:var(--t1)}
 .btn-icon.danger:hover{color:var(--red);border-color:var(--red)}
 
-/* KÜTÜPHANE */
-.kutuphane-bar{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:12px;max-width:860px}
-.kutuphane-title{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}
-.kutuphane-pills{display:flex;flex-wrap:wrap;gap:4px}
-.kutuphane-pill{background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;transition:all .1s;font-family:inherit}
-.kutuphane-pill:hover{background:var(--bg4);color:var(--t1)}
-.kutuphane-pill.added{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);color:var(--green);cursor:default}
+/* AGENT CARDS */
+.agent-card{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;background:var(--bg2);margin-bottom:6px;border:1px solid var(--border)}
+.agent-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.agent-info{flex:1}
+.agent-name{font-size:12px;font-weight:600}
+.agent-questions{font-size:10px;color:var(--t3);margin-top:2px}
+.agent-status{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
 
-/* KONTROL LİSTESİ */
-.kontrol-list{display:flex;flex-direction:column;gap:5px;max-width:680px}
-.kontrol-item{background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:8px 11px;display:flex;align-items:center;gap:9px}
-.kontrol-text{flex:1;font-size:11px;color:var(--t1)}
-.kontrol-tetik{font-size:10px;color:var(--t3);font-family:'DM Mono',monospace;flex-shrink:0}
+/* ALERT */
+.alert-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--bg4)}
+.alert-row:last-child{border-bottom:none}
+.alert-name{font-size:12px;flex:1}
+.alert-op{font-size:10px;color:var(--t3);width:20px;text-align:center}
+.alert-val{width:80px}
+.alert-val input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--t1);font-size:11px;font-family:'DM Mono',monospace;text-align:right;outline:none}
+.alert-val input:focus{border-color:var(--orange)}
 
-/* BOŞLUK DURUMU */
+/* PREVIEW */
+.preview-frame{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:360px}
+.preview-header{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.preview-dots{display:flex;gap:4px}
+.preview-dots span{width:8px;height:8px;border-radius:50%}
+.preview-url{font-size:10px;color:var(--t3);flex:1;text-align:center}
+.preview-body{padding:20px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px}
+.badge-green{background:rgba(34,197,94,.12);color:var(--green)}
+.badge-yellow{background:rgba(245,158,11,.12);color:var(--yellow)}
+.badge-red{background:rgba(239,68,68,.12);color:var(--red)}
+.badge-blue{background:rgba(59,130,246,.12);color:var(--blue)}
+.badge-orange{background:rgba(255,107,43,.12);color:var(--orange)}
+.badge-teal{background:rgba(0,194,168,.12);color:var(--teal)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-primary{background:var(--orange);color:white}
+.btn-primary:hover{background:#e55a1f}
+.btn-secondary{background:var(--bg3);color:var(--t1);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--border2);background:var(--bg4)}
+.btn-ghost{background:transparent;color:var(--t2);padding:7px 12px;border:1px solid transparent}
+.btn-ghost:hover{color:var(--t1);background:var(--bg3)}
+.btn-sm{padding:5px 10px;font-size:10px}
+.btn-add{background:var(--orange);color:#fff;border:none;padding:4px 9px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:inherit}
+
+/* EMPTY */
 .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--t3);text-align:center;padding:32px}
 .empty-icon{font-size:36px}
 .empty-title{font-size:13px;font-weight:600;color:var(--t2)}
 .empty-desc{font-size:11px;color:var(--t3);max-width:260px;line-height:1.5}
 
-/* BUTONLAR */
-.btn-pri{padding:6px 14px;background:var(--orange);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-pri:hover{background:#e55a20}
-.btn-sec{padding:6px 11px;background:transparent;color:var(--t2);border:1px solid var(--border);border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit}
-.btn-sec:hover{border-color:var(--border2);color:var(--t1)}
-.btn-add{background:var(--orange);color:#fff;border:none;padding:4px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:inherit}
-.btn-sm{padding:4px 9px;font-size:10px;border-radius:4px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:transparent;color:var(--t2)}
-.btn-sm:hover{background:var(--bg3);color:var(--t1)}
-.btn-danger{background:transparent;border:1px solid var(--border);color:var(--red);padding:4px 9px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit}
-.btn-danger:hover{background:rgba(239,68,68,.08)}
+/* FOOTER BAR */
+.footer-bar{position:sticky;bottom:0;background:rgba(13,13,18,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.fb-info{font-size:11px;color:var(--t3)}
 
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -194,13 +210,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .modal-body{flex:1;overflow-y:auto;padding:20px}
 .modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
 
-/* MODAL ADIMLAR */
+/* MODAL STEPS */
 .step-indicator{display:flex;gap:0;margin-bottom:20px}
-.step{flex:1;text-align:center;padding:8px 4px;font-size:10px;font-weight:600;color:var(--t3);border-bottom:2px solid var(--border);cursor:default;position:relative}
+.step{flex:1;text-align:center;padding:8px 4px;font-size:10px;font-weight:600;color:var(--t3);border-bottom:2px solid var(--border);cursor:default}
 .step.active{color:var(--orange);border-bottom-color:var(--orange)}
 .step.done{color:var(--green);border-bottom-color:var(--green)}
 
-/* ŞABLON KARTLARI */
+/* TEMPLATE CARDS */
 .tmpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tmpl-card{background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s}
 .tmpl-card:hover{border-color:var(--border2);background:var(--bg4)}
@@ -213,7 +229,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .tmpl-sched-row{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)}
 .tmpl-sched-badge{font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px}
 
-/* ZAMANLAMA EKLEME MODAL */
+/* FREQ CARDS */
 .freq-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .freq-card{background:var(--bg3);border:2px solid var(--border);border-radius:7px;padding:12px;cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:9px}
 .freq-card:hover{border-color:var(--border2)}
@@ -232,11 +248,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="brand">
-    <div class="brand-dot"></div>
-    <span class="brand-name">Pimland</span>
-    <span class="brand-mod">Daily Brief</span>
-  </div>
+  <div class="dot"></div>
+  <span class="brand">Pimland</span>
+  <span class="mod">Brief Builder</span>
   <div class="topbar-nav">
     <a href="/api/v1/portal/yonetim/brief-profilleri" class="topbar-link active">Profil Yönetimi</a>
     <a href="/api/v1/portal/yonetim/daily-brief" class="topbar-link">Brief Önizleme</a>
@@ -246,69 +260,211 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 <div class="layout">
 
-<!-- SOL: PROFİL LİSTESİ -->
-<div class="panel" id="panel-profil">
-  <div class="panel-hdr">
-    <span class="panel-title" id="profil-panel-title">Profiller</span>
-    <button class="btn-add" onclick="openNewProfileModal()">+ Yeni</button>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <div class="sb-label" id="sb-section-label">Profiller</div>
+    <div id="sb-profile-list"></div>
   </div>
-  <div class="panel-body" id="profil-list"></div>
+  <div style="flex:1"></div>
+  <div class="sb-divider"></div>
+  <div class="sb-add" onclick="openNewProfileModal()">+ Yeni Profil Oluştur</div>
+  <div class="sb-footer" id="sb-footer">Yükleniyor...</div>
 </div>
 
-<!-- ORTA: ZAMANLAMA LİSTESİ -->
-<div class="panel" id="panel-sched">
-  <div class="panel-hdr">
-    <span class="panel-title" id="sched-panel-title">Zamanlamalar</span>
-    <button class="btn-add" id="btn-add-sched" onclick="openNewSchedModal()" style="display:none">+ Ekle</button>
-  </div>
-  <div class="panel-body" id="sched-list">
-    <div class="empty-state">
-      <div class="empty-icon">📋</div>
-      <div class="empty-title">Profil seçin</div>
-      <div class="empty-desc">Sol panelden bir profil seçerek zamanlamalarını görüntüleyin.</div>
-    </div>
-  </div>
-</div>
+<!-- MAIN -->
+<div class="main" id="main">
 
-<!-- SAĞ: EDITOR -->
-<div class="editor" id="editor">
-  <div class="empty-state" id="editor-empty" style="height:100%">
-    <div class="empty-icon">⏰</div>
-    <div class="empty-title">Zamanlama seçin</div>
-    <div class="empty-desc">Orta panelden bir zamanlama seçerek sorularını ve ayarlarını düzenleyin.</div>
+  <!-- Empty state -->
+  <div class="empty-state" id="main-empty" style="height:100%">
+    <div class="empty-icon">📋</div>
+    <div class="empty-title">Profil seçin</div>
+    <div class="empty-desc">Sol panelden bir profil seçerek ayarlarını düzenleyin.</div>
   </div>
-  <div id="editor-content" style="display:none;flex-direction:column;height:100%">
-    <div class="editor-hdr">
-      <div class="editor-title-wrap">
-        <div class="editor-icon" id="ed-icon">📋</div>
-        <div class="editor-titles">
-          <h2 id="ed-title">—</h2>
-          <div class="sub" id="ed-sub">—</div>
+
+  <!-- Main content (hidden until profile selected) -->
+  <div id="main-content" style="display:none;flex-direction:column;height:100%">
+
+    <!-- Profile header -->
+    <div class="main-header">
+      <div class="main-title-wrap">
+        <div class="main-icon" id="main-icon" style="background:rgba(255,107,43,.1)">📋</div>
+        <div class="main-titles">
+          <h2 id="main-title">—</h2>
+          <div class="sub" id="main-sub">—</div>
         </div>
       </div>
-      <div class="editor-actions">
-        <button class="btn-sec" onclick="generateBrief()">▶ Brief Üret</button>
-        <button class="btn-sec btn-danger" onclick="deleteCurrentSchedule()">Sil</button>
-        <button class="btn-pri" onclick="saveSchedule()">Kaydet</button>
+      <div class="main-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openNewSchedModal()">+ Zamanlama</button>
+        <button class="btn btn-secondary btn-sm" id="btn-gen-brief" onclick="generateBrief()">▶ Brief Üret</button>
       </div>
     </div>
+
+    <!-- Schedule selector (multiple schedules) -->
+    <div class="sched-selector" id="sched-selector" style="display:none"></div>
+
+    <!-- Tabs -->
     <div class="tabs">
-      <div class="tab active" data-pane="ayarlar" onclick="switchTab(this)">Ayarlar</div>
-      <div class="tab" data-pane="sorular" id="tab-sorular" onclick="switchTab(this)">Sorular</div>
+      <div class="tab active" data-tab="genel" onclick="switchTab(this)">Genel Ayarlar</div>
+      <div class="tab" data-tab="sorular" id="tab-sorular-btn" onclick="switchTab(this)">Sorular</div>
+      <div class="tab" data-tab="agentler" onclick="switchTab(this)">Agent Haritası</div>
+      <div class="tab" data-tab="uyarilar" onclick="switchTab(this)">Uyarı Eşikleri</div>
+      <div class="tab" data-tab="zamanlama" onclick="switchTab(this)">Zamanlama</div>
+      <div class="tab" data-tab="onizleme" onclick="switchTab(this)">Önizleme</div>
     </div>
-    <div class="tab-content">
-      <!-- TAB: AYARLAR -->
-      <div class="tab-pane active" id="pane-ayarlar">
-        <div class="section">
-          <div class="section-title">Zamanlama</div>
-          <div class="form-grid">
-            <div class="form-group">
+
+    <!-- Tab content -->
+    <div class="tab-area">
+
+      <!-- ====== GENEL AYARLAR ====== -->
+      <div class="tab-pane active" id="pane-genel">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Profil Adı</label>
+            <input class="form-input" id="fp-name" placeholder="örn: CEO Briefing">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rol / Pozisyon</label>
+            <input class="form-input" id="fp-role" placeholder="örn: Genel Müdür">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">E-posta</label>
+            <input class="form-input" id="fp-email" type="email" placeholder="isim@pimland.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Durum</label>
+            <select class="form-select" id="fp-active">
+              <option value="true">✅ Aktif</option>
+              <option value="false">⏸ Pasif</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brief Amacı</label>
+          <textarea class="form-input" id="fp-purpose" placeholder="Bu profil kimin için, ne amaçla üretilir?"></textarea>
+          <div class="form-hint">Composer'a bağlam olarak gider. Profil kimliğini tanımlar.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Composer Yorum Tonu</label>
+          <textarea class="form-input" id="fp-tone-text" placeholder="Claude'a verilecek ton talimatı..."></textarea>
+          <div class="form-hint">Üslup, uzunluk ve format direktiflerini buraya yazın.</div>
+        </div>
+        <div class="card" style="border-color:rgba(255,107,43,.15)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span style="font-size:14px">📧</span>
+            <span style="font-size:12px;font-weight:600">Gönderim Kanalları</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-green">✓ Portal Bildirim</span>
+            <span class="badge badge-green" id="ch-email-badge">✓ E-posta</span>
+            <span class="badge" style="background:var(--bg4);color:var(--t3)">+ Slack (yakında)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== SORULAR & BÖLÜMLER ====== -->
+      <div class="tab-pane" id="pane-sorular">
+        <div class="stats-bar" id="soru-stats"></div>
+        <div class="soru-toolbar">
+          <input class="soru-search" id="soru-search" placeholder="Soru ara..." oninput="filterQuestions()">
+          <button class="btn btn-secondary btn-sm" onclick="openHavuzModal()">📚 Havuzdan Ekle</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAddQuestionModal()">+ Özel Soru</button>
+        </div>
+        <div class="soru-list" id="soru-list"></div>
+      </div>
+
+      <!-- ====== AGENT HARİTASI ====== -->
+      <div class="tab-pane" id="pane-agentler">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:16px">Seçili sorulara göre hesaplanan agent haritası. Orchestrator paralel çağrıyı yönetir.</div>
+        <div id="agent-list"></div>
+        <div class="card" style="margin-top:16px">
+          <div class="form-label" style="margin-bottom:10px">Paralel Çağrı Ayarları</div>
+          <div class="form-row-3">
+            <div class="form-group" style="margin-bottom:0">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Max Paralel Agent</div>
+              <input class="form-input" value="3" style="font-family:'DM Mono',monospace;text-align:center">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Timeout (saniye)</div>
+              <input class="form-input" value="30" style="font-family:'DM Mono',monospace;text-align:center">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Fallback</div>
+              <select class="form-input" style="font-size:11px">
+                <option selected>Kısmi brief üret</option>
+                <option>Dünün verisini göster</option>
+                <option>Brief'i geciktir</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== UYARI EŞİKLERİ ====== -->
+      <div class="tab-pane" id="pane-uyarilar">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:16px">Eşik aşıldığında brief başına 🔴 banner eklenir. "Uyarılar" bölümü sadece aktif uyarı varsa görünür.</div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:600;margin-bottom:12px">Uyarı Eşikleri</div>
+          <div class="alert-row">
+            <div class="alert-name">İade oranı spike</div>
+            <div class="alert-op">&gt;</div>
+            <div class="alert-val"><input value="25"></div>
+            <span style="font-size:10px;color:var(--t3)">%</span>
+            <span class="badge badge-red" style="margin-left:8px">Kritik</span>
+          </div>
+          <div class="alert-row">
+            <div class="alert-name">İptal oranı spike</div>
+            <div class="alert-op">&gt;</div>
+            <div class="alert-val"><input value="15"></div>
+            <span style="font-size:10px;color:var(--t3)">%</span>
+            <span class="badge badge-red" style="margin-left:8px">Kritik</span>
+          </div>
+          <div class="alert-row">
+            <div class="alert-name">Brüt-Net makas</div>
+            <div class="alert-op">&gt;</div>
+            <div class="alert-val"><input value="30"></div>
+            <span style="font-size:10px;color:var(--t3)">%</span>
+            <span class="badge badge-yellow" style="margin-left:8px">Uyarı</span>
+          </div>
+          <div class="alert-row">
+            <div class="alert-name">Sıfır satış aktif ürün</div>
+            <div class="alert-op">&gt;</div>
+            <div class="alert-val"><input value="20"></div>
+            <span style="font-size:10px;color:var(--t3)">adet</span>
+            <span class="badge badge-yellow" style="margin-left:8px">Uyarı</span>
+          </div>
+          <div class="alert-row">
+            <div class="alert-name">Hedef gerçekleşme düşük</div>
+            <div class="alert-op">&lt;</div>
+            <div class="alert-val"><input value="80"></div>
+            <span style="font-size:10px;color:var(--t3)">%</span>
+            <span class="badge badge-yellow" style="margin-left:8px">Uyarı</span>
+          </div>
+          <div class="alert-row">
+            <div class="alert-name">Kanal 3+ gün düşüş</div>
+            <div class="alert-op">≥</div>
+            <div class="alert-val"><input value="3"></div>
+            <span style="font-size:10px;color:var(--t3)">gün</span>
+            <span class="badge badge-red" style="margin-left:8px">Kritik</span>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm">+ Yeni Eşik Ekle</button>
+      </div>
+
+      <!-- ====== ZAMANLAMA ====== -->
+      <div class="tab-pane" id="pane-zamanlama">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Zamanlama Ayarları</div>
+          <div class="form-row" style="margin-bottom:16px">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Zamanlama Adı</label>
               <input class="form-input" id="f-name" placeholder="örn: Günlük Brief">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Frekans Tipi</label>
-              <select class="form-select" id="f-freq">
+              <select class="form-select" id="f-freq" onchange="updateCronDisplay()">
                 <option value="daily">Günlük</option>
                 <option value="weekly">Haftalık</option>
                 <option value="monthly">Aylık</option>
@@ -316,44 +472,51 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
                 <option value="threshold">Eşik Bazlı</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Üretim Saati</label>
-              <input class="form-input" type="time" id="f-time" value="07:00">
+          </div>
+          <div class="form-row" style="margin-bottom:16px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Üretim Saati (İstanbul)</label>
+              <input class="form-input" type="time" id="f-time" value="07:00" oninput="updateCronDisplay()">
             </div>
-            <div class="form-group">
-              <label class="form-label">Email Gönderimi</label>
-              <label class="toggle-switch">
-                <input type="checkbox" id="f-email" checked>
-                <span class="sw-track"></span>
-                <span style="font-size:11px;color:var(--t2)">Brief üretilince email gönder</span>
-              </label>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Timezone</label>
+              <select class="form-select"><option selected>Europe/Istanbul (UTC+3)</option></select>
             </div>
-            <div class="form-group full">
-              <label class="form-label">Aktif Günler</label>
-              <div class="day-toggle" id="f-days">
-                <button class="day-btn selected" data-day="1">Pzt</button>
-                <button class="day-btn selected" data-day="2">Sal</button>
-                <button class="day-btn selected" data-day="3">Çar</button>
-                <button class="day-btn selected" data-day="4">Per</button>
-                <button class="day-btn selected" data-day="5">Cum</button>
-                <button class="day-btn" data-day="6">Cmt</button>
-                <button class="day-btn" data-day="7">Paz</button>
-              </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Email Gönderimi</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="f-email" checked>
+              <span class="sw-track"></span>
+              <span style="font-size:11px;color:var(--t2)">Brief üretilince email gönder</span>
+            </label>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Aktif Günler</label>
+            <div class="sched-grid" id="f-days">
+              <div class="sched-day active" data-day="1" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Pzt</div>✓</div>
+              <div class="sched-day active" data-day="2" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Sal</div>✓</div>
+              <div class="sched-day active" data-day="3" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Çar</div>✓</div>
+              <div class="sched-day active" data-day="4" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Per</div>✓</div>
+              <div class="sched-day active" data-day="5" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Cum</div>✓</div>
+              <div class="sched-day" data-day="6" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Cmt</div></div>
+              <div class="sched-day" data-day="7" onclick="this.classList.toggle('active');updateCronDisplay()"><div class="day-label">Paz</div></div>
             </div>
           </div>
         </div>
-        <div class="section">
-          <div class="section-title">Sunum Tercihleri</div>
-          <div class="form-grid">
-            <div class="form-group full">
-              <label class="form-label">Ton</label>
-              <div class="tone-grid">
-                <div class="tone-card selected" data-tone="yonetici"><div class="tone-name">🎩 Yönetici</div><div class="tone-desc">Stratejik, kısa, karar odaklı.</div></div>
-                <div class="tone-card" data-tone="operasyonel"><div class="tone-name">⚙️ Operasyonel</div><div class="tone-desc">Detaylı veri, eyleme dönük.</div></div>
-                <div class="tone-card" data-tone="analitik"><div class="tone-name">📊 Analitik</div><div class="tone-desc">Trend analizi, derinlemesine.</div></div>
-              </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">Sunum Tercihleri</div>
+          <div class="form-group">
+            <label class="form-label">Ton</label>
+            <div class="tone-grid">
+              <div class="tone-card selected" data-tone="yonetici"><div class="tone-name">🎩 Yönetici</div><div class="tone-desc">Stratejik, kısa, karar odaklı.</div></div>
+              <div class="tone-card" data-tone="operasyonel"><div class="tone-name">⚙️ Operasyonel</div><div class="tone-desc">Detaylı veri, eyleme dönük.</div></div>
+              <div class="tone-card" data-tone="analitik"><div class="tone-name">📊 Analitik</div><div class="tone-desc">Trend analizi, derinlemesine.</div></div>
             </div>
-            <div class="form-group">
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Uzunluk</label>
               <select class="form-select" id="f-length">
                 <option value="kisa">Kısa (~100 kelime)</option>
@@ -361,7 +524,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
                 <option value="detay">Detaylı (~600 kelime)</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom:0">
               <label class="form-label">Format</label>
               <select class="form-select" id="f-format">
                 <option value="mixed" selected>Anlatı + Madde</option>
@@ -370,33 +533,69 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
                 <option value="table">Tablo ağırlıklı</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Top Insight Sayısı</label>
-              <input class="form-input" type="number" id="f-topn" value="3" min="1" max="10">
+          </div>
+          <div class="form-group" style="margin-top:16px;margin-bottom:0">
+            <label class="form-label">Top Insight Sayısı</label>
+            <input class="form-input" type="number" id="f-topn" value="3" min="1" max="10" style="max-width:120px">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:10px">EventBridge Cron</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <code id="cron-display" style="flex:1;background:var(--bg4);padding:10px 14px;border-radius:6px;font-size:12px;color:var(--teal);font-family:'DM Mono','SF Mono',monospace">cron(0 4 ? * MON-FRI *)</code>
+            <span style="font-size:10px;color:var(--t3)">UTC</span>
+          </div>
+          <div style="font-size:10px;color:var(--t3);margin-top:6px" id="cron-hint">07:00 İstanbul = 04:00 UTC · AWS EventBridge formatı</div>
+        </div>
+      </div>
+
+      <!-- ====== ÖNİZLEME ====== -->
+      <div class="tab-pane" id="pane-onizleme">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-primary btn-sm" id="btn-draft-preview" onclick="generateDraftPreview()">📄 Taslak Brief Oluştur</button>
+            <span style="font-size:10px;color:var(--t3)">Gerçek veri yok — seçilen sorulara göre taslak</span>
+          </div>
+          <span style="font-size:10px;color:var(--t3)" id="preview-last-info">—</span>
+        </div>
+        <div class="preview-frame" style="padding:0;overflow:hidden">
+          <div class="preview-header">
+            <div class="preview-dots">
+              <span style="background:var(--red)"></span>
+              <span style="background:var(--yellow)"></span>
+              <span style="background:var(--green)"></span>
+            </div>
+            <div class="preview-url" id="preview-url">brief/taslak-önizleme</div>
+          </div>
+          <div id="preview-iframe-wrap" style="height:520px">
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--t3)">
+              <div style="font-size:24px">📄</div>
+              <div style="font-size:11px">Taslak brief oluşturmak için butona tıklayın</div>
+              <div style="font-size:10px;color:var(--t4)">Seçili sorulara göre AI taslak üretir (~10-15 sn)</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB: SORULAR -->
-      <div class="tab-pane" id="pane-sorular">
-        <div class="soru-toolbar">
-          <input class="soru-search" id="soru-search" placeholder="Soru ara..." oninput="filterQuestions()">
-          <button class="btn-sec" onclick="openHavuzModal()">📚 Soru Havuzundan Ekle</button>
-          <button class="btn-sec" onclick="openAddQuestionModal()">+ Özel Soru</button>
-        </div>
-        <div class="soru-list" id="soru-list"></div>
+    </div><!-- /tab-area -->
+
+    <!-- Footer bar -->
+    <div class="footer-bar">
+      <div class="fb-info" id="fb-info">Kaydedilmemiş değişiklikler</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="reloadCurrent()">İptal</button>
+        <button class="btn btn-secondary" onclick="saveAll(false)">Taslak Kaydet</button>
+        <button class="btn btn-primary" onclick="saveAll(true)">Kaydet & Aktifleştir</button>
       </div>
     </div>
-  </div><!-- /editor-content -->
-</div><!-- /editor -->
 
+  </div><!-- /main-content -->
+</div><!-- /main -->
 </div><!-- /layout -->
 </div><!-- /app -->
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- MODAL: YENİ PROFİL (3 ADIM)                                            -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════ MODAL: YENİ PROFİL (3 ADIM) ═══════════════════ -->
 <div class="modal-bg hidden" id="modal-new-profil">
   <div class="modal">
     <div class="modal-hdr">
@@ -409,48 +608,38 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
         <div class="step" id="np-step-2">2 · Şablon</div>
         <div class="step" id="np-step-3">3 · Özet</div>
       </div>
-
-      <!-- ADIM 1: Temel Bilgiler -->
       <div id="np-pane-1">
-        <div class="form-grid" style="max-width:100%">
-          <div class="form-group">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
             <label class="form-label">Profil Adı *</label>
             <input class="form-input" id="np-name" placeholder="örn: CEO Briefing">
           </div>
-          <div class="form-group">
+          <div class="form-group" style="margin-bottom:0">
             <label class="form-label">Rol / Pozisyon</label>
             <input class="form-input" id="np-role" placeholder="örn: Genel Müdür">
           </div>
-          <div class="form-group full">
-            <label class="form-label">E-posta</label>
-            <input class="form-input" id="np-email" type="email" placeholder="erdinc@pimland.com">
-          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">E-posta</label>
+          <input class="form-input" id="np-email" type="email" placeholder="isim@pimland.com">
         </div>
       </div>
-
-      <!-- ADIM 2: Şablon -->
       <div id="np-pane-2" style="display:none">
-        <div style="font-size:11px;color:var(--t2);margin-bottom:14px">
-          Profilin rolüne en uygun şablonu seçin. Zamanlamalar ve sorular otomatik oluşturulacak — daha sonra düzenleyebilirsiniz.
-        </div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:14px">Profilin rolüne en uygun şablonu seçin. Zamanlamalar ve sorular otomatik oluşturulacak.</div>
         <div class="tmpl-grid" id="tmpl-grid"></div>
       </div>
-
-      <!-- ADIM 3: Özet -->
       <div id="np-pane-3" style="display:none">
         <div id="np-summary" style="display:flex;flex-direction:column;gap:12px"></div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-sec" id="np-btn-back" onclick="npPrev()" style="display:none">← Geri</button>
-      <button class="btn-pri" id="np-btn-next" onclick="npNext()">İleri →</button>
+      <button class="btn btn-ghost" id="np-btn-back" onclick="npPrev()" style="display:none">← Geri</button>
+      <button class="btn btn-primary" id="np-btn-next" onclick="npNext()">İleri →</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- MODAL: YENİ ZAMANLAMA                                                   -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════ MODAL: YENİ ZAMANLAMA ═══════════════════ -->
 <div class="modal-bg hidden" id="modal-new-sched">
   <div class="modal" style="max-width:480px">
     <div class="modal-hdr">
@@ -458,30 +647,30 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <button class="modal-close" onclick="document.getElementById('modal-new-sched').classList.add('hidden')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid" style="max-width:100%;margin-bottom:16px">
-        <div class="form-group">
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Zamanlama Adı *</label>
           <input class="form-input" id="ns-name" placeholder="örn: Haftalık Özet">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Üretim Saati</label>
           <input class="form-input" type="time" id="ns-time" value="07:00">
         </div>
       </div>
-      <div style="margin-bottom:14px">
+      <div>
         <div class="form-label" style="margin-bottom:8px">Frekans Tipi</div>
         <div class="freq-grid">
           <div class="freq-card selected" data-freq="daily" onclick="selectFreq(this)">
             <div class="freq-card-icon">☀️</div>
-            <div class="freq-card-info"><div class="freq-card-name">Günlük</div><div class="freq-card-desc">Seçili günlerde her gün üretilir.</div></div>
+            <div class="freq-card-info"><div class="freq-card-name">Günlük</div><div class="freq-card-desc">Seçili günlerde her gün.</div></div>
           </div>
           <div class="freq-card" data-freq="weekly" onclick="selectFreq(this)">
             <div class="freq-card-icon">📅</div>
-            <div class="freq-card-info"><div class="freq-card-name">Haftalık</div><div class="freq-card-desc">Haftada bir kez, derin analiz.</div></div>
+            <div class="freq-card-info"><div class="freq-card-name">Haftalık</div><div class="freq-card-desc">Haftada bir, derin analiz.</div></div>
           </div>
           <div class="freq-card" data-freq="monthly" onclick="selectFreq(this)">
             <div class="freq-card-icon">📊</div>
-            <div class="freq-card-info"><div class="freq-card-name">Aylık</div><div class="freq-card-desc">Ayda bir kez, geniş perspektif.</div></div>
+            <div class="freq-card-info"><div class="freq-card-name">Aylık</div><div class="freq-card-desc">Ayda bir, geniş perspektif.</div></div>
           </div>
           <div class="freq-card" data-freq="adhoc" onclick="selectFreq(this)">
             <div class="freq-card-icon">⚡</div>
@@ -491,25 +680,22 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-sec" onclick="document.getElementById('modal-new-sched').classList.add('hidden')">İptal</button>
-      <button class="btn-pri" onclick="createNewSchedule()">Oluştur</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-new-sched').classList.add('hidden')">İptal</button>
+      <button class="btn btn-primary" onclick="createNewSchedule()">Oluştur</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- MODAL: SORU HAVUZU BROWSER                                               -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════ MODAL: SORU HAVUZU ═══════════════════ -->
 <div class="modal-bg hidden" id="modal-havuz">
   <div class="modal" style="max-width:780px;height:88vh">
     <div class="modal-hdr">
       <span class="modal-title">📚 Soru Havuzu</span>
       <button class="modal-close" onclick="closeHavuzModal()">×</button>
     </div>
-    <!-- Filtre bar -->
     <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;align-items:center;flex-shrink:0">
-      <input id="hv-search" class="form-input" placeholder="Soru ara..." style="flex:1;min-width:160px;padding:5px 9px;font-size:11px" oninput="hvDebounce()">
-      <select id="hv-cat" class="form-select" style="font-size:11px;padding:5px 8px" onchange="hvLoad()">
+      <input id="hv-search" class="form-input" placeholder="Soru ara..." style="flex:1;min-width:160px;padding:6px 10px;font-size:11px" oninput="hvDebounce()">
+      <select id="hv-cat" class="form-select" style="font-size:11px;padding:6px 9px;width:auto" onchange="hvLoad()">
         <option value="">Tüm Kategoriler</option>
         <option value="A">A — Satış</option>
         <option value="B">B — Ürün Katalog</option>
@@ -522,13 +708,13 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
         <option value="I">I — Teknoloji</option>
         <option value="J">J — Stratejik</option>
       </select>
-      <select id="hv-status" class="form-select" style="font-size:11px;padding:5px 8px" onchange="hvLoad()">
+      <select id="hv-status" class="form-select" style="font-size:11px;padding:6px 9px;width:auto" onchange="hvLoad()">
         <option value="">Tüm Durumlar</option>
         <option value="available">🟢 Yanıtlanabilir</option>
         <option value="partial">🟡 Kısmi</option>
         <option value="integration_needed">🔴 Entegrasyon Gerekli</option>
       </select>
-      <select id="hv-freq" class="form-select" style="font-size:11px;padding:5px 8px" onchange="hvLoad()">
+      <select id="hv-freq" class="form-select" style="font-size:11px;padding:6px 9px;width:auto" onchange="hvLoad()">
         <option value="">Tüm Frekanslar</option>
         <option value="daily">Günlük</option>
         <option value="weekly">Haftalık</option>
@@ -536,34 +722,31 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       </select>
       <span id="hv-count" style="font-size:10px;color:var(--t3);white-space:nowrap"></span>
     </div>
-    <!-- Soru listesi -->
     <div id="hv-list" style="flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:6px"></div>
     <div class="modal-footer" style="justify-content:space-between">
       <span id="hv-selected-info" style="font-size:11px;color:var(--teal)"></span>
       <div style="display:flex;gap:8px">
-        <button class="btn-sec" onclick="closeHavuzModal()">Kapat</button>
-        <button class="btn-pri" id="hv-btn-add" onclick="hvAddSelected()" disabled>Seçilenleri Ekle</button>
+        <button class="btn btn-ghost" onclick="closeHavuzModal()">Kapat</button>
+        <button class="btn btn-primary" id="hv-btn-add" onclick="hvAddSelected()" disabled>Seçilenleri Ekle</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!-- MODAL: ÖZEL SORU EKLE                                                   -->
-<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════ MODAL: ÖZEL SORU ═══════════════════ -->
 <div class="modal-bg hidden" id="modal-add-q">
   <div class="modal" style="max-width:520px">
     <div class="modal-hdr">
-      <span class="modal-title">Soru Ekle</span>
+      <span class="modal-title">Özel Soru Ekle</span>
       <button class="modal-close" onclick="document.getElementById('modal-add-q').classList.add('hidden')">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid" style="max-width:100%">
-        <div class="form-group full">
-          <label class="form-label">Soru Metni *</label>
-          <textarea class="form-input" id="aq-text" rows="3" style="resize:vertical" placeholder="Brief'te sorulacak soruyu yazın..."></textarea>
-        </div>
-        <div class="form-group">
+      <div class="form-group">
+        <label class="form-label">Soru Metni *</label>
+        <textarea class="form-input" id="aq-text" rows="3" style="resize:vertical" placeholder="Brief'te sorulacak soruyu yazın..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Agent</label>
           <select class="form-select" id="aq-agent">
             <option value="satis">Satış</option>
@@ -572,7 +755,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             <option value="kiyaslama">Kıyaslama</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:0">
           <label class="form-label">Önem</label>
           <select class="form-select" id="aq-importance">
             <option value="kritik">Kritik</option>
@@ -581,208 +764,260 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
             <option value="dusuk">Düşük</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Çapraz Alan</label>
-          <label class="toggle-switch">
-            <input type="checkbox" id="aq-cross">
-            <span class="sw-track"></span>
-            <span style="font-size:11px;color:var(--t2)">Birden fazla agent gerektirir</span>
-          </label>
-        </div>
+      </div>
+      <div class="form-group" style="margin-top:14px;margin-bottom:0">
+        <label class="toggle-switch">
+          <input type="checkbox" id="aq-cross">
+          <span class="sw-track"></span>
+          <span style="font-size:11px;color:var(--t2)">Çapraz alan — birden fazla agent gerektirir</span>
+        </label>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn-sec" onclick="document.getElementById('modal-add-q').classList.add('hidden')">İptal</button>
-      <button class="btn-pri" onclick="submitAddQuestion()">Ekle</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-add-q').classList.add('hidden')">İptal</button>
+      <button class="btn btn-primary" onclick="submitAddQuestion()">Ekle</button>
     </div>
   </div>
 </div>
 
 <script>
 const API = '/api/v1/daily-brief';
-if(window.self !== window.top){
-  document.querySelector('.topbar').style.display='none';
+
+if (window.self !== window.top) {
+  document.querySelector('.topbar').style.display = 'none';
 }
 window.addEventListener('message', e => {
-  if(e.data?.type === 'theme')
+  if (e.data?.type === 'theme')
     document.documentElement.setAttribute('data-theme', e.data.value || 'dark');
 });
 
-// ── Durum ────────────────────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────────────────────
 let _profiles = [];
-let _currentProfile = null;   // {profile, schedules, checklist}
-let _currentSchedule = null;  // {schedule, questions}
-let _library = {};
+let _currentProfile = null;
+let _currentSchedule = null;
 
-const FREQ_ICONS = {daily:'☀️', weekly:'📅', monthly:'📊', adhoc:'⚡', threshold:'🎯'};
-const FREQ_LABELS = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık', adhoc:'Acil / Manuel', threshold:'Eşik Bazlı'};
-const AGENT_TAG = {satis:'tag-satis', eticaret:'tag-eticaret', urun_yonetimi:'tag-urun', kiyaslama:'tag-kiyaslama'};
-const AGENT_LBL = {satis:'Satış', eticaret:'E-Ticaret', urun_yonetimi:'Ürün', kiyaslama:'Kıyaslama'};
-const IMP_TAG   = {kritik:'tag-kritik', yuksek:'tag-yuksek', orta:'tag-orta', dusuk:'tag-dusuk'};
-const IMP_LBL   = {kritik:'Kritik', yuksek:'Yüksek', orta:'Orta', dusuk:'Düşük'};
+const FREQ_ICONS  = {daily:'☀️', weekly:'📅', monthly:'📊', adhoc:'⚡', threshold:'🎯'};
+const FREQ_LABELS = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık', adhoc:'Acil', threshold:'Eşik'};
+const AGENT_TAG   = {satis:'tag-satis', eticaret:'tag-eticaret', urun_yonetimi:'tag-urun', kiyaslama:'tag-kiyaslama'};
+const AGENT_LBL   = {satis:'Satış', eticaret:'E-Ticaret', urun_yonetimi:'Ürün', kiyaslama:'Kıyaslama'};
+const AGENT_ICON  = {satis:'📊', eticaret:'🛒', urun_yonetimi:'🏷️', kiyaslama:'⚖️'};
+const AGENT_COLOR = {satis:'rgba(0,194,168,.1)', eticaret:'rgba(255,107,43,.1)', urun_yonetimi:'rgba(245,158,11,.1)', kiyaslama:'rgba(168,85,247,.1)'};
+const IMP_TAG     = {kritik:'tag-kritik', yuksek:'tag-yuksek', orta:'tag-orta', dusuk:'tag-dusuk'};
+const IMP_LBL     = {kritik:'Kritik', yuksek:'Yüksek', orta:'Orta', dusuk:'Düşük'};
 
-// ── Yükle ─────────────────────────────────────────────────────────────────────
+function roleEmoji(role) {
+  if (!role) return '📋';
+  const r = role.toLowerCase();
+  if (r.includes('genel') || r.includes('gm') || r.includes('ceo')) return '👔';
+  if (r.includes('satış') || r.includes('operasyon')) return '📦';
+  if (r.includes('ürün') || r.includes('katalog')) return '🏷️';
+  if (r.includes('pazarlama') || r.includes('marketing')) return '📢';
+  if (r.includes('tekno') || r.includes('mühendis') || r.includes('it')) return '⚙️';
+  if (r.includes('finans') || r.includes('mali')) return '💰';
+  if (r.includes('mağaza')) return '🏬';
+  return '📋';
+}
 
-async function loadProfiles(){
+function roleColor(role) {
+  if (!role) return 'rgba(255,107,43,.1)';
+  const r = role.toLowerCase();
+  if (r.includes('genel') || r.includes('ceo')) return 'rgba(255,107,43,.1)';
+  if (r.includes('satış') || r.includes('operasyon')) return 'rgba(0,194,168,.1)';
+  if (r.includes('ürün') || r.includes('katalog')) return 'rgba(168,85,247,.1)';
+  if (r.includes('pazarlama')) return 'rgba(59,130,246,.1)';
+  if (r.includes('tekno')) return 'rgba(34,197,94,.1)';
+  return 'rgba(255,107,43,.1)';
+}
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+
+async function loadProfiles() {
   try {
     const d = await fetch(`${API}/profiles`).then(r => r.json());
     _profiles = d.profiles || [];
-    renderProfileList();
-    if(_profiles.length > 0 && !_currentProfile)
+    renderSidebar();
+    if (_profiles.length > 0 && !_currentProfile)
       await selectProfile(_profiles[0].id);
-  } catch(e){ console.error('loadProfiles', e); }
+  } catch(e) { console.error('loadProfiles', e); }
 }
 
-function renderProfileList(){
-  const list = document.getElementById('profil-list');
-  const title = document.getElementById('profil-panel-title');
-  title.textContent = `Profiller (${_profiles.length})`;
-  if(!_profiles.length){
-    list.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">👤</div>
-      <div class="empty-title">Profil yok</div>
-      <div class="empty-desc">Yeni bir profil oluşturun.</div>
-    </div>`;
+function renderSidebar() {
+  const list = document.getElementById('sb-profile-list');
+  const label = document.getElementById('sb-section-label');
+  const footer = document.getElementById('sb-footer');
+  label.textContent = `Profiller (${_profiles.length})`;
+  const active = _profiles.filter(p => p.is_active).length;
+  footer.textContent = `${active} aktif · ${_profiles.length - active} pasif`;
+
+  if (!_profiles.length) {
+    list.innerHTML = `<div style="padding:12px 0;text-align:center;color:var(--t3);font-size:11px">Henüz profil yok</div>`;
     return;
   }
   const cur = _currentProfile?.profile?.id;
   list.innerHTML = _profiles.map(p => {
-    const av = (p.name||'P').replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ]/g,'').substring(0,2).toUpperCase() || p.name.substring(0,2).toUpperCase();
-    return `<div class="profil-item ${p.id===cur?'active':''}" onclick="selectProfile(${p.id})">
-      <div class="profil-av">${av}</div>
-      <div class="profil-info">
-        <div class="profil-name">${p.name}</div>
-        <div class="profil-rol">${p.role||''}${p.is_active?'':' · Pasif'}</div>
+    const emoji = roleEmoji(p.role);
+    const color = roleColor(p.role);
+    const dot = p.is_active ? 'var(--green)' : 'var(--t4)';
+    // Find primary schedule time
+    const sched = _currentProfile?.profile?.id === p.id
+      ? _currentProfile.schedules?.[0]
+      : null;
+    const schedInfo = sched ? `${(sched.schedule_time||'').substring(0,5)} · ${sched.question_count||0} soru` : (p.owner_email || p.role || '');
+    return `<div class="sb-item ${p.id === cur ? 'active' : ''}" onclick="selectProfile(${p.id})">
+      <div class="sb-icon" style="background:${color}">${emoji}</div>
+      <div class="sb-info">
+        <div class="sb-name">${p.name}</div>
+        <div class="sb-meta">${schedInfo}</div>
       </div>
-      <div class="profil-dot ${p.is_active?'':'pasif'}"></div>
+      <div class="sb-dot" style="background:${dot}"></div>
     </div>`;
   }).join('');
 }
 
-async function selectProfile(pid){
+async function selectProfile(pid) {
   try {
     const d = await fetch(`${API}/profiles/${pid}`).then(r => r.json());
     _currentProfile = d;
     _currentSchedule = null;
-    renderProfileList();
-    renderSchedList();
-    showEditorEmpty();
-    document.getElementById('btn-add-sched').style.display = 'flex';
-    document.getElementById('sched-panel-title').textContent =
-      `${d.profile.name} — Zamanlamalar`;
-    if(d.schedules.length > 0)
+    renderSidebar();
+    showMainContent();
+    updateMainHeader();
+    renderSchedSelector();
+    if (d.schedules.length > 0)
       await selectSchedule(d.schedules[0].id);
-  } catch(e){ console.error('selectProfile', e); }
+  } catch(e) { console.error('selectProfile', e); }
 }
 
-function renderSchedList(){
-  const list = document.getElementById('sched-list');
-  if(!_currentProfile){ list.innerHTML = ''; return; }
-  const scheds = _currentProfile.schedules || [];
-  if(!scheds.length){
-    list.innerHTML = `<div class="empty-state">
-      <div class="empty-icon">⏰</div>
-      <div class="empty-title">Zamanlama yok</div>
-      <div class="empty-desc">+ Ekle ile yeni zamanlama oluşturun.</div>
-    </div>`;
-    return;
-  }
+function showMainContent() {
+  document.getElementById('main-empty').style.display = 'none';
+  const mc = document.getElementById('main-content');
+  mc.style.display = 'flex';
+}
+
+function updateMainHeader() {
+  if (!_currentProfile) return;
+  const p = _currentProfile.profile;
+  document.getElementById('main-icon').textContent = roleEmoji(p.role);
+  document.getElementById('main-icon').style.background = roleColor(p.role);
+  document.getElementById('main-title').textContent = p.name;
+  document.getElementById('main-sub').textContent = `${p.role || ''}${p.is_active ? '' : ' · Pasif'}`;
+}
+
+function renderSchedSelector() {
+  const sel = document.getElementById('sched-selector');
+  const scheds = _currentProfile?.schedules || [];
+  if (scheds.length <= 1) { sel.style.display = 'none'; return; }
+  sel.style.display = 'flex';
   const cur = _currentSchedule?.schedule?.id;
-  list.innerHTML = scheds.map(s => {
-    const icon = FREQ_ICONS[s.frequency_type] || '📋';
-    const label = FREQ_LABELS[s.frequency_type] || s.frequency_type;
-    const badgeCls = `badge-${s.frequency_type}`;
-    const timeStr = (s.schedule_time||'').substring(0,5);
-    return `<div class="sched-item ${s.id===cur?'active':''}" onclick="selectSchedule(${s.id})">
-      <div class="sched-icon ${s.frequency_type}">${icon}</div>
-      <div class="sched-info">
-        <div class="sched-name">${s.name}</div>
-        <div class="sched-meta">${timeStr} · ${s.question_count||0} soru</div>
-        <span class="sched-badge ${badgeCls}">${label}</span>
-      </div>
-    </div>`;
-  }).join('');
+  sel.innerHTML = `<span class="sched-selector-label">Zamanlama:</span>` +
+    scheds.map(s => `<span class="sched-chip ${s.id === cur ? 'active' : ''}" onclick="selectSchedule(${s.id})">
+      ${FREQ_ICONS[s.frequency_type] || '📋'} ${s.name}
+    </span>`).join('');
 }
 
-async function selectSchedule(sid){
+async function selectSchedule(sid) {
   try {
     const d = await fetch(`${API}/schedules/${sid}`).then(r => r.json());
     _currentSchedule = d;
-    renderSchedList();
-    renderEditor();
-    await loadLibraryPills();
-  } catch(e){ console.error('selectSchedule', e); }
+    renderSchedSelector();
+    populateEditor();
+  } catch(e) { console.error('selectSchedule', e); }
 }
 
-// ── Editor ────────────────────────────────────────────────────────────────────
+// ── Populate editor ───────────────────────────────────────────────────────────
 
-function showEditorEmpty(){
-  document.getElementById('editor-empty').style.display = 'flex';
-  document.getElementById('editor-content').style.display = 'none';
-}
-
-function renderEditor(){
-  if(!_currentSchedule) return;
+function populateEditor() {
+  if (!_currentSchedule || !_currentProfile) return;
+  const p = _currentProfile.profile;
   const s = _currentSchedule.schedule;
   const questions = _currentSchedule.questions || [];
 
-  document.getElementById('editor-empty').style.display = 'none';
-  const ec = document.getElementById('editor-content');
-  ec.style.display = 'flex';
+  // Genel Ayarlar
+  document.getElementById('fp-name').value = p.name || '';
+  document.getElementById('fp-role').value = p.role || '';
+  document.getElementById('fp-email').value = p.owner_email || '';
+  document.getElementById('fp-active').value = String(!!p.is_active);
 
-  // Header
-  document.getElementById('ed-icon').textContent = FREQ_ICONS[s.frequency_type] || '📋';
-  document.getElementById('ed-title').textContent = s.name;
-  document.getElementById('ed-sub').textContent =
-    `${_currentProfile?.profile?.name || ''} · ${FREQ_LABELS[s.frequency_type]||''}`;
-
-  // Ayarlar formu
+  // Zamanlama
   document.getElementById('f-name').value = s.name || '';
   document.getElementById('f-freq').value = s.frequency_type || 'daily';
-  document.getElementById('f-time').value = (s.schedule_time||'07:00').substring(0,5);
+  document.getElementById('f-time').value = (s.schedule_time || '07:00').substring(0, 5);
   document.getElementById('f-email').checked = !!s.send_email;
   document.getElementById('f-length').value = s.length || 'ozet';
   document.getElementById('f-format').value = s.format || 'mixed';
   document.getElementById('f-topn').value = s.top_insight_count || 3;
 
-  // Günler
+  // Days
   const days = s.active_days || [1,2,3,4,5];
-  document.querySelectorAll('#f-days .day-btn').forEach(b => {
-    b.classList.toggle('selected', days.includes(parseInt(b.dataset.day)));
+  document.querySelectorAll('#f-days .sched-day').forEach(b => {
+    const active = days.includes(parseInt(b.dataset.day));
+    b.classList.toggle('active', active);
+    b.textContent = '';
+    const lbl = document.createElement('div');
+    lbl.className = 'day-label';
+    lbl.textContent = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'][parseInt(b.dataset.day)-1];
+    b.appendChild(lbl);
+    if (active) b.appendChild(document.createTextNode('✓'));
   });
 
-  // Ton
-  document.querySelectorAll('.tone-card').forEach(c => {
-    c.classList.toggle('selected', c.dataset.tone === s.tone);
-  });
+  // Tone
+  document.querySelectorAll('.tone-card').forEach(c =>
+    c.classList.toggle('selected', c.dataset.tone === s.tone)
+  );
+  if (!document.querySelector('.tone-card.selected'))
+    document.querySelector('.tone-card[data-tone="yonetici"]').classList.add('selected');
 
-  // Sorular
-  document.getElementById('tab-sorular').textContent = `Sorular (${questions.length})`;
+  // Questions tab label
+  document.getElementById('tab-sorular-btn').textContent = `Sorular (${questions.length})`;
+
+  // Sorular tab
   renderQuestions(questions);
+  renderStats(questions);
+
+  // Agent map
+  renderAgentMap(questions);
+
+  // Cron
+  updateCronDisplay();
+
+  // Preview URL
+  document.getElementById('preview-url').textContent = `brief/${p.name.toLowerCase().replace(/\s+/g,'-')}/önizleme`;
+
+  // Footer
+  document.getElementById('fb-info').textContent = `${p.name} · ${s.name}`;
 }
 
-// ── TAB ───────────────────────────────────────────────────────────────────────
+// ── Tab switch ────────────────────────────────────────────────────────────────
 
-function switchTab(btn){
+function switchTab(btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById(`pane-${btn.dataset.pane}`).classList.add('active');
+  document.getElementById(`pane-${btn.dataset.tab}`).classList.add('active');
 }
 
-// ── SORULAR ───────────────────────────────────────────────────────────────────
+// ── Questions ─────────────────────────────────────────────────────────────────
 
-function renderQuestions(questions){
+function renderStats(questions) {
+  const avail  = questions.filter(q => q.data_status === 'available' || !q.data_status).length;
+  const partial = questions.filter(q => q.data_status === 'partial').length;
+  const integ  = questions.filter(q => q.data_status === 'integration_needed').length;
+  document.getElementById('soru-stats').innerHTML = `
+    <div class="stat"><div class="stat-dot" style="background:var(--green)"></div>${avail} yanıtlanabilir</div>
+    <div class="stat"><div class="stat-dot" style="background:var(--yellow)"></div>${partial} kısmi</div>
+    <div class="stat"><div class="stat-dot" style="background:var(--red)"></div>${integ} entegrasyon</div>
+    <div class="stat" style="margin-left:auto;color:var(--orange);font-weight:500">${questions.length} soru</div>`;
+}
+
+function renderQuestions(questions) {
   const list = document.getElementById('soru-list');
-  if(!questions.length){
+  if (!questions.length) {
     list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--t3);font-size:11px">
-      Henüz soru eklenmedi. Kütüphaneden ekleyin veya özel soru yazın.
-    </div>`;
+      Henüz soru eklenmedi. Havuzdan ekleyin veya özel soru yazın.</div>`;
     return;
   }
   list.innerHTML = questions.map(q => `
-    <div class="soru-card" data-qid="${q.id}">
-      <div class="soru-handle">⋮⋮</div>
+    <div class="soru-card">
       <div class="soru-content">
         <div class="soru-text">${q.question_text}</div>
         <div class="soru-meta">
@@ -797,75 +1032,303 @@ function renderQuestions(questions){
     </div>`).join('');
 }
 
-function filterQuestions(){
-  const q = (document.getElementById('soru-search').value||'').toLowerCase();
-  if(!_currentSchedule) return;
+function filterQuestions() {
+  const q = (document.getElementById('soru-search').value || '').toLowerCase();
+  if (!_currentSchedule) return;
   const filtered = q
-    ? (_currentSchedule.questions||[]).filter(x => x.question_text.toLowerCase().includes(q))
-    : (_currentSchedule.questions||[]);
+    ? (_currentSchedule.questions || []).filter(x => x.question_text.toLowerCase().includes(q))
+    : (_currentSchedule.questions || []);
   renderQuestions(filtered);
 }
 
-async function deleteQuestion(qid){
-  if(!confirm('Bu soruyu silmek istiyor musunuz?')) return;
+async function deleteQuestion(qid) {
+  if (!confirm('Bu soruyu silmek istiyor musunuz?')) return;
   await fetch(`${API}/questions/${qid}`, {method:'DELETE'});
   await selectSchedule(_currentSchedule.schedule.id);
 }
 
-// ── SORU HAVUZU MODAL ─────────────────────────────────────────────────────────
+// ── Agent map ─────────────────────────────────────────────────────────────────
+
+function renderAgentMap(questions) {
+  const groups = {};
+  questions.forEach(q => {
+    const a = q.agent || 'satis';
+    if (!groups[a]) groups[a] = [];
+    groups[a].push(q);
+  });
+  const list = document.getElementById('agent-list');
+  if (!Object.keys(groups).length) {
+    list.innerHTML = `<div style="color:var(--t3);font-size:11px;padding:12px 0">Henüz soru eklenmedi.</div>`;
+    return;
+  }
+  list.innerHTML = Object.entries(groups).map(([agent, qs]) => `
+    <div class="agent-card">
+      <div class="agent-icon" style="background:${AGENT_COLOR[agent]||'rgba(255,107,43,.1)'}">${AGENT_ICON[agent]||'🤖'}</div>
+      <div class="agent-info">
+        <div class="agent-name">${AGENT_LBL[agent]||agent} Agent</div>
+        <div class="agent-questions">${qs.map(q => q.question_text.substring(0,60)).join(' · ')}</div>
+      </div>
+      <span class="agent-status badge-green">${qs.length} soru</span>
+    </div>`).join('');
+}
+
+// ── Cron display ──────────────────────────────────────────────────────────────
+
+function updateCronDisplay() {
+  const timeVal = document.getElementById('f-time')?.value || '07:00';
+  const [h, m] = timeVal.split(':').map(Number);
+  const utcH = ((h - 3) + 24) % 24;
+  const days = [];
+  const dayMap = {1:'MON',2:'TUE',3:'WED',4:'THU',5:'FRI',6:'SAT',7:'SUN'};
+  document.querySelectorAll('#f-days .sched-day.active').forEach(b =>
+    days.push(dayMap[b.dataset.day])
+  );
+  const dayStr = days.length === 7 ? '*' : (days.join(',') || 'MON-FRI');
+  const cron = `cron(${m} ${utcH} ? * ${dayStr} *)`;
+  const el = document.getElementById('cron-display');
+  const hint = document.getElementById('cron-hint');
+  if (el) el.textContent = cron;
+  if (hint) hint.textContent = `${timeVal} İstanbul = ${String(utcH).padStart(2,'0')}:${String(m).padStart(2,'0')} UTC · AWS EventBridge formatı`;
+}
+
+// ── Save ─────────────────────────────────────────────────────────────────────
+
+async function saveAll(activate) {
+  if (!_currentProfile || !_currentSchedule) return;
+  const btns = document.querySelectorAll('.footer-bar .btn');
+  btns.forEach(b => b.disabled = true);
+
+  const activeDays = [];
+  document.querySelectorAll('#f-days .sched-day').forEach(b => {
+    if (b.classList.contains('active')) activeDays.push(parseInt(b.dataset.day));
+  });
+  const selectedTone = document.querySelector('.tone-card.selected')?.dataset.tone || 'yonetici';
+
+  try {
+    await fetch(`${API}/profiles/${_currentProfile.profile.id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name:        document.getElementById('fp-name').value,
+        role:        document.getElementById('fp-role').value,
+        owner_email: document.getElementById('fp-email').value,
+        is_active:   activate ? true : (document.getElementById('fp-active').value === 'true'),
+      })
+    });
+
+    await fetch(`${API}/schedules/${_currentSchedule.schedule.id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name:              document.getElementById('f-name').value,
+        frequency_type:    document.getElementById('f-freq').value,
+        schedule_time:     document.getElementById('f-time').value,
+        send_email:        document.getElementById('f-email').checked,
+        active_days:       activeDays,
+        tone:              selectedTone,
+        length:            document.getElementById('f-length').value,
+        format:            document.getElementById('f-format').value,
+        top_insight_count: parseInt(document.getElementById('f-topn').value) || 3,
+        is_active:         activate,
+      })
+    });
+
+    const now = new Date();
+    const ts = `${now.getDate()} ${['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'][now.getMonth()]} ${now.getFullYear()} · ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    document.getElementById('fb-info').textContent = `Son kayıt: ${ts}`;
+    await loadProfiles();
+    if (_currentProfile) await selectProfile(_currentProfile.profile.id);
+  } catch(e) {
+    alert('Kaydetme hatası: ' + e.message);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
+
+async function reloadCurrent() {
+  if (_currentProfile) await selectProfile(_currentProfile.profile.id);
+}
+
+// ── Generate brief ────────────────────────────────────────────────────────────
+
+async function generateBrief() {
+  if (!_currentSchedule) return;
+  const genBtn = document.getElementById('btn-gen-brief');
+  const prevBtn = document.querySelector('#pane-onizleme [onclick="generateBrief()"]');
+  [genBtn, prevBtn].filter(Boolean).forEach(b => { b.textContent = '⏳ Üretiliyor...'; b.disabled = true; });
+  try {
+    const d = await fetch(`${API}/schedules/${_currentSchedule.schedule.id}/generate`, {method:'POST'}).then(r => r.json());
+    const info = `Son üretim: ${d.brief_date||'—'} · ${d.soru_sayisi||0} soru · ${((d.generation_ms||0)/1000).toFixed(1)} sn`;
+    document.getElementById('preview-last-info').textContent = info;
+    renderBriefPreview(d.brief || {});
+    document.querySelector('[data-tab="onizleme"]')?.click();
+  } catch(e) {
+    alert('Brief üretme hatası: ' + e.message);
+  } finally {
+    if (genBtn) { genBtn.textContent = '▶ Brief Üret'; genBtn.disabled = false; }
+    if (prevBtn) { prevBtn.textContent = '▶ Canlı Brief Oluştur'; prevBtn.disabled = false; }
+  }
+}
+
+function renderBriefPreview(brief) {
+  const insights = brief.top_insights || [];
+  const actions  = brief.actions || [];
+  const qa       = brief.qa_results || [];
+  const kpis     = brief.kpi_data || {};
+
+  let html = `<div style="max-width:640px;margin:0 auto">`;
+
+  // KPI bar
+  const kpiKeys = Object.keys(kpis);
+  if (kpiKeys.length) {
+    html += `<div style="display:grid;grid-template-columns:repeat(${Math.min(kpiKeys.length,4)},1fr);gap:1px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">`;
+    kpiKeys.slice(0,4).forEach(k => {
+      const v = kpis[k];
+      html += `<div style="background:var(--bg2);padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--t3);text-transform:uppercase;margin-bottom:3px">${k}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--teal)">${v}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Insights
+  if (insights.length) {
+    html += `<div style="margin-bottom:14px">`;
+    insights.forEach(ins => {
+      const txt = ins.text || ins;
+      html += `<div style="font-size:11px;color:var(--t1);padding:8px 10px;background:rgba(255,107,43,.04);border-left:2px solid var(--orange);border-radius:0 5px 5px 0;margin-bottom:6px;line-height:1.5">${txt}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Q&A
+  if (qa.length) {
+    html += `<div style="margin-bottom:14px">`;
+    qa.slice(0,5).forEach(item => {
+      html += `<div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;margin-bottom:3px">${item.question||''}</div>
+        <div style="font-size:11px;color:var(--t2);line-height:1.6">${(item.answer||'').substring(0,300)}${(item.answer||'').length>300?'…':''}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Actions
+  if (actions.length) {
+    html += `<div style="padding:12px;background:rgba(255,107,43,.04);border:1px solid rgba(255,107,43,.12);border-radius:8px">
+      <div style="font-size:10px;color:var(--orange);font-weight:600;text-transform:uppercase;margin-bottom:8px">Bugün Öncelik</div>`;
+    actions.slice(0,4).forEach(a => {
+      const txt = a.text || a.action || a;
+      html += `<div style="font-size:11px;color:var(--t1);padding:3px 0">→ ${txt}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!insights.length && !qa.length && !actions.length) {
+    html += `<div style="text-align:center;color:var(--t3);font-size:11px;padding:24px">Brief üretildi ancak içerik boş döndü.</div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('preview-body').innerHTML = html;
+}
+
+async function generateDraftPreview() {
+  if (!_currentSchedule) { alert('Önce bir zamanlama seçin'); return; }
+  const btn = document.getElementById('btn-draft-preview');
+  btn.textContent = '⏳ Üretiliyor...'; btn.disabled = true;
+  document.getElementById('preview-last-info').textContent = 'Claude taslak oluşturuyor...';
+
+  try {
+    const d = await fetch(`${API}/schedules/${_currentSchedule.schedule.id}/draft-preview`, {method:'POST'}).then(r => {
+      if (!r.ok) return r.json().then(e => { throw new Error(e.detail || r.statusText); });
+      return r.json();
+    });
+
+    document.getElementById('preview-last-info').textContent = `${d.question_count} sorudan üretildi (taslak)`;
+    document.getElementById('preview-url').textContent = `brief/${(_currentProfile?.profile?.name||'profil').toLowerCase().replace(/\s+/g,'-')}/taslak`;
+
+    const fullHtml = `<!DOCTYPE html><html lang="tr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#0d0d12;color:#f0f0f8;font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.5;padding:20px}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2a2a3a}</style>
+</head><body>${d.html}</body></html>`;
+
+    const wrap = document.getElementById('preview-iframe-wrap');
+    wrap.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:520px;border:none;display:block';
+    iframe.sandbox = 'allow-same-origin';
+    wrap.appendChild(iframe);
+    iframe.srcdoc = fullHtml;
+  } catch(e) {
+    document.getElementById('preview-last-info').textContent = 'Hata: ' + e.message;
+    alert('Taslak üretme hatası: ' + e.message);
+  } finally {
+    btn.textContent = '📄 Taslak Brief Oluştur'; btn.disabled = false;
+  }
+}
+
+function sendTestEmail() {
+  alert('Test e-postası gönderme yakında...');
+}
+
+// ── Delete schedule ───────────────────────────────────────────────────────────
+
+async function deleteCurrentSchedule() {
+  if (!_currentSchedule) return;
+  if (!confirm(`"${_currentSchedule.schedule.name}" zamanlamasını silmek istiyor musunuz?`)) return;
+  await fetch(`${API}/schedules/${_currentSchedule.schedule.id}`, {method:'DELETE'});
+  await selectProfile(_currentProfile.profile.id);
+}
+
+// ── Soru Havuzu ───────────────────────────────────────────────────────────────
 
 let _hvSelected = new Set();
 let _hvDebTimer;
 const _HV_STATUS_DOT = {available:'🟢', partial:'🟡', integration_needed:'🔴'};
-const _HV_FREQ_LBL = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık'};
-const _HV_IMP_CLS = {kritik:'tag-kritik', yuksek:'tag-yuksek', orta:'tag-orta'};
+const _HV_FREQ_LBL   = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık'};
+const _HV_IMP_CLS    = {kritik:'tag-kritik', yuksek:'tag-yuksek', orta:'tag-orta'};
 
-async function openHavuzModal(){
-  if(!_currentSchedule){ alert('Önce bir zamanlama seçin'); return; }
+async function openHavuzModal() {
+  if (!_currentSchedule) { alert('Önce bir zamanlama seçin'); return; }
   _hvSelected.clear();
-  document.getElementById('hv-search').value = '';
-  document.getElementById('hv-cat').value = '';
-  document.getElementById('hv-status').value = '';
-  document.getElementById('hv-freq').value = '';
+  ['hv-search','hv-cat','hv-status','hv-freq'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('modal-havuz').classList.remove('hidden');
   await hvLoad();
 }
 
-function closeHavuzModal(){
+function closeHavuzModal() {
   document.getElementById('modal-havuz').classList.add('hidden');
   _hvSelected.clear();
 }
 
-function hvDebounce(){ clearTimeout(_hvDebTimer); _hvDebTimer = setTimeout(hvLoad, 260); }
+function hvDebounce() { clearTimeout(_hvDebTimer); _hvDebTimer = setTimeout(hvLoad, 260); }
 
-async function hvLoad(){
+async function hvLoad() {
   const q      = document.getElementById('hv-search').value;
   const cat    = document.getElementById('hv-cat').value;
   const status = document.getElementById('hv-status').value;
   const freq   = document.getElementById('hv-freq').value;
   const params = new URLSearchParams();
-  if(q) params.set('q', q);
-  if(cat) params.set('category', cat);
-  if(status) params.set('data_status', status);
-  if(freq) params.set('frequency', freq);
+  if (q)      params.set('q', q);
+  if (cat)    params.set('category', cat);
+  if (status) params.set('data_status', status);
+  if (freq)   params.set('frequency', freq);
 
   const list = document.getElementById('hv-list');
   list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--t3);font-size:11px">Yükleniyor...</div>';
-
   try {
     const d = await fetch(`${API}/library/questions?${params}`).then(r => r.json());
     const allItems = Object.values(d.library || {}).flat();
     document.getElementById('hv-count').textContent = `${allItems.length} soru`;
-    const addedTexts = new Set((_currentSchedule?.questions||[]).map(q => q.question_text));
-
-    if(!allItems.length){
+    const addedTexts = new Set((_currentSchedule?.questions || []).map(q => q.question_text));
+    if (!allItems.length) {
       list.innerHTML = '<div style="padding:24px;text-align:center;color:var(--t3);font-size:11px">Soru bulunamadı</div>';
       return;
     }
     list.innerHTML = allItems.map(item => {
-      const isAdded = addedTexts.has(item.question_text);
+      const isAdded   = addedTexts.has(item.question_text);
       const isChecked = _hvSelected.has(item.id);
-      const sources = (item.data_sources || []).slice(0,3);
+      const sources   = (item.data_sources || []).slice(0, 3);
       return `<div class="soru-card" style="${isAdded?'opacity:.45;':''}" data-hvid="${item.id}">
         <label style="display:flex;align-items:flex-start;gap:9px;cursor:${isAdded?'default':'pointer'};flex:1">
           <input type="checkbox" style="margin-top:3px;flex-shrink:0;accent-color:var(--orange)"
@@ -886,35 +1349,31 @@ async function hvLoad(){
         </label>
       </div>`;
     }).join('');
-  } catch(e){ list.innerHTML = '<div style="padding:16px;color:var(--red);font-size:11px">Yükleme hatası</div>'; }
+  } catch(e) {
+    list.innerHTML = '<div style="padding:16px;color:var(--red);font-size:11px">Yükleme hatası</div>';
+  }
 }
 
-function hvToggle(id, checked){
-  if(checked) _hvSelected.add(id); else _hvSelected.delete(id);
+function hvToggle(id, checked) {
+  if (checked) _hvSelected.add(id); else _hvSelected.delete(id);
   const cnt = _hvSelected.size;
   document.getElementById('hv-selected-info').textContent = cnt > 0 ? `${cnt} soru seçildi` : '';
   document.getElementById('hv-btn-add').disabled = cnt === 0;
 }
 
-async function hvAddSelected(){
-  if(!_currentSchedule || _hvSelected.size === 0) return;
+async function hvAddSelected() {
+  if (!_currentSchedule || _hvSelected.size === 0) return;
   const btn = document.getElementById('hv-btn-add');
   btn.textContent = 'Ekleniyor...'; btn.disabled = true;
-
-  // Tüm library sorularını çekip seçilenleri bul
   const d = await fetch(`${API}/library/questions`).then(r => r.json());
   const allItems = Object.values(d.library || {}).flat();
   const toAdd = allItems.filter(item => _hvSelected.has(item.id));
-
-  for(const item of toAdd){
+  for (const item of toAdd) {
     await fetch(`${API}/schedules/${_currentSchedule.schedule.id}/questions`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        question_text:   item.question_text,
-        agent:           item.agent,
-        importance:      item.importance,
-        is_cross_domain: item.is_cross_domain,
-        library_id:      item.id,
+        question_text: item.question_text, agent: item.agent,
+        importance: item.importance, is_cross_domain: item.is_cross_domain, library_id: item.id,
       })
     });
   }
@@ -922,9 +1381,7 @@ async function hvAddSelected(){
   await selectSchedule(_currentSchedule.schedule.id);
 }
 
-async function loadLibraryPills(){ /* artık kullanılmıyor */ }
-
-function openAddQuestionModal(){
+function openAddQuestionModal() {
   document.getElementById('aq-text').value = '';
   document.getElementById('aq-agent').value = 'satis';
   document.getElementById('aq-importance').value = 'orta';
@@ -933,16 +1390,15 @@ function openAddQuestionModal(){
   document.getElementById('aq-text').focus();
 }
 
-async function submitAddQuestion(){
+async function submitAddQuestion() {
   const txt = document.getElementById('aq-text').value.trim();
-  if(!txt){ alert('Soru metni boş olamaz'); return; }
-  if(!_currentSchedule){ alert('Önce bir zamanlama seçin'); return; }
+  if (!txt) { alert('Soru metni boş olamaz'); return; }
+  if (!_currentSchedule) { alert('Önce bir zamanlama seçin'); return; }
   await fetch(`${API}/schedules/${_currentSchedule.schedule.id}/questions`, {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({
-      question_text:   txt,
-      agent:           document.getElementById('aq-agent').value,
-      importance:      document.getElementById('aq-importance').value,
+      question_text: txt, agent: document.getElementById('aq-agent').value,
+      importance: document.getElementById('aq-importance').value,
       is_cross_domain: document.getElementById('aq-cross').checked,
     })
   });
@@ -950,72 +1406,10 @@ async function submitAddQuestion(){
   await selectSchedule(_currentSchedule.schedule.id);
 }
 
-// ── KAYDET ───────────────────────────────────────────────────────────────────
+// ── New schedule modal ────────────────────────────────────────────────────────
 
-async function saveSchedule(){
-  if(!_currentSchedule) return;
-  const activeDays = [];
-  document.querySelectorAll('#f-days .day-btn').forEach(b => {
-    if(b.classList.contains('selected')) activeDays.push(parseInt(b.dataset.day));
-  });
-  const selectedTone = document.querySelector('.tone-card.selected')?.dataset.tone || 'yonetici';
-  const updates = {
-    name:              document.getElementById('f-name').value,
-    frequency_type:    document.getElementById('f-freq').value,
-    schedule_time:     document.getElementById('f-time').value,
-    send_email:        document.getElementById('f-email').checked,
-    active_days:       activeDays,
-    tone:              selectedTone,
-    length:            document.getElementById('f-length').value,
-    format:            document.getElementById('f-format').value,
-    top_insight_count: parseInt(document.getElementById('f-topn').value) || 3,
-  };
-  const btn = document.querySelector('.btn-pri');
-  btn.textContent = 'Kaydediliyor...';
-  try {
-    await fetch(`${API}/schedules/${_currentSchedule.schedule.id}`, {
-      method: 'PUT', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(updates)
-    });
-    await selectProfile(_currentProfile.profile.id);
-    btn.textContent = '✓ Kaydedildi';
-    setTimeout(() => btn.textContent = 'Kaydet', 2000);
-  } catch(e){
-    btn.textContent = 'Kaydet';
-    alert('Kaydetme hatası: ' + e.message);
-  }
-}
-
-// ── SİL ──────────────────────────────────────────────────────────────────────
-
-async function deleteCurrentSchedule(){
-  if(!_currentSchedule) return;
-  if(!confirm(`"${_currentSchedule.schedule.name}" zamanlamasını silmek istiyor musunuz? Tüm sorular silinir.`)) return;
-  await fetch(`${API}/schedules/${_currentSchedule.schedule.id}`, {method:'DELETE'});
-  await selectProfile(_currentProfile.profile.id);
-}
-
-// ── BRIEF ÜRET ───────────────────────────────────────────────────────────────
-
-async function generateBrief(){
-  if(!_currentSchedule) return;
-  const btn = document.querySelector('[onclick="generateBrief()"]');
-  btn.textContent = '⏳ Üretiliyor...';
-  btn.disabled = true;
-  try {
-    const d = await fetch(`${API}/schedules/${_currentSchedule.schedule.id}/generate`, {method:'POST'}).then(r => r.json());
-    alert(`✓ Brief üretildi — ${d.soru_sayisi||0} soru, ${((d.generation_ms||0)/1000).toFixed(1)} sn`);
-  } catch(e){
-    alert('Brief üretme hatası: ' + e.message);
-  } finally {
-    btn.textContent = '▶ Brief Üret';
-    btn.disabled = false;
-  }
-}
-
-// ── YENİ ZAMANLAMA MODAL ──────────────────────────────────────────────────────
-
-function openNewSchedModal(){
+function openNewSchedModal() {
+  if (!_currentProfile) { alert('Önce bir profil seçin'); return; }
   document.getElementById('ns-name').value = '';
   document.getElementById('ns-time').value = '07:00';
   document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('selected'));
@@ -1024,175 +1418,136 @@ function openNewSchedModal(){
   document.getElementById('ns-name').focus();
 }
 
-function selectFreq(card){
+function selectFreq(card) {
   document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
 }
 
-async function createNewSchedule(){
+async function createNewSchedule() {
   const name = document.getElementById('ns-name').value.trim();
   const freq = document.querySelector('.freq-card.selected')?.dataset.freq || 'daily';
-  if(!name){ alert('Zamanlama adı gerekli'); return; }
-  if(!_currentProfile){ alert('Önce profil seçin'); return; }
+  if (!name) { alert('Zamanlama adı gerekli'); return; }
   const d = await fetch(`${API}/profiles/${_currentProfile.profile.id}/schedules`, {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      name,
-      frequency_type: freq,
-      schedule_time:  document.getElementById('ns-time').value,
-    })
+    body: JSON.stringify({name, frequency_type: freq, schedule_time: document.getElementById('ns-time').value})
   }).then(r => r.json());
   document.getElementById('modal-new-sched').classList.add('hidden');
   await selectProfile(_currentProfile.profile.id);
-  if(d.id) await selectSchedule(d.id);
+  if (d.id) await selectSchedule(d.id);
 }
 
-// ── YENİ PROFİL MODAL (3 ADIM) ────────────────────────────────────────────────
+// ── New profile modal (3 steps) ───────────────────────────────────────────────
 
 let _npStep = 1;
 let _npTemplateKey = 'bos';
 let _templates = [];
 
-async function openNewProfileModal(){
-  _npStep = 1;
-  _npTemplateKey = 'bos';
+async function openNewProfileModal() {
+  _npStep = 1; _npTemplateKey = 'bos';
   document.getElementById('np-name').value = '';
   document.getElementById('np-role').value = '';
   document.getElementById('np-email').value = '';
   npRenderStep();
   document.getElementById('modal-new-profil').classList.remove('hidden');
   document.getElementById('np-name').focus();
-
-  if(!_templates.length){
+  if (!_templates.length) {
     try {
       const d = await fetch(`${API}/templates`).then(r => r.json());
       _templates = d.templates || [];
       renderTemplateGrid();
-    } catch(e){}
+    } catch(e) {}
   }
 }
 
-function closeNewProfileModal(){
+function closeNewProfileModal() {
   document.getElementById('modal-new-profil').classList.add('hidden');
 }
 
-function npRenderStep(){
+function npRenderStep() {
   [1,2,3].forEach(i => {
-    document.getElementById(`np-pane-${i}`).style.display = i===_npStep ? '' : 'none';
+    document.getElementById(`np-pane-${i}`).style.display = i === _npStep ? '' : 'none';
     const el = document.getElementById(`np-step-${i}`);
-    el.className = `step ${i<_npStep?'done':i===_npStep?'active':''}`;
+    el.className = `step ${i < _npStep ? 'done' : i === _npStep ? 'active' : ''}`;
   });
   document.getElementById('np-btn-back').style.display = _npStep > 1 ? '' : 'none';
   document.getElementById('np-btn-next').textContent = _npStep < 3 ? 'İleri →' : '✓ Oluştur';
   document.getElementById('np-modal-title').textContent =
-    ['', 'Yeni Profil — Temel Bilgiler', 'Yeni Profil — Şablon Seç', 'Yeni Profil — Özet'][_npStep];
+    ['','Yeni Profil — Temel Bilgiler','Yeni Profil — Şablon Seç','Yeni Profil — Özet'][_npStep];
 }
 
-async function npNext(){
-  if(_npStep === 1){
-    const name = document.getElementById('np-name').value.trim();
-    if(!name){ document.getElementById('np-name').focus(); return; }
-    _npStep = 2;
-    renderTemplateGrid();
-  } else if(_npStep === 2){
-    _npStep = 3;
-    renderNpSummary();
+async function npNext() {
+  if (_npStep === 1) {
+    if (!document.getElementById('np-name').value.trim()) { document.getElementById('np-name').focus(); return; }
+    _npStep = 2; renderTemplateGrid();
+  } else if (_npStep === 2) {
+    _npStep = 3; renderNpSummary();
   } else {
-    await createProfileFromModal();
-    return;
+    await createProfileFromModal(); return;
   }
   npRenderStep();
 }
 
-function npPrev(){
-  if(_npStep > 1){ _npStep--; npRenderStep(); }
-}
+function npPrev() { if (_npStep > 1) { _npStep--; npRenderStep(); } }
 
-function renderTemplateGrid(){
+function renderTemplateGrid() {
   const grid = document.getElementById('tmpl-grid');
-  if(!_templates.length){ grid.innerHTML = '<div style="color:var(--t3);font-size:11px">Şablonlar yükleniyor...</div>'; return; }
-  const FREQ_BADGE = {daily:'badge-daily', weekly:'badge-weekly', monthly:'badge-monthly', adhoc:'badge-adhoc'};
-  const FREQ_LBL   = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık', adhoc:'Acil'};
+  if (!_templates.length) { grid.innerHTML = '<div style="color:var(--t3);font-size:11px">Şablonlar yükleniyor...</div>'; return; }
+  const FREQ_BADGE = {daily:'badge-teal', weekly:'badge-blue', monthly:'badge-purple', adhoc:'badge-yellow'};
+  const FREQ_LBL2  = {daily:'Günlük', weekly:'Haftalık', monthly:'Aylık', adhoc:'Acil'};
   grid.innerHTML = _templates.map(t => `
-    <div class="tmpl-card ${t.key===_npTemplateKey?'selected':''}"
-         onclick="selectTemplate('${t.key}')">
-      <div class="tmpl-header">
-        <span class="tmpl-emoji">${t.icon}</span>
-        <span class="tmpl-label">${t.label}</span>
-      </div>
+    <div class="tmpl-card ${t.key === _npTemplateKey ? 'selected' : ''}" onclick="selectTemplate('${t.key}')">
+      <div class="tmpl-header"><span class="tmpl-emoji">${t.icon}</span><span class="tmpl-label">${t.label}</span></div>
       <div class="tmpl-desc">${t.description}</div>
-      <div class="tmpl-schedules">
-        ${(t.schedules_preview||[]).map(s => `
-          <div class="tmpl-sched-row">
-            <span class="tmpl-sched-badge ${FREQ_BADGE[s.frequency_type]||'badge-daily'}">${FREQ_LBL[s.frequency_type]||s.frequency_type}</span>
-            <span>${s.name} · ${s.question_count} soru</span>
-          </div>`).join('')}
-      </div>
+      <div class="tmpl-schedules">${(t.schedules_preview||[]).map(s => `
+        <div class="tmpl-sched-row">
+          <span class="tmpl-sched-badge ${FREQ_BADGE[s.frequency_type]||''}">${FREQ_LBL2[s.frequency_type]||s.frequency_type}</span>
+          <span>${s.name} · ${s.question_count} soru</span>
+        </div>`).join('')}</div>
     </div>`).join('');
 }
 
-function selectTemplate(key){
-  _npTemplateKey = key;
-  renderTemplateGrid();
-}
+function selectTemplate(key) { _npTemplateKey = key; renderTemplateGrid(); }
 
-function renderNpSummary(){
+function renderNpSummary() {
   const tmpl = _templates.find(t => t.key === _npTemplateKey);
-  const el = document.getElementById('np-summary');
-  el.innerHTML = `
+  document.getElementById('np-summary').innerHTML = `
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
       <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Profil</div>
-      <div style="font-size:13px;font-weight:600;color:var(--t1)">${document.getElementById('np-name').value}</div>
+      <div style="font-size:13px;font-weight:600">${document.getElementById('np-name').value}</div>
       ${document.getElementById('np-role').value?`<div style="font-size:11px;color:var(--t2);margin-top:2px">${document.getElementById('np-role').value}</div>`:''}
-      ${document.getElementById('np-email').value?`<div style="font-size:11px;color:var(--t3);margin-top:1px">${document.getElementById('np-email').value}</div>`:''}
     </div>
-    ${tmpl ? `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
+    ${tmpl?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px">
       <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Şablon — ${tmpl.icon} ${tmpl.label}</div>
-      ${(tmpl.schedules_preview||[]).map(s => `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px">
-          <span>${FREQ_ICONS[s.frequency_type]||'📋'}</span>
-          <span style="font-weight:600;color:var(--t1)">${s.name}</span>
-          <span style="color:var(--t3)">· ${s.question_count} soru · ${s.schedule_time}</span>
-        </div>`).join('')}
-    </div>` : ''}
-    <div style="font-size:10px;color:var(--t3);padding:4px 0">
-      Zamanlamalar ve sorular oluşturulacak — daha sonra düzenleyebilirsiniz.
-    </div>`;
+      ${(tmpl.schedules_preview||[]).map(s=>`<div style="font-size:11px;margin-bottom:4px">${FREQ_ICONS[s.frequency_type]||'📋'} <strong>${s.name}</strong> · ${s.question_count} soru</div>`).join('')}
+    </div>`:''}`;
 }
 
-async function createProfileFromModal(){
+async function createProfileFromModal() {
   const name = document.getElementById('np-name').value.trim();
-  if(!name) return;
+  if (!name) return;
   const btn = document.getElementById('np-btn-next');
-  btn.textContent = 'Oluşturuluyor...';
-  btn.disabled = true;
+  btn.textContent = 'Oluşturuluyor...'; btn.disabled = true;
   try {
     const d = await fetch(`${API}/profiles`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        name,
-        role:         document.getElementById('np-role').value,
-        owner_email:  document.getElementById('np-email').value,
+        name, role: document.getElementById('np-role').value,
+        owner_email: document.getElementById('np-email').value,
         template_key: _npTemplateKey,
       })
     }).then(r => r.json());
     closeNewProfileModal();
     await loadProfiles();
-    if(d.id) await selectProfile(d.id);
-  } catch(e){
+    if (d.id) await selectProfile(d.id);
+  } catch(e) {
     alert('Oluşturma hatası: ' + e.message);
   } finally {
-    btn.textContent = '✓ Oluştur';
-    btn.disabled = false;
+    btn.textContent = '✓ Oluştur'; btn.disabled = false;
   }
 }
 
-// ── DAY TOGGLE & TONE ─────────────────────────────────────────────────────────
+// ── Tone cards ────────────────────────────────────────────────────────────────
 
-document.querySelectorAll('#f-days .day-btn').forEach(b =>
-  b.addEventListener('click', () => b.classList.toggle('selected'))
-);
 document.querySelectorAll('.tone-card').forEach(c =>
   c.addEventListener('click', () => {
     document.querySelectorAll('.tone-card').forEach(x => x.classList.remove('selected'));
@@ -1200,7 +1555,7 @@ document.querySelectorAll('.tone-card').forEach(c =>
   })
 );
 
-// ── BAŞLAT ───────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', loadProfiles);
 </script>

@@ -112,6 +112,37 @@ INCORTA_TABLES: list = [
             Column("ortalama_oturum_suresi", "double precision", "Ortalama oturum süresi (saniye)."),
         ],
     ),
+    Table(
+        name="incorta_ecommerce_gunluk",
+        description=(
+            "Incorta'dan çekilen e-ticaret günlük performans verisi. "
+            "Her satır: bir gün + kanal + SKU + renk + beden kombinasyonunun satış, iade ve iptal toplamları. "
+            "840K+ satır, günlük granülarite. 'Bugün', 'son 7 gün', 'günlük trend' sorguları için kullan."
+        ),
+        columns=[
+            Column("tarih",        "text",   "Tarih (YYYY-MM-DD HH:MM:SS formatında). Filtrelerken DATE(tarih) kullan."),
+            Column("satis_kanali", "text",   "Satış kanalı. Örn: ADL, TRENDYOL, HEPSIBURADA."),
+            Column("urun_kodu",    "text",   "Ürün/SKU kodu."),
+            Column("urun_adi",     "text",   "Ürün adı."),
+            Column("renk",         "text",   "Renk."),
+            Column("beden",        "text",   "Beden."),
+            Column("satis_tutar",  "double precision", "Günlük brüt satış cirosu (TL). NULL olabilir."),
+            Column("iade_tutar",   "double precision", "Günlük iade tutarı (TL, negatif). NULL olabilir."),
+            Column("iptal_tutar",  "double precision", "Günlük iptal tutarı (TL, negatif). NULL olabilir."),
+            Column("satis_adet",   "double precision", "Günlük satış adedi. NULL olabilir."),
+            Column("iade_adet",    "double precision", "Günlük iade adedi (negatif). NULL olabilir."),
+            Column("iptal_adet",   "double precision", "Günlük iptal adedi (negatif). NULL olabilir."),
+        ],
+    ),
+    Table(
+        name="incorta_magaza_gunluk",
+        description=(
+            "Incorta'dan çekilen mağaza günlük performans verisi. "
+            "Tarih + bölge + mağaza bazında KPI'lar (ciro, hedef, ziyaretçi vb.). "
+            "Günlük granülarite. Mağaza bazlı günlük analizler için kullan."
+        ),
+        columns=[],  # İlk sync sonrası kolonlar netleşecek — şema dinamik
+    ),
 ]
 
 # ── 2. Pimland PLM — Master data ─────────────────────────────────────────────

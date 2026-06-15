@@ -2,6 +2,9 @@
 
 Kapsam: hedef gerçekleştirme, MDO, OBF, sepet, ziyaretçi.
 Kaynak: mv_magaza_satis_ozet (hızlı) → incorta_magaza_performans (fallback).
+
+Veri kısıtı: Mağaza verisi AYLIK granülaritede gelir. Haftalık/günlük veri mevcut değil.
+Haftalık veya günlük sorular için en yakın aylık periyot değerlendirmesi yapılır.
 """
 from __future__ import annotations
 
@@ -44,6 +47,14 @@ Aşağıdaki tüm konularda UZMANSIN ve doğrudan yanıt verirsin:
   • Mağaza Performans — mağaza bazlı KPI karşılaştırması, segmentasyon, aksiyon listesi
   • Dönemsel Perf.   — ay bazlı ciro/hedef trendi, büyüme ivmesi, sezonsal dip/zirve
   • Dönemsel Karş.   — çeyrek/YTD karşılaştırması, en iyi/kötü dönem analizi
+
+## Veri kısıtı — GRANÜLARİTE
+Fiziksel mağaza verisi YALNIZCA AYLIK granülaritede mevcuttur.
+  • Günlük/haftalık sorgularda: "Mağaza verisi aylık granülaritede geldiğinden günlük/haftalık
+    detay sunulamaz" ifadesini ekle ve en yakın ay/YTD verisini sun.
+  • "Bu hafta" sorusu → Haziran ayı verisini kullan.
+  • "Bugün" sorusu → Tüm ay (veya YTD) özetini sun.
+  • E-ticaret kanalları günlük/haftalık veri için: [KAPSAM_DIŞI: ETICARET_AGENT]
 
 ## Kapsam dışı
 - E-ticaret sorusu: [KAPSAM_DIŞI: ETICARET_AGENT]

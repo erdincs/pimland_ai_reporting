@@ -85,7 +85,7 @@ async def generate_brief(
     try:
         results = await asyncio.wait_for(
             asyncio.gather(*tasks, return_exceptions=True),
-            timeout=120,
+            timeout=180,
         )
     except asyncio.TimeoutError:
         results = []
@@ -129,34 +129,36 @@ async def generate_brief(
           (schedule_id, profile_id, brief_date, generation_ms,
            top_insights, kpi_data, qa_results,
            checklist_state, actions, agent_metadata,
-           estimated_cost, tenant_id)
+           executive_summary, estimated_cost, tenant_id)
         VALUES
           (:sid, :pid, :bdate, :gen_ms,
            CAST(:top_ins AS JSONB), CAST(:kpi AS JSONB), CAST(:qa AS JSONB),
            CAST(:cl AS JSONB), CAST(:acts AS JSONB), CAST(:meta AS JSONB),
-           :cost, :tenant)
+           CAST(:exec_sum AS JSONB), :cost, :tenant)
         ON CONFLICT (schedule_id, brief_date) DO UPDATE SET
-          generated_at    = NOW(),
-          generation_ms   = EXCLUDED.generation_ms,
-          top_insights    = EXCLUDED.top_insights,
-          kpi_data        = EXCLUDED.kpi_data,
-          qa_results      = EXCLUDED.qa_results,
-          checklist_state = EXCLUDED.checklist_state,
-          actions         = EXCLUDED.actions,
-          agent_metadata  = EXCLUDED.agent_metadata
+          generated_at      = NOW(),
+          generation_ms     = EXCLUDED.generation_ms,
+          top_insights      = EXCLUDED.top_insights,
+          kpi_data          = EXCLUDED.kpi_data,
+          qa_results        = EXCLUDED.qa_results,
+          checklist_state   = EXCLUDED.checklist_state,
+          actions           = EXCLUDED.actions,
+          agent_metadata    = EXCLUDED.agent_metadata,
+          executive_summary = EXCLUDED.executive_summary
     """), {
-        "sid":     schedule_id,
-        "pid":     profile_id,
-        "bdate":   target_date,
-        "gen_ms":  gen_ms,
-        "top_ins": json.dumps(composed.get("top_insights", [])),
-        "kpi":     json.dumps(composed.get("kpi_data", {})),
-        "qa":      json.dumps(composed.get("qa_results", [])),
-        "cl":      json.dumps(checklist, default=str),
-        "acts":    json.dumps(composed.get("actions", [])),
-        "meta":    json.dumps(agent_meta),
-        "cost":    float(composed.get("estimated_cost", 0)),
-        "tenant":  schedule.get("tenant_id", "upagon"),
+        "sid":      schedule_id,
+        "pid":      profile_id,
+        "bdate":    target_date,
+        "gen_ms":   gen_ms,
+        "top_ins":  json.dumps(composed.get("top_insights", [])),
+        "kpi":      json.dumps(composed.get("kpi_data", {})),
+        "qa":       json.dumps(composed.get("qa_results", [])),
+        "cl":       json.dumps(checklist, default=str),
+        "acts":     json.dumps(composed.get("actions", [])),
+        "meta":     json.dumps(agent_meta),
+        "exec_sum": json.dumps(composed.get("executive_summary", {})),
+        "cost":     float(composed.get("estimated_cost", 0)),
+        "tenant":   schedule.get("tenant_id", "upagon"),
     })
     await session.commit()
 

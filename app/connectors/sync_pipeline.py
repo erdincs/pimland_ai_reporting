@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone, timedelta
 from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
@@ -30,7 +30,10 @@ _sync_engine = create_engine(settings.sync_database_url, pool_pre_ping=True)
 # Materialized views that should be refreshed after every sync.
 # Only views whose source tables were updated are refreshed.
 _VIEW_DEPENDENCIES: dict = {
-    "eticaret_satis": ["mv_satis_aylik", "mv_satis_urun", "mv_satis_kanal"],
+    "eticaret_satis":      ["mv_satis_aylik", "mv_satis_urun", "mv_satis_kanal"],
+    "pim_products":        ["mv_ecom_product_placement", "mv_product_malzeme_ozet"],
+    "pim_ecom_catalogs":   [],  # ecom_sync job view'ları kendisi yeniler
+    "pim_product_malzeme": ["mv_product_malzeme_ozet"],
 }
 
 # Tablolar için beklenen minimum yıl — yeni veri daha eskiyse eski veriyi koru.
@@ -45,7 +48,7 @@ async def run(
     if_exists: str = "replace",
     job_id: Optional[str] = None,
 ) -> SyncJobResult:
-    """Run a full sync for `source_id`. Returns a SyncJobResult."""
+    """Run a full or incremental sync for `source_id`. Returns a SyncJobResult."""
     job_id = job_id or str(uuid.uuid4())
     started_at = datetime.now(timezone.utc)
     t0 = time.perf_counter()
@@ -56,8 +59,31 @@ async def run(
         connector = registry.get(source_id)
         cfg = connector.config
 
+        # ── Incremental mode detection ──────────────────────────────────────
+        incr = getattr(cfg.tool, "incremental", None) if cfg.tool else None
+        extra_prompts = None
+        is_incremental = False
+
+        if incr and if_exists == "replace":
+            last_date = _get_last_date(cfg.target_table, incr.date_field)
+            if last_date is not None:
+                is_incremental = True
+                if_exists = "append"   # will use delete+insert below
+                today_str  = date.today().strftime(incr.date_format)
+                last_str   = last_date.strftime(incr.date_format)
+                extra_prompts = [{
+                    "field":    incr.incorta_date_field,
+                    "operator": "BETWEEN",
+                    "values":   [last_str, today_str],
+                    "type":     "dimension",
+                }]
+                log.info("sync.incremental_mode",
+                         source=source_id,
+                         from_date=last_str,
+                         to_date=today_str)
+
         # 1. Fetch from source (blocks in thread for sync connectors)
-        raw_records = await connector.fetch()
+        raw_records = await connector.fetch(extra_prompts=extra_prompts)
         if not raw_records:
             raise IngestionError(f"[{source_id}] Source returned no records.")
 
@@ -92,15 +118,18 @@ async def run(
             except Exception as guard_exc:
                 log.warning("sync.year_guard_error", error=str(guard_exc))
 
-        df.to_sql(
-            cfg.target_table,
-            _sync_engine,
-            if_exists=if_exists,
-            index=False,
-            chunksize=5_000,
-            method="multi",
-        )
-        rows_loaded = len(df)
+        if is_incremental and incr:
+            rows_loaded = _incremental_load(df, cfg.target_table, incr.date_field)
+        else:
+            df.to_sql(
+                cfg.target_table,
+                _sync_engine,
+                if_exists=if_exists,
+                index=False,
+                chunksize=5_000,
+                method="multi",
+            )
+            rows_loaded = len(df)
 
         # 4. Refresh materialized views that depend on this table
         _refresh_views(cfg.target_table)
@@ -138,6 +167,53 @@ async def run(
             finished_at=finished_at,
             duration_ms=duration_ms,
         )
+
+
+def _get_last_date(table: str, date_col: str) -> Optional[date]:
+    """Return the latest date in `date_col` of `table`, or None if table is empty/missing."""
+    try:
+        with _sync_engine.connect() as conn:
+            row = conn.execute(text(
+                f"SELECT MAX({date_col}::date) FROM {table}"  # noqa: S608
+            )).fetchone()
+            return row[0] if row and row[0] else None
+    except Exception:
+        return None
+
+
+def _incremental_load(df: "pd.DataFrame", table: str, date_col: str) -> int:
+    """Delete rows whose date is in df, then insert df. Returns rows inserted."""
+    if df.empty:
+        return 0
+
+    # Collect distinct dates in the new batch
+    dates_in_batch = (
+        df[date_col]
+        .dropna()
+        .apply(lambda v: str(v)[:10])   # "YYYY-MM-DD HH:MM:SS" → "YYYY-MM-DD"
+        .unique()
+        .tolist()
+    )
+    if not dates_in_batch:
+        return 0
+
+    with _sync_engine.begin() as conn:
+        placeholders = ", ".join(f"'{d}'" for d in dates_in_batch)
+        conn.execute(text(
+            f"DELETE FROM {table} WHERE {date_col}::date IN ({placeholders})"  # noqa: S608
+        ))
+
+    df.to_sql(
+        table,
+        _sync_engine,
+        if_exists="append",
+        index=False,
+        chunksize=5_000,
+        method="multi",
+    )
+    log.info("sync.incremental_loaded",
+             table=table, dates=dates_in_batch, rows=len(df))
+    return len(df)
 
 
 def _serialize_nested(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

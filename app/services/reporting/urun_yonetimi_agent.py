@@ -1,6 +1,7 @@
 """Ürün Yönetimi Agent — PLM katalog, sezon/tema/kategori analizi, satış performansı."""
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import time
@@ -61,13 +62,21 @@ Aşağıdaki tüm konularda UZMANSIN ve doğrudan yanıt verirsin:
   • PLM Katalog        — toplam SKU, marka/sezon/tema/kategori dağılımı
   • Ürün Yönetimi YK  — yönetim kurulu özetleri, marka karşılaştırması, büyüme
   • Sezon Analizi      — cari/planlanan/arşiv sezonlar, YoY SKU büyümesi
-  • Tema Performansı   — CORE/YENİ/CARRY tema analizi, kategori yoğunluğu
+  • Tema Performansı   — CORE/YENİ/CARRY tema analizi, kategori yoğunluğu, iade karşılaştırması
+  • Hikaye Analizi     — ürün hikayesi bazlı SKU/ciro/iade dağılımı, en karlı hikayeler
   • Kategori Analizi   — ürün grubu/ana grup dağılımı, derinlik analizi
-  • Satış–PLM Köprüsü  — PLM ürünlerinin satış performansı, iade oranı, en iyi temalar
-  • Katalog Sağlığı    — blokaj, internet aktivasyonu, eksik veri durumu
+  • Satış–PLM Köprüsü  — PLM ürünlerinin satış performansı, iade oranı, en iyi temalar ve hikayeler
+  • Katalog Sağlığı    — blokaj, internet aktivasyonu, eksik veri (hikayesiz ürünler dahil)
   • Stok Durumu        — Pimland MCP'den anlık stok: beden/renk bazlı mevcut/rezerv/toplam
 
-Hiyerarşi: Marka → Sezon → Tema → Kategori (ürün grubu) → SKU
+Hiyerarşi: Marka → Sezon → Hikaye → Tema → Kategori (ürün grubu) → SKU
+
+## Hikaye ve Tema tanımları
+- Ürün Hikayesi (productStory): Koleksiyonun anlatı çerçevesi — örn. "Boho Chic", "City Essentials". Her hikaye birden fazla temaya yayılabilir.
+- Ürün Teması (productTheme): Ürün grubunun pazarlama ve portföy sınıfı — örn. CORE (devamlı), YENİ (yeni sezon girişi), CARRY (sezon devrolan).
+- Hikayesiz ürünler: hikaye_adi = NULL olan ürünler — bunlar kapsama dışında bırakılmış veya henüz atanmamış.
+- MCP Tema Master: Pimland PLM'deki resmi tema listesi (tip, açıklama ile birlikte).
+- MCP Hikaye Master: Pimland PLM'deki resmi hikaye listesi.
 
 ## Kapsam dışı
 - Online kanal satış sorusu: [KAPSAM_DIŞI: ETICARET_AGENT]
@@ -338,6 +347,121 @@ async def _fetch_kategori_analiz(
         return []
 
 
+async def _fetch_hikaye_analiz(
+    session: AsyncSession,
+    marka: Optional[str],
+    sezon: Optional[str],
+) -> List[Dict[str, Any]]:
+    """Hikaye bazlı SKU dağılımı + satış + iade. hikaye_adi kolonunu kullanır."""
+    conds = ["p.hikaye_adi IS NOT NULL"]
+    params: Dict[str, Any] = {}
+    if marka:
+        conds.append("p.marka_adi = :marka"); params["marka"] = marka
+    if sezon:
+        conds.append("p.sezon_kodu = :sezon"); params["sezon"] = sezon
+    where_p = "WHERE " + " AND ".join(conds)
+
+    try:
+        rows = (await session.execute(text(f"""
+            WITH plm AS (
+                SELECT COALESCE(p.hikaye_adi, 'Hikayesiz') AS hikaye,
+                       p.hikaye_kodu,
+                       COUNT(*) AS sku,
+                       COUNT(DISTINCT p.tema_adi) AS tema_sayisi,
+                       COUNT(DISTINCT p.marka_adi) AS marka_sayisi,
+                       ROUND((100.0*COUNT(*)/SUM(COUNT(*))OVER())::numeric, 1) AS pay
+                FROM pim_products p {where_p}
+                GROUP BY COALESCE(p.hikaye_adi,'Hikayesiz'), p.hikaye_kodu
+            ),
+            sat AS (
+                SELECT p.hikaye_adi AS hikaye,
+                       ROUND(SUM(s.tutar)::numeric) AS brut_ciro,
+                       SUM(s.adet::int) AS brut_adet
+                FROM incorta_satis s
+                JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+                {where_p}
+                GROUP BY p.hikaye_adi
+            ),
+            iad AS (
+                SELECT p.hikaye_adi AS hikaye,
+                       ROUND(ABS(SUM(d.tutar))::numeric) AS iade_ciro
+                FROM incorta_depo_iade d
+                JOIN pim_products p ON p.urun_kodu = d.urun_kodu
+                {where_p}
+                GROUP BY p.hikaye_adi
+            )
+            SELECT plm.hikaye, plm.hikaye_kodu, plm.sku, plm.tema_sayisi, plm.marka_sayisi, plm.pay,
+                   COALESCE(sat.brut_ciro, 0) AS brut_ciro,
+                   COALESCE(sat.brut_adet, 0) AS brut_adet,
+                   COALESCE(iad.iade_ciro, 0) AS iade_ciro,
+                   ROUND((COALESCE(iad.iade_ciro,0) /
+                          NULLIF(sat.brut_ciro, 0) * 100)::numeric, 1) AS iade_pct
+            FROM plm
+            LEFT JOIN sat USING(hikaye)
+            LEFT JOIN iad USING(hikaye)
+            ORDER BY COALESCE(sat.brut_ciro,0) DESC NULLS LAST
+            LIMIT 20
+        """), params)).mappings().all()
+
+        return [
+            {
+                "hikaye":        r["hikaye"],
+                "hikaye_kodu":   r["hikaye_kodu"],
+                "sku_sayisi":    int(r["sku"]),
+                "tema_sayisi":   int(r["tema_sayisi"]),
+                "marka_sayisi":  int(r["marka_sayisi"]),
+                "pay_pct":       float(r["pay"] or 0),
+                "brut_ciro":     int(r["brut_ciro"]),
+                "brut_adet":     int(r["brut_adet"]),
+                "iade_ciro":     int(r["iade_ciro"]),
+                "iade_pct":      float(r["iade_pct"] or 0),
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        log.warning("urun_yonetimi.hikaye_error", error=str(e))
+        return []
+
+
+async def _fetch_tema_master_mcp() -> List[Dict[str, Any]]:
+    """MCP'den tema master listesini çeker (kod, ad, açıklama)."""
+    try:
+        from app.connectors.pimland_live import fetch_master_themes
+        themes = await fetch_master_themes()
+        return [
+            {
+                "kod":  t.get("code") or t.get("themeCode") or t.get("id", ""),
+                "ad":   t.get("name") or t.get("themeName") or "",
+                "tip":  t.get("type") or t.get("themeType") or "",
+                "aciklama": t.get("description") or "",
+            }
+            for t in (themes or [])
+            if t.get("name") or t.get("themeName")
+        ][:30]
+    except Exception as e:
+        log.warning("urun_yonetimi.tema_master_error", error=str(e))
+        return []
+
+
+async def _fetch_hikaye_master_mcp() -> List[Dict[str, Any]]:
+    """MCP'den hikaye master listesini çeker (kod, ad)."""
+    try:
+        from app.connectors.pimland_live import fetch_master_stories
+        stories = await fetch_master_stories()
+        return [
+            {
+                "kod": s.get("code") or s.get("storyCode") or s.get("id", ""),
+                "ad":  s.get("name") or s.get("storyName") or "",
+                "aciklama": s.get("description") or "",
+            }
+            for s in (stories or [])
+            if s.get("name") or s.get("storyName")
+        ][:30]
+    except Exception as e:
+        log.warning("urun_yonetimi.hikaye_master_error", error=str(e))
+        return []
+
+
 async def _fetch_top_performans(
     session: AsyncSession,
     marka: Optional[str],
@@ -429,23 +553,52 @@ async def run_urun_yonetimi_agent(
     sezon = filters.get("sezon") or None
     tema  = filters.get("tema")  or None
 
-    genel     = await _fetch_genel_ozet(session, marka, sezon, tema)
-    sezon_lst = await _fetch_sezon_analiz(session, marka, tema)
-    tema_lst  = await _fetch_tema_analiz(session, marka, sezon)
-    kat_lst   = await _fetch_kategori_analiz(session, marka, sezon, tema)
-    perf      = await _fetch_top_performans(session, marka, sezon)
-    stok      = await _fetch_stok_live(question)
+    hikaye = filters.get("hikaye") or None
+
+    (
+        genel, sezon_lst, tema_lst, hikaye_lst, kat_lst, perf, stok,
+        tema_master, hikaye_master,
+    ) = await asyncio.gather(
+        _fetch_genel_ozet(session, marka, sezon, tema),
+        _fetch_sezon_analiz(session, marka, tema),
+        _fetch_tema_analiz(session, marka, sezon),
+        _fetch_hikaye_analiz(session, marka, sezon),
+        _fetch_kategori_analiz(session, marka, sezon, tema),
+        _fetch_top_performans(session, marka, sezon),
+        _fetch_stok_live(question),
+        _fetch_tema_master_mcp(),
+        _fetch_hikaye_master_mcp(),
+        return_exceptions=True,
+    )
+    # Exception guard
+    def _safe(v, default):
+        return default if isinstance(v, Exception) else v
+
+    genel        = _safe(genel, {})
+    sezon_lst    = _safe(sezon_lst, [])
+    tema_lst     = _safe(tema_lst, [])
+    hikaye_lst   = _safe(hikaye_lst, [])
+    kat_lst      = _safe(kat_lst, [])
+    perf         = _safe(perf, {})
+    stok         = _safe(stok, None)
+    tema_master  = _safe(tema_master, [])
+    hikaye_master = _safe(hikaye_master, [])
 
     ctx: Dict[str, Any] = {
-        "filtre":          {"marka": marka, "sezon": sezon, "tema": tema},
-        "genel_ozet":      genel,
-        "sezon_analizi":   sezon_lst,
-        "tema_analizi":    tema_lst,
+        "filtre":           {"marka": marka, "sezon": sezon, "tema": tema, "hikaye": hikaye},
+        "genel_ozet":       genel,
+        "sezon_analizi":    sezon_lst,
+        "tema_analizi":     tema_lst,
+        "hikaye_analizi":   hikaye_lst,
         "kategori_analizi": kat_lst,
         "satis_performansi": perf,
     }
     if stok:
         ctx["stok_bilgisi"] = stok
+    if tema_master:
+        ctx["tema_master_listesi"] = tema_master
+    if hikaye_master:
+        ctx["hikaye_master_listesi"] = hikaye_master
 
     filtreler_str = json.dumps(ctx["filtre"], ensure_ascii=False)
     veri_str      = json.dumps(ctx, ensure_ascii=False, indent=2)

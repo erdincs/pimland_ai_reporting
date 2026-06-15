@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKL-03 · Ürün & Katalog Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--border:#2a2a3a;--border2:#333348;--t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;--orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(13,13,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px}
+.topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--orange)}.topbar .brand{font-weight:600;font-size:14px}.topbar .module{font-size:11px;color:var(--t3);margin-left:4px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}.topbar .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}.topbar .date{font-size:11px;color:var(--t2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:860px;margin:0 auto;padding:24px}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-num{width:24px;height:24px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--orange)}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.traffic-light{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:12px;margin-bottom:16px}
+.tl-green{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15)}
+.tl-yellow{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15)}
+.tl-red{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15)}
+.tl-icon{font-size:28px}.tl-content{flex:1}
+.tl-title{font-size:14px;font-weight:600;margin-bottom:2px}.tl-desc{font-size:11px;color:var(--t2)}
+.sync-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg4);font-size:12px}
+.sync-row:last-child{border-bottom:none}.sync-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-label{flex:1;color:var(--t2)}.sync-count{font-weight:600;font-family:monospace;width:60px;text-align:right}
+.grade-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.grade-label{width:36px;font-size:12px;font-weight:700;text-align:center}
+.grade-bar-wrap{flex:1;height:10px;background:var(--bg4);border-radius:5px;overflow:hidden}
+.grade-bar{height:100%;border-radius:5px}
+.grade-val{width:70px;font-size:11px;text-align:right;font-family:monospace;color:var(--t2)}
+.stale-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg4)}
+.stale-item:last-child{border-bottom:none}.stale-name{flex:1;font-size:12px;color:var(--t1)}
+.stale-days{font-size:11px;font-weight:600;font-family:monospace}
+.action-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg4);font-size:12px}
+.action-item:last-child{border-bottom:none}
+.action-priority{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.ap-high{background:rgba(239,68,68,.12);color:var(--red)}.ap-med{background:rgba(245,158,11,.12);color:var(--yellow)}.ap-low{background:rgba(59,130,246,.12);color:var(--blue)}
+.action-desc{flex:1;color:var(--t1)}.action-who{font-size:10px;color:var(--teal);background:rgba(0,194,168,.08);padding:1px 6px;border-radius:3px}
+.footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--t4)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .4s ease forwards;opacity:0}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}
+.loading{color:var(--t4);font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="dot"></div><span class="brand">Pimland Reporting</span>
+  <span class="module">· SKL-03 Ürün & Katalog Brief</span>
+  <div class="right"><div class="pulse"></div><span class="date" id="topbar-date">Yükleniyor…</span></div>
+</div>
+
+<div class="container">
+
+  <div class="section anim d1">
+    <div class="section-header"><div class="section-num">1</div><div class="section-title">PIM Katalog Durumu</div></div>
+    <div id="pim-traffic" class="loading">Yükleniyor…</div>
+    <div class="card" id="pim-sync-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d2">
+    <div class="section-header"><div class="section-num">2</div><div class="section-title">Enrichment Durumu</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px" id="enr-summary">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+    <div class="card" id="grade-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d3">
+    <div class="section-header"><div class="section-num">3</div><div class="section-title">Sıralama Sağlığı</div></div>
+    <div class="card" id="siralama-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d4">
+    <div class="section-header"><div class="section-num">4</div><div class="section-title">Sezon Durumu</div></div>
+    <div id="sezon-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="section anim d5">
+    <div class="section-header"><div class="section-num">5</div><div class="section-title">Bugün Aksiyon Listesi</div></div>
+    <div class="card" style="border-color:rgba(255,107,43,.2)" id="actions-card">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="footer-sync">Veri: PIM Sync · Enrichment DB</span>
+    <span>Pimland AI Reporting v1.0 · SKL-03</span>
+  </div>
+</div>
+
+<script>
+const GRADE_COLORS = {A:'var(--green)',B:'var(--teal)',C:'var(--yellow)',D:'var(--red)',F:'var(--t4)'};
+
+fetch('/api/v1/eticaret-brief/skl03/data')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('topbar-date').textContent =
+      new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) + ' · 08:00';
+
+    // PIM traffic light
+    const pim = d.pim;
+    const issues = (pim.gorselsiz_aktif > 0 ? 1 : 0);
+    const tlClass = issues > 0 ? 'tl-yellow' : 'tl-green';
+    const tlIcon  = issues > 0 ? '🟡' : '🟢';
+    const tlTitle = issues > 0 ? `${issues} sorun tespit edildi` : 'Katalog Sağlıklı';
+    const tlDesc  = `${pim.aktif} aktif ürün · ${pim.gorselsiz_aktif} görselsiz aktif · ${pim.bloke} bloke`;
+    document.getElementById('pim-traffic').outerHTML = `
+      <div class="traffic-light ${tlClass}">
+        <div class="tl-icon">${tlIcon}</div>
+        <div class="tl-content">
+          <div class="tl-title">${tlTitle}</div>
+          <div class="tl-desc">${tlDesc}</div>
+        </div>
+      </div>`;
+
+    document.getElementById('pim-sync-card').innerHTML = `
+      <div class="sync-row">
+        <div class="sync-status" style="background:${pim.aktif>0?'var(--green)':'var(--red)'}"></div>
+        <div class="sync-label">Aktif ürün sayısı</div>
+        <div class="sync-count" style="color:var(--teal)">${pim.aktif}</div>
+      </div>
+      <div class="sync-row">
+        <div class="sync-status" style="background:${pim.gorselsiz_aktif===0?'var(--green)':'var(--red)'}"></div>
+        <div class="sync-label">Görselsiz aktif ürün</div>
+        <div class="sync-count" style="color:${pim.gorselsiz_aktif>0?'var(--red)':'var(--green)'}">${pim.gorselsiz_aktif||'✓'}</div>
+      </div>
+      <div class="sync-row">
+        <div class="sync-status" style="background:${pim.bloke===0?'var(--green)':'var(--yellow)'}"></div>
+        <div class="sync-label">Bloke edilen ürün</div>
+        <div class="sync-count" style="color:${pim.bloke>0?'var(--yellow)':'var(--green)'}">${pim.bloke||'✓'}</div>
+      </div>
+      <div class="sync-row">
+        <div class="sync-status" style="background:var(--t3)"></div>
+        <div class="sync-label">Toplam ürün (PIM)</div>
+        <div class="sync-count" style="color:var(--t2)">${pim.toplam}</div>
+      </div>`;
+
+    // Enrichment summary
+    const enr = d.dun_enrichment;
+    const enrPct = enr.islem > 0 ? Math.round(enr.islem / 50 * 100) : 0;
+    document.getElementById('enr-summary').innerHTML = `
+      <div class="card">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Dün Enrichment</div>
+        <div style="font-size:22px;font-weight:700;color:${enrPct>=80?'var(--teal)':'var(--yellow)'};margin:4px 0">${enr.islem} ürün</div>
+        <div style="font-size:11px;color:var(--t2)">Hedef: 50/gün · <span style="color:${enrPct>=80?'var(--green)':'var(--yellow)'}">%${enrPct} gerçekleşme</span></div>
+      </div>
+      <div class="card">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Grade A'ya Yükselen (Dün)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green);margin:4px 0">${enr.grade_a} ürün</div>
+        <div style="font-size:11px;color:var(--t2)">Toplam A grade: ${d.grades.find(g=>g.grade==='A')?.cnt||0}</div>
+      </div>`;
+
+    // Grade bars
+    document.getElementById('grade-card').innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.3px">
+        Grade Dağılımı (${d.total_enrichment} ürün değerlendi)
+      </div>
+      ${d.grades.map(g => `
+        <div class="grade-row">
+          <div class="grade-label" style="color:${GRADE_COLORS[g.grade]||'var(--t3)'}">${g.grade}</div>
+          <div class="grade-bar-wrap"><div class="grade-bar" style="width:${g.pct}%;background:${GRADE_COLORS[g.grade]||'var(--t4)'}"></div></div>
+          <div class="grade-val">${g.cnt} (%${g.pct})</div>
+        </div>`).join('')}`;
+
+    // Sıralama
+    const sir = d.siralama;
+    document.getElementById('siralama-card').innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">
+        ${sir.eskimis_14 > 0 ? `${sir.eskimis_14} kategori 14+ gün güncellenmedi` : 'Tüm kategoriler güncel'}
+      </div>
+      ${sir.stale_cats.length ? sir.stale_cats.map(c => `
+        <div class="stale-item">
+          <div class="stale-name">${c.kategori}</div>
+          <div class="stale-days" style="color:${c.gun_once>21?'var(--red)':'var(--yellow)'}">${c.gun_once} gün</div>
+        </div>`).join('') : '<div style="color:var(--green);font-size:12px">✓ Tüm kategoriler 14 günden kısa süre önce güncellendi</div>'}`;
+
+    // Sezon
+    if (d.sezonlar.length) {
+      const s = d.sezonlar[0];
+      document.getElementById('sezon-grid').innerHTML = `
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Toplam Ürün</div>
+          <div style="font-size:22px;font-weight:700;color:var(--t1);margin:4px 0">${s.toplam}</div>
+          <div style="font-size:11px;color:var(--t2)">${s.sezon_adi}</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Yayında</div>
+          <div style="font-size:22px;font-weight:700;color:var(--green);margin:4px 0">${s.yayinda}</div>
+          <div style="font-size:11px;color:var(--green)">%${s.yayin_pct}</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Bekleyen</div>
+          <div style="font-size:22px;font-weight:700;color:var(--yellow);margin:4px 0">${s.bekleyen}</div>
+          <div style="font-size:11px;color:var(--yellow)">Eksik içerik</div>
+        </div>`;
+    } else {
+      document.getElementById('sezon-grid').innerHTML = '<div style="color:var(--t3)">Sezon verisi bulunamadı</div>';
+    }
+
+    // Aksiyonlar
+    const acts = [];
+    if (pim.gorselsiz_aktif > 0) acts.push({pri:'ap-high',icon:'!',code:`${pim.gorselsiz_aktif} ürün`,desc:'Görselsiz aktif ürün → Görsel yükle',who:'Görsel Ekibi'});
+    if (sir.eskimis_14 > 0)      acts.push({pri:'ap-med', icon:'⚠',code:`${sir.eskimis_14} kategori`,desc:'14+ gün sıralama güncellenmedi',who:'Sıralama Ekibi'});
+    const dfCount = (d.grades.find(g=>g.grade==='D')?.cnt||0) + (d.grades.find(g=>g.grade==='F')?.cnt||0);
+    if (dfCount > 10)            acts.push({pri:'ap-med', icon:'⚠',code:`${dfCount} ürün`,desc:'D/F grade ürünler enrichment önceliğine alınmalı',who:'İçerik Ekibi'});
+    if (!acts.length)            acts.push({pri:'ap-low', icon:'i',code:'—',desc:'Rutin takip — kritik sorun yok',who:'Ekip'});
+    document.getElementById('actions-card').innerHTML = acts.map(a => `
+      <div class="action-item">
+        <div class="action-priority ${a.pri}">${a.icon}</div>
+        <div style="font-family:monospace;font-size:11px;color:var(--t3);width:100px">${a.code}</div>
+        <div class="action-desc">${a.desc}</div>
+        <div class="action-who">${a.who}</div>
+      </div>`).join('');
+
+    document.getElementById('footer-sync').textContent = `Son güncelleme: ${new Date().toLocaleTimeString('tr-TR')}`;
+  })
+  .catch(e => console.error('SKL-03 error:', e));
+</script>
+</body>
+</html>

@@ -15,6 +15,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from app.connectors.registry import registry
 from app.connectors.sync_pipeline import run as sync_run
 from app.core.logging import get_logger
+from app.connectors.pimland_ecom_sync import run_ecom_sync
+from scripts.sync_product_malzeme import run as run_malzeme_sync
 
 log = get_logger(__name__)
 
@@ -40,6 +42,68 @@ async def _search_index_job():
         log.error("scheduler.search_index_failed", error=str(exc))
 
 
+async def _ecom_sync_job():
+    """Her gece 02:00 — ecom katalog senkronizasyonu (katalog sync sonrası)."""
+    log.info("scheduler.ecom_sync_started")
+    try:
+        result = await run_ecom_sync()
+        log.info("scheduler.ecom_sync_done", **result)
+    except Exception as exc:
+        log.error("scheduler.ecom_sync_failed", error=str(exc))
+
+
+async def _malzeme_sync_job():
+    """Her gece 03:30 — ürün malzeme detayları (PLM sync sonrası)."""
+    log.info("scheduler.malzeme_sync_started")
+    try:
+        result = await asyncio.to_thread(run_malzeme_sync)
+        log.info("scheduler.malzeme_sync_done", **result)
+    except Exception as exc:
+        log.error("scheduler.malzeme_sync_failed", error=str(exc))
+
+
+async def _generate_due_briefs_job():
+    """Her 30dk'da bir — bugün için üretilmemiş aktif brifleri üret."""
+    from datetime import date
+    from app.db.session import AsyncSessionLocal
+    from sqlalchemy import text
+    from app.services.daily_brief.orchestrator import generate_brief
+
+    log.info("scheduler.brief_generation_started")
+    generated = 0
+    try:
+        async with AsyncSessionLocal() as session:
+            due_rows = (await session.execute(text("""
+                SELECT s.id AS schedule_id
+                FROM brief_schedules s
+                JOIN brief_profiles p ON p.id = s.profile_id
+                WHERE s.is_active = true
+                  AND p.is_active = true
+                  AND s.frequency_type = 'daily'
+                  AND EXTRACT(DOW FROM NOW()::date) = ANY(
+                      ARRAY(SELECT jsonb_array_elements_text(s.active_days)::int)
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 FROM brief_history h
+                      WHERE h.schedule_id = s.id
+                        AND h.brief_date = CURRENT_DATE
+                  )
+                  AND s.schedule_time <= CURRENT_TIME
+            """))).mappings().all()
+
+            for row in due_rows:
+                try:
+                    result = await generate_brief(row["schedule_id"], session)
+                    if "hata" not in result:
+                        generated += 1
+                        log.info("scheduler.brief_generated", schedule_id=row["schedule_id"])
+                except Exception as exc:
+                    log.error("scheduler.brief_generate_failed", schedule_id=row["schedule_id"], error=str(exc))
+    except Exception as exc:
+        log.error("scheduler.brief_generation_failed", error=str(exc))
+    log.info("scheduler.brief_generation_done", generated=generated)
+
+
 def register_jobs() -> None:
     """Register a scheduler job for every source that has a schedule config."""
     # Arama index — nightly 04:00 (PLM sync 03:00'den sonra)
@@ -51,6 +115,37 @@ def register_jobs() -> None:
         misfire_grace_time=600,
     )
     log.info("scheduler.job_registered", source="search_index", trigger="CronTrigger")
+
+    # Ecom katalog senkronizasyonu — 02:00 (pimland_ecom_catalogs 01:30 sonrası)
+    _scheduler.add_job(
+        _ecom_sync_job,
+        CronTrigger.from_crontab("0 2 * * *"),
+        id="ecom_sync",
+        replace_existing=True,
+        misfire_grace_time=600,
+    )
+    log.info("scheduler.job_registered", source="ecom_sync", trigger="CronTrigger")
+
+    # Ürün malzeme detayları — 03:30 (PLM ürün sync 03:00 sonrası)
+    _scheduler.add_job(
+        _malzeme_sync_job,
+        CronTrigger.from_crontab("30 3 * * *"),
+        id="malzeme_sync",
+        replace_existing=True,
+        misfire_grace_time=600,
+    )
+    log.info("scheduler.job_registered", source="malzeme_sync", trigger="CronTrigger")
+
+
+    # Brief üretim kontrolü — her 30dk çalışır, zamanı gelen briefleri üretir
+    _scheduler.add_job(
+        _generate_due_briefs_job,
+        CronTrigger.from_crontab("*/30 5-12 * * 1-5"),
+        id="brief_generation",
+        replace_existing=True,
+        misfire_grace_time=300,
+    )
+    log.info("scheduler.job_registered", source="brief_generation", trigger="CronTrigger")
 
     for source_id, cfg in registry.all_configs().items():
         if not cfg.schedule:

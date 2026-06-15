@@ -99,6 +99,31 @@ async def reload_registry() -> dict:
     return {"reloaded": registry.source_ids()}
 
 
+@router.post("/pim/sync-stories")
+async def sync_pim_stories(background_tasks: BackgroundTasks) -> dict:
+    """
+    Pimland MCP'den ürün hikayelerini çekip pim_products.hikaye_kodu/hikaye_adi kolonlarını günceller.
+    Arka planda çalışır (255 hikaye × API süresi = birkaç dakika).
+    """
+    background_tasks.add_task(_run_story_sync)
+    return {"status": "started", "message": "Hikaye sync arka planda başlatıldı"}
+
+
+@router.get("/pim/hikaye-stats")
+async def hikaye_stats() -> dict:
+    """pim_products tablosundaki hikaye doluluk istatistiği."""
+    async with SessionLocal() as session:
+        row = (await session.execute(text("""
+            SELECT
+              COUNT(*) AS toplam_sku,
+              COUNT(hikaye_adi) AS hikayeli,
+              COUNT(*) - COUNT(hikaye_adi) AS hikayesiz,
+              COUNT(DISTINCT hikaye_adi) AS farkli_hikaye
+            FROM pim_products
+        """))).mappings().first()
+        return dict(row)
+
+
 # ── helpers ─────────────────────────────────────────────────────────────────
 
 def _require_source(source_id: str) -> None:
@@ -111,6 +136,14 @@ def _require_source(source_id: str) -> None:
 
 async def _run_sync(source_id: str, job_id: str) -> None:
     await sync_run(source_id, job_id=job_id)
+
+
+async def _run_story_sync() -> None:
+    from app.connectors.pimland_live import sync_product_stories
+    async with SessionLocal() as session:
+        result = await sync_product_stories(session)
+        from app.core.logging import get_logger
+        get_logger(__name__).info("connectors.story_sync.done", **result)
 
 
 async def _last_sync(source_id: str) -> Optional[SyncJobResult]:

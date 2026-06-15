@@ -46,6 +46,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .date-line .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
+/* YÖNETİCİ ÖZETİ */
+.exec-summary{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(0,194,168,.05));border:1px solid rgba(59,130,246,.22);border-radius:14px;padding:20px 22px;margin-bottom:28px}
+.exec-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.exec-lbl{font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600}
+.exec-ozet-metin{font-size:13.5px;line-height:1.65;color:var(--t1)}
+.exec-tarih{font-size:11px;color:var(--t3);white-space:nowrap;padding:3px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:4px}
+.exec-kpi-strip{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 12px}
+.exec-kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 14px;flex:1;min-width:110px}
+.exec-kpi-etiket{font-size:9px;text-transform:uppercase;color:var(--t3);letter-spacing:.5px;margin-bottom:4px}
+.exec-kpi-deger{font-size:18px;font-weight:700;color:var(--t1);font-family:'DM Mono',monospace}
+.exec-kpi-delta{font-size:10px;margin-top:2px}
+.exec-kpi-card.up .exec-kpi-delta{color:var(--green)}
+.exec-kpi-card.down .exec-kpi-delta{color:var(--red)}
+.exec-kpi-card.flat .exec-kpi-delta{color:var(--t3)}
+.exec-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);border-radius:7px;padding:9px 13px;margin-bottom:10px;font-size:12px;color:var(--red);display:flex;align-items:center;gap:8px}
+.exec-odak{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.18);border-radius:7px;padding:9px 13px;font-size:12px;color:var(--t1);display:flex;align-items:center;gap:8px}
+
 /* TOP INSIGHTS - Eye-catcher */
 .top-insights{background:linear-gradient(135deg,rgba(255,107,43,.06),rgba(168,85,247,.04));border:1px solid rgba(255,107,43,.18);border-radius:14px;padding:20px 22px;margin-bottom:28px}
 .insights-header{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -167,6 +184,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
       <span>14 saniyede 5 agent koordine edildi</span>
     </div>
   </div>
+
+  <!-- YÖNETİCİ ÖZETİ -->
+  <div id="exec-summary-block"></div>
 
   <!-- TOP INSIGHTS -->
   <div class="top-insights">
@@ -488,12 +508,41 @@ async function generateBrief(){
   }
 }
 
+function renderExecSummary(exec){
+  const el = document.getElementById('exec-summary-block');
+  if(!el) return;
+  if(!exec || !exec.ozet_metin){ el.innerHTML=''; return; }
+  const kpiHtml = (exec.kpi_strip||[]).map(k=>`
+    <div class="exec-kpi-card ${k.trend||'flat'}">
+      <div class="exec-kpi-etiket">${k.etiket||''}</div>
+      <div class="exec-kpi-deger">${k.deger||'—'}</div>
+      ${k.delta?`<div class="exec-kpi-delta">${k.trend==='up'?'▲':k.trend==='down'?'▼':'–'} ${k.delta}</div>`:''}
+    </div>`).join('');
+  const alertHtml = exec.kritik_uyari
+    ? `<div class="exec-alert">${exec.kritik_uyari}</div>` : '';
+  const odakHtml = exec.bugun_odak
+    ? `<div class="exec-odak"><span style="flex-shrink:0">🎯</span>${exec.bugun_odak}</div>` : '';
+  el.innerHTML = `<div class="exec-summary">
+    <div class="exec-header">
+      <div>
+        <div class="exec-lbl">🗓 Yönetici Özeti</div>
+        <div class="exec-ozet-metin">${exec.ozet_metin}</div>
+      </div>
+      ${exec.tarih?`<span class="exec-tarih">${exec.tarih}</span>`:''}
+    </div>
+    ${kpiHtml?`<div class="exec-kpi-strip">${kpiHtml}</div>`:''}
+    ${alertHtml}
+    ${odakHtml}
+  </div>`;
+}
+
 function renderBrief(data){
   const brief = data.brief || data;
   const topInsights = brief.top_insights || data.top_insights || [];
   const qaResults   = brief.qa_results   || data.qa_results   || [];
   const actions     = brief.actions      || data.actions      || [];
   const checklist   = brief.checklist_state || data.checklist_state || [];
+  renderExecSummary(brief.executive_summary || data.executive_summary || {});
 
   // --- HEADER ---
   if(_profileInfo) document.querySelector('.name').textContent = _profileInfo.name || 'Yönetici';

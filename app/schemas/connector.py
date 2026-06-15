@@ -63,6 +63,13 @@ class McpConnectionConfig(BaseModel):
     retry_backoff_seconds: float = 2.0
 
 
+class IncrementalConfig(BaseModel):
+    """Delta sync: fetch only new dates, delete+re-insert matching days."""
+    date_field: str                  # DB sütun adı (örn: "tarih")
+    incorta_date_field: str          # Incorta BETWEEN filtresi için field adı
+    date_format: str = "%Y-%m-%d"   # last_date → string dönüşümü
+
+
 class McpToolConfig(BaseModel):
     name: str
     args: Dict[str, Any] = Field(default_factory=dict)
@@ -74,6 +81,8 @@ class McpToolConfig(BaseModel):
     pagination_size_field: Optional[str] = None   # e.g. "pagination.pageSize"
     pagination_page_size: int = 5000
     total_rows_path: Optional[str] = None         # dot-path to totalRows in response
+    # Incremental / delta sync
+    incremental: Optional[IncrementalConfig] = None
     # Env var placeholders in args: {"Authorization": "__env:INCORTA_TOKEN"}
     # resolved at runtime so secrets stay out of YAML
 

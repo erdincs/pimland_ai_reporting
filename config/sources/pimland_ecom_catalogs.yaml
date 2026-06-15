@@ -1,0 +1,32 @@
+source_id: pimland_ecom_catalogs
+enabled: true
+type: mcp
+target_table: pim_ecom_catalogs
+description: "Pimland PLM — E-ticaret katalog listesi"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30001"
+  timeout_seconds: 30
+
+auth:
+  type: oauth2_password_grant
+  token_url_env: PIMLAND_TOKEN_URL
+  client_id_env: PIMLAND_CLIENT_ID
+  client_secret_env: PIMLAND_CLIENT_SECRET
+  scope_env: PIMLAND_SCOPE
+  username_env: PIMLAND_USERNAME
+  password_env: PIMLAND_PASSWORD
+
+tool:
+  name: post_api_Product_get_ecom_catalogs
+  args: {}
+  response_data_path: "content.data.result.catalogs"
+
+field_map:
+  referenceCode: catalog_code
+  name: catalog_name
+  description: catalog_description
+  id: catalog_id
+
+schedule:
+  cron: "30 1 * * *"   # pimland_products (01:00) sonrası

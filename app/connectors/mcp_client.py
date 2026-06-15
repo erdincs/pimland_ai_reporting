@@ -152,7 +152,15 @@ class McpConnector(BaseConnector):
         return data
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-    async def fetch(self) -> List[Dict[str, Any]]:
+    async def fetch(
+        self,
+        extra_prompts: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Fetch records from the MCP tool.
+
+        extra_prompts: additional Incorta filter prompts injected at runtime
+        (used by the incremental sync pipeline to pass date range filters).
+        """
         conn = self.config.connection
         tool = self.config.tool
         if not conn or not tool:
@@ -169,6 +177,11 @@ class McpConnector(BaseConnector):
                 headers["Authorization"] = f"Bearer {token}"
 
             base_args = self._resolve_args(tool.args or {})
+
+            # Inject extra_prompts (e.g. date filter for incremental sync)
+            if extra_prompts:
+                existing = base_args.get("prompts", [])
+                base_args["prompts"] = list(existing) + extra_prompts
 
             # ── Pagination support ──────────────────────────────────────────
             if tool.pagination_start_field and tool.pagination_size_field:
@@ -303,31 +316,43 @@ class McpConnector(BaseConnector):
     def _parse_incorta(data: Any) -> List[Dict[str, Any]]:
         """Parse Incorta columnar response: headers + data arrays → dict list.
 
-        Response shape:
-          content.data.headers.dimensions  → [{label, field, ...}, ...]
-          content.data.headers.measures    → [{label, field, ...}, ...]
-          content.data.data                → [[v0, v1, ...], ...]
+        Supports two response envelopes:
+          Legacy: data["content"]["data"] → {headers, data}
+          Direct: data["data"]            → {headers, data}  (newer tools)
+
+        "--" values in data rows are converted to None.
         """
+        payload = None
         try:
             payload = data["content"]["data"]
-            headers = payload["headers"]
+        except (KeyError, TypeError):
+            pass
+        if payload is None:
+            try:
+                payload = data["data"]
+            except (KeyError, TypeError):
+                return []
+
+        try:
+            headers  = payload["headers"]
             rows_raw = payload["data"]
         except (KeyError, TypeError):
             return []
 
-        dims    = headers.get("dimensions", [])
+        dims     = headers.get("dimensions", [])
         measures = headers.get("measures", [])
         all_cols = dims + measures
 
-        # Use Turkish label as column name, normalised
-        import re
-        def col_name(label: str) -> str:
-            label = label.strip().lower()
-            label = re.sub(r"[^\w]+", "_", label, flags=re.UNICODE)
-            return re.sub(r"_+", "_", label).strip("_") or "col"
+        from app.ingestion.normalizer import normalise_column_name
+        col_names = [normalise_column_name(c["label"]) for c in all_cols]
 
-        col_names = [col_name(c["label"]) for c in all_cols]
-        return [dict(zip(col_names, row)) for row in (rows_raw or [])]
+        def clean(v: Any) -> Any:
+            return None if v == "--" else v
+
+        return [
+            {k: clean(v) for k, v in zip(col_names, row)}
+            for row in (rows_raw or [])
+        ]
 
     async def health_check(self) -> bool:
         conn = self.config.connection

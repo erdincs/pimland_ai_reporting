@@ -209,7 +209,7 @@ async def fetch_season_products(season_code: str) -> Dict[str, Dict]:
     result_map: Dict[str, Dict] = {}
     page = 1
 
-    async with httpx.AsyncClient(timeout=_SEASON_TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=_SEASON_TIMEOUT*2) as client:
         try:
             token = await _get_token(client)
         except Exception as exc:
@@ -256,6 +256,74 @@ async def fetch_season_products(season_code: str) -> Dict[str, Dict]:
 
     log.info("pimland_live.season_done", season=season_code, total=len(result_map))
     return result_map
+
+
+async def fetch_master_stories() -> List[Dict]:
+    """MCP'den tüm ürün hikayelerini çeker. filter=None zorunludur."""
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        token = await _get_token(client)
+        raw = await _call_tool(client, token,
+            "post_api_MasterData_product_stories_get_product_stories",
+            {"filter": None})
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return raw
+    for k in ("result", "items", "data", "stories"):
+        v = raw.get(k) if isinstance(raw, dict) else None
+        if isinstance(v, list):
+            return v
+    return []
+
+
+async def fetch_master_themes() -> List[Dict]:
+    """MCP'den tüm ürün temalarını çeker. filter=None zorunludur."""
+    async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        token = await _get_token(client)
+        raw = await _call_tool(client, token,
+            "post_api_MasterData_product_themes_get_product_themes",
+            {"filter": None})
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return raw
+    for k in ("result", "items", "data", "themes"):
+        v = raw.get(k) if isinstance(raw, dict) else None
+        if isinstance(v, list):
+            return v
+    return []
+
+
+async def fetch_products_by_story(story_id: int, page_size: int = 200) -> List[Dict]:
+    """DEVRE DIŞI — Pimland API'de productStory filtresi çalışmıyor.
+
+    Sorun: post_api_Product_get_products_by_filter endpoint'i productStory
+    parametresini sunucu tarafında işleyemiyor; ya tüm kataloğu (4.281 ürün)
+    ya da 0 ürün döndürüyor. API tarafında düzeltme bekleniyor.
+    """
+    log.warning("pimland_live.story_filter_disabled",
+                story_id=story_id,
+                reason="productStory filtresi API düzeyinde kırık — tüm katalog veya 0 döndürüyor")
+    return []
+
+
+async def sync_product_stories(db_session) -> Dict[str, int]:
+    """DEVRE DIŞI — productStory API filtresi düzelene kadar sync yapılamaz.
+
+    Durum: Pimland MCP'de post_api_Product_get_products_by_filter endpoint'i
+    productStory parametresini filtrelemeden tüm kataloğu (~4.281 ürün)
+    döndürüyor. Bu nedenle doğru atama yapılamıyor.
+
+    Yapılması gereken: Pimland ekibine API bug bildirimi.
+    Döner: {"guncellenen": 0, "hikaye_sayisi": 0, "hata": "..."}
+    """
+    log.warning("pimland_live.sync_stories.disabled",
+                reason="productStory filtresi API düzeyinde kırık")
+    return {
+        "guncellenen": 0,
+        "hikaye_sayisi": 0,
+        "hata": "productStory API filtresi çalışmıyor — Pimland ekibine bildirilmeli",
+    }
 
 
 async def search_products(

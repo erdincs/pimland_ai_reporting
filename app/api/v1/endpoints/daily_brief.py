@@ -249,6 +249,136 @@ _TEMPLATES: Dict[str, Dict] = {
         ],
         "checklist": [],
     },
+    # ── Eticaret SKL Profilleri ────────────────────────────────────────────────
+    "eticaret_genel_mudur": {
+        "key":         "eticaret_genel_mudur",
+        "label":       "E-Ticaret Genel Müdür (SKL-01)",
+        "description": "Günlük KPI özeti: net ciro, kanal nabzı, hedef tempo, uyarılar. 07:30'da gönderilir.",
+        "tone":        "yonetici",
+        "icon":        "🎯",
+        "skl":         "skl01",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "07:30",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "yonetici",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Dün e-ticaret toplam net ve brüt ciro ile iade/iptal makası nedir? Kanal bazında dağılımı ver.", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Tüm kanallarda dünün WoW trendi nasıl? Anormal düşüş veya artış gösteren kanal var mı?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Bu ay başından bugüne kadar günlük ortalama satış ne kadar? MoM karşılaştırması nedir?", "agent": "eticaret", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Kanal düşüşü varsa kanal yöneticisiyle görüş", "trigger_rule": "haftalik", "priority": "high"},
+        ],
+    },
+    "eticaret_satis_ops": {
+        "key":         "eticaret_satis_ops",
+        "label":       "Satış & Operasyon Müdürü (SKL-02)",
+        "description": "Günlük ürün performansı, iade/iptal analizi, katalog sağlığı. 07:00'de gönderilir.",
+        "tone":        "operasyonel",
+        "icon":        "📊",
+        "skl":         "skl02",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "07:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "operasyonel",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Dün en çok satan 5 ürün (ciro ve adet bazında)? WoW değişimi nedir?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Dün iade oranı en yüksek ürünler hangileri? Beden bazında spike var mı?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "İptal oranı dünkü seviyesi ve son 7 günlük trendi nedir?", "agent": "eticaret", "importance": "yuksek"},
+                    {"question_text": "7 günden uzun süredir satış yapmayan aktif ürünler kaç tane? Hangi kategorilerde yoğun?", "agent": "eticaret", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "İade spike'ı varsa ürün ekibiyle görüş", "trigger_rule": "haftalik", "priority": "high"},
+        ],
+    },
+    "eticaret_urun_katalog": {
+        "key":         "eticaret_urun_katalog",
+        "label":       "Ürün & Katalog Müdürü (SKL-03)",
+        "description": "Enrichment grade dağılımı, sıralama sağlığı, sezon durumu. 08:00'de gönderilir.",
+        "tone":        "operasyonel",
+        "icon":        "📦",
+        "skl":         "skl03",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "08:00",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "operasyonel",
+                "length":        "detay",
+                "questions": [
+                    {"question_text": "Güncel enrichment grade dağılımı nedir? A/B/C/D/F yüzdeleri ve dün kaç ürün A'ya yükseldi?", "agent": "urun_yonetimi", "importance": "kritik"},
+                    {"question_text": "Aktif ürün sayısı kaç? Görselsiz ya da bloke olan aktif ürün var mı?", "agent": "urun_yonetimi", "importance": "yuksek"},
+                    {"question_text": "14 gün veya daha fazla süredir sıralama güncellenmemiş kategori var mı?", "agent": "urun_yonetimi", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Haftalık enrichment raporu takibi", "trigger_rule": "pazartesi", "priority": "high"},
+        ],
+    },
+    "eticaret_pazarlama": {
+        "key":         "eticaret_pazarlama",
+        "label":       "Pazarlama Müdürü (SKL-04)",
+        "description": "Kanal performansı, trafik kalitesi, kampanya durumu. 07:30'da gönderilir.",
+        "tone":        "analitik",
+        "icon":        "📣",
+        "skl":         "skl04",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "07:30",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "analitik",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Dün kanal bazında net ciro dağılımı ve WoW delta? Öne çıkan veya düşüş gösteren kanal?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Dün en iyi ve en kötü performanslı 3 kanal ve nedenleri neler?", "agent": "eticaret", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Haftalık e-ticaret performans raporu hazırla", "trigger_rule": "cuma", "priority": "high"},
+        ],
+    },
+    "eticaret_teknoloji": {
+        "key":         "eticaret_teknoloji",
+        "label":       "Teknoloji & Süreç Müdürü (SKL-05)",
+        "description": "Sistem sağlığı, pipeline durumu, ekip üretkenliği. 06:30'da gönderilir.",
+        "tone":        "operasyonel",
+        "icon":        "⚙️",
+        "skl":         "skl05",
+        "schedules": [
+            {
+                "name":          "Günlük Brief",
+                "frequency_type": "daily",
+                "schedule_time": "06:30",
+                "active_days":   [1, 2, 3, 4, 5],
+                "tone":          "operasyonel",
+                "length":        "ozet",
+                "questions": [
+                    {"question_text": "Son 24 saatte tüm sync jobları başarılı mı? Hata veya gecikme var mı?", "agent": "eticaret", "importance": "kritik"},
+                    {"question_text": "Enrichment durumu: dün kaç ürün işlendi? D/F grade bekleyen ürün sayısı nedir?", "agent": "urun_yonetimi", "importance": "yuksek"},
+                ],
+            },
+        ],
+        "checklist": [
+            {"text": "Haftalık teknik sorun değerlendirmesi", "trigger_rule": "pazartesi", "priority": "med"},
+        ],
+    },
 }
 
 
@@ -909,6 +1039,80 @@ async def generate_brief_for_schedule(
     return result
 
 
+@router.post("/schedules/{schedule_id}/draft-preview")
+async def draft_preview_for_schedule(
+    schedule_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    """Gerçek veri çekmeden, sadece soru listesine dayalı taslak brief HTML üretir."""
+    from app.services.daily_brief.composer import _converse
+
+    sched = (await session.execute(text("""
+        SELECT s.*, p.name AS prof_name, p.role, p.tone AS prof_tone
+        FROM brief_schedules s
+        JOIN brief_profiles p ON p.id = s.profile_id
+        WHERE s.id = :sid
+    """), {"sid": schedule_id})).mappings().first()
+    if not sched:
+        raise HTTPException(404, "Zamanlama bulunamadı")
+
+    questions = (await session.execute(text("""
+        SELECT * FROM brief_questions WHERE schedule_id = :sid
+        ORDER BY sort_order, id
+    """), {"sid": schedule_id})).mappings().all()
+
+    if not questions:
+        raise HTTPException(400, "Bu zamanlamada soru yok — önce soru ekleyin")
+
+    tone = sched.get("tone") or sched.get("prof_tone") or "yonetici"
+    tone_desc = {"yonetici": "stratejik, kısa, karar odaklı",
+                 "operasyonel": "detaylı, operasyonel, somut sayılar",
+                 "analitik": "analitik, trend odaklı, derinlemesine"}.get(tone, "stratejik")
+
+    q_lines = "\n".join(
+        f"{i+1}. [{q['agent'].upper()}] {q['question_text']}"
+        for i, q in enumerate(questions)
+    )
+
+    system = """Sen Pimland e-ticaret yönetim briefi tasarımcısısın.
+Verilen soru listesine göre bir yönetici brief TASLAK'ı oluştur.
+Gerçek veri yok — temsili/kurgusal örnek sayılar kullan, her değerin yanına (taslak) ibaresi ekle.
+
+ÇIKTI KURALLARI:
+- SADECE HTML döndür. DOCTYPE/html/head/body TAG YOK. Doğrudan <style> bloğuyla başla.
+- Renk paleti hex olarak kullan (CSS değişken yok): bg2=#13131a bg3=#1a1a24 bg4=#22222f border=#2a2a3a t1=#f0f0f8 t2=#9898b8 t3=#55556a orange=#ff6b2b teal=#00c2a8 green=#22c55e red=#ef4444 yellow=#f59e0b
+- Font: Inter, system-ui, sans-serif. Font-size: 13px.
+- .pw-wrap max-width:640px; margin:0 auto
+
+BÖLÜM SIRASI (değiştirme):
+1. Profil başlığı — küçük, renksiz, tarih placeholder
+2. KPI strip — 4 kart (profil için anlamlı metrikler, kurgusal sayılar, "(taslak)" etiketi)
+3. Soru kartları — agent grubuna göre grupla, her soru için 2-3 cümle örnek yanıt yaz
+4. Uyarı bantları — 1-2 adet, uygun uyarı öner
+5. BUGÜN ÖNCELİK — 3-4 aksiyon maddesi
+
+Türkçe yaz. Bölüm başlıkları BÜYÜK HARF."""
+
+    user = f"""Profil: {sched['prof_name']} — {sched.get('role') or 'Yönetici'}
+Ton: {tone_desc}
+Zamanlama: {sched.get('name', 'Günlük Brief')}
+
+Sorular ({len(questions)} adet):
+{q_lines}
+
+Bu sorulara ve profile göre HTML brief taslağı oluştur."""
+
+    html = await _converse(system, user, max_tokens=4000, temperature=0.6)
+
+    # Strip code fences if Claude wraps in them
+    if "```html" in html:
+        html = html.split("```html", 1)[1].split("```", 1)[0].strip()
+    elif "```" in html:
+        html = html.split("```", 1)[1].split("```", 1)[0].strip()
+
+    return {"html": html, "question_count": len(questions)}
+
+
 @router.get("/schedules/{schedule_id}/brief/{brief_date}")
 async def get_brief_for_schedule(
     schedule_id: int,
@@ -922,6 +1126,74 @@ async def get_brief_for_schedule(
     if not row:
         raise HTTPException(404, "Brief bulunamadı — önce üret")
     return dict(row)
+
+
+@router.get("/briefs/{profile_id}/{brief_date}")
+async def get_brief_for_profile(
+    profile_id: int,
+    brief_date: str,
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+) -> dict:
+    """Profil + tarih için en güncel daily brief'i döndürür (tüm zamanlamalar birleştirilir)."""
+    rows = (await session.execute(text("""
+        SELECT h.*, s.name AS schedule_name, s.frequency_type, s.tone
+        FROM brief_history h
+        JOIN brief_schedules s ON s.id = h.schedule_id
+        WHERE h.profile_id = :pid
+          AND h.brief_date = :bdate
+          AND s.frequency_type = 'daily'
+        ORDER BY h.generation_ms DESC
+        LIMIT 1
+    """), {"pid": profile_id, "bdate": date.fromisoformat(brief_date)})).mappings().all()
+
+    if not rows:
+        raise HTTPException(404, "Brief bulunamadı — önce üret")
+
+    row = dict(rows[0])
+    import json as _json
+    for field in ("top_insights", "kpi_data", "qa_results", "checklist_state",
+                  "actions", "agent_metadata", "executive_summary"):
+        v = row.get(field)
+        if isinstance(v, str):
+            try:
+                row[field] = _json.loads(v)
+            except Exception:
+                pass
+    return row
+
+
+@router.post("/briefs/{profile_id}/generate")
+async def generate_brief_for_profile(
+    profile_id: int,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> dict:
+    """Profilin tüm aktif günlük zamanlamaları için brief üretir ve birleşik sonuç döndürür."""
+    from app.services.daily_brief.orchestrator import generate_brief as _gen
+
+    rows = (await session.execute(text("""
+        SELECT s.id, s.name
+        FROM brief_schedules s
+        WHERE s.profile_id = :pid
+          AND s.is_active = true
+          AND s.frequency_type = 'daily'
+          AND (SELECT COUNT(*) FROM brief_questions q
+               WHERE q.schedule_id = s.id AND q.is_active = true) > 0
+        ORDER BY s.id
+    """), {"pid": profile_id})).mappings().all()
+
+    if not rows:
+        raise HTTPException(404, "Bu profil için aktif günlük zamanlama bulunamadı")
+
+    last_result = None
+    for sched in rows:
+        result = await _gen(sched["id"], session)
+        if "hata" not in result:
+            last_result = result
+
+    if not last_result:
+        raise HTTPException(500, "Brief üretilemedi")
+
+    return last_result
 
 
 @router.get("/profiles/{profile_id}/history")

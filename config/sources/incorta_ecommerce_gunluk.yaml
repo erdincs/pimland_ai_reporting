@@ -1,0 +1,39 @@
+source_id: incorta_ecommerce_gunluk
+enabled: true
+type: mcp
+target_table: incorta_ecommerce_gunluk
+description: "Incorta — adL Ecommerce Günlük Performans (Tarih/Kanal/SKU/Renk/Beden/Satış+İade+İptal)"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30002"
+  timeout_seconds: 300    # 840K satır sayfalı — toleranslı timeout
+
+auth:
+  type: none
+
+tool:
+  name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_08198735
+  args: {}
+  response_format: incorta
+  pagination_start_field: "pagination.startRow"
+  pagination_size_field: "pagination.pageSize"
+  pagination_page_size: 5000
+  total_rows_path: "content.data.headers.totalRows"
+  incremental:
+    date_field: tarih                                   # DB'deki tarih sütunu
+    incorta_date_field: "ETicaret.ETicaretDetaylari.Tarih"  # Incorta BETWEEN filtresi
+
+# Incorta label → DB sütun adı (normalise_column_name çıktısıyla eşleşir)
+field_map:
+  "satis_kanali": satis_kanali
+  "urun_kodu":    urun_kodu
+  "urun_adi":     urun_adi
+  "satis_tutar":  satis_tutar
+  "iade_tutar":   iade_tutar
+  "iptal_tutar":  iptal_tutar
+  "satis_adet":   satis_adet
+  "iade_adet":    iade_adet
+  "iptal_adet":   iptal_adet
+
+schedule:
+  cron: "0 4 * * *"   # Her gece 04:00

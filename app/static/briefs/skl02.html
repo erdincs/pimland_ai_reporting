@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKL-02 · Satış & Operasyon Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--border:#2a2a3a;--border2:#333348;--t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;--orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(13,13,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px}
+.topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--orange)}.topbar .brand{font-weight:600;font-size:14px}.topbar .module{font-size:11px;color:var(--t3);margin-left:4px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}.topbar .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}.topbar .date{font-size:11px;color:var(--t2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:860px;margin:0 auto;padding:24px}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-num{width:24px;height:24px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--orange)}
+.section-title{font-size:13px;font-weight:600;color:var(--t1);text-transform:uppercase;letter-spacing:.5px}
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.kpi{background:var(--bg2);padding:14px;text-align:center}
+.kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-bottom:4px}
+.kpi .value{font-size:18px;font-weight:700;color:var(--t1)}.kpi .delta{font-size:10px;margin-top:3px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.ptable{width:100%;border-collapse:collapse}
+.ptable th{text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);border-bottom:1px solid var(--border);font-weight:500}
+.ptable th.r{text-align:right}.ptable td{padding:8px;font-size:12px;border-bottom:1px solid var(--bg4);color:var(--t1)}
+.ptable td.r{text-align:right;font-family:monospace;font-size:11px}.ptable td.code{color:var(--t2);font-size:11px;font-family:monospace}
+.ptable tr:hover td{background:var(--bg3)}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:4px;font-size:10px;font-weight:700}
+.badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px}
+.alert-banner{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:8px;margin-bottom:8px;font-size:12px}
+.ab-red{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15)}
+.stok-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg4)}
+.stok-item:last-child{border-bottom:none}.stok-code{font-size:11px;font-family:monospace;color:var(--t2);width:120px}
+.stok-name{font-size:12px;color:var(--t1);flex:1}
+.action-list{list-style:none;padding:0}
+.action-list li{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg4);font-size:12px}
+.action-list li:last-child{border-bottom:none}.action-arrow{color:var(--orange);font-weight:700;flex-shrink:0}
+.action-who{display:inline-block;font-size:10px;color:var(--teal);background:rgba(0,194,168,.1);padding:1px 6px;border-radius:3px;margin-left:4px}
+.footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--t4)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .4s ease forwards;opacity:0}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}.d6{animation-delay:.3s}
+.loading{color:var(--t4);font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="dot"></div><span class="brand">Pimland Reporting</span>
+  <span class="module">· SKL-02 Satış & Operasyon Brief</span>
+  <div class="right"><div class="pulse"></div><span class="date" id="topbar-date">Yükleniyor…</span></div>
+</div>
+
+<div class="container">
+
+  <div class="kpi-strip anim d1" id="kpi-strip">
+    <div class="kpi"><div class="label">Net Ciro</div><div class="value" id="kpi-net" style="color:var(--teal)">—</div><div class="delta" id="kpi-net-d">—</div></div>
+    <div class="kpi"><div class="label">İade Oranı</div><div class="value" id="kpi-iade" style="color:var(--yellow)">—</div><div class="delta" id="kpi-iade-d">—</div></div>
+    <div class="kpi"><div class="label">İptal Oranı</div><div class="value" id="kpi-iptal">—</div><div class="delta" id="kpi-iptal-d">—</div></div>
+    <div class="kpi"><div class="label">Sıfır Satış (7g)</div><div class="value" id="kpi-sifir" style="color:var(--red)">—</div><div class="delta" style="color:var(--t3)">Aktif ürün</div></div>
+    <div class="kpi"><div class="label">Aktif Ürün</div><div class="value" id="kpi-aktif">—</div><div class="delta" id="kpi-aktif-d" style="color:var(--t2)">—</div></div>
+  </div>
+
+  <div class="section anim d2">
+    <div class="section-header"><div class="section-num">1</div><div class="section-title">Dün Satış — Top 5 Ürün</div></div>
+    <div class="card" id="top5-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d3">
+    <div class="section-header"><div class="section-num">2</div><div class="section-title">İade & İptal — Uyarı Seviyesi</div></div>
+    <div id="iade-banner"></div>
+    <div class="card" id="iade5-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d4">
+    <div class="section-header"><div class="section-num">3</div><div class="section-title">Katalog Sağlığı</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="katalog-grid">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="section anim d5">
+    <div class="section-header"><div class="section-num">4</div><div class="section-title">Sezon Durumu</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" id="sezon-grid">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="section anim d6">
+    <div class="section-header"><div class="section-num">5</div><div class="section-title">Bugün Aksiyon</div></div>
+    <div class="card" style="border-color:rgba(255,107,43,.2)">
+      <ul class="action-list" id="actions-list"><li><span class="loading">Yükleniyor…</span></li></ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="footer-sync">Veri: Incorta · PIM</span>
+    <span>Pimland AI Reporting v1.0 · SKL-02</span>
+  </div>
+</div>
+
+<script>
+const RANK_COLORS = ['r1','r2','r3','rn','rn'];
+const RANK_CSS = '.r1{background:rgba(255,107,43,.15);color:var(--orange)}.r2{background:rgba(0,194,168,.15);color:var(--teal)}.r3{background:rgba(59,130,246,.15);color:var(--blue)}.rn{background:var(--bg4);color:var(--t3)}';
+const styleEl = document.createElement('style'); styleEl.textContent = RANK_CSS; document.head.appendChild(styleEl);
+
+const KANAL_COLORS = {ADL:'teal','ADL IOS APP':'teal','ADL ANDROID APP':'teal',TRENDYOL:'blue',HEPSIBURADA:'purple',BOYNER:'yellow',LOVEMYBODY:'orange'};
+function kanalBadge(k) {
+  const short = k === 'TRENDYOL' ? 'TY' : k === 'HEPSIBURADA' ? 'HB' : k === 'BOYNER' ? 'BYN' : k === 'LOVEMYBODY' ? 'LMB' : 'ADL';
+  const color = KANAL_COLORS[k] || 'teal';
+  return `<span class="badge" style="background:rgba(var(--${color}-rgb,0,194,168),.12);color:var(--${color})">${short}</span>`;
+}
+function badgeStyle(color, text) {
+  const colors = {teal:'0,194,168', orange:'255,107,43', blue:'59,130,246', yellow:'245,158,11'};
+  const rgb = colors[color] || '128,128,128';
+  return `<span class="badge" style="background:rgba(${rgb},.12);color:var(--${color})">${text}</span>`;
+}
+
+fetch('/api/v1/eticaret-brief/skl02/data')
+  .then(r => r.json())
+  .then(d => {
+    const k = d.kpis;
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) + ' · 07:00';
+
+    document.getElementById('kpi-net').textContent = k.net_ciro_fmt;
+    const nd = document.getElementById('kpi-net-d');
+    nd.textContent = k.net_wow !== null ? `${k.net_wow > 0 ? '↑' : '↓'} %${Math.abs(k.net_wow).toFixed(1)} WoW` : '—';
+    nd.style.color = k.net_wow > 0 ? 'var(--green)' : 'var(--red)';
+
+    document.getElementById('kpi-iade').textContent = `%${k.iade_oran}`;
+    document.getElementById('kpi-iade').style.color = k.iade_oran > 25 ? 'var(--red)' : k.iade_oran > 18 ? 'var(--yellow)' : 'var(--green)';
+    const id_ = document.getElementById('kpi-iade-d');
+    id_.textContent = k.iade_wow !== null ? `${k.iade_wow > 0 ? '↑' : '↓'} %${Math.abs(k.iade_wow).toFixed(1)} WoW` : '—';
+    id_.style.color = k.iade_wow > 0 ? 'var(--red)' : 'var(--green)';
+
+    document.getElementById('kpi-iptal').textContent = `%${k.iptal_oran}`;
+    document.getElementById('kpi-iptal').style.color = k.iptal_oran > 10 ? 'var(--red)' : 'var(--t1)';
+    document.getElementById('kpi-iptal-d').textContent = k.iptal_oran > 10 ? '↑ Kritik' : 'Normal';
+    document.getElementById('kpi-iptal-d').style.color = k.iptal_oran > 10 ? 'var(--red)' : 'var(--green)';
+
+    document.getElementById('kpi-sifir').textContent = k.sifir_satis;
+    document.getElementById('kpi-aktif').textContent = d.katalog.aktif;
+    document.getElementById('kpi-aktif-d').textContent = `${d.katalog.toplam} toplam`;
+
+    // Top-5 ürün
+    const rankStyle = {1:'rgba(255,107,43,.15);color:var(--orange)',2:'rgba(0,194,168,.15);color:var(--teal)',3:'rgba(59,130,246,.15);color:var(--blue)'};
+    document.getElementById('top5-card').innerHTML = `
+      <table class="ptable">
+        <thead><tr><th>#</th><th>Ürün Kodu</th><th>Açıklama</th><th>Kanal</th><th class="r">Ciro</th><th class="r">Adet</th><th class="r">WoW</th></tr></thead>
+        <tbody>${d.top5.map(r => `
+          <tr>
+            <td><span class="rank" style="background:${rankStyle[r.rank]||'var(--bg4);color:var(--t3)'}">${r.rank}</span></td>
+            <td class="code">${r.urun_kodu}</td>
+            <td>${r.urun_adi}</td>
+            <td>${kanalBadge(r.kanal)}</td>
+            <td class="r">${r.ciro_fmt}</td>
+            <td class="r">${r.adet}</td>
+            <td class="r" style="color:${r.wow===null?'var(--t3)':r.wow>0?'var(--green)':'var(--red)'}">${r.wow===null?'—':`${r.wow>0?'↑':'↓'} %${Math.abs(r.wow).toFixed(0)}`}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    // İade uyarısı
+    if (k.iade_oran > 18) {
+      document.getElementById('iade-banner').innerHTML = `
+        <div class="alert-banner ab-red">
+          <span>🔴</span>
+          <span style="flex:1;font-size:12px;color:var(--red)">İade oranı <strong>%${k.iade_oran}</strong>${k.iade_wow > 0 ? ` — geçen haftaya göre %${Math.abs(k.iade_wow)} artış` : ''}.</span>
+        </div>`;
+    }
+
+    // İade top-5
+    document.getElementById('iade5-card').innerHTML = `
+      <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px">İade Oranı Yüksek Ürünler</div>
+      <table class="ptable">
+        <thead><tr><th>Ürün Kodu</th><th>Açıklama</th><th class="r">İade %</th><th class="r">İade/Satış</th></tr></thead>
+        <tbody>${d.iade5.map(r => `
+          <tr>
+            <td class="code">${r.urun_kodu}</td>
+            <td>${r.urun_adi}</td>
+            <td class="r" style="color:${r.iade_oran>30?'var(--red)':r.iade_oran>18?'var(--yellow)':'var(--t2)'}">%${r.iade_oran}</td>
+            <td class="r" style="color:var(--t2)">${r.iade_adet} / ${r.satis_adet}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+
+    // Katalog sağlığı
+    const kat = d.katalog;
+    document.getElementById('katalog-grid').innerHTML = `
+      <div class="card">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Aktif Ürün</div>
+        <div style="font-size:20px;font-weight:700;color:var(--teal);margin:4px 0">${kat.aktif}</div>
+        <div style="font-size:11px;color:var(--t2)">${kat.toplam} toplam · ${kat.pasif} pasif · ${kat.bloke} bloke</div>
+      </div>
+      <div class="card">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">7 Günde Satışsız</div>
+        <div style="font-size:20px;font-weight:700;color:${k.sifir_satis>50?'var(--red)':'var(--yellow)'};margin:4px 0">${k.sifir_satis} ürün</div>
+        <div style="font-size:11px;color:var(--t2)">Aktif ürünlerin %${Math.round(k.sifir_satis/kat.aktif*100)||0}'i</div>
+      </div>`;
+
+    // Sezon grid
+    if (d.katalog.sezon_adi && d.katalog.sezon_toplam > 0) {
+      const s = d.katalog;
+      const yainPct = Math.round(s.sezon_yayinda / s.sezon_toplam * 100) || 0;
+      document.getElementById('sezon-grid').innerHTML = `
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Toplam Ürün</div>
+          <div style="font-size:22px;font-weight:700;color:var(--t1);margin:4px 0">${s.sezon_toplam}</div>
+          <div style="font-size:11px;color:var(--t2)">${s.sezon_adi}</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Yayında</div>
+          <div style="font-size:22px;font-weight:700;color:var(--green);margin:4px 0">${s.sezon_yayinda}</div>
+          <div style="font-size:11px;color:var(--green)">%${yainPct}</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Bekleyen</div>
+          <div style="font-size:22px;font-weight:700;color:var(--yellow);margin:4px 0">${s.sezon_toplam - s.sezon_yayinda}</div>
+          <div style="font-size:11px;color:var(--yellow)">Eksik içerik</div>
+        </div>`;
+    } else {
+      document.getElementById('sezon-grid').innerHTML = '<div class="card" style="color:var(--t3);text-align:center">Sezon verisi bulunamadı</div>';
+    }
+
+    // Aksiyonlar
+    const actions = [];
+    if (k.iade_oran > 20) actions.push({text: `İade oranı %${k.iade_oran} — iade spike'ı olan ürünler incelenmeli`, who: 'Ürün Ekibi'});
+    if (k.sifir_satis > 20) actions.push({text: `${k.sifir_satis} ürün 7 gün satışsız — indirim/görünürlük planı`, who: 'Pazarlama'});
+    if (d.top5.length > 0) actions.push({text: `Top ürün: ${d.top5[0].urun_adi} — stok takibi yap`, who: 'Tedarik'});
+    if (!actions.length) actions.push({text: 'Rutin takip — anormal sinyal yok', who: 'Ekip'});
+    document.getElementById('actions-list').innerHTML = actions.map(a =>
+      `<li><span class="action-arrow">→</span><span>${a.text} <span class="action-who">${a.who}</span></span></li>`
+    ).join('');
+
+    document.getElementById('footer-sync').textContent = `Son güncelleme: ${new Date().toLocaleTimeString('tr-TR')}`;
+  })
+  .catch(e => console.error('SKL-02 error:', e));
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+source_id: incorta_magaza_gunluk
+enabled: true
+type: mcp
+target_table: incorta_magaza_gunluk
+description: "Incorta — adL Mağaza Günlük Performans (Tarih/Bölge/Mağaza/KPI)"
+
+connection:
+  url: "https://agentup-mcp-test.pimland.com/30002"
+  timeout_seconds: 300    # İlk sync'te timeout yaşandı — yüksek timeout
+
+auth:
+  type: none
+
+tool:
+  name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_9cb5630f
+  args: {}
+  response_format: incorta   # data["data"].headers + data["data"].data (yeni envelope)
+
+schedule:
+  cron: "30 4 * * *"   # Her gece 04:30 — ecommerce_gunluk'tan sonra

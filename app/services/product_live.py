@@ -4,21 +4,16 @@ Pimland MCP'den per-SKU verileri paralel çeker:
   - Stok durumu (renk/beden bazında)
   - Satış fiyatları
   - ERP maliyet fiyatı + KDV
-  - Finansal veriler (markup, maliyet)
-  - Satış performansı (PLM bazlı)
   - Beden bilgileri
 
 Redis'te TTL'li cache:
   - Stok: 15 dakika (sık değişir)
-  - Fiyat/finansal: 2 saat
-  - Performans/beden: 6 saat
+  - Fiyat/beden: 2 saat
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
-import os
 import time
 from typing import Any, Dict, List, Optional
 
@@ -64,7 +59,6 @@ async def _call(
     sku: str,
     extra_params: Optional[Dict] = None,
 ) -> Any:
-    """Tek bir per-SKU tool çağrısı."""
     body = {"stockCode": sku, "includedRevision": False}
     if extra_params:
         body.update(extra_params)
@@ -83,7 +77,6 @@ async def _call(
 
 
 def _parse_stocks(raw: Optional[Dict]) -> List[Dict]:
-    """Stok verisi → renk/beden/adet listesi."""
     if not raw or not raw.get("productStocks"):
         return []
     stocks = []
@@ -99,7 +92,6 @@ def _parse_stocks(raw: Optional[Dict]) -> List[Dict]:
 
 
 def _parse_prices(raw: Optional[Dict]) -> List[Dict]:
-    """Satış fiyat grupları."""
     if not raw or not raw.get("salesPrices"):
         return []
     return [
@@ -114,7 +106,6 @@ def _parse_prices(raw: Optional[Dict]) -> List[Dict]:
 
 
 def _parse_erp_price(raw: Optional[Dict]) -> Optional[Dict]:
-    """ERP fiyat özeti."""
     if not raw or not raw.get("stockCode"):
         return None
     return {
@@ -128,52 +119,16 @@ def _parse_erp_price(raw: Optional[Dict]) -> Optional[Dict]:
     }
 
 
-def _parse_financial(raw: Optional[Dict]) -> List[Dict]:
-    """Finansal veriler — markup, maliyet."""
-    if not raw or not raw.get("financialDatas"):
-        return []
-    result = []
-    for f in raw["financialDatas"][:5]:
-        result.append({
-            "hesaplanan_satis": f.get("calculatedSalesPrice"),
-            "markup": f.get("markUp"),
-            "gercek_markup": f.get("actualMarkUp"),
-            "cog": f.get("bareCostOfGoods"),
-            "maliyet_ozet": f.get("costSummary"),
-            "gercek_satis": f.get("realSellingPriceInTurkishLira"),
-        })
-    return result
-
-
-def _parse_performance(raw: Optional[Dict]) -> List[Dict]:
-    """PLM satış performansı — renk/beden bazında."""
-    if not raw or not raw.get("salesPerformances"):
-        return []
-    result = []
-    for p in raw["salesPerformances"]:
-        result.append({
-            "renk": p.get("colorName"),
-            "beden": p.get("sizeName"),
-            "ilk_sevkiyat": (p.get("initialShipmentDate") or "")[:10],
-            "sezon_satis": p.get("initialSeasonSalesPiece"),
-            "stok_kalan": p.get("currentRemainingStock"),
-            "satis_hizi": p.get("salesVelocity"),
-        })
-    return result[:20]
-
-
 def _parse_sizes(raw: Optional[Dict]) -> List[str]:
-    """Mevcut beden kodları."""
     if not raw or not raw.get("productSizes"):
         return []
     return [s.get("sizeName", "") for s in raw["productSizes"] if s.get("sizeName")]
 
 
 async def get_product_live(sku: str) -> Dict[str, Any]:
-    """SKU için tüm canlı verileri paralel çek, Redis'te cache'le."""
+    """SKU için canlı stok/fiyat/beden verilerini paralel çek, Redis'te cache'le."""
     cache_key = f"product_live:{sku}"
 
-    # Cache kontrolü
     cached = await cache_service.get(cache_key)
     if cached:
         cached["_cached"] = True
@@ -182,32 +137,25 @@ async def get_product_live(sku: str) -> Dict[str, Any]:
     async with httpx.AsyncClient(timeout=20) as client:
         token = await _get_token(client)
 
-        # 6 tool paralel çağrı
-        stocks_raw, prices_raw, erp_raw, financial_raw, perf_raw, sizes_raw = \
-            await asyncio.gather(
-                _call(client, token, "get_product_stocks",            sku),
-                _call(client, token, "get_product_sales_prices",      sku),
-                _call(client, token, "get_product_erp_prices",        sku),
-                _call(client, token, "get_product_financial_datas",   sku),
-                _call(client, token, "get_product_sales_performances", sku),
-                _call(client, token, "get_product_sizes",             sku),
-            )
+        stocks_raw, prices_raw, erp_raw, sizes_raw = await asyncio.gather(
+            _call(client, token, "get_product_stocks",       sku),
+            _call(client, token, "get_product_sales_prices", sku),
+            _call(client, token, "get_product_erp_prices",   sku),
+            _call(client, token, "get_product_sizes",        sku),
+        )
 
     result = {
-        "sku": sku,
+        "sku":         sku,
         "stok":        _parse_stocks(stocks_raw),
         "satis_fiyat": _parse_prices(prices_raw),
         "erp_fiyat":   _parse_erp_price(erp_raw),
-        "finansal":    _parse_financial(financial_raw),
-        "performans":  _parse_performance(perf_raw),
         "bedenler":    _parse_sizes(sizes_raw),
         "toplam_stok": sum(s["stok"] for s in _parse_stocks(stocks_raw)),
-        "_cached": False,
+        "_cached":     False,
     }
 
-    # Cache'e yaz — stok kısa TTL (15dk), geri kalanı 2 saat
     await cache_service.set(cache_key, {k: v for k, v in result.items() if k != "_cached"},
-                            ttl=900)  # 15 dakika
+                            ttl=900)
 
     log.info("product_live.fetched", sku=sku,
              toplam_stok=result["toplam_stok"],

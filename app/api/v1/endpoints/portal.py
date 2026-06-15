@@ -32,13 +32,6 @@ async def portal_html() -> HTMLResponse:
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
-@router.get("/yonetim/daily-brief", response_class=HTMLResponse)
-async def daily_brief_html() -> HTMLResponse:
-    """Günlük Brief sayfası."""
-    p = _STATIC / "daily_brief_ekran.html"
-    return HTMLResponse(content=p.read_text(encoding="utf-8"))
-
-
 @router.get("/yonetim/brief-profilleri", response_class=HTMLResponse)
 async def brief_profiles_html() -> HTMLResponse:
     """Brief Profil Yönetimi sayfası."""

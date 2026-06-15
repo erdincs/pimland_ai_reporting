@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKL-05 · Teknoloji & Süreç Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d12;--bg2:#13131a;--bg3:#1a1a24;--bg4:#22222f;--border:#2a2a3a;--border2:#333348;--t1:#f0f0f8;--t2:#9898b8;--t3:#55556a;--t4:#35354a;--orange:#ff6b2b;--teal:#00c2a8;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);font-size:13px;line-height:1.5}
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(13,13,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px}
+.topbar .dot{width:8px;height:8px;border-radius:50%;background:var(--orange)}.topbar .brand{font-weight:600;font-size:14px}.topbar .module{font-size:11px;color:var(--t3);margin-left:4px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:8px}.topbar .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}.topbar .date{font-size:11px;color:var(--t2)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:860px;margin:0 auto;padding:24px}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.section-num{width:24px;height:24px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--orange)}
+.section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.sys-header{display:flex;align-items:center;gap:16px;padding:20px;border-radius:12px;margin-bottom:20px}
+.sys-green{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15)}
+.sys-yellow{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15)}
+.sys-red{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15)}
+.sys-icon{font-size:32px}.sys-info{flex:1}
+.sys-title{font-size:16px;font-weight:700;margin-bottom:2px}.sys-desc{font-size:11px;color:var(--t2)}
+.pipe-row{display:flex;align-items:center;gap:0;padding:0;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pipe-name{width:180px;padding:10px 14px;font-size:12px;font-weight:500;border-right:1px solid var(--border);background:var(--bg3)}
+.pipe-status{width:32px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.pipe-info{flex:1;padding:8px 14px;font-size:11px;color:var(--t2)}
+.pipe-time{width:130px;padding:8px 14px;font-size:10px;color:var(--t3);text-align:right;font-family:monospace}
+.team-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg4)}
+.team-row:last-child{border-bottom:none}.team-name{font-size:12px;color:var(--t1);width:160px}
+.team-bar-wrap{flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.team-bar{height:100%;border-radius:4px}
+.team-vals{width:80px;text-align:right;font-size:11px;font-family:monospace}
+.team-pct{width:50px;text-align:right;font-size:11px;font-weight:600}
+.issue{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg4);font-size:12px}
+.issue:last-child{border-bottom:none}.issue-severity{width:6px;border-radius:3px;flex-shrink:0}
+.issue-content{flex:1}.issue-title{font-weight:600;margin-bottom:2px}.issue-impact{font-size:11px;color:var(--t2)}
+.issue-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px}
+.footer{margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--t4)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .4s ease forwards;opacity:0}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}
+.loading{color:var(--t4);font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="dot"></div><span class="brand">Pimland Reporting</span>
+  <span class="module">· SKL-05 Teknoloji & Süreç Brief</span>
+  <div class="right"><div class="pulse"></div><span class="date" id="topbar-date">Yükleniyor…</span></div>
+</div>
+
+<div class="container">
+
+  <div id="sys-header-wrap" class="anim d1">
+    <div class="sys-header sys-green">
+      <div class="sys-icon">🟢</div>
+      <div class="sys-info">
+        <div class="sys-title" id="sys-title">Sistemler Kontrol Ediliyor…</div>
+        <div class="sys-desc" id="sys-desc">Veriler yükleniyor</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section anim d1">
+    <div class="section-header"><div class="section-num">1</div><div class="section-title">Sistem Sağlığı</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px" id="health-grid">
+      <div class="loading" style="padding:16px">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="section anim d2">
+    <div class="section-header"><div class="section-num">2</div><div class="section-title">Veri Boru Hattı</div></div>
+    <div id="pipeline-section"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d3">
+    <div class="section-header"><div class="section-num">3</div><div class="section-title">Ekip Üretkenliği — Dün</div></div>
+    <div class="card" id="team-card"><div class="loading">Yükleniyor…</div></div>
+  </div>
+
+  <div class="section anim d4">
+    <div class="section-header"><div class="section-num">4</div><div class="section-title">Aksiyon Gerektiren Teknik Sorunlar</div></div>
+    <div class="card" style="border-color:rgba(255,107,43,.15)" id="issues-card">
+      <div class="loading">Yükleniyor…</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="footer-sync">Son kontrol: Yükleniyor</span>
+    <span>Pimland AI Reporting v1.0 · SKL-05</span>
+  </div>
+</div>
+
+<script>
+const STATUS_ICONS = {completed:'🟢', running:'🟡', failed:'🔴', error:'🔴'};
+const STATUS_NAMES = {
+  pimland_products: 'Pimland Sync',
+  incorta_ecommerce_gunluk: 'Incorta → RDS',
+  incorta_satis: 'Incorta Satış',
+  incorta_depo_iade: 'Incorta İade',
+  incorta_iptal_siparis: 'Incorta İptal',
+  incorta_analytics: 'Analytics',
+  pimland_ecom_catalogs: 'E-com Katalog',
+  search_index: 'Arama Index',
+};
+const SEVERITY_COLORS = {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)',blue:'var(--blue)'};
+const TAG_STYLES = {
+  'Orta': 'background:rgba(245,158,11,.12);color:var(--yellow)',
+  'Düşük': 'background:rgba(59,130,246,.12);color:var(--blue)',
+  'Kritik': 'background:rgba(239,68,68,.12);color:var(--red)',
+  'OK': 'background:rgba(34,197,94,.12);color:var(--green)',
+};
+
+fetch('/api/v1/eticaret-brief/skl05/data')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('topbar-date').textContent =
+      new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) + ' · 06:30';
+
+    // Sistem header
+    const sysEl = document.querySelector('.sys-header');
+    sysEl.className = `sys-header sys-${d.sys_status}`;
+    const sysIcons = {green:'🟢', yellow:'🟡', red:'🔴'};
+    sysEl.querySelector('.sys-icon').textContent = sysIcons[d.sys_status]||'🟡';
+    document.getElementById('sys-title').textContent = d.sys_text;
+    const failCount = d.pipeline.filter(p => p.status === 'failed').length;
+    document.getElementById('sys-desc').textContent = `${d.pipeline.length} pipeline tarandı · ${failCount} hata · PIM: ${d.pim.aktif} aktif ürün`;
+
+    // Health grid
+    const enr  = d.enrichment;
+    const sir  = d.siralama;
+    const pimSync = d.pipeline.find(p => p.source_id === 'pimland_products');
+    const incSync = d.pipeline.find(p => p.source_id === 'incorta_ecommerce_gunluk');
+    document.getElementById('health-grid').innerHTML = `
+      <div class="card" style="border:none;border-radius:0;text-align:center;margin:0">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">PIM Sync</div>
+        <div style="font-size:18px;font-weight:700;color:${pimSync?.status==='completed'?'var(--green)':'var(--yellow)'};margin:4px 0">${pimSync?.status==='completed'?'✓':pimSync?.status==='running'?'…':'✗'}</div>
+        <div style="font-size:10px;color:var(--t2)">${pimSync?.finished_at||'—'} · ${pimSync?.dur_fmt||'—'}</div>
+      </div>
+      <div class="card" style="border:none;border-radius:0;text-align:center;margin:0">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Incorta Sync</div>
+        <div style="font-size:18px;font-weight:700;color:${incSync?.status==='completed'?'var(--green)':'var(--yellow)'};margin:4px 0">${incSync?.status==='completed'?'✓':incSync?.status==='running'?'…':'✗'}</div>
+        <div style="font-size:10px;color:var(--t2)">${incSync?.finished_at||'—'} · ${(incSync?.rows||0).toLocaleString('tr-TR')} satır</div>
+      </div>
+      <div class="card" style="border:none;border-radius:0;text-align:center;margin:0">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Enrichment</div>
+        <div style="font-size:18px;font-weight:700;color:${enr.dun>=40?'var(--green)':enr.dun>0?'var(--yellow)':'var(--red)'};margin:4px 0">${enr.dun}</div>
+        <div style="font-size:10px;color:var(--t2)">Dün işlenen (hedef: ${enr.hedef})</div>
+      </div>
+      <div class="card" style="border:none;border-radius:0;text-align:center;margin:0">
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">D/F Grade</div>
+        <div style="font-size:18px;font-weight:700;color:${enr.df_bekleyen>50?'var(--red)':'var(--yellow)'};margin:4px 0">${enr.df_bekleyen}</div>
+        <div style="font-size:10px;color:var(--yellow)">Enrichment bekliyor</div>
+      </div>`;
+
+    // Pipeline
+    document.getElementById('pipeline-section').innerHTML = d.pipeline.map(p => {
+      const icon = STATUS_ICONS[p.status] || '⚪';
+      const name = STATUS_NAMES[p.source_id] || p.source_id;
+      const info = p.status === 'completed'
+        ? `${p.rows.toLocaleString('tr-TR')} satır · 0 hata`
+        : p.status === 'running' ? 'Devam ediyor…'
+        : `Hata — ${p.dur_fmt}`;
+      return `<div class="pipe-row">
+        <div class="pipe-name">${name}</div>
+        <div class="pipe-status">${icon}</div>
+        <div class="pipe-info">${info}</div>
+        <div class="pipe-time">${p.finished_at} · ${p.dur_fmt}</div>
+      </div>`;
+    }).join('');
+
+    // Team productivity
+    const enrPct = Math.round(enr.dun / enr.hedef * 100);
+    const sirPct = Math.round(sir.dun / sir.hedef * 100);
+    document.getElementById('team-card').innerHTML = `
+      <div class="team-row">
+        <div class="team-name">Enrichment (İçerik)</div>
+        <div class="team-bar-wrap"><div class="team-bar" style="width:${Math.min(100,enrPct)}%;background:${enrPct>=80?'var(--green)':'var(--yellow)'}"></div></div>
+        <div class="team-vals" style="color:${enrPct>=80?'var(--green)':'var(--yellow)'}">${enr.dun} / ${enr.hedef}</div>
+        <div class="team-pct" style="color:${enrPct>=80?'var(--green)':'var(--yellow)'}">%${enrPct}</div>
+      </div>
+      <div class="team-row">
+        <div class="team-name">Sıralama Güncelleme</div>
+        <div class="team-bar-wrap"><div class="team-bar" style="width:${Math.min(100,sirPct)}%;background:${sirPct>=80?'var(--teal)':'var(--yellow)'}"></div></div>
+        <div class="team-vals" style="color:${sirPct>=80?'var(--teal)':'var(--yellow)'}">${sir.dun} / ${sir.hedef}</div>
+        <div class="team-pct" style="color:${sirPct>=80?'var(--teal)':'var(--yellow)'}">%${sirPct}</div>
+      </div>
+      <div class="team-row">
+        <div class="team-name">D/F Grade Bekleyen</div>
+        <div class="team-bar-wrap"><div class="team-bar" style="width:${Math.min(100, enr.df_bekleyen)}%;background:var(--red)"></div></div>
+        <div class="team-vals" style="color:var(--red)">${enr.df_bekleyen} ürün</div>
+        <div class="team-pct" style="color:var(--red)">${enr.df_bekleyen > 0 ? '⚠' : '✓'}</div>
+      </div>`;
+
+    // Issues
+    const SEV_C = {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)',blue:'var(--blue)'};
+    document.getElementById('issues-card').innerHTML = d.sorunlar.map(s => `
+      <div class="issue">
+        <div class="issue-severity" style="background:${SEV_C[s.severity]||'var(--t3)'}"></div>
+        <div class="issue-content">
+          <div class="issue-title">${s.title}</div>
+          <div class="issue-impact">${s.impact}</div>
+        </div>
+        <span class="issue-tag" style="${TAG_STYLES[s.tag]||''}">${s.tag}</span>
+      </div>`).join('');
+
+    document.getElementById('footer-sync').textContent = `Son kontrol: ${new Date().toLocaleTimeString('tr-TR')} UTC+3`;
+  })
+  .catch(e => console.error('SKL-05 error:', e));
+</script>
+</body>
+</html>

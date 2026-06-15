@@ -759,9 +759,6 @@ body,
       <span class="g-arrow">▶</span>
     </div>
     <div class="nav-group-body open" id="grpb-yonetim">
-      <div class="nav-item nav-sub" onclick="showSection('daily-brief')" id="nav-daily-brief">
-        <span class="nav-icon">☀️</span><span class="nav-text">Günlük Brief</span>
-      </div>
       <div class="nav-item nav-sub" onclick="showSection('brief-profil')" id="nav-brief-profil">
         <span class="nav-icon">⚙️</span><span class="nav-text">Brief Profilleri</span>
       </div>
@@ -2114,11 +2111,6 @@ body,
 
     </div><!-- /section-enrichment -->
 
-    <!-- ── GÜNLÜK BRIEF ──────────────────────────────────────────────────── -->
-    <div class="section" id="section-daily-brief" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
-      <iframe id="iframe-daily-brief" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
-    </div>
-
     <!-- ── BRIEF PROFİLLERİ ──────────────────────────────────────────────── -->
     <div class="section" id="section-brief-profil" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
       <iframe id="iframe-brief-profil" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
@@ -2385,10 +2377,6 @@ function loadSection(id){
   else if(id==='magaza-karsilastirma')loadDKarsilastirma();
   else if(id==='monitoring'){initMonitoring();}
   else if(id==='enrichment'){toggleEnrMenu();return;}
-  else if(id==='daily-brief'){
-    const f=document.getElementById('iframe-daily-brief');
-    if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/daily-brief';}
-  }
   else if(id==='brief-profil'){
     const f=document.getElementById('iframe-brief-profil');
     if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/brief-profilleri';}
@@ -5284,7 +5272,6 @@ const _SECTION_GROUP = {
   'magaza-donemseel':'satis',
   'magaza-karsilastirma':'satis',
   monitoring:'other',
-  'daily-brief':'yonetim',
   'brief-profil':'yonetim'
 };
 
