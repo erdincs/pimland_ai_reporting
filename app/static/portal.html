@@ -640,6 +640,9 @@ body,
       <span class="g-arrow">▶</span>
     </div>
     <div class="nav-group-body" id="grpb-satis">
+      <div class="nav-item nav-sub" onclick="showSection('magaza-gunluk')" id="nav-magaza-gunluk">
+        <span class="nav-icon" style="font-size:12px">📅</span><span class="nav-text">Günlük Analiz</span>
+      </div>
       <div class="nav-item nav-sub" onclick="showSection('magaza-yonetici')" id="nav-magaza-yonetici">
         <span class="nav-icon" style="font-size:12px">🏪</span><span class="nav-text">Yönetici Özeti</span>
       </div>
@@ -647,10 +650,10 @@ body,
         <span class="nav-icon" style="font-size:12px">📋</span><span class="nav-text">Mağaza Performans</span>
       </div>
       <div class="nav-item nav-sub" onclick="showSection('magaza-donemseel')" id="nav-magaza-donemseel">
-        <span class="nav-icon" style="font-size:12px">📅</span><span class="nav-text">Dönemsel Performans</span>
+        <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">Dönemsel Performans</span>
       </div>
       <div class="nav-item nav-sub" onclick="showSection('magaza-karsilastirma')" id="nav-magaza-karsilastirma">
-        <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">Dönemsel Karşılaştırma</span>
+        <span class="nav-icon" style="font-size:12px">🔄</span><span class="nav-text">Dönemsel Karşılaştırma</span>
       </div>
     </div>
 
@@ -660,6 +663,9 @@ body,
       <span class="g-arrow">▶</span>
     </div>
     <div class="nav-group-body" id="grpb-eticaret">
+      <div class="nav-item nav-sub" onclick="showSection('eticaret-gunluk')" id="nav-eticaret-gunluk">
+        <span class="nav-icon">📅</span><span class="nav-text">Günlük Analiz</span>
+      </div>
       <div class="nav-item nav-sub" onclick="showSection('exec')" id="nav-exec">
         <span class="nav-icon">🎯</span><span class="nav-text">Executive Özet</span>
       </div>
@@ -753,6 +759,40 @@ body,
       </div>
     </div>
 
+    <!-- ── ADL RAPORLAR ──────────────────────────────────────────────── -->
+    <div class="nav-group-hdr" id="grp-adl" onclick="toggleNavGroup('adl')">
+      <span>📋 ADL RAPORLAR</span>
+      <span class="g-arrow">▶</span>
+    </div>
+    <div class="nav-group-body" id="grpb-adl">
+      <div class="nav-item nav-sub" onclick="showSection('adl-yonetici')" id="nav-adl-yonetici">
+        <span class="nav-icon">☕</span><span class="nav-text">Yönetici Özeti</span>
+        <span style="font-size:9px;font-weight:700;background:var(--teal);color:#000;padding:1px 5px;border-radius:3px;margin-left:auto">GÜN</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('adl-eticaret')" id="nav-adl-eticaret">
+        <span class="nav-icon">🛒</span><span class="nav-text">E-Ticaret Raporu</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('adl-magaza')" id="nav-adl-magaza">
+        <span class="nav-icon">🏪</span><span class="nav-text">Mağaza Raporu</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('adl-premium')" id="nav-adl-premium">
+        <span class="nav-icon">👑</span><span class="nav-text">Premium Marka</span>
+        <span style="font-size:9px;font-weight:700;background:var(--purple);color:#fff;padding:1px 5px;border-radius:3px;margin-left:auto">HAFTA</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('adl-urun-stok')" id="nav-adl-urun-stok">
+        <span class="nav-icon">📦</span><span class="nav-text">Ürün & Stok</span>
+        <span style="font-size:9px;font-weight:700;background:var(--purple);color:#fff;padding:1px 5px;border-radius:3px;margin-left:auto">HAFTA</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('premium-brief-ec')" id="nav-premium-brief-ec">
+        <span class="nav-icon">🛒</span><span class="nav-text">Premium Brief · EC</span>
+        <span style="font-size:9px;font-weight:700;background:#c9a961;color:#0d0d12;padding:1px 5px;border-radius:3px;margin-left:auto">v2</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('premium-brief-mg')" id="nav-premium-brief-mg">
+        <span class="nav-icon">🏪</span><span class="nav-text">Premium Brief · MG</span>
+        <span style="font-size:9px;font-weight:700;background:#c9a961;color:#0d0d12;padding:1px 5px;border-radius:3px;margin-left:auto">v2</span>
+      </div>
+    </div>
+
     <!-- ── DİĞER ────────────────────────────────────────────────────── -->
     <div class="nav-group-hdr open" id="grp-yonetim" onclick="toggleNavGroup('yonetim')">
       <span>📋 YÖNETİM</span>
@@ -774,6 +814,9 @@ body,
     <div class="nav-group-body" id="grpb-other">
       <div class="nav-item nav-sub" onclick="showSection('monitoring')" id="nav-monitoring">
         <span class="nav-icon">📊</span><span class="nav-text">Sistem Sağlığı</span>
+      </div>
+      <div class="nav-item nav-sub" onclick="showSection('menu-yonetim')" id="nav-menu-yonetim">
+        <span class="nav-icon">🗂️</span><span class="nav-text">Menü Düzenleme</span>
       </div>
     </div>
   </nav>
@@ -819,6 +862,46 @@ body,
         <select id="f-grup" class="filter-select" style="max-width:130px"><option value="">Tümü</option></select>
       </div>
     </div>
+
+    <!-- ── E-TİCARET GÜNLÜK ANALİZ ──────────────────────────────────────────── -->
+    <div class="section" id="section-eticaret-gunluk" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">E-Ticaret Günlük Analiz</div>
+          <div style="font-size:10px;color:var(--t3)" id="eg-son-gun-lbl">Son 30 günlük e-ticaret verisi</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="egSetPeriod(7)"  id="eg-btn-7"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">7 Gün</button>
+          <button onclick="egSetPeriod(14)" id="eg-btn-14" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">14 Gün</button>
+          <button onclick="egSetPeriod(30)" id="eg-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <!-- KPI strip -->
+        <div id="eg-kpi-strip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <!-- Trend + Kanal -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📈 Günlük Trend</span></div>
+            <div style="padding:12px" id="eg-trend-chart"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">📡 Kanal Bazlı (Son Gün)</span>
+              <span style="font-size:10px;color:var(--t3)" id="eg-kanal-gun-lbl"></span>
+            </div>
+            <div style="padding:0" id="eg-kanal"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- Top Ürünler -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">⭐ Top 20 Ürün (Net Ciro)</span></div>
+          <div id="eg-top-urunler"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div><!-- /section-eticaret-gunluk -->
 
     <div class="section active" id="section-exec">
       <div class="sec-hdr">
@@ -1456,6 +1539,46 @@ body,
         <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
       </div>
     </div><!-- /section-magaza-karsilastirma -->
+
+    <!-- ── MAĞAZA GÜNLÜK ANALİZ ──────────────────────────────────────────────── -->
+    <div class="section" id="section-magaza-gunluk" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">Mağaza Günlük Analiz</div>
+          <div style="font-size:10px;color:var(--t3)" id="mg-son-gun-lbl">Son 30 günlük mağaza satış verisi</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="mgSetPeriod(7)"  id="mg-btn-7"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">7 Gün</button>
+          <button onclick="mgSetPeriod(14)" id="mg-btn-14" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">14 Gün</button>
+          <button onclick="mgSetPeriod(30)" id="mg-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <!-- KPI strip -->
+        <div id="mg-kpi-strip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <!-- Trend + Top Mağazalar -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📈 30 Günlük Trend</span></div>
+            <div style="padding:12px" id="mg-trend-chart"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">🏪 Top 20 Mağaza</span>
+              <span style="font-size:10px;color:var(--t3)" id="mg-top-period-lbl"></span>
+            </div>
+            <div style="padding:0" id="mg-top-magazalar"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- Top Ürünler -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">⭐ Top 20 Ürün (Net Ciro)</span></div>
+          <div id="mg-top-urunler"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+    </div><!-- /section-magaza-gunluk -->
 
     <!-- ── MAĞAZA YÖNETİCİ ÖZETİ ──────────────────────────────────────────── -->
     <div class="section" id="section-magaza-yonetici" style="padding:0;flex-direction:column;overflow-y:auto">
@@ -2120,6 +2243,10 @@ body,
       <iframe id="iframe-soru-havuzu" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
     </div>
 
+    <div class="section" id="section-menu-yonetim" style="padding:0;overflow:hidden;flex-direction:column;height:calc(100vh - 100px)">
+      <iframe id="iframe-menu-yonetim" style="width:100%;height:100%;border:none;display:block;border-radius:8px"></iframe>
+    </div>
+
     <!-- Enrichment ürün detay modalı — section dışında (overflow:hidden bypass) -->
     <div id="enr-modal" style="display:none" class="enr-modal-overlay" onclick="if(event.target===this)closeEnrModal()">
       <div class="enr-modal-box" id="enr-modal-box"></div>
@@ -2180,6 +2307,634 @@ body,
     </div>
   </div>
 </div>
+
+    <!-- ── ADL YÖNETİCİ ÖZETİ ──────────────────────────────────────────────── -->
+    <div class="section" id="section-adl-yonetici" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">☕ Yönetici Özeti</div>
+          <div style="font-size:10px;color:var(--t3)" id="adly-lbl">Günlük birleşik performans özeti</div>
+        </div>
+        <span style="margin-left:4px;font-size:9px;font-weight:700;background:var(--teal);color:#000;padding:2px 8px;border-radius:4px;letter-spacing:.5px">SABAH KAHVESİ</span>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="adlySetPeriod(1)"  id="adly-btn-1"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">Bugün</button>
+          <button onclick="adlySetPeriod(7)"  id="adly-btn-7"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">7 Gün</button>
+          <button onclick="adlySetPeriod(30)" id="adly-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div id="adly-kpi-strip" style="display:grid;grid-template-columns:repeat(8,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/9;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <!-- Dönem Karşılaştırma (WoW) -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📊 Dönem Karşılaştırma (Önceki Dönem vs Şimdi)</span></div>
+          <div id="adly-donem-kars" style="padding:14px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📡 E-Ticaret Kanal (Son Gün)</span></div>
+            <div style="padding:0" id="adly-kanallar"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">⚠️ Risk Uyarıları</span></div>
+            <div style="padding:12px" id="adly-risk"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">🏪 Mağaza Özet (Son Gün)</span></div>
+          <div style="padding:12px" id="adly-magaza-ozet"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Top 5 / Bottom 5 SKU -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">🏆 Top 5 SKU (Dönem Net)</span></div>
+            <div style="padding:0" id="adly-top5-sku"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📉 Bottom 5 SKU (Düşük Net)</span></div>
+            <div style="padding:0" id="adly-bottom5-sku"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- Premium Marka Sinyalleri -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">👑 Premium Marka Sinyalleri</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Tam Fiyat Oranı</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)">—</div>
+              <div style="font-size:9px;color:var(--t3);margin-top:4px">mv_tam_fiyat_orani</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Hedef: <b style="color:var(--green)">&gt;%70</b> · Kritik: <b style="color:var(--red)">&lt;%60</b></div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Hedef Gerçekleşme</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)">—</div>
+              <div style="font-size:9px;color:var(--t3);margin-top:4px">mv_magaza_satis_ozet</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Uyarı: <b style="color:var(--yellow)">&lt;%85</b> · Kritik: <b style="color:var(--red)">&lt;%80</b></div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Marka Sağlık Skoru</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)" id="adly-marka-skor">—</div>
+              <div style="font-size:9px;color:var(--teal);margin-top:4px">Premium raporu verisi</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Güçlü ≥80 · Sağlıklı ≥65</div>
+            </div>
+          </div>
+        </div>
+        <!-- AI Yorumu — otomatik -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🤖 AI Yönetici Yorumu</span>
+            <span style="font-size:10px;color:var(--t3)">Otomatik</span>
+          </div>
+          <div id="adly-ai-panel" style="padding:14px;color:var(--t3);font-size:11px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div id="adly-aksiyonlar" style="display:none"></div>
+      </div>
+    </div><!-- /section-adl-yonetici -->
+
+    <!-- ── ADL E-TİCARET RAPORU ──────────────────────────────────────────────── -->
+    <div class="section" id="section-adl-eticaret" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">🛒 E-Ticaret Raporu</div>
+          <div style="font-size:10px;color:var(--t3)" id="adle-lbl">Kanal bazlı detaylı analiz</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="adleSetPeriod(7)"  id="adle-btn-7"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">7 Gün</button>
+          <button onclick="adleSetPeriod(14)" id="adle-btn-14" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">14 Gün</button>
+          <button onclick="adleSetPeriod(30)" id="adle-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div id="adle-kpi-strip" style="display:grid;grid-template-columns:repeat(9,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/10;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <!-- 4 Kanal Kartları -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📡 4 Kanal Performansı (Komisyon Sonrası Net)</span></div>
+          <div id="adle-kanal-kartlar" style="padding:12px"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📈 Günlük Trend</span></div>
+            <div style="padding:12px" id="adle-trend"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📋 Kanal Özet Tablo</span></div>
+            <div style="padding:0" id="adle-kanal-ozet"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">⭐ Top 20 Ürün (Net Ciro)</span></div>
+          <div id="adle-top-urunler"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Bottom SKU + İade matrisi -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📉 Bottom 10 SKU</span></div>
+            <div id="adle-bottom-urunler"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">⚠️ İade Matrisi (Ürün × Beden × Renk)</span></div>
+            <div id="adle-iade-matrisi"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- GA4 Trafik -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📊 GA4 Trafik Kalitesi</span></div>
+          <div id="adle-ga4" style="padding:12px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Dönem MoM özeti -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📅 Dönem Karşılaştırma (WoW / MoM)</span></div>
+          <div id="adle-donem-kars" style="padding:14px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Tam Fiyat vs İndirim placeholder -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🏷️ Tam Fiyat vs İndirim Analizi</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Tam Fiyat Oranı</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)">—</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Hedef <b style="color:var(--green)">&gt;%70</b></div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Ort. İndirim%</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)">—</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Kritik <b style="color:var(--red)">&gt;%35</b></div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">İndirimsiz Tükenen SKU</div>
+              <div style="font-size:22px;font-weight:700;color:var(--t3)">—</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:6px">Gerçek talep sinyali</div>
+            </div>
+          </div>
+          <div style="padding:0 16px 12px;font-size:10px;color:var(--t3)">mv_tam_fiyat_orani view'u hazır olduğunda dolacak.</div>
+        </div>
+        <!-- AI Yorumu — otomatik -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🤖 AI E-Ticaret Yorumu</span>
+            <span style="font-size:10px;color:var(--t3)">Otomatik</span>
+          </div>
+          <div id="adle-ai-panel" style="padding:14px;color:var(--t3);font-size:11px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div id="adle-aksiyonlar" style="display:none"></div>
+      </div>
+    </div><!-- /section-adl-eticaret -->
+
+    <!-- ── ADL MAĞAZA RAPORU ──────────────────────────────────────────────────── -->
+    <div class="section" id="section-adl-magaza" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">🏪 Mağaza Raporu</div>
+          <div style="font-size:10px;color:var(--t3)" id="adlm-lbl">Mağaza performans analizi</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="adlmSetPeriod(7)"  id="adlm-btn-7"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">7 Gün</button>
+          <button onclick="adlmSetPeriod(14)" id="adlm-btn-14" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">14 Gün</button>
+          <button onclick="adlmSetPeriod(30)" id="adlm-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <!-- KPI Strip — 8 tile -->
+        <div id="adlm-kpi-strip" style="display:grid;grid-template-columns:repeat(8,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/9;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <!-- Trend + OBF benchmark 2-col -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📈 Günlük Net Ciro Trendi</span></div>
+            <div style="padding:12px" id="adlm-trend"><div class="spinner" style="height:120px"></div></div>
+          </div>
+          <div class="table-card" id="adlm-obf-card">
+            <div class="table-header"><span class="table-title">💰 OBF Proxy (Net/Adet)</span></div>
+            <div style="padding:14px" id="adlm-obf-panel"><div class="spinner" style="height:80px"></div></div>
+          </div>
+        </div>
+        <!-- Top 5 + Kritik 5 yan yana -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">🏆 Top 5 Mağaza</span></div>
+            <div style="padding:0" id="adlm-top5"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">🚨 Kritik 5 Mağaza (Yüksek İade)</span></div>
+            <div style="padding:0" id="adlm-kritik5"><div class="loading" style="height:120px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- MDO × OBF × Sepet Üçgeni (placeholder) -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🔺 MDO × OBF × Sepet Üçgeni</span>
+            <span style="font-size:10px;color:var(--yellow);padding:2px 8px;border-radius:4px;background:color-mix(in srgb,var(--yellow) 12%,transparent)">Kısmi Veri</span>
+          </div>
+          <div id="adlm-ucgen" style="padding:14px">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">MDO</div>
+                <div style="font-size:22px;font-weight:700;color:var(--yellow)">—</div>
+                <div style="font-size:9px;color:var(--t3);margin-top:4px">Ziyaretçi verisi yok</div>
+                <div style="margin-top:8px;font-size:10px;color:var(--t2)">adL tahmini: <b style="color:var(--yellow)">~%5.91</b></div>
+                <div style="font-size:9px;color:var(--t3)">Sektör normu: %12-18</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">OBF (Net/Adet)</div>
+                <div style="font-size:22px;font-weight:700;color:var(--teal)" id="adlm-ucgen-obf">—</div>
+                <div style="font-size:9px;color:var(--teal);margin-top:4px">Gerçek veri ✓</div>
+                <div style="margin-top:8px;font-size:9px;color:var(--t3)">Ort. birim satış fiyatı (₺)</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center">
+                <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Sepet (Adet/Visit)</div>
+                <div style="font-size:22px;font-weight:700;color:var(--yellow)">—</div>
+                <div style="font-size:9px;color:var(--t3);margin-top:4px">Ziyaretçi verisi yok</div>
+                <div style="margin-top:8px;font-size:10px;color:var(--t2)">adL tahmini: <b style="color:var(--yellow)">~1.90</b></div>
+                <div style="font-size:9px;color:var(--t3)">Norm: 2.5-3.5 adet</div>
+              </div>
+            </div>
+            <div style="background:color-mix(in srgb,var(--yellow) 8%,transparent);border:1px solid color-mix(in srgb,var(--yellow) 30%,transparent);border-radius:8px;padding:12px">
+              <div style="font-size:11px;font-weight:600;color:var(--yellow);margin-bottom:6px">📊 adL Tanısal Yorum (Benchmark Bazlı)</div>
+              <div style="font-size:11px;color:var(--t1);line-height:1.6">
+                <div>🔴 <b>MDO ~%5.91</b> → Sektör normunun altında (%12-18). <i>"Mağazaya trafik geliyor ama dönüşüm zayıf — vitrin & yerleşim optimizasyonu öncelikli."</i></div>
+                <div style="margin-top:6px">🟡 <b>Sepet ~1.90 adet</b> → Normun altında (2.5-3.5). <i>"Müşteri alıyor ama tek ürünle çıkıyor — çapraz satış & bundle kampanya fırsatı."</i></div>
+                <div style="margin-top:6px">ℹ️ Gerçek MDO/Sepet için <b>mv_magaza_satis_ozet</b> görünümü gerekli. <span id="adlm-ucgen-obf-tip"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Bölge Müdürü Performansı (placeholder) -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">👤 Bölge Müdürü Performansı</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div style="padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🏗️</div>
+            <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px">mv_magaza_satis_ozet Bekleniyor</div>
+            <div style="font-size:11px;color:var(--t2);max-width:420px;margin:0 auto;line-height:1.6">
+              Bu bölüm 15 bölge müdürü için net ciro, hedef%, büyüme ve iade oranlarını gösterecek.
+              Verinin hazır olması için <b>bolge_muduru</b> kolonu içeren bir materialized view gereklidir.
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Bölge Net Ciro</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Hedef Gerçekleşme%</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Dönemsel Büyüme%</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Kritik Mağaza Sayısı</span>
+            </div>
+          </div>
+        </div>
+        <!-- Same-Store Sales / LfL (placeholder) -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">📊 Same-Store Sales (LfL Büyüme)</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div style="padding:20px;text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">📅</div>
+            <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px">magaza_acilis Tablosu Bekleniyor</div>
+            <div style="font-size:11px;color:var(--t2);max-width:420px;margin:0 auto;line-height:1.6">
+              Like-for-Like büyüme analizi için mağaza açılış tarihlerini içeren <b>magaza_acilis</b> tablosu gereklidir.
+              Aynı dönemde faaliyet gösteren mağazalar arasında gerçek büyüme hesaplanacak.
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">LfL Net Büyüme%</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Yeni Mağaza Katkısı</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--t3)">Kapanan Mağaza Etkisi</span>
+            </div>
+          </div>
+        </div>
+        <!-- Top ürünler -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">⭐ Top 20 Ürün (Mağaza)</span></div>
+          <div id="adlm-top-urunler"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- AI Yorumu — otomatik -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🤖 AI Mağaza Yorumu</span>
+            <span style="font-size:10px;color:var(--t3)">Otomatik</span>
+          </div>
+          <div id="adlm-ai-panel" style="padding:14px;color:var(--t3);font-size:11px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div id="adlm-aksiyonlar" style="display:none"></div>
+      </div>
+    </div><!-- /section-adl-magaza -->
+
+    <!-- ── ADL PREMİUM MARKA SAĞLIĞI ─────────────────────────────────────────── -->
+    <div class="section" id="section-adl-premium" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">👑 Premium Marka Sağlığı</div>
+          <div style="font-size:10px;color:var(--t3)" id="adlp-lbl">Marka sağlık endeksi · Haftalık</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="adlpSetPeriod(1)"  id="adlp-btn-1"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">Son Ay</button>
+          <button onclick="adlpSetPeriod(3)"  id="adlp-btn-3"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">3 Ay</button>
+          <button onclick="adlpSetPeriod(6)"  id="adlp-btn-6"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">6 Ay</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div id="adlp-kpi-strip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">🏷️ Marka Mix</span></div>
+            <div style="padding:0" id="adlp-marka-mix"><div class="loading" style="height:180px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📂 Kategori Mix</span></div>
+            <div style="padding:0" id="adlp-kategori-mix"><div class="loading" style="height:180px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">🌿 Sezon Dağılımı</span></div>
+          <div style="padding:0" id="adlp-sezon"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Fiyat Segmenti -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">💰 Fiyat Segmenti (Entry / Core / Premium / Luxury)</span><span id="adlp-prem-lux-badge" style="font-size:10px;padding:2px 8px;border-radius:4px;background:var(--bg4);color:var(--t3)">P+L: —</span></div>
+          <div id="adlp-fiyat-seg" style="padding:14px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Brand Health + Beden -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">💎 Marka Sağlık Endeksi</span></div>
+            <div id="adlp-brand-health" style="padding:14px"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📐 Beden Dağılımı</span></div>
+            <div id="adlp-beden" style="padding:0"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- Tam Fiyat vs İndirim placeholder -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🏷️ Fiyat Disiplini (Tam Fiyat vs Markdown)</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div style="padding:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Tam Fiyat Oranı (haftalık ort.)</div>
+              <div style="font-size:20px;font-weight:700;color:var(--t3)">— <span style="font-size:11px;font-weight:400;color:var(--t3)">hedef &gt;%70</span></div>
+              <div style="margin-top:8px;font-size:10px;color:var(--t3)">mv_tam_fiyat_orani · %1 tam fiyat ↓ → marka erozyonu sinyali</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:10px;color:var(--t3);margin-bottom:4px">Ortalama İndirim Oranı</div>
+              <div style="font-size:20px;font-weight:700;color:var(--t3)">— <span style="font-size:11px;font-weight:400;color:var(--t3)">kritik &gt;%35</span></div>
+              <div style="margin-top:8px;font-size:10px;color:var(--t3)">Premium segment: Beymen &lt;%15, Vakko &lt;%20 benchmark</div>
+            </div>
+          </div>
+        </div>
+        <!-- Marka Sinyalleri (Google Trends) placeholder -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">📡 Marka Sinyalleri</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Opsiyonel</span>
+          </div>
+          <div style="padding:16px;text-align:center">
+            <div style="font-size:28px;margin-bottom:8px">🔍</div>
+            <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px">Google Trends Entegrasyonu</div>
+            <div style="font-size:11px;color:var(--t2);max-width:380px;margin:0 auto;line-height:1.6">
+              Rakip marka karşılaştırması: <b>adL vs Beymen vs Vakko vs Mudo vs İpekyol</b>.<br>
+              Bedrock web_search aracı ile haftalık trend sinyali alınabilir.
+            </div>
+            <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t3)">Trend: up/down/stable</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t3)">Rakip konumlanma</span>
+              <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t3)">Sezon ilgi endeksi</span>
+            </div>
+          </div>
+        </div>
+        <!-- AI Yorumu — otomatik -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🤖 AI Marka Sağlık Yorumu</span>
+            <span style="font-size:10px;color:var(--t3)">Otomatik</span>
+          </div>
+          <div id="adlp-ai-panel" style="padding:14px;color:var(--t3);font-size:11px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div id="adlp-aksiyonlar" style="display:none"></div>
+      </div>
+    </div><!-- /section-adl-premium -->
+
+    <!-- ── ADL ÜRÜN & STOK STRATEJİSİ ───────────────────────────────────────── -->
+    <div class="section" id="section-adl-urun-stok" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">📦 Ürün & Stok Stratejisi</div>
+          <div style="font-size:10px;color:var(--t3)" id="adlus-lbl">Ürün performans ve risk analizi · Haftalık</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="adlusSetPeriod(1)"  id="adlus-btn-1"  style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">Son Ay</button>
+          <button onclick="adlusSetPeriod(3)"  id="adlus-btn-3"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">3 Ay</button>
+          <button onclick="adlusSetPeriod(6)"  id="adlus-btn-6"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">6 Ay</button>
+        </div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <div id="adlus-kpi-strip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">⭐ Top 20 Ürün (Net Ciro)</span></div>
+            <div style="padding:0" id="adlus-top-urunler"><div class="loading" style="height:180px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">⚠️ İade Risk Matrisi</span></div>
+            <div style="padding:0" id="adlus-risk"><div class="loading" style="height:180px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📂 Kategori Performansı</span></div>
+          <div id="adlus-kategori"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Beden (Sektör Norm) + Renk -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">📐 Beden & Renk Tükenme Paterni</span></div>
+          <div id="adlus-beden-renk" style="padding:12px"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Restock Önerisi + Hızlı Eriyen -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">📦 Restock Önerisi (Son Ay Hızı × 60 Gün)</span></div>
+            <div id="adlus-restock"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+          <div class="table-card">
+            <div class="table-header"><span class="table-title">🔥 Hızlı Eriyen Ürünler (Dönem)</span></div>
+            <div id="adlus-hizli"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+          </div>
+        </div>
+        <!-- Ürün Başarı Tahmini (gerçek veri) -->
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">🚀 Ürün Başarı Tahmini (Yeni SKU · İlk Hafta → Sezon Sonu)</span></div>
+          <div id="adlus-basari-tahmini"><div class="loading" style="height:80px"><div class="spinner"></div></div></div>
+        </div>
+        <!-- Stok Devir Hızı + Sell-Through placeholder -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">⚙️ Stok Devir Hızı (Turnover)</span>
+              <span style="font-size:10px;color:var(--t3);padding:2px 6px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+            </div>
+            <div style="padding:14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+                  <div style="font-size:10px;color:var(--t3)">Turnover (yıllık)</div>
+                  <div style="font-size:20px;font-weight:700;color:var(--t3)">—</div>
+                </div>
+                <div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center">
+                  <div style="font-size:10px;color:var(--t3)">Days of Inventory</div>
+                  <div style="font-size:20px;font-weight:700;color:var(--t3)">—</div>
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--t3);line-height:1.5">
+                <b>adL Hedef:</b> 3-4x · &lt;2x yavaş · 4-6x sağlıklı · &gt;6x hızlı moda<br>
+                Stok adet verisi hazır olduğunda dolacak.
+              </div>
+            </div>
+          </div>
+          <div class="table-card">
+            <div class="table-header">
+              <span class="table-title">📈 Sell-Through Rate</span>
+              <span style="font-size:10px;color:var(--t3);padding:2px 6px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+            </div>
+            <div style="padding:14px">
+              <div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center">
+                <div style="font-size:10px;color:var(--t3)">6. Hafta ST Oranı</div>
+                <div style="font-size:20px;font-weight:700;color:var(--t3)">—</div>
+                <div style="font-size:9px;color:var(--t3)">hedef %30-40</div>
+              </div>
+              <div style="font-size:10px;color:var(--t3);line-height:1.5">
+                H2: %10-15 · H4: %20-30 · H6: %30-40 · H8: %40-55<br>
+                H12: %55-70 · Sezon sonu: %75+<br>
+                mv_sell_through view'u bekleniyor.
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Dead Stock + Stok Yaşı placeholder -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🔴 Stok Yaşı Dağılımı & Dead Stock</span>
+            <span style="font-size:10px;color:var(--t3);padding:2px 8px;border-radius:4px;background:var(--bg3)">Veri Bekleniyor</span>
+          </div>
+          <div id="adlus-stok-yasi" style="padding:14px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+              <div style="flex:1;min-width:90px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--green)">
+                <div style="font-size:10px;color:var(--t3)">0-30 Gün</div>
+                <div style="font-size:18px;font-weight:700;color:var(--green)">—</div>
+                <div style="font-size:9px;color:var(--t3)">Aktif</div>
+              </div>
+              <div style="flex:1;min-width:90px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--teal)">
+                <div style="font-size:10px;color:var(--t3)">31-60 Gün</div>
+                <div style="font-size:18px;font-weight:700;color:var(--teal)">—</div>
+                <div style="font-size:9px;color:var(--t3)">Normal</div>
+              </div>
+              <div style="flex:1;min-width:90px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--yellow)">
+                <div style="font-size:10px;color:var(--t3)">61-90 Gün</div>
+                <div style="font-size:18px;font-weight:700;color:var(--yellow)">—</div>
+                <div style="font-size:9px;color:var(--t3)">Markdown planla</div>
+              </div>
+              <div style="flex:1;min-width:90px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--orange)">
+                <div style="font-size:10px;color:var(--t3)">91-120 Gün</div>
+                <div style="font-size:18px;font-weight:700;color:var(--orange)">—</div>
+                <div style="font-size:9px;color:var(--t3)">Markdown adayı</div>
+              </div>
+              <div style="flex:1;min-width:90px;padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--red)">
+                <div style="font-size:10px;color:var(--t3)">120+ Gün</div>
+                <div style="font-size:18px;font-weight:700;color:var(--red)">—</div>
+                <div style="font-size:9px;color:var(--red);font-weight:600">Aksiyon zorunlu</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--t3)">mv_stok_yasi view'u hazır olduğunda dolacak. Dead stock eşiği: SKU sayısı &gt;50 uyarı · &gt;100 kritik.</div>
+          </div>
+        </div>
+        <!-- Mağaza AI Yorumu — otomatik -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">🤖 AI Ürün & Stok Yorumu</span>
+            <span style="font-size:10px;color:var(--t3)">Otomatik</span>
+          </div>
+          <div id="adlus-ai-panel" style="padding:14px;color:var(--t3);font-size:11px"><div class="loading" style="height:60px"><div class="spinner"></div></div></div>
+        </div>
+        <div id="adlus-aksiyonlar" style="display:none"></div>
+      </div>
+    </div><!-- /section-adl-urun-stok -->
+
+    <!-- ── PREMIUM BRIEF v2 · EC ───────────────────────────────────────────── -->
+    <div class="section" id="section-premium-brief-ec" style="padding:0;flex-direction:column;overflow:hidden;height:calc(100vh - 56px)">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--t1)">🛒 Premium Brief · E-Ticaret</div>
+          <div style="font-size:10px;color:var(--t3)">Günlük kanal bazlı analiz — EC v2</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;background:#c9a961;color:#0d0d12;padding:2px 8px;border-radius:3px;letter-spacing:.5px">v2</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <input type="date" id="pb-ec-date"
+                 style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:12px;cursor:pointer"
+                 onchange="loadPremiumBrief('ec')">
+          <div style="display:flex;gap:2px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+            <button id="pb-ec-p7"  onclick="setPbPeriod('ec',7)"
+                    style="background:#c9a961;border:none;color:#0d0d12;padding:5px 10px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700">7G</button>
+            <button id="pb-ec-p15" onclick="setPbPeriod('ec',15)"
+                    style="background:var(--bg3);border:none;color:var(--t2);padding:5px 10px;cursor:pointer;font-family:inherit;font-size:11px">15G</button>
+            <button id="pb-ec-p30" onclick="setPbPeriod('ec',30)"
+                    style="background:var(--bg3);border:none;color:var(--t2);padding:5px 10px;cursor:pointer;font-family:inherit;font-size:11px">30G</button>
+          </div>
+          <button onclick="loadPremiumBrief('ec')"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">
+            ↺ Yükle
+          </button>
+          <a id="pb-ec-newwin" href="#" target="_blank"
+             style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;text-decoration:none">
+            ↗ Tam Ekran
+          </a>
+        </div>
+      </div>
+      <div id="pb-ec-loading" style="display:none;padding:40px;text-align:center">
+        <div class="spinner"></div>
+      </div>
+      <iframe id="iframe-premium-brief-ec"
+              style="width:100%;flex:1;border:none;display:block;background:#0d0d12"
+              onload="document.getElementById('pb-ec-loading').style.display='none'"></iframe>
+    </div><!-- /section-premium-brief-ec -->
+
+    <!-- ── PREMIUM BRIEF v2 · MG ───────────────────────────────────────────── -->
+    <div class="section" id="section-premium-brief-mg" style="padding:0;flex-direction:column;overflow:hidden;height:calc(100vh - 56px)">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--t1)">🏪 Premium Brief · Mağaza</div>
+          <div style="font-size:10px;color:var(--t3)">Günlük mağaza özeti — MG v2</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;background:#c9a961;color:#0d0d12;padding:2px 8px;border-radius:3px;letter-spacing:.5px">v2</span>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <input type="date" id="pb-mg-date"
+                 style="background:var(--bg3);border:1px solid var(--border);color:var(--t1);padding:5px 10px;border-radius:6px;font-family:inherit;font-size:12px;cursor:pointer"
+                 onchange="loadPremiumBrief('mg')">
+          <button onclick="loadPremiumBrief('mg')"
+                  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">
+            ↺ Yükle
+          </button>
+          <a id="pb-mg-newwin" href="#" target="_blank"
+             style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;text-decoration:none">
+            ↗ Tam Ekran
+          </a>
+        </div>
+      </div>
+      <div id="pb-mg-loading" style="display:none;padding:40px;text-align:center">
+        <div class="spinner"></div>
+      </div>
+      <iframe id="iframe-premium-brief-mg"
+              style="width:100%;flex:1;border:none;display:block;background:#0d0d12"
+              onload="document.getElementById('pb-mg-loading').style.display='none'"></iframe>
+    </div><!-- /section-premium-brief-mg -->
 
   </main>
 </div>
@@ -2333,7 +3088,7 @@ function pushURL(){
 // ── NAVIGATION ───────────────────────────────────────────────────────────────
 // E-Ticaret bölümleri — topbar filtresi yalnızca bunlar için görünür
 const _ETICARET_SECTIONS = new Set([
-  'exec','kpi','overview','kategori','urunler','iade',
+  'eticaret-gunluk','exec','kpi','overview','kategori','urunler','iade',
   'risk','karlilik','colors','products','ai','callcenter','sizewin'
 ]);
 
@@ -2371,6 +3126,15 @@ function loadSection(id){
   else if(id==='urun-yonetimi')loadUrunYonetimi();
   else if(id==='urun-satis')loadUrunSatisAnaliz();
   else if(id==='siralama')initSiralama();
+  else if(id==='eticaret-gunluk')loadEticaretGunluk();
+  else if(id==='magaza-gunluk')loadMagazaGunluk();
+  else if(id==='adl-yonetici')loadAdlYonetici();
+  else if(id==='adl-eticaret')loadAdlEticaret();
+  else if(id==='adl-magaza')loadAdlMagaza();
+  else if(id==='adl-premium')loadAdlPremium();
+  else if(id==='adl-urun-stok')loadAdlUrunStok();
+  else if(id==='premium-brief-ec')loadPremiumBrief('ec');
+  else if(id==='premium-brief-mg')loadPremiumBrief('mg');
   else if(id==='magaza-yonetici')loadMagaza();
   else if(id==='magaza-performans')loadMagazaPerformans();
   else if(id==='magaza-donemseel')loadDonemseel();
@@ -2384,6 +3148,10 @@ function loadSection(id){
   else if(id==='soru-havuzu'){
     const f=document.getElementById('iframe-soru-havuzu');
     if(!f.src||f.src==='about:blank'){f.src='/api/v1/portal/yonetim/soru-havuzu';}
+  }
+  else if(id==='menu-yonetim'){
+    const f=document.getElementById('iframe-menu-yonetim');
+    if(!f.src||f.src==='about:blank'){f.src='/api/v1/menu/ui';}
   }
   if(id!=='monitoring') stopMonitoring();
 }
@@ -5261,17 +6029,23 @@ function _openNavGroup(id){
 // showSection: ilgili grubu otomatik aç
 const _SECTION_GROUP = {
   // ai/callcenter/sizewin pinned — grup yok
+  'eticaret-gunluk':'eticaret',
   exec:'eticaret',kpi:'eticaret',overview:'eticaret',
   kategori:'eticaret',urunler:'eticaret',iade:'eticaret',
   risk:'eticaret',karlilik:'eticaret',colors:'eticaret',
   products:'urunmgmt','plm-katalog':'urunmgmt',
   'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
   siralama:'ekat',
+  'magaza-gunluk':'satis',
   'magaza-yonetici':'satis',
   'magaza-performans':'satis',
   'magaza-donemseel':'satis',
   'magaza-karsilastirma':'satis',
+  'adl-yonetici':'adl','adl-eticaret':'adl','adl-magaza':'adl',
+  'adl-premium':'adl','adl-urun-stok':'adl',
+  'premium-brief-ec':'adl','premium-brief-mg':'adl',
   monitoring:'other',
+  'menu-yonetim':'other',
   'brief-profil':'yonetim'
 };
 
@@ -8513,6 +9287,1551 @@ async function aiSearchReindex(){
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// E-TİCARET GÜNLÜK ANALİZ
+// ════════════════════════════════════════════════════════════════════════════
+let _egPeriod = 7;
+
+function egSetPeriod(n) {
+  _egPeriod = n;
+  ['7','14','30'].forEach(d => {
+    const b = document.getElementById('eg-btn-'+d);
+    if (!b) return;
+    const active = String(n) === d;
+    b.style.background = active ? 'var(--orange)' : 'var(--bg3)';
+    b.style.borderColor = active ? 'var(--orange)' : 'var(--border)';
+    b.style.color       = active ? '#fff' : 'var(--t2)';
+    b.style.fontWeight  = active ? '600' : '400';
+  });
+  loadEticaretGunluk();
+}
+
+async function loadEticaretGunluk() {
+  const kpiEl   = document.getElementById('eg-kpi-strip');
+  const trendEl = document.getElementById('eg-trend-chart');
+  const kanalEl = document.getElementById('eg-kanal');
+  const urunEl  = document.getElementById('eg-top-urunler');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>';
+
+  try {
+    const d = await fetch(`${API}/portal/eticaret-gunluk?gun_sayisi=${_egPeriod}`).then(r => r.json());
+    const son = d.son_gun ? new Date(d.son_gun).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '—';
+    const lbl = document.getElementById('eg-son-gun-lbl');
+    if (lbl) lbl.textContent = `Son ${_egPeriod} gün · Güncelleme: ${son}`;
+    const kgl = document.getElementById('eg-kanal-gun-lbl');
+    if (kgl) kgl.textContent = son;
+
+    // ── KPI Strip ──
+    const k = d.kpis || {};
+    const bg = k.bugun || {}, dn = k.dun || {}, hf = k.hafta || {};
+    const pctChg = (a, b) => {
+      if (!b || !b.net) return '';
+      const chg = ((a.net - b.net) / b.net * 100).toFixed(1);
+      const up = parseFloat(chg) >= 0;
+      return `<span style="font-size:10px;color:${up?'var(--green)':'var(--red)'};margin-top:2px">${up?'▲':'▼'} %${Math.abs(chg)}</span>`;
+    };
+    const kpiCard = (lbl, val, sub, sub2, accent) =>
+      `<div style="background:var(--bg2);padding:14px 12px;display:flex;flex-direction:column;gap:3px;cursor:default;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);font-weight:600">${lbl}</div>
+        <div style="font-size:18px;font-weight:700;color:${accent||'var(--t1)'}">${val}</div>
+        <div style="font-size:10px;color:var(--t3)">${sub}</div>
+        ${sub2 ? `<div style="font-size:10px">${sub2}</div>` : ''}
+      </div>`;
+    kpiEl.innerHTML =
+      kpiCard('Bugün Net Ciro', bg.net != null ? fmtM(bg.net) : '—', `${fmtAdet(bg.adet||0)} adet`, pctChg(bg, dn), 'var(--teal)') +
+      kpiCard('Bugün Satış (Brüt)', bg.satis != null ? fmtM(bg.satis) : '—', `İade: ${fmtM(bg.iade||0)}`, '', 'var(--orange)') +
+      kpiCard('Bugün İade Oranı', bg.iade_pct != null ? `%${bg.iade_pct}` : '—', `Dün: %${dn.iade_pct||'—'}`, '', bg.iade_pct > 30 ? 'var(--red)' : bg.iade_pct > 15 ? 'var(--yellow)' : 'var(--green)') +
+      kpiCard('Dün Net Ciro', dn.net != null ? fmtM(dn.net) : '—', `${fmtAdet(dn.adet||0)} adet`, '', 'var(--t1)') +
+      kpiCard(`${_egPeriod} Gün Net`, hf.net != null ? fmtM(hf.net) : '—', `${fmtAdet(hf.adet||0)} adet`, '', 'var(--blue)') +
+      kpiCard(`${_egPeriod} Gün Satış`, hf.satis != null ? fmtM(hf.satis) : '—', `İade: ${fmtM(hf.iade||0)}`, '', 'var(--t2)');
+
+    // ── Trend chart (SVG) ──
+    const trend = d.trend || [];
+    if (trend.length) {
+      const maxNet = Math.max(...trend.map(r => parseFloat(r.net) || 0));
+      const W = 380, H = 110, pad = 8;
+      const x = (i) => pad + (i / Math.max(trend.length - 1, 1)) * (W - pad * 2);
+      const y = (v) => H - pad - ((parseFloat(v) || 0) / (maxNet || 1)) * (H - pad * 2);
+      const pts  = trend.map((r,i) => `${x(i)},${y(r.net)}`).join(' ');
+      const pts2 = trend.map((r,i) => `${x(i)},${y(r.satis)}`).join(' ');
+      const area  = `${x(0)},${H} ` + pts + ` ${x(trend.length-1)},${H}`;
+      trendEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:110px;overflow:visible">
+        <defs>
+          <linearGradient id="eg-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--teal)" stop-opacity=".25"/>
+            <stop offset="100%" stop-color="var(--teal)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon points="${area}" fill="url(#eg-grad)"/>
+        <polyline points="${pts2}" fill="none" stroke="var(--orange)" stroke-width="1.5" stroke-dasharray="3,2" opacity=".5"/>
+        <polyline points="${pts}" fill="none" stroke="var(--teal)" stroke-width="2"/>
+        ${trend.filter((_,i)=>i%Math.ceil(trend.length/6)===0).map((r,_,arr,i=trend.indexOf(r))=>`
+          <text x="${x(i)}" y="${H}" dy="10" text-anchor="middle" fill="var(--t3)" font-size="8">${new Date(r.gun).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'})}</text>
+        `).join('')}
+      </svg>
+      <div style="display:flex;gap:12px;margin-top:4px;font-size:10px;color:var(--t3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:var(--teal);display:inline-block"></span>Net Ciro</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:1.5px;background:var(--orange);display:inline-block;opacity:.5"></span>Brüt Satış</span>
+      </div>`;
+    } else {
+      trendEl.innerHTML = '<div style="color:var(--t3);font-size:11px;text-align:center;padding:20px">Trend verisi yok</div>';
+    }
+
+    // ── Kanal tablosu ──
+    const kanal = d.kanal || [];
+    if (kanal.length) {
+      const maxS = Math.max(...kanal.map(r => parseFloat(r.satis) || 0));
+      kanalEl.innerHTML = `<table class="ai-dtable"><thead><tr>
+        <th>Kanal</th><th class="num">Net Ciro</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">Adet</th><th class="num">İade%</th>
+      </tr></thead><tbody>${kanal.map(r => {
+        const ip = parseFloat(r.iade_pct) || 0;
+        const col = ip > 30 ? 'var(--red)' : ip > 15 ? 'var(--yellow)' : 'var(--green)';
+        const bar = `<div style="height:2px;background:var(--bg4);border-radius:1px;margin-top:2px"><div style="height:2px;background:var(--orange);border-radius:1px;width:${Math.round((parseFloat(r.satis)||0)/maxS*100)}%"></div></div>`;
+        return `<tr><td><div style="font-size:11px;color:var(--t1);font-weight:500">${r.satis_kanali}</div>${bar}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+          <td class="num">${fmtM(r.satis)}</td>
+          <td class="num" style="color:var(--red)">${fmtM(r.iade)}</td>
+          <td class="num">${fmtAdet(r.adet)}</td>
+          <td class="num" style="color:${col}">%${ip}</td></tr>`;
+      }).join('')}</tbody></table>`;
+    } else {
+      kanalEl.innerHTML = '<div style="padding:16px;color:var(--t3);font-size:11px">Kanal verisi yok</div>';
+    }
+
+    // ── Top Ürünler tablosu ──
+    const urunler = d.top_urunler || [];
+    if (urunler.length) {
+      urunEl.innerHTML = `<table class="ai-dtable"><thead><tr>
+        <th>#</th><th>Ürün</th><th class="num">Net Ciro</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">Adet</th><th class="num">İade%</th>
+      </tr></thead><tbody>${urunler.map((r,i) => {
+        const ip = parseFloat(r.iade_pct) || 0;
+        const col = ip > 30 ? 'var(--red)' : ip > 15 ? 'var(--yellow)' : 'var(--green)';
+        const rank = i < 3 ? ['var(--orange)','var(--teal)','var(--blue)'][i] : 'var(--t3)';
+        return `<tr><td style="color:${rank};font-weight:700;font-size:12px">${i+1}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+          <td class="num">${fmtM(r.satis)}</td>
+          <td class="num" style="color:var(--red)">${fmtM(r.iade)}</td>
+          <td class="num">${fmtAdet(r.adet)}</td>
+          <td class="num" style="color:${col}">%${ip}</td></tr>`;
+      }).join('')}</tbody></table>
+      <div class="ai-dtable-footer">Son ${_egPeriod} gün · ${urunler.length} ürün</div>`;
+    } else {
+      urunEl.innerHTML = '<div style="padding:16px;color:var(--t3);font-size:11px">Ürün verisi yok</div>';
+    }
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/7;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MAĞAZA GÜNLÜK ANALİZ
+// ════════════════════════════════════════════════════════════════════════════
+let _mgPeriod = 7;
+
+function mgSetPeriod(n) {
+  _mgPeriod = n;
+  ['7','14','30'].forEach(d => {
+    const b = document.getElementById('mg-btn-'+d);
+    if (!b) return;
+    const active = String(n) === d;
+    b.style.background = active ? 'var(--orange)' : 'var(--bg3)';
+    b.style.borderColor = active ? 'var(--orange)' : 'var(--border)';
+    b.style.color       = active ? '#fff' : 'var(--t2)';
+    b.style.fontWeight  = active ? '600' : '400';
+  });
+  loadMagazaGunluk();
+}
+
+async function loadMagazaGunluk() {
+  const kpiEl  = document.getElementById('mg-kpi-strip');
+  const trendEl= document.getElementById('mg-trend-chart');
+  const magEl  = document.getElementById('mg-top-magazalar');
+  const urunEl = document.getElementById('mg-top-urunler');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>';
+
+  try {
+    const d = await fetch(`${API}/portal/magaza-gunluk?gun_sayisi=${_mgPeriod}`).then(r => r.json());
+    const son = d.son_gun ? new Date(d.son_gun).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}) : '—';
+    const lbl = document.getElementById('mg-son-gun-lbl');
+    if (lbl) lbl.textContent = `Son ${_mgPeriod} gün · Güncelleme: ${son}`;
+    const pl = document.getElementById('mg-top-period-lbl');
+    if (pl) pl.textContent = `Son ${_mgPeriod} gün`;
+
+    // ── KPI Strip ──
+    const k = d.kpis || {};
+    const bg = k.bugun || {}, dn = k.dun || {}, hf = k.hafta || {};
+    const pctChg = (a, b) => {
+      if (a.net == null || b.net == null) return '';
+      const chg = ((a.net - b.net) / b.net * 100).toFixed(1);
+      const up = parseFloat(chg) >= 0;
+      return `<span style="font-size:10px;color:${up?'var(--green)':'var(--red)'};margin-top:2px">${up?'▲':'▼'} %${Math.abs(chg)}</span>`;
+    };
+    const kpiCard = (lbl, val, sub, sub2, accent) =>
+      `<div style="background:var(--bg2);padding:14px 12px;display:flex;flex-direction:column;gap:3px;cursor:default;transition:background .15s" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background='var(--bg2)'">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);font-weight:600">${lbl}</div>
+        <div style="font-size:18px;font-weight:700;color:${accent||'var(--t1)'}">${val}</div>
+        <div style="font-size:10px;color:var(--t3)">${sub}</div>
+        ${sub2 ? `<div style="font-size:10px">${sub2}</div>` : ''}
+      </div>`;
+    kpiEl.innerHTML =
+      kpiCard('Son Gün Net Ciro', bg.net != null ? fmtM(bg.net) : '—', `${fmtAdet(bg.adet||0)} adet`, pctChg(bg, dn), 'var(--teal)') +
+      kpiCard('Son Gün Satış', bg.satis != null ? fmtM(bg.satis) : '—', `İade: ${fmtM(bg.iade||0)}`, '', 'var(--orange)') +
+      kpiCard('Son Gün İade', bg.iade_pct != null ? `%${bg.iade_pct}` : '—', `Önceki: %${dn.iade_pct||'—'}`, '', bg.iade_pct > 30 ? 'var(--red)' : bg.iade_pct > 15 ? 'var(--yellow)' : 'var(--green)') +
+      kpiCard('Önceki Gün Net', dn.net != null ? fmtM(dn.net) : '—', `${fmtAdet(dn.adet||0)} adet`, '', 'var(--t1)') +
+      kpiCard(`${_mgPeriod} Gün Net`, hf.net != null ? fmtM(hf.net) : '—', `${fmtAdet(hf.adet||0)} adet`, '', 'var(--blue)') +
+      kpiCard(`${_mgPeriod} Gün Satış`, hf.satis != null ? fmtM(hf.satis) : '—', `İade: ${fmtM(hf.iade||0)}`, '', 'var(--t2)');
+
+    // ── Trend chart (SVG) ──
+    const trend = d.trend || [];
+    if (trend.length) {
+      const maxNet = Math.max(...trend.map(r => parseFloat(r.net) || 0));
+      const W = 380, H = 110, pad = 8;
+      const x = (i) => pad + (i / Math.max(trend.length - 1, 1)) * (W - pad * 2);
+      const y = (v) => H - pad - ((parseFloat(v) || 0) / (maxNet || 1)) * (H - pad * 2);
+      const pts  = trend.map((r,i) => `${x(i)},${y(r.net)}`).join(' ');
+      const pts2 = trend.map((r,i) => `${x(i)},${y(r.satis)}`).join(' ');
+      const area  = `${x(0)},${H} ` + pts + ` ${x(trend.length-1)},${H}`;
+      trendEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:110px;overflow:visible">
+        <defs>
+          <linearGradient id="mg-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--purple)" stop-opacity=".25"/>
+            <stop offset="100%" stop-color="var(--purple)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <polygon points="${area}" fill="url(#mg-grad)"/>
+        <polyline points="${pts2}" fill="none" stroke="var(--orange)" stroke-width="1.5" stroke-dasharray="3,2" opacity=".5"/>
+        <polyline points="${pts}" fill="none" stroke="var(--purple)" stroke-width="2"/>
+        ${trend.filter((_,i)=>i%Math.ceil(trend.length/6)===0).map((r,_,arr,i=trend.indexOf(r))=>`
+          <text x="${x(i)}" y="${H}" dy="10" text-anchor="middle" fill="var(--t3)" font-size="8">${new Date(r.gun).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'})}</text>
+        `).join('')}
+      </svg>
+      <div style="display:flex;gap:12px;margin-top:4px;font-size:10px;color:var(--t3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:var(--purple);display:inline-block"></span>Net Ciro</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:1.5px;background:var(--orange);display:inline-block;opacity:.5"></span>Brüt Satış</span>
+      </div>`;
+    } else {
+      trendEl.innerHTML = '<div style="color:var(--t3);font-size:11px;text-align:center;padding:20px">Trend verisi yok</div>';
+    }
+
+    // ── Top Mağazalar ──
+    const magazalar = d.top_magazalar || [];
+    if (magazalar.length) {
+      const maxN = Math.max(...magazalar.map(r => parseFloat(r.net) || 0));
+      magEl.innerHTML = `<table class="ai-dtable"><thead><tr>
+        <th>#</th><th>Mağaza</th><th class="num">Net Ciro</th><th class="num">Brüt</th><th class="num">İade%</th>
+      </tr></thead><tbody>${magazalar.map((r,i) => {
+        const ip = parseFloat(r.iade_pct) || 0;
+        const col = ip > 30 ? 'var(--red)' : ip > 15 ? 'var(--yellow)' : 'var(--green)';
+        const rank = i < 3 ? ['var(--orange)','var(--teal)','var(--blue)'][i] : 'var(--t3)';
+        return `<tr><td style="color:${rank};font-weight:700">${i+1}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${r.magaza}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+          <td class="num">${fmtM(r.satis)}</td>
+          <td class="num" style="color:${col}">%${ip}</td></tr>`;
+      }).join('')}</tbody></table>
+      <div class="ai-dtable-footer">${magazalar.length} mağaza</div>`;
+    } else {
+      magEl.innerHTML = '<div style="padding:16px;color:var(--t3);font-size:11px">Mağaza verisi yok</div>';
+    }
+
+    // ── Top Ürünler ──
+    const urunler = d.top_urunler || [];
+    if (urunler.length) {
+      urunEl.innerHTML = `<table class="ai-dtable"><thead><tr>
+        <th>#</th><th>Ürün</th><th class="num">Net Ciro</th><th class="num">Brüt</th><th class="num">İade</th><th class="num">Adet</th><th class="num">İade%</th>
+      </tr></thead><tbody>${urunler.map((r,i) => {
+        const ip = parseFloat(r.iade_pct) || 0;
+        const col = ip > 30 ? 'var(--red)' : ip > 15 ? 'var(--yellow)' : 'var(--green)';
+        const rank = i < 3 ? ['var(--orange)','var(--teal)','var(--blue)'][i] : 'var(--t3)';
+        return `<tr><td style="color:${rank};font-weight:700">${i+1}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+          <td class="num">${fmtM(r.satis)}</td>
+          <td class="num" style="color:var(--red)">${fmtM(r.iade)}</td>
+          <td class="num">${fmtAdet(r.adet)}</td>
+          <td class="num" style="color:${col}">%${ip}</td></tr>`;
+      }).join('')}</tbody></table>
+      <div class="ai-dtable-footer">Son ${_mgPeriod} gün · ${urunler.length} ürün</div>`;
+    } else {
+      urunEl.innerHTML = '<div style="padding:16px;color:var(--t3);font-size:11px">Ürün verisi yok</div>';
+    }
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/7;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADL RAPORLAR — JavaScript
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function adlKpiTile(label, value, sub, color) {
+  return `<div class="kpi-card" style="padding:14px 16px;background:var(--bg2)">
+    <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${label}</div>
+    <div style="font-size:18px;font-weight:700;color:${color||'var(--t1)'}">${value}</div>
+    ${sub ? `<div style="font-size:10px;color:var(--t3);margin-top:4px">${sub}</div>` : ''}
+  </div>`;
+}
+
+function adlDod(today, yesterday, invert) {
+  if (!yesterday || !today) return '';
+  const pct = yesterday !== 0 ? ((today - yesterday) / Math.abs(yesterday) * 100).toFixed(1) : null;
+  if (pct === null) return '';
+  const pos = invert ? parseFloat(pct) < 0 : parseFloat(pct) > 0;
+  const col = pos ? 'var(--green)' : 'var(--red)';
+  const arr = parseFloat(pct) > 0 ? '▲' : '▼';
+  return `<span style="font-size:10px;color:${col};margin-left:5px">${arr}${Math.abs(pct)}%</span>`;
+}
+
+function adlSetPeriodBtns(prefix, n, choices) {
+  choices.forEach(c => {
+    const b = document.getElementById(prefix+'-btn-'+c);
+    if (!b) return;
+    const active = String(n) === String(c);
+    b.style.background  = active ? 'var(--orange)' : 'var(--bg3)';
+    b.style.borderColor = active ? 'var(--orange)' : 'var(--border)';
+    b.style.color       = active ? '#fff' : 'var(--t2)';
+    b.style.fontWeight  = active ? '600' : '400';
+  });
+}
+
+function adlTrendSvg(data, valueKey, color) {
+  if (!data || !data.length) return '<div style="padding:20px;color:var(--t3);font-size:11px">Veri yok</div>';
+  const vals = data.map(r => parseFloat(r[valueKey]) || 0);
+  const mx = Math.max(...vals) || 1;
+  const W = 280, H = 80, pad = 8;
+  const pts = vals.map((v, i) => {
+    const x = pad + (i / (vals.length - 1 || 1)) * (W - pad * 2);
+    const y = H - pad - (v / mx) * (H - pad * 2);
+    return `${x},${y}`;
+  }).join(' ');
+  const fill_pts = `${pad},${H} ` + pts + ` ${W - pad},${H}`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">
+    <polygon points="${fill_pts}" fill="${color}" opacity=".18"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function adlKanalTable(rows, withKomisyon) {
+  if (!rows || !rows.length) return '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+  const maxNet = Math.max(...rows.map(r => parseFloat(r.net) || 0)) || 1;
+  return `<table class="ai-dtable" style="width:100%"><thead><tr>
+    <th>Kanal</th><th class="num">Satış</th><th class="num">Net</th>
+    ${withKomisyon ? '<th class="num">Kom.Net</th>' : ''}
+    <th class="num">İade%</th><th style="width:60px">Pay</th>
+  </tr></thead><tbody>${rows.map((r,i) => {
+    const ip = parseFloat(r.iade_pct) || 0;
+    const ic = ip > 30 ? 'var(--red)' : ip > 20 ? 'var(--yellow)' : 'var(--green)';
+    const rank = i < 3 ? ['var(--orange)','var(--teal)','var(--blue)'][i] : 'var(--t3)';
+    const barW = Math.round((parseFloat(r.net)||0) / maxNet * 56);
+    const kNet = withKomisyon ? `<td class="num" style="color:var(--teal)">${fmtM(r.komisyon_net)}</td>` : '';
+    return `<tr>
+      <td style="color:${rank};font-weight:600;white-space:nowrap">${r.satis_kanali||r.kanal||'-'}</td>
+      <td class="num">${fmtM(r.satis)}</td>
+      <td class="num">${fmtM(r.net)}</td>
+      ${kNet}
+      <td class="num" style="color:${ic}">%${ip}</td>
+      <td><div style="width:${barW}px;height:3px;background:var(--teal);border-radius:2px"></div></td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function adlUrunTable(rows) {
+  if (!rows || !rows.length) return '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+  return `<table class="ai-dtable"><thead><tr>
+    <th>#</th><th>Ürün</th><th class="num">Net</th><th class="num">Satış</th><th class="num">Adet</th><th class="num">İade%</th>
+  </tr></thead><tbody>${rows.map((r,i) => {
+    const ip = parseFloat(r.iade_pct) || 0;
+    const ic = ip > 30 ? 'var(--red)' : ip > 15 ? 'var(--yellow)' : 'var(--green)';
+    const rank = i < 3 ? ['var(--orange)','var(--teal)','var(--blue)'][i] : 'var(--t3)';
+    return `<tr>
+      <td style="color:${rank};font-weight:700">${i+1}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+      <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+      <td class="num">${fmtM(r.satis)}</td>
+      <td class="num">${fmtAdet(r.adet)}</td>
+      <td class="num" style="color:${ic}">%${ip}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+// ── ADL Yönetici ─────────────────────────────────────────────────────────────
+let _adlyPeriod = 1;
+
+function adlySetPeriod(n) {
+  _adlyPeriod = n;
+  adlSetPeriodBtns('adly', n, [1, 7, 30]);
+  loadAdlYonetici();
+}
+
+async function loadAdlYonetici() {
+  const kpiEl   = document.getElementById('adly-kpi-strip');
+  const kanEl   = document.getElementById('adly-kanallar');
+  const riskEl  = document.getElementById('adly-risk');
+  const mgEl    = document.getElementById('adly-magaza-ozet');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/9;padding:20px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/adl/yonetici?gun_sayisi=${_adlyPeriod}`).then(r => r.json());
+    const eg = d.eg_kpis || {};
+    const mg = d.mg_kpis || {};
+    const egBugun = eg.bugun || {};
+    const egDun   = eg.dun   || {};
+    const mgBugun = mg.bugun || {};
+    const mgDun   = mg.dun   || {};
+    const dc = d.donem_karsilastirma || {};
+    const toplamNet = (parseFloat(egBugun.net)||0) + (parseFloat(mgBugun.net)||0);
+    const toplamNetDun = (parseFloat(egDun.net)||0) + (parseFloat(mgDun.net)||0);
+
+    document.getElementById('adly-lbl').textContent =
+      d.eg_son_gun ? `Son güncelleme: ${d.eg_son_gun} · ${_adlyPeriod === 1 ? 'Bugün' : _adlyPeriod+' günlük'} özet` : 'Günlük özet';
+
+    kpiEl.innerHTML = [
+      adlKpiTile('Toplam Net Ciro', fmtM(toplamNet), adlDod(toplamNet, toplamNetDun), 'var(--teal)'),
+      adlKpiTile('E-Ticaret Net', fmtM(egBugun.net), adlDod(egBugun.net, egDun.net)+'&nbsp;dün', 'var(--teal)'),
+      adlKpiTile('Mağaza Net', fmtM(mgBugun.net), adlDod(mgBugun.net, mgDun.net)+'&nbsp;dün', 'var(--purple)'),
+      adlKpiTile('E-Tic İade%', `%${parseFloat(egBugun.iade_pct)||0}`,
+        `Dün: %${parseFloat(egDun.iade_pct)||0}`,
+        parseFloat(egBugun.iade_pct)>30?'var(--red)':parseFloat(egBugun.iade_pct)>20?'var(--yellow)':'var(--green)'),
+      adlKpiTile('E-Tic Satış', fmtM(egBugun.satis), adlDod(egBugun.satis, egDun.satis), 'var(--orange)'),
+      adlKpiTile('Mağaza Satış', fmtM(mgBugun.satis), adlDod(mgBugun.satis, mgDun.satis), 'var(--orange)'),
+      adlKpiTile('Toplam WoW',
+        dc.toplam_wow_pct != null ? (dc.toplam_wow_pct>0?'+':'')+dc.toplam_wow_pct+'%' : '—',
+        'önceki dönem vs şimdi',
+        dc.toplam_wow_pct > 0 ? 'var(--green)' : dc.toplam_wow_pct < 0 ? 'var(--red)' : 'var(--t2)'),
+      adlKpiTile('Risk Uyarı', (d.risk_uyarilari||[]).length, 'aktif alarm',
+        (d.risk_uyarilari||[]).some(r=>r.tip==='kritik')?'var(--red)':(d.risk_uyarilari||[]).length>0?'var(--yellow)':'var(--green)'),
+    ].join('');
+
+    // ── Dönem Karşılaştırma ──
+    const dkEl = document.getElementById('adly-donem-kars');
+    if (dkEl && dc.eg_net_simdi != null) {
+      const _row = (lbl, simdi, onceki, wow) => {
+        const wc = wow > 0 ? 'var(--green)' : wow < 0 ? 'var(--red)' : 'var(--t3)';
+        const wa = wow != null ? `<span style="color:${wc};font-weight:700">${wow>0?'+':''}${wow}%</span>` : '<span style="color:var(--t3)">—</span>';
+        return `<tr>
+          <td style="font-size:11px;color:var(--t2)">${lbl}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(simdi)}</td>
+          <td class="num" style="color:var(--t3)">${fmtM(onceki)}</td>
+          <td class="num">${wa}</td>
+        </tr>`;
+      };
+      dkEl.innerHTML = `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>Kanal</th><th class="num">Bu Dönem</th><th class="num">Önceki Dönem</th><th class="num">Değişim</th>
+      </tr></thead><tbody>
+        ${_row('E-Ticaret Net', dc.eg_net_simdi, dc.eg_net_onceki, dc.eg_wow_pct)}
+        ${_row('Mağaza Net', dc.mg_net_simdi, dc.mg_net_onceki, dc.mg_wow_pct)}
+        ${_row('📊 TOPLAM', dc.toplam_simdi, dc.toplam_onceki, dc.toplam_wow_pct)}
+      </tbody></table>
+      <div class="ai-dtable-footer">Karşılaştırma periyodu: ${_adlyPeriod} gün</div>`;
+    } else if (dkEl) {
+      dkEl.innerHTML = '<div style="color:var(--t3);font-size:11px;padding:8px">Karşılaştırma verisi hesaplanıyor...</div>';
+    }
+
+    kanEl.innerHTML = adlKanalTable(d.top_kanallar || [], true);
+
+    const riskler = d.risk_uyarilari || [];
+    riskEl.innerHTML = riskler.length ? riskler.map(r => {
+      const col = r.tip === 'kritik' ? 'var(--red)' : 'var(--yellow)';
+      const bg  = r.tip === 'kritik' ? 'rgba(239,68,68,.08)' : 'rgba(245,158,11,.08)';
+      return `<div style="padding:8px 10px;background:${bg};border-radius:6px;margin-bottom:6px;border-left:3px solid ${col}">
+        <div style="font-size:9px;font-weight:700;color:${col};text-transform:uppercase">${r.tip}</div>
+        <div style="font-size:11px;color:var(--t1);margin-top:2px">${r.mesaj}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--green);font-size:12px;padding:8px">✓ Risk uyarısı yok</div>';
+
+    mgEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0">
+      ${[
+        ['Net Ciro', fmtM(mgBugun.net), 'var(--purple)'],
+        ['Satış',    fmtM(mgBugun.satis), 'var(--t1)'],
+        ['İade%',    `%${parseFloat(mgBugun.iade_pct)||0}`, parseFloat(mgBugun.iade_pct)>20?'var(--red)':'var(--green)'],
+        ['Dün Net',  fmtM(mgDun.net), 'var(--t2)'],
+      ].map(([l,v,c]) => `<div><div style="font-size:10px;color:var(--t3)">${l}</div><div style="font-size:14px;font-weight:700;color:${c}">${v}</div></div>`).join('')}
+    </div>`;
+
+    // ── Top 5 / Bottom 5 SKU ──
+    const t5El = document.getElementById('adly-top5-sku');
+    const b5El = document.getElementById('adly-bottom5-sku');
+    const _skuTable = (list, rankColor) => list.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+      <th>#</th><th>Ürün</th><th class="num">Net</th><th class="num">İade%</th>
+    </tr></thead><tbody>${list.map((r,i)=>{
+      const ip = parseFloat(r.iade_pct)||0;
+      const ic = ip>30?'var(--red)':ip>15?'var(--yellow)':'var(--green)';
+      return `<tr>
+        <td style="color:${rankColor};font-weight:700">${i+1}</td>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${r.urun_adi||r.urun_kodu}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+        <td class="num" style="color:${ic}">%${ip}</td>
+      </tr>`;
+    }).join('')}</tbody></table>` : '<div style="padding:12px;color:var(--t3);font-size:11px">Veri yok</div>';
+    if (t5El) t5El.innerHTML = _skuTable(d.top5_sku||[], 'var(--orange)');
+    if (b5El) b5El.innerHTML = _skuTable(d.bottom5_sku||[], 'var(--red)');
+
+    window._adlyLastData = d;
+
+    // ── AI otomatik ──
+    adlAutoAI('yonetici-ozeti', 'adly-ai-panel', 'adly-aksiyonlar', {
+      'E-ticaret Net (bugün)': fmtM(egBugun.net),
+      'Mağaza Net (bugün)': fmtM(mgBugun.net),
+      'Toplam Net (dönem)': fmtM(dc.toplam_simdi),
+      'WoW Değişim': dc.toplam_wow_pct != null ? (dc.toplam_wow_pct>0?'+':'')+dc.toplam_wow_pct+'%' : '—',
+      'E-Tic İade%': '%'+(egBugun.iade_pct||0),
+      'Risk uyarı sayısı': (d.risk_uyarilari||[]).length,
+      'Top SKU': (d.top5_sku||[]).slice(0,2).map(s=>s.urun_adi).join(', ')||'—',
+      'Periyot (gün)': _adlyPeriod,
+    }, `yonetici-ozeti:${_adlyPeriod}`);
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/9;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ── ADL E-Ticaret ────────────────────────────────────────────────────────────
+let _adlePeriod = 7;
+
+function adleSetPeriod(n) {
+  _adlePeriod = n;
+  adlSetPeriodBtns('adle', n, [7, 14, 30]);
+  loadAdlEticaret();
+}
+
+function adleKanalKartlari(kanallar) {
+  if (!kanallar || !kanallar.length) return '<div style="color:var(--t3);font-size:11px;padding:8px">Kanal verisi yok</div>';
+  const _KANAL_COLORS = {ADL:'var(--orange)',TRENDYOL:'var(--blue)',HEPSIBURADA:'var(--purple)',AMAZON:'var(--yellow)'};
+  const _KANAL_NORM = {ADL:'Sahip kanal · %0 komisyon',TRENDYOL:'%18 komisyon',HEPSIBURADA:'%15 komisyon',AMAZON:'%15 komisyon'};
+  const toplam_net = kanallar.reduce((s,k)=>s+parseFloat(k.net||0),0)||1;
+  const kartlar = kanallar.slice(0,4).map(k=>{
+    const kanal  = (k.satis_kanali||'').toUpperCase();
+    const col    = _KANAL_COLORS[kanal] || 'var(--t3)';
+    const satis  = parseFloat(k.satis||0);
+    const iade   = parseFloat(k.iade||0);
+    const iptal  = parseFloat(k.iptal||0);
+    const net    = parseFloat(k.net||0);
+    const knet   = parseFloat(k.komisyon_net||net);
+    const ip     = parseFloat(k.iade_pct||0);
+    const pay    = (net/toplam_net*100).toFixed(1);
+    const ic     = ip>30?'var(--red)':ip>20?'var(--yellow)':'var(--green)';
+    const wow    = k.wow_pct != null ? parseFloat(k.wow_pct) : null;
+    const wowHtml = wow != null
+      ? `<span style="font-size:10px;color:${wow>=0?'var(--green)':'var(--red)'}">${wow>=0?'▲':'▼'}${Math.abs(wow)}% HoH</span>`
+      : '';
+    const iadeW  = satis>0?Math.min(100,iade/satis*100):0;
+    const iptalW = satis>0?Math.min(100,iptal/satis*100):0;
+    return `<div style="flex:1;min-width:200px;padding:14px;background:var(--bg3);border-radius:10px;border-top:3px solid ${col};display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${col}">${k.satis_kanali}</div>
+          <div style="font-size:9px;color:var(--t3)">${_KANAL_NORM[kanal]||''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--t3)">Pazar payı</div>
+          <div style="font-size:14px;font-weight:700;color:${col}">%${pay}</div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+          <span style="color:var(--t3)">Brüt</span><span style="color:var(--t2)">${fmtM(satis)}</span>
+        </div>
+        <div style="height:4px;background:var(--bg4);border-radius:2px;margin-bottom:6px">
+          <div style="height:4px;background:var(--orange);width:100%;border-radius:2px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+          <span style="color:var(--t3)">İade</span><span style="color:var(--red)">-${fmtM(iade)}</span>
+        </div>
+        <div style="height:3px;background:var(--bg4);border-radius:2px;margin-bottom:6px">
+          <div style="height:3px;background:var(--red);width:${iadeW}%;border-radius:2px"></div>
+        </div>
+        ${iptal>0?`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+          <span style="color:var(--t3)">İptal</span><span style="color:var(--yellow)">-${fmtM(iptal)}</span>
+        </div>
+        <div style="height:3px;background:var(--bg4);border-radius:2px;margin-bottom:6px">
+          <div style="height:3px;background:var(--yellow);width:${iptalW}%;border-radius:2px"></div>
+        </div>`:''}
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid var(--border)">
+        <div>
+          <div style="font-size:10px;color:var(--t3)">Net Ciro</div>
+          <div style="font-size:15px;font-weight:800;color:var(--teal)">${fmtM(net)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--t3)">Kom. Sonrası</div>
+          <div style="font-size:13px;font-weight:700;color:${col}">${fmtM(knet)}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:${ic}">İade: %${ip}</span>
+        ${wowHtml}
+      </div>
+    </div>`;
+  });
+  return `<div style="display:flex;gap:10px;flex-wrap:wrap">${kartlar.join('')}</div>`;
+}
+
+async function loadAdlEticaret() {
+  const kpiEl   = document.getElementById('adle-kpi-strip');
+  const trendEl = document.getElementById('adle-trend');
+  const kanEl   = document.getElementById('adle-kanal-ozet');
+  const urunEl  = document.getElementById('adle-top-urunler');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/10;padding:20px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/adl/eticaret?gun_sayisi=${_adlePeriod}`).then(r => r.json());
+    const kp = d.kpis || {};
+    const today = kp.bugun || {};
+    const dun   = kp.dun   || {};
+    const donem = kp.donem || {};
+    document.getElementById('adle-lbl').textContent =
+      d.son_gun ? `Son: ${d.son_gun} · ${_adlePeriod} günlük analiz` : 'E-ticaret raporu';
+
+    // 9 KPI strip (skill spec)
+    const ip  = parseFloat(donem.iade_pct)||0;
+    const ic  = ip>30?'var(--red)':ip>20?'var(--yellow)':'var(--green)';
+    const ort = parseFloat(donem.ort_sepet)||0;
+    kpiEl.innerHTML = [
+      adlKpiTile('Brüt Ciro',     fmtM(donem.satis),  `${_adlePeriod} gün`,   'var(--orange)'),
+      adlKpiTile('İade Ciro',     fmtM(donem.iade),   null,                    'var(--red)'),
+      adlKpiTile('İptal Ciro',    fmtM(donem.iptal),  null,                    'var(--yellow)'),
+      adlKpiTile('Net Ciro',      fmtM(donem.net),    adlDod(today.net,dun.net)+'&nbsp;dün', 'var(--teal)'),
+      adlKpiTile('İade%',         `%${ip}`,           `Dün %${parseFloat(today.iade_pct)||0}`, ic),
+      adlKpiTile('Tam Fiyat%',    '—',                'mv_tam_fiyat bekl.',    'var(--purple)'),
+      adlKpiTile('Ort. Sepet',    fmtM(ort),          'net/adet',              'var(--blue)'),
+      adlKpiTile('Satış Adet',    fmtAdet(donem.adet),null,                    'var(--t1)'),
+      adlKpiTile('SKU Çeşit',     fmtAdet(donem.sku_cesitliligi||0), 'aktif', 'var(--teal)'),
+    ].join('');
+
+    // 4 kanal kartları
+    const kanKartEl = document.getElementById('adle-kanal-kartlar');
+    if (kanKartEl) kanKartEl.innerHTML = adleKanalKartlari(d.kanal_ozet || []);
+
+    trendEl.innerHTML = adlTrendSvg(d.trend, 'net', 'var(--teal)');
+    kanEl.innerHTML   = adlKanalTable(d.kanal_ozet || [], true);
+    urunEl.innerHTML  = adlUrunTable(d.top_urunler || []);
+
+    // Bottom SKU
+    const botEl = document.getElementById('adle-bottom-urunler');
+    if (botEl) botEl.innerHTML = adlUrunTable(d.bottom_urunler || []);
+
+    // İade matrisi
+    const matEl = document.getElementById('adle-iade-matrisi');
+    if (matEl && d.iade_matrisi) {
+      const mat = d.iade_matrisi;
+      matEl.innerHTML = mat.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>#</th><th>Ürün</th><th>Renk</th><th>Beden</th><th class="num">İade%</th><th class="num">Adet</th>
+      </tr></thead><tbody>${mat.map((r,i)=>{
+        const ip=parseFloat(r.iade_orani)||0;
+        const ic=ip>40?'var(--red)':ip>25?'var(--yellow)':'var(--orange)';
+        return `<tr>
+          <td style="color:${ic};font-weight:700">${i+1}</td>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+          <td style="font-size:10px;color:var(--t2)">${r.renk||'-'}</td>
+          <td style="font-size:10px;color:var(--t2)">${r.beden||'-'}</td>
+          <td class="num" style="color:${ic};font-weight:700">%${ip}</td>
+          <td class="num">${r.iade_adet||0}</td>
+        </tr>`;
+      }).join('')}</tbody></table>` : '<div style="padding:16px;color:var(--green);font-size:11px">✓ Risk kombinasyon yok</div>';
+    }
+
+    // GA4 — benchmark renklendirmeli
+    const ga4El = document.getElementById('adle-ga4');
+    if (ga4El) {
+      const g = d.ga4_ozet || {};
+      const cv   = parseFloat(g.conversion_pct)||0;
+      const bv   = parseFloat(g.bounce_pct)||0;
+      const cvCol = cv>=5?'var(--green)':cv>=2?'var(--teal)':'var(--red)';
+      const bvCol = bv<40?'var(--green)':bv<60?'var(--yellow)':'var(--red)';
+      const cvLbl = cv>=5?'Mükemmel':cv>=2?'İyi':'Düşük ⚠️';
+      const bvLbl = bv<40?'İyi':bv<60?'Orta':'Yüksek ⚠️';
+      const toplam_trafik = (parseFloat(g.organik_ciro||0)+parseFloat(g.ucretli_ciro||0))||1;
+      const organik_pay = toplam_trafik>0?Math.round(parseFloat(g.organik_ciro||0)/toplam_trafik*100):0;
+      ga4El.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr) repeat(2,1fr);gap:10px">
+        <div style="padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid ${cvCol}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Conversion Rate</div>
+            <div style="font-size:9px;color:${cvCol};font-weight:700">${cvLbl}</div>
+          </div>
+          <div style="font-size:20px;font-weight:800;color:${cvCol};margin:4px 0">%${cv.toFixed(2)}</div>
+          <div style="font-size:9px;color:var(--t3)">&lt;%2 düşük · %2-4 iyi · &gt;%5 mükemmel</div>
+        </div>
+        <div style="padding:12px;background:var(--bg3);border-radius:8px;border-left:3px solid ${bvCol}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Bounce Rate</div>
+            <div style="font-size:9px;color:${bvCol};font-weight:700">${bvLbl}</div>
+          </div>
+          <div style="font-size:20px;font-weight:800;color:${bvCol};margin:4px 0">%${bv.toFixed(1)}</div>
+          <div style="font-size:9px;color:var(--t3)">&lt;%40 iyi · %40-60 orta · &gt;%60 kötü</div>
+        </div>
+        <div style="padding:12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Toplam Oturum</div>
+          <div style="font-size:20px;font-weight:800;color:var(--blue);margin:4px 0">${g.toplam_oturum!=null?fmtAdet(g.toplam_oturum):'—'}</div>
+          <div style="font-size:9px;color:var(--t3)">${g.toplam_kullanici!=null?fmtAdet(g.toplam_kullanici)+' kullanıcı':''}</div>
+        </div>
+        <div style="padding:12px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase">Organik Ciro</div>
+          <div style="font-size:18px;font-weight:800;color:var(--green);margin:4px 0">${g.organik_ciro!=null?fmtM(g.organik_ciro):'—'}</div>
+          <div style="height:3px;background:var(--bg4);border-radius:2px;margin-top:4px">
+            <div style="height:3px;background:var(--green);width:${organik_pay}%;border-radius:2px"></div>
+          </div>
+          <div style="font-size:9px;color:var(--t3);margin-top:3px">%${organik_pay} organik · %${100-organik_pay} ücretli</div>
+        </div>
+      </div>`;
+    }
+
+    window._adleLastData = d;
+
+    // ── Dönem Karşılaştırma (WoW/MoM) ──
+    const eDkEl = document.getElementById('adle-donem-kars');
+    if (eDkEl) {
+      const kd = (d.kpis||{}).donem||{};
+      const wow = kd.wow_pct;
+      const mom = kd.mom_pct;
+      const _badge = (v) => {
+        if (v == null) return '<span style="color:var(--t3)">—</span>';
+        const c = v>0?'var(--green)':v<0?'var(--red)':'var(--t2)';
+        return `<span style="color:${c};font-weight:700">${v>0?'+':''}${v}%</span>`;
+      };
+      const momRows = (d.kanal_ozet||[]).map(k=>`<tr>
+        <td style="font-size:11px;color:var(--t2)">${k.satis_kanali}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(k.net)}</td>
+        <td class="num">${_badge(k.wow_pct)}</td>
+        <td class="num">${_badge(k.mom_pct)}</td>
+      </tr>`).join('');
+      eDkEl.innerHTML = `
+        <div style="display:flex;gap:12px;margin-bottom:12px">
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center">
+            <div style="font-size:10px;color:var(--t3)">WoW Toplam</div>
+            <div style="font-size:18px;font-weight:700">${_badge(wow)}</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:10px 16px;text-align:center">
+            <div style="font-size:10px;color:var(--t3)">MoM Toplam</div>
+            <div style="font-size:18px;font-weight:700">${_badge(mom)}</div>
+          </div>
+        </div>
+        <table class="ai-dtable" style="width:100%"><thead><tr>
+          <th>Kanal</th><th class="num">Net</th><th class="num">WoW</th><th class="num">MoM</th>
+        </tr></thead><tbody>${momRows}</tbody></table>`;
+    }
+
+    // ── AI otomatik ──
+    const ekp = (d.kpis||{}).donem||{};
+    const eg4 = d.ga4_ozet||{};
+    const etop = (d.kanal_ozet||[])[0]||{};
+    adlAutoAI('eticaret-raporu', 'adle-ai-panel', 'adle-aksiyonlar', {
+      'Dönem Net Ciro':   fmtM(ekp.net),
+      'İade Oranı':       '%'+(ekp.iade_pct||0),
+      'WoW':              ekp.wow_pct != null ? (ekp.wow_pct>0?'+':'')+ekp.wow_pct+'%' : '—',
+      'MoM':              ekp.mom_pct != null ? (ekp.mom_pct>0?'+':'')+ekp.mom_pct+'%' : '—',
+      'Ort. Sepet':       fmtM(ekp.ort_sepet),
+      'SKU Çeşitliliği':  ekp.sku_cesitliligi||'—',
+      'Lider Kanal':      (etop.satis_kanali||'—')+' net '+fmtM(etop.net),
+      'Conversion Rate':  '%'+(parseFloat(eg4.conversion_pct)||0).toFixed(2),
+      'Bounce Rate':      '%'+(parseFloat(eg4.bounce_pct)||0).toFixed(1),
+      'Risk Kombinasyon': (d.iade_matrisi||[]).length+' adet (≥3 iade)',
+      'Periyot (gün)':    _adlePeriod,
+    }, `eticaret-raporu:${_adlePeriod}`);
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/7;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ── ADL Mağaza ───────────────────────────────────────────────────────────────
+let _adlmPeriod = 7;
+
+function adlmSetPeriod(n) {
+  _adlmPeriod = n;
+  adlSetPeriodBtns('adlm', n, [7, 14, 30]);
+  loadAdlMagaza();
+}
+
+async function loadAdlMagaza() {
+  const kpiEl  = document.getElementById('adlm-kpi-strip');
+  const trendEl= document.getElementById('adlm-trend');
+  const urunEl = document.getElementById('adlm-top-urunler');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/9;padding:20px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/adl/magaza?gun_sayisi=${_adlmPeriod}`).then(r => r.json());
+    const kp = d.kpis || {};
+    const today = kp.bugun || {};
+    const dun   = kp.dun   || {};
+    const donem = kp.donem || {};
+    document.getElementById('adlm-lbl').textContent =
+      d.son_gun ? `Son: ${d.son_gun} · ${_adlmPeriod} günlük analiz` : 'Mağaza raporu';
+
+    const kritikSayisi = parseInt(donem.kritik_magaza_sayisi) || 0;
+    const obf          = parseFloat(d.zincir_obf) || parseFloat(donem.net_obf) || 0;
+
+    kpiEl.innerHTML = [
+      adlKpiTile('Dönem Net Ciro', fmtM(donem.net), `${_adlmPeriod} gün`, 'var(--purple)'),
+      adlKpiTile('Dönem Satış', fmtM(donem.satis), null, 'var(--orange)'),
+      adlKpiTile('Son Gün Net', fmtM(today.net), adlDod(today.net, dun.net)+'&nbsp;dün', 'var(--purple)'),
+      adlKpiTile('Aktif Mağaza', fmtAdet(donem.aktif_magaza), null, 'var(--t1)'),
+      adlKpiTile('Kritik Mağaza', kritikSayisi, 'iade>%25',
+        kritikSayisi>3?'var(--red)':kritikSayisi>1?'var(--yellow)':'var(--green)'),
+      adlKpiTile('OBF Proxy', obf>0?fmtM(obf):'—', 'net/adet', 'var(--teal)'),
+      adlKpiTile('İade%', `%${parseFloat(donem.iade_pct)||0}`,
+        null,
+        parseFloat(donem.iade_pct)>25?'var(--red)':parseFloat(donem.iade_pct)>15?'var(--yellow)':'var(--green)'),
+      adlKpiTile('Net Adet', fmtAdet(donem.adet), null, 'var(--t1)'),
+    ].join('');
+
+    trendEl.innerHTML = adlTrendSvg(d.trend, 'net', 'var(--purple)');
+
+    // OBF proxy panel
+    const obfEl = document.getElementById('adlm-obf-panel');
+    if (obfEl) {
+      const obfVal = obf > 0 ? obf : null;
+      obfEl.innerHTML = obfVal ? `
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:28px;font-weight:700;color:var(--teal)">${fmtM(obfVal)}</div>
+            <div style="font-size:11px;color:var(--t2)">Zincir geneli<br>ortalama birim fiyat</div>
+          </div>
+          <div style="font-size:11px;color:var(--t2);line-height:1.5">
+            OBF = Net Ciro / Net Adet. Gerçek OBF için ziyaretçi sayısı gerekli —
+            <b>mv_magaza_satis_ozet</b> bekleniyor.
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="background:var(--bg3);border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-size:10px;color:var(--t3)">Birim Fiyat Proxy ✓</span>
+            <span style="background:var(--bg3);border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-size:10px;color:var(--t3)">MDO — (ziyaretçi yok)</span>
+            <span style="background:var(--bg3);border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-size:10px;color:var(--t3)">Sepet — (ziyaretçi yok)</span>
+          </div>
+        </div>` :
+        '<div style="font-size:11px;color:var(--t3);padding:8px 0">OBF hesaplanamadı — net adet verisi yetersiz.</div>';
+    }
+
+    // OBF üçgen tile
+    const ucgenObf = document.getElementById('adlm-ucgen-obf');
+    const ucgenTip = document.getElementById('adlm-ucgen-obf-tip');
+    if (ucgenObf && obf > 0) {
+      ucgenObf.textContent = fmtM(obf);
+      if (ucgenTip) ucgenTip.textContent = `Zincir geneli OBF proxy: ${fmtM(obf)}.`;
+    }
+
+    // Top 5 mağazalar
+    const top5El = document.getElementById('adlm-top5');
+    if (top5El) {
+      const t5 = d.top5_magazalar || (d.magazalar||[]).slice(0,5);
+      const maxT = Math.max(...t5.map(r=>parseFloat(r.net)||0)) || 1;
+      top5El.innerHTML = t5.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>#</th><th>Mağaza</th><th class="num">Net</th><th class="num">İade%</th><th class="num">OBF</th>
+      </tr></thead><tbody>${t5.map((r,i)=>{
+        const ip  = parseFloat(r.iade_pct)||0;
+        const ic  = ip>25?'var(--red)':ip>15?'var(--yellow)':'var(--green)';
+        const rank= ['var(--orange)','var(--teal)','var(--blue)','var(--t2)','var(--t3)'][i]||'var(--t3)';
+        const bw  = Math.round((parseFloat(r.net)||0)/maxT*40);
+        const obfR= parseFloat(r.net_obf)||0;
+        return `<tr>
+          <td style="color:${rank};font-weight:700">${i+1}</td>
+          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.magaza}</td>
+          <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+          <td class="num" style="color:${ic}">%${ip}</td>
+          <td class="num" style="color:var(--t2)">${obfR>0?fmtM(obfR):'—'}</td>
+        </tr>`;
+      }).join('')}</tbody></table>` :
+      '<div style="padding:16px;color:var(--t3);font-size:11px">Mağaza verisi yok</div>';
+    }
+
+    // Kritik 5 mağazalar (en yüksek iade oranı)
+    const krtEl = document.getElementById('adlm-kritik5');
+    if (krtEl) {
+      const k5 = d.kritik5_magazalar || (d.bottom_magazalar||[]).slice(0,5);
+      krtEl.innerHTML = k5.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>#</th><th>Mağaza</th><th class="num">Net</th><th class="num">İade%</th><th class="num">OBF</th>
+      </tr></thead><tbody>${k5.map((r,i)=>{
+        const ip  = parseFloat(r.iade_pct)||0;
+        const ic  = ip>25?'var(--red)':ip>15?'var(--yellow)':'var(--t2)';
+        const obfR= parseFloat(r.net_obf)||0;
+        return `<tr>
+          <td style="color:var(--red);font-weight:700">⚠</td>
+          <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.magaza}</td>
+          <td class="num" style="color:var(--t2)">${fmtM(r.net)}</td>
+          <td class="num" style="color:${ic};font-weight:${ip>25?700:400}">%${ip}</td>
+          <td class="num" style="color:var(--t2)">${obfR>0?fmtM(obfR):'—'}</td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      <div style="padding:6px 12px;font-size:10px;color:var(--t3)">Sıralama: İade% azalan — Kritik eşik: %25</div>` :
+      '<div style="padding:16px;color:var(--t3);font-size:11px">Kritik mağaza yok</div>';
+    }
+
+    urunEl.innerHTML = adlUrunTable((d.top_urunler||[]).map(r => ({...r, net: parseFloat(r.net)})));
+
+    window._adlmLastData = d;
+
+    // ── AI otomatik ──
+    const mkp = (d.kpis||{}).donem||{};
+    const mobf = parseFloat(d.zincir_obf)||parseFloat(mkp.net_obf)||0;
+    adlAutoAI('magaza-raporu', 'adlm-ai-panel', 'adlm-aksiyonlar', {
+      'Dönem Net Ciro':         fmtM(mkp.net),
+      'Dönem Satış':            fmtM(mkp.satis),
+      'İade Oranı':             '%'+(mkp.iade_pct||0),
+      'Aktif Mağaza':           mkp.aktif_magaza,
+      'Kritik Mağaza (iade>%25)': parseInt(mkp.kritik_magaza_sayisi)||0,
+      'OBF Proxy (net/adet)':   mobf>0?fmtM(mobf):'Hesaplanamadı',
+      'MDO (tahmin)':           '~%5.91 (sektör %12-18)',
+      'Sepet (tahmin)':         '~1.90 adet (norm 2.5-3.5)',
+      'Top 3 Mağaza':           (d.top5_magazalar||[]).slice(0,3).map(m=>m.magaza+' '+fmtM(m.net)).join(', ')||'—',
+      'Kritik Mağazalar':       (d.kritik5_magazalar||[]).slice(0,3).map(m=>m.magaza+' %'+m.iade_pct).join(', ')||'Yok',
+      'Periyot (gün)':          _adlmPeriod,
+    }, `magaza-raporu:${_adlmPeriod}`);
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/9;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ── ADL Premium ──────────────────────────────────────────────────────────────
+let _adlpPeriod = 1;
+
+function adlpSetPeriod(n) {
+  _adlpPeriod = n;
+  adlSetPeriodBtns('adlp', n, [1, 3, 6]);
+  loadAdlPremium();
+}
+
+async function loadAdlPremium() {
+  const kpiEl  = document.getElementById('adlp-kpi-strip');
+  const marEl  = document.getElementById('adlp-marka-mix');
+  const katEl  = document.getElementById('adlp-kategori-mix');
+  const sezEl  = document.getElementById('adlp-sezon');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/adl/premium?ay_count=${_adlpPeriod}`).then(r => r.json());
+    const oz = d.ozet || {};
+    document.getElementById('adlp-lbl').textContent =
+      `Son ${_adlpPeriod} aylık marka sağlık analizi · ${d.min_yyay}`;
+
+    kpiEl.innerHTML = [
+      adlKpiTile('Net Ciro', fmtM(oz.toplam_net), `${_adlpPeriod} ay`, 'var(--teal)'),
+      adlKpiTile('Brüt Satış', fmtM(oz.toplam_satis), null, 'var(--orange)'),
+      adlKpiTile('İade Tutarı', fmtM(oz.toplam_iade), null, 'var(--red)'),
+      adlKpiTile('İade%', `%${parseFloat(oz.iade_pct)||0}`, null,
+        parseFloat(oz.iade_pct)>30?'var(--red)':parseFloat(oz.iade_pct)>20?'var(--yellow)':'var(--green)'),
+      adlKpiTile('Net Adet', fmtAdet(oz.toplam_adet), null, 'var(--t1)'),
+      adlKpiTile('Ürün Çeşidi', fmtAdet(oz.urun_cesidi), 'aktif SKU', 'var(--blue)'),
+    ].join('');
+
+    // Marka mix grouping
+    const markaMap = {};
+    (d.marka_trend || []).forEach(r => {
+      const m = r.marka || 'Diğer';
+      if (!markaMap[m]) markaMap[m] = {satis:0, net:0, iade:0, adet:0};
+      markaMap[m].satis += parseFloat(r.satis)||0;
+      markaMap[m].net   += parseFloat(r.net)||0;
+      markaMap[m].iade  += parseFloat(r.iade)||0;
+      markaMap[m].adet  += parseInt(r.adet)||0;
+    });
+    const markaRows = Object.entries(markaMap).sort((a,b)=>b[1].net-a[1].net);
+    const totalNet = markaRows.reduce((s,[,v])=>s+v.net,0)||1;
+    marEl.innerHTML = `<table class="ai-dtable" style="width:100%"><thead><tr>
+      <th>Marka</th><th class="num">Net</th><th class="num">İade%</th><th style="width:60px">Pay</th>
+    </tr></thead><tbody>${markaRows.map(([m,v],i)=>{
+      const ip = v.satis>0?((v.iade/v.satis)*100).toFixed(1):0;
+      const ic = ip>30?'var(--red)':ip>20?'var(--yellow)':'var(--green)';
+      const bw = Math.round(v.net/totalNet*56);
+      const colors=['var(--orange)','var(--teal)','var(--blue)'];
+      return `<tr>
+        <td style="color:${colors[i]||'var(--t3)'};font-weight:600">${m}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(v.net)}</td>
+        <td class="num" style="color:${ic}">%${ip}</td>
+        <td><div style="width:${bw}px;height:3px;background:var(--teal);border-radius:2px"></div></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+
+    const kats = d.kategori_mix || [];
+    katEl.innerHTML = kats.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+      <th>#</th><th>Kategori</th><th class="num">Net</th><th class="num">Gerçek%</th><th class="num">Hedef%</th><th class="num">Sapma</th>
+    </tr></thead><tbody>${kats.map((r,i)=>{
+      const rank=['var(--orange)','var(--teal)','var(--blue)'][i]||'var(--t3)';
+      const gercek = parseFloat(r.pay)||0;
+      const hedef  = parseFloat(r.hedef_pct)||5;
+      const sapma  = parseFloat(r.sapma)||0;
+      const alarm  = r.sapma_alarm;
+      const sc     = sapma > 0 ? 'var(--green)' : sapma < 0 ? 'var(--red)' : 'var(--t3)';
+      return `<tr style="${alarm?'background:color-mix(in srgb, var(--red) 6%, transparent)':''}">
+        <td style="color:${rank};font-weight:700">${i+1}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${alarm?'⚠️ ':''}${r.kategori||'Diğer'}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+        <td class="num">${gercek}%</td>
+        <td class="num" style="color:var(--t3)">${hedef}%</td>
+        <td class="num" style="color:${sc};font-weight:${alarm?700:400}">${sapma>0?'+':''}${sapma}%</td>
+      </tr>`;
+    }).join('')}</tbody></table>
+    <div class="ai-dtable-footer">Hedef: ELB %35 · TRK %20 · DGI %15 · PNT %10 · BLZ %8 · AKS %7 · ±10% sapma uyarı</div>` : '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+
+    const sezs = d.sezon_dagili || [];
+    sezEl.innerHTML = sezs.length ? `<div style="padding:4px"><table class="ai-dtable" style="width:100%"><thead><tr>
+      <th>Sezon</th><th class="num">Net</th><th class="num">Pay%</th>
+    </tr></thead><tbody>${sezs.map(r=>{
+      const bw=Math.round((parseFloat(r.pay)||0)/100*120);
+      return `<tr>
+        <td>${r.sezon}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+        <td class="num"><div style="display:flex;align-items:center;gap:6px">${r.pay}%<div style="width:${bw}px;height:3px;background:var(--blue);border-radius:2px"></div></div></td>
+      </tr>`;
+    }).join('')}</tbody></table></div>` : '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+
+    // Fiyat Segmenti
+    const fsEl = document.getElementById('adlp-fiyat-seg');
+    const plBadge = document.getElementById('adlp-prem-lux-badge');
+    if (fsEl) {
+      const segs = d.fiyat_segmenti || [];
+      const _SEG_COLORS = {Entry:'var(--t3)',Core:'var(--blue)',Premium:'var(--purple)',Luxury:'var(--orange)'};
+      const _SEG_LABELS = {Entry:'<500₺',Core:'500-1.500₺',Premium:'1.500-3.500₺',Luxury:'>3.500₺'};
+      const maxPay = Math.max(...segs.map(s=>parseFloat(s.ciro_pay)||0))||1;
+      if (segs.length) {
+        const totalBar = `<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:16px">
+          ${segs.map(s=>`<div style="width:${parseFloat(s.ciro_pay)||0}%;background:${_SEG_COLORS[s.segment]||'var(--t3)'};transition:width .6s" title="${s.segment}: ${s.ciro_pay}%"></div>`).join('')}
+        </div>`;
+        fsEl.innerHTML = totalBar + `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          ${segs.map(s=>{
+            const col = _SEG_COLORS[s.segment]||'var(--t3)';
+            const isPL = ['Premium','Luxury'].includes(s.segment);
+            return `<div style="padding:10px;background:var(--bg3);border-radius:8px;border-top:2px solid ${col}">
+              <div style="font-size:10px;color:${col};font-weight:700;text-transform:uppercase">${s.segment}</div>
+              <div style="font-size:9px;color:var(--t3);margin-bottom:6px">${_SEG_LABELS[s.segment]||''}</div>
+              <div style="font-size:17px;font-weight:800;color:${isPL?col:'var(--t1)'}">${parseFloat(s.ciro_pay)||0}%</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:2px">${fmtM(s.ciro)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:8px">Hedef: Premium + Luxury > %50 ciro payı</div>`;
+      } else {
+        fsEl.innerHTML = '<div style="color:var(--t3);font-size:11px">Veri yok</div>';
+      }
+      if (plBadge) {
+        const pl = parseFloat(d.prem_lux_pay)||0;
+        const plOk = pl >= 50;
+        plBadge.textContent = `P+L: %${pl}`;
+        plBadge.style.background = plOk ? 'color-mix(in srgb, var(--green) 15%, transparent)' : 'color-mix(in srgb, var(--yellow) 15%, transparent)';
+        plBadge.style.color = plOk ? 'var(--green)' : 'var(--yellow)';
+      }
+    }
+
+    // Brand Health Index
+    const bhEl = document.getElementById('adlp-brand-health');
+    if (bhEl && d.brand_health) {
+      const bh = d.brand_health;
+      const bhColor = bh.total>=80?'var(--green)':bh.total>=65?'var(--teal)':bh.total>=50?'var(--yellow)':'var(--red)';
+      const bhBar = (lbl,score,col)=>{
+        const fc=score>=75?'var(--green)':score>=60?'var(--yellow)':'var(--red)';
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="font-size:10px;color:var(--t3);width:140px;flex-shrink:0">${lbl}</div>
+          <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px">
+            <div style="width:${Math.min(100,score)}%;height:4px;background:${fc};border-radius:2px"></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:${fc};width:28px;text-align:right">${Math.round(score)}</div>
+        </div>`;
+      };
+      bhEl.innerHTML = `<div style="text-align:center;padding:8px 0 12px">
+        <div style="font-size:36px;font-weight:800;color:${bhColor}">${bh.total}<span style="font-size:16px;color:var(--t3)">/100</span></div>
+        <div style="font-size:12px;font-weight:700;color:${bhColor};margin-top:2px">${bh.rating}</div>
+        ${bh.ort_kategori_sapma!=null?`<div style="font-size:10px;color:var(--t3);margin-top:4px">Ort. kategori sapması: ±${bh.ort_kategori_sapma}%</div>`:''}
+      </div>
+      <div style="padding:0 4px">
+        ${bhBar('Tam Fiyat Disiplini (×0.30)',bh.tam_fiyat_skoru||65)}
+        ${bhBar('Markdown Disiplini (×0.20)',bh.markdown_disiplini||65)}
+        ${bhBar('Sezon Yenileme (×0.20)',bh.sezon_yenileme||65)}
+        ${bhBar('Kategori Dengesi (×0.15)',bh.kategori_dengesi||65)}
+        ${bhBar('Marka Sinyali (×0.15)',bh.marka_sinyal||70)}
+      </div>
+      <div style="font-size:9px;color:var(--t3);margin-top:8px;text-align:center">★ Tam fiyat & sezon skorları mv_tam_fiyat_orani / mv_sell_through bekleniyor</div>`;
+    }
+
+    // Beden dağılımı
+    const bedenEl = document.getElementById('adlp-beden');
+    if (bedenEl) {
+      const beds = d.beden_dagilim || [];
+      const maxBed = Math.max(...beds.map(r=>parseInt(r.satilan_adet)||0)) || 1;
+      bedenEl.innerHTML = beds.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>Beden</th><th class="num">Adet</th><th class="num">Pay%</th>
+      </tr></thead><tbody>${beds.map(r=>{
+        const bw=Math.round((parseInt(r.satilan_adet)||0)/maxBed*56);
+        return `<tr>
+          <td style="font-weight:600">${r.beden}</td>
+          <td class="num">${fmtAdet(r.satilan_adet)}</td>
+          <td class="num"><div style="display:flex;align-items:center;gap:6px">${r.pay_pct}%<div style="width:${bw}px;height:3px;background:var(--blue);border-radius:2px"></div></div></td>
+        </tr>`;
+      }).join('')}</tbody></table>` : '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+    }
+
+    window._adlpLastData = d;
+
+    // ── AI otomatik ──
+    const pbh = d.brand_health || {};
+    const poz = d.ozet || {};
+    const pkatAlarm = (d.kategori_mix||[]).filter(k=>k.sapma_alarm).map(k=>k.kategori+' ('+k.sapma+'%)').join(', ');
+    const pfs = (d.fiyat_segmenti||[]).map(s=>s.segment+' %'+s.ciro_pay).join(' · ');
+    adlAutoAI('premium-marka', 'adlp-ai-panel', 'adlp-aksiyonlar', {
+      'Marka Sağlık Endeksi': (pbh.total||0)+'/100 ('+pbh.rating+')',
+      'Markdown Disiplini': pbh.markdown_disiplini||'—',
+      'Kategori Dengesi': pbh.kategori_dengesi||'—',
+      'Ort. Kategori Sapması': '±'+(pbh.ort_kategori_sapma||0)+'%',
+      'Kategori Alarm': pkatAlarm||'Yok',
+      'Fiyat Segmenti': pfs||'—',
+      'Premium+Luxury Pay': '%'+(d.prem_lux_pay||0)+' (hedef >%50)',
+      'Net Ciro': fmtM(poz.toplam_net),
+      'İade Oranı': '%'+(poz.iade_pct||0),
+      'Ürün Çeşidi': poz.urun_cesidi,
+      'Dönem': _adlpPeriod+' ay',
+    }, `premium-marka:${_adlpPeriod}`);
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/7;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ── ADL Ürün & Stok ──────────────────────────────────────────────────────────
+let _adlusPeriod = 1;
+
+function adlusSetPeriod(n) {
+  _adlusPeriod = n;
+  adlSetPeriodBtns('adlus', n, [1, 3, 6]);
+  loadAdlUrunStok();
+}
+
+async function loadAdlUrunStok() {
+  const kpiEl  = document.getElementById('adlus-kpi-strip');
+  const topEl  = document.getElementById('adlus-top-urunler');
+  const riskEl = document.getElementById('adlus-risk');
+  const katEl  = document.getElementById('adlus-kategori');
+  kpiEl.innerHTML = '<div class="loading" style="grid-column:1/7;padding:20px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/adl/urun-stok?ay_count=${_adlusPeriod}`).then(r => r.json());
+    const oz = d.ozet || {};
+    document.getElementById('adlus-lbl').textContent =
+      `Son ${_adlusPeriod} aylık ürün & stok analizi`;
+
+    kpiEl.innerHTML = [
+      adlKpiTile('Net Ciro', fmtM(oz.toplam_net), `${_adlusPeriod} ay`, 'var(--teal)'),
+      adlKpiTile('Brüt Satış', fmtM(oz.toplam_satis), null, 'var(--orange)'),
+      adlKpiTile('İade', fmtM(oz.toplam_iade), null, 'var(--red)'),
+      adlKpiTile('İade%', `%${parseFloat(oz.iade_pct)||0}`, null,
+        parseFloat(oz.iade_pct)>30?'var(--red)':parseFloat(oz.iade_pct)>20?'var(--yellow)':'var(--green)'),
+      adlKpiTile('Ürün Çeşidi', fmtAdet(oz.urun_cesidi), 'aktif SKU', 'var(--blue)'),
+      adlKpiTile('Risk SKU', fmtAdet(oz.risk_urun_sayisi), 'iade>%20', 'var(--yellow)'),
+    ].join('');
+
+    topEl.innerHTML = adlUrunTable(d.top_urunler || []);
+
+    const risks = d.risk_urunler || [];
+    riskEl.innerHTML = risks.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+      <th>#</th><th>Ürün</th><th class="num">Satış</th><th class="num">İade%</th>
+    </tr></thead><tbody>${risks.map((r,i)=>{
+      const ip=parseFloat(r.iade_pct)||0;
+      const ic=ip>40?'var(--red)':ip>30?'var(--yellow)':'var(--orange)';
+      return `<tr>
+        <td style="color:${ic};font-weight:700">${i+1}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+        <td class="num">${fmtM(r.satis)}</td>
+        <td class="num" style="color:${ic};font-weight:700">%${ip}</td>
+      </tr>`;
+    }).join('')}</tbody></table>` : '<div style="padding:16px;color:var(--green);font-size:12px">✓ Risk ürün yok</div>';
+
+    const kats = d.kategori_perf || [];
+    const maxKat = Math.max(...kats.map(r=>parseFloat(r.net)||0))||1;
+    katEl.innerHTML = kats.length ? `<table class="ai-dtable"><thead><tr>
+      <th>#</th><th>Kategori</th><th class="num">Net</th><th class="num">Adet</th><th class="num">İade%</th><th class="num">Pay%</th>
+    </tr></thead><tbody>${kats.map((r,i)=>{
+      const ip=parseFloat(r.iade_pct)||0;
+      const ic=ip>30?'var(--red)':ip>20?'var(--yellow)':'var(--green)';
+      const rank=['var(--orange)','var(--teal)','var(--blue)'][i]||'var(--t3)';
+      return `<tr>
+        <td style="color:${rank};font-weight:700">${i+1}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.kategori||'Diğer'}</td>
+        <td class="num" style="color:var(--teal)">${fmtM(r.net)}</td>
+        <td class="num">${fmtAdet(r.adet)}</td>
+        <td class="num" style="color:${ic}">%${ip}</td>
+        <td class="num">${r.pay}%</td>
+      </tr>`;
+    }).join('')}</tbody></table>
+    <div class="ai-dtable-footer">${kats.length} kategori · Son ${_adlusPeriod} ay</div>` : '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+
+    // Beden & Renk — sektör normu karşılaştırmalı
+    const brEl = document.getElementById('adlus-beden-renk');
+    if (brEl) {
+      const beds = d.beden_dagilim || [];
+      const renkler = d.renk_top15 || [];
+      // Sektör normu (kadın giyim): S %20, M %35, L %25, XL %15
+      const _BEDEN_NORM = {S:20, M:35, L:25, XL:15, XS:5, XXL:3};
+      const maxBed = Math.max(...beds.map(r=>parseInt(r.satilan_adet)||0)) || 1;
+      brEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:10px">Beden Dağılımı vs Sektör Normu</div>
+          ${beds.slice(0,8).map(r=>{
+            const gercek = parseFloat(r.pay_pct)||0;
+            const norm   = _BEDEN_NORM[(r.beden||'').toUpperCase()] || null;
+            const sapma  = norm != null ? (gercek - norm) : null;
+            const alarm  = sapma != null && Math.abs(sapma) >= 10;
+            const sc     = sapma == null ? 'var(--t3)' : sapma > 0 ? 'var(--green)' : 'var(--red)';
+            const bw     = Math.round(gercek/100*120);
+            const nw     = norm ? Math.round(norm/100*120) : 0;
+            return `<div style="margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                <span style="font-weight:600;color:${alarm?'var(--yellow)':'var(--t1)'}">${r.beden}${alarm?' ⚠️':''}</span>
+                <div style="display:flex;gap:8px;align-items:center">
+                  ${norm!=null?`<span style="font-size:9px;color:var(--t3)">Norm: %${norm}</span>`:''}
+                  <span style="color:${sc};font-weight:600">${gercek}%${sapma!=null?' ('+(sapma>0?'+':'')+sapma.toFixed(1)+'%)':''}</span>
+                </div>
+              </div>
+              <div style="position:relative;height:5px;background:var(--bg4);border-radius:3px">
+                <div style="position:absolute;height:5px;background:var(--blue);width:${Math.min(100,gercek/100*100)}%;border-radius:3px;opacity:0.9"></div>
+                ${norm!=null?`<div style="position:absolute;height:100%;width:1px;background:var(--t3);left:${norm}%;top:0"></div>`:''}
+              </div>
+            </div>`;
+          }).join('')}
+          <div style="font-size:9px;color:var(--t3);margin-top:6px">| çizgi = sektör normu · ±10% sapma ⚠️</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:10px">Top Renkler</div>
+          ${renkler.slice(0,10).map((r,i)=>{
+            const cols=['var(--orange)','var(--teal)','var(--blue)','var(--purple)','var(--green)','var(--yellow)','var(--red)','var(--pink)','var(--t2)','var(--t3)'];
+            const bw=Math.round((parseFloat(r.pay_pct)||0)/100*80);
+            return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+              <span style="width:8px;height:8px;border-radius:2px;background:${cols[i%10]};flex-shrink:0"></span>
+              <span style="font-size:11px;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.renk}</span>
+              <div style="width:${bw}px;height:3px;background:${cols[i%10]};border-radius:2px;flex-shrink:0"></div>
+              <span style="font-size:10px;color:var(--t3);width:28px;text-align:right;flex-shrink:0">${r.pay_pct}%</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Restock önerisi
+    const restockEl = document.getElementById('adlus-restock');
+    if (restockEl) {
+      const rs = d.restock_onerileri || [];
+      restockEl.innerHTML = rs.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>#</th><th>Ürün</th><th class="num">Son Ay</th><th class="num">Günlük</th><th class="num" style="color:var(--orange)">Öneri (60g)</th>
+      </tr></thead><tbody>${rs.slice(0,15).map((r,i)=>{
+        const rank=['var(--orange)','var(--teal)','var(--blue)'][i]||'var(--t3)';
+        return `<tr>
+          <td style="color:${rank};font-weight:700">${i+1}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+          <td class="num">${fmtAdet(r.son_ay_satis)}</td>
+          <td class="num" style="color:var(--t3)">${parseFloat(r.gunluk_ort)||0}</td>
+          <td class="num" style="color:var(--orange);font-weight:700">${fmtAdet(r.onerilen_siparis)}</td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      <div class="ai-dtable-footer">Formül: son ay satış / 30 × 60 · Eşik: 20+ adet/ay</div>` :
+      '<div style="padding:16px;color:var(--t3);font-size:11px">Yeterli satış verisi yok</div>';
+    }
+
+    // Hızlı eriyen
+    const hizliEl = document.getElementById('adlus-hizli');
+    if (hizliEl) {
+      const hz = d.hizli_eriyenler || [];
+      hizliEl.innerHTML = hz.length ? `<table class="ai-dtable" style="width:100%"><thead><tr>
+        <th>#</th><th>Ürün</th><th class="num">Adet</th><th class="num">Ciro</th>
+      </tr></thead><tbody>${hz.slice(0,15).map((r,i)=>{
+        const rank=['var(--orange)','var(--teal)','var(--blue)'][i]||'var(--t3)';
+        return `<tr>
+          <td style="color:${rank};font-weight:700">${i+1}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.urun_adi||r.urun_kodu}</td>
+          <td class="num" style="color:var(--orange);font-weight:700">${fmtAdet(r.satilan_adet)}</td>
+          <td class="num">${fmtM(r.ciro)}</td>
+        </tr>`;
+      }).join('')}</tbody></table>` : '<div style="padding:16px;color:var(--t3);font-size:11px">Veri yok</div>';
+    }
+
+    // Ürün Başarı Tahmini
+    const basariEl = document.getElementById('adlus-basari-tahmini');
+    if (basariEl) {
+      const bt = d.urun_basari_tahmini || [];
+      if (bt.length) {
+        const _faktor_label = (f) => f>=1.0?'Erken Sezon':f>=0.85?'Orta Sezon':f>=0.65?'Geç Sezon':'Markdown';
+        const _faktor_color = (f) => f>=1.0?'var(--green)':f>=0.85?'var(--teal)':f>=0.65?'var(--yellow)':'var(--red)';
+        basariEl.innerHTML = `<table class="ai-dtable" style="width:100%"><thead><tr>
+          <th>#</th><th>Ürün</th><th class="num">İlk Hafta</th><th class="num">Gün</th>
+          <th class="num">Sezon Haftası</th><th class="num" style="color:var(--orange)">Projeksiyon</th><th>Faz</th>
+        </tr></thead><tbody>${bt.slice(0,12).map((r,i)=>{
+          const rank=['var(--orange)','var(--teal)','var(--blue)'][i]||'var(--t3)';
+          const fc = _faktor_color(r.faktor);
+          return `<tr>
+            <td style="color:${rank};font-weight:700">${i+1}</td>
+            <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">${r.urun_adi||r.urun_kodu}</td>
+            <td class="num" style="color:var(--teal);font-weight:700">${fmtAdet(r.ilk_hafta_adet)}</td>
+            <td class="num" style="color:var(--t3)">${r.yasam_gunu}g</td>
+            <td class="num">H${r.sezon_hafta}</td>
+            <td class="num" style="color:var(--orange);font-weight:700">${fmtAdet(r.projeksiyon_adet)} adet</td>
+            <td style="font-size:10px;color:${fc}">${_faktor_label(r.faktor)}</td>
+          </tr>`;
+        }).join('')}</tbody></table>
+        <div class="ai-dtable-footer">Formül: İlk hafta satış × kalan hafta × sezon faktörü · Son 45-60 gün içinde başlayan SKU'lar</div>`;
+      } else {
+        basariEl.innerHTML = '<div style="padding:16px;color:var(--t3);font-size:11px">Son 45-60 günde başlayan yeni SKU bulunamadı (min. 3 adet/hafta eşiği)</div>';
+      }
+    }
+
+    window._adlusLastData = d;
+
+    // ── AI otomatik ──
+    const uoz = d.ozet || {};
+    const uhz = (d.hizli_eriyenler||[]).slice(0,3).map(r=>r.urun_adi).join(', ')||'—';
+    const ursk = (d.risk_urunler||[]).slice(0,3).map(r=>r.urun_adi+' %'+r.iade_pct).join(', ')||'—';
+    const ubt = (d.urun_basari_tahmini||[]).slice(0,2).map(r=>r.urun_adi+' proj:'+r.projeksiyon_adet).join(', ')||'—';
+    adlAutoAI('urun-stok', 'adlus-ai-panel', 'adlus-aksiyonlar', {
+      'Toplam Net Ciro': fmtM(uoz.toplam_net),
+      'Toplam Adet': fmtAdet(uoz.toplam_adet),
+      'İade Oranı': '%'+(uoz.iade_pct||0),
+      'Ürün Çeşidi': uoz.urun_cesidi,
+      'Risk Ürün Sayısı': uoz.risk_urun_sayisi||0,
+      'Hızlı Eriyen Top3': uhz,
+      'Yüksek İade Risk Top3': ursk,
+      'Yeni SKU Projeksiyon': ubt,
+      'Dönem': _adlusPeriod+' ay',
+    }, `urun-stok:${_adlusPeriod}`);
+
+  } catch(e) {
+    kpiEl.innerHTML = `<div style="grid-column:1/7;padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+// ── PREMIUM BRIEF v2 ─────────────────────────────────────────────────────────
+const _pbPeriod = { ec: 7 };  // MG has no period param
+
+function setPbPeriod(tip, p) {
+  _pbPeriod[tip] = p;
+  [7, 15, 30].forEach(n => {
+    const btn = document.getElementById(`pb-${tip}-p${n}`);
+    if (!btn) return;
+    btn.style.background = n === p ? '#c9a961' : 'var(--bg3)';
+    btn.style.color      = n === p ? '#0d0d12' : 'var(--t2)';
+    btn.style.fontWeight = n === p ? '700'     : '400';
+  });
+  loadPremiumBrief(tip);
+}
+
+function loadPremiumBrief(tip) {
+  const dateEl  = document.getElementById(`pb-${tip}-date`);
+  const iframe  = document.getElementById(`iframe-premium-brief-${tip}`);
+  const loading = document.getElementById(`pb-${tip}-loading`);
+  const newwin  = document.getElementById(`pb-${tip}-newwin`);
+
+  if (!dateEl.value) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    dateEl.value = d.toISOString().slice(0, 10);
+  }
+
+  let url = `/api/v1/brief/${tip}?gun=${dateEl.value}`;
+  if (tip === 'ec' && _pbPeriod.ec) url += `&period=${_pbPeriod.ec}`;
+  newwin.href = url;
+
+  loading.style.display = 'block';
+
+  const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  iframe.onload = () => {
+    loading.style.display = 'none';
+    try { iframe.contentWindow.postMessage({type:'theme', value:theme}, '*'); } catch(e){}
+  };
+  iframe.src = url;
+}
+
+// ── ADL AI helpers ───────────────────────────────────────────────────────────
+function adlAksiyonlarHtml(aksiyonlar) {
+  if (!aksiyonlar || !aksiyonlar.length) return '';
+  const cols = ['var(--orange)', 'var(--teal)', 'var(--blue)'];
+  return `<div class="table-card" style="margin-top:0">
+    <div class="table-header"><span class="table-title">✅ AI Önerilen 3 Aksiyon</span></div>
+    <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+      ${aksiyonlar.slice(0,3).map((a,i)=>`
+        <div style="display:flex;gap:12px;padding:10px;background:var(--bg3);border-radius:8px;border-left:3px solid ${cols[i]||'var(--t3)'}">
+          <div style="font-size:18px;font-weight:800;color:${cols[i]||'var(--t3)'};min-width:24px">${a.priority||i+1}</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:3px">${a.title||''}</div>
+            <div style="font-size:11px;color:var(--t2);margin-bottom:6px">${a.description||''}</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              ${a.expected_impact?`<span style="font-size:10px;color:var(--green)">📈 ${a.expected_impact}</span>`:''}
+              ${a.responsible?`<span style="font-size:10px;color:var(--t3)">👤 ${a.responsible}</span>`:''}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function adlAiPanel(el, aksEl, text) {
+  el.innerHTML = `<div style="font-size:12px;line-height:1.6;color:var(--t1);white-space:pre-wrap">${text}</div>`;
+}
+
+// AI yorum cache — key: "rapor_tipi:period"
+const _adlAiCache = {};
+
+async function adlAutoAI(rapor_tipi, panelId, aksId, ozet_data, cacheKey) {
+  const key = cacheKey || rapor_tipi;
+  const panel = document.getElementById(panelId);
+  const aks   = document.getElementById(aksId);
+  if (!panel) return;
+
+  // Cache'den servis et
+  if (_adlAiCache[key]) {
+    const c = _adlAiCache[key];
+    adlAiPanel(panel, aks, c.acilis_yorumu || 'Yorum üretilemedi.');
+    if (c.aksiyonlar && c.aksiyonlar.length && aks) {
+      aks.style.display = 'block';
+      aks.innerHTML = adlAksiyonlarHtml(c.aksiyonlar);
+    }
+    return;
+  }
+
+  panel.innerHTML = '<div class="loading" style="height:60px"><div class="spinner"></div></div>';
+  try {
+    const r = await fetch(`${API}/portal/adl/ai-yorum`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ rapor_tipi, ozet_data })
+    }).then(x => x.json());
+    _adlAiCache[key] = r;
+    adlAiPanel(panel, aks, r.acilis_yorumu || 'Yorum üretilemedi.');
+    if (r.aksiyonlar && r.aksiyonlar.length && aks) {
+      aks.style.display = 'block';
+      aks.innerHTML = adlAksiyonlarHtml(r.aksiyonlar);
+    }
+  } catch(e) {
+    panel.innerHTML = `<div style="color:var(--red);font-size:11px;padding:12px">AI hatası: ${e.message}</div>`;
+  }
+}
+
+// Eski fonksiyon — geriye dönük uyum
+async function adlCallAI(prefix, btnId, panelId, aksEl, rapor_tipi, ozet_data) {
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  await adlAutoAI(rapor_tipi, panelId, aksEl, ozet_data, rapor_tipi);
+  if (btn) { btn.disabled = false; btn.textContent = 'Yenile'; }
+}
+
+// Per-report AI generate functions
+function adlyGenerateAI() {
+  const eg = (window._adlyLastData||{}).eg_kpis||{};
+  const mg = (window._adlyLastData||{}).mg_kpis||{};
+  adlCallAI('adly','adly-ai-btn','adly-ai-panel','adly-aksiyonlar','yonetici-ozeti', {
+    'E-ticaret Net (bugün)': fmtM((eg.bugun||{}).net),
+    'Mağaza Net (bugün)': fmtM((mg.bugun||{}).net),
+    'E-tic İade%': '%'+((eg.bugun||{}).iade_pct||0),
+    'Risk uyarı sayısı': ((window._adlyLastData||{}).risk_uyarilari||[]).length,
+    'Periyot (gün)': _adlyPeriod,
+  });
+}
+
+function adleGenerateAI() {
+  const d   = window._adleLastData || {};
+  const kp  = (d.kpis||{}).donem||{};
+  const g   = d.ga4_ozet||{};
+  const top = (d.kanal_ozet||[])[0]||{};
+  adlCallAI('adle','adle-ai-btn','adle-ai-panel','adle-aksiyonlar','eticaret-raporu', {
+    'Dönem Net Ciro':      fmtM(kp.net),
+    'Brüt Ciro':           fmtM(kp.satis),
+    'İade Ciro':           fmtM(kp.iade),
+    'İptal Ciro':          fmtM(kp.iptal),
+    'İade Oranı':          '%'+(kp.iade_pct||0),
+    'Ort. Sepet':          fmtM(kp.ort_sepet),
+    'SKU Çeşitliliği':     kp.sku_cesitliligi||'—',
+    'Lider Kanal':         (top.satis_kanali||'—')+' net '+fmtM(top.net),
+    'Conversion Rate':     '%'+(parseFloat(g.conversion_pct)||0).toFixed(2),
+    'Bounce Rate':         '%'+(parseFloat(g.bounce_pct)||0).toFixed(1),
+    'Risk Kombinasyon':    (d.iade_matrisi||[]).length+' adet (≥3 iade)',
+    'Periyot (gün)':       _adlePeriod,
+    'Son gün':             d.son_gun,
+  });
+}
+
+function adlmGenerateAI() {
+  const d  = window._adlmLastData || {};
+  const kp = (d.kpis||{}).donem||{};
+  const obf = parseFloat(d.zincir_obf)||parseFloat(kp.net_obf)||0;
+  const kritik = parseInt(kp.kritik_magaza_sayisi)||0;
+  const top5 = (d.top5_magazalar||[]).slice(0,3).map(m=>m.magaza+' '+fmtM(m.net)).join(', ');
+  const k5   = (d.kritik5_magazalar||[]).slice(0,3).map(m=>m.magaza+' %'+m.iade_pct).join(', ');
+  adlCallAI('adlm','adlm-ai-btn','adlm-ai-panel','adlm-aksiyonlar','magaza-raporu', {
+    'Dönem Net Ciro': fmtM(kp.net),
+    'Dönem Satış': fmtM(kp.satis),
+    'İade Oranı': '%'+(kp.iade_pct||0),
+    'Aktif Mağaza': kp.aktif_magaza,
+    'Kritik Mağaza (iade>%25)': kritik,
+    'OBF Proxy (net/adet)': obf>0?fmtM(obf):'Hesaplanamadı',
+    'MDO (tahmin)': '~%5.91 (sektör %12-18)',
+    'Sepet (tahmin)': '~1.90 adet (norm 2.5-3.5)',
+    'Top 3 Mağaza': top5||'—',
+    'Kritik Mağazalar': k5||'Yok',
+    'Periyot (gün)': _adlmPeriod,
+    'Son gün': d.son_gun,
+  });
+}
+
+function adlpGenerateAI() {
+  const d = window._adlpLastData || {};
+  const bh = d.brand_health || {};
+  const oz = d.ozet || {};
+  const fs = d.fiyat_segmenti || [];
+  const katAlarmlar = (d.kategori_mix || []).filter(k=>k.sapma_alarm).map(k=>k.kategori+' ('+k.sapma+'%)').join(', ');
+  const segStr = fs.map(s=>s.segment+' %'+s.ciro_pay).join(' · ');
+  adlCallAI('adlp','adlp-ai-btn','adlp-ai-panel','adlp-aksiyonlar','premium-marka', {
+    'Marka Sağlık Endeksi': (bh.total||0)+'/100 ('+bh.rating+')',
+    'Markdown Disiplini Skoru': bh.markdown_disiplini||'—',
+    'Kategori Dengesi Skoru': bh.kategori_dengesi||'—',
+    'Ort. Kategori Sapması': '±'+(bh.ort_kategori_sapma||0)+'%',
+    'Kategori Alarm': katAlarmlar || 'Yok',
+    'Fiyat Segmenti': segStr || '—',
+    'Premium+Luxury Pay': '%'+(d.prem_lux_pay||0)+' (hedef >%50)',
+    'Net Ciro': fmtM(oz.toplam_net),
+    'İade Oranı': '%'+(oz.iade_pct||0),
+    'Ürün Çeşidi': oz.urun_cesidi,
+    'Periyot (ay)': _adlpPeriod,
+  });
+}
+
+function adlusGenerateAI() {
+  const d  = window._adlusLastData || {};
+  const oz = d.ozet || {};
+  // Beden sapma alarmları
+  const _NORM = {S:20, M:35, L:25, XL:15, XS:5, XXL:3};
+  const bedenAlarmlar = (d.beden_dagilim||[]).filter(r=>{
+    const n=_NORM[(r.beden||'').toUpperCase()];
+    return n && Math.abs((parseFloat(r.pay_pct)||0)-n)>=10;
+  }).map(r=>r.beden+' %'+r.pay_pct).join(', ');
+  // Restock sayısı
+  const restockSayi = (d.restock_onerileri||[]).length;
+  const topRestock  = (d.restock_onerileri||[])[0];
+  adlCallAI('adlus','adlus-ai-btn','adlus-ai-panel','adlus-aksiyonlar','urun-stok', {
+    'Net Ciro':            fmtM(oz.toplam_net),
+    'Risk SKU':            oz.risk_urun_sayisi+' adet (iade>%20)',
+    'İade Oranı':          '%'+(oz.iade_pct||0),
+    'Ürün Çeşidi':         oz.urun_cesidi,
+    'Restock Öneri Adedi': restockSayi,
+    'En Hızlı Eriyen':     topRestock?(topRestock.urun_adi||topRestock.urun_kodu)+' '+fmtAdet(topRestock.son_ay_satis)+' adet/ay':'—',
+    'Beden Sapma Alarmı':  bedenAlarmlar || 'Yok',
+    'Stok Yaşı':           'mv_stok_yasi bekleniyor',
+    'Sell-Through':        'mv_sell_through bekleniyor',
+    'Periyot (ay)':        _adlusPeriod,
+  });
+}
+
+
+// ── Menu Visibility — DB'den aktif/pasif durumuna göre nav'ı gizle ────────────
+(async function applyMenuVisibility() {
+  try {
+    const res = await fetch('/api/v1/menu');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    for (const group of data.groups) {
+      if (!group.navId) continue;
+      const hdr  = document.getElementById(group.navId);
+      const body = document.getElementById('grpb-' + group.navId.replace('grp-', ''));
+      if (!group.active) {
+        if (hdr)  hdr.style.display  = 'none';
+        if (body) body.style.display = 'none';
+      }
+      for (const item of (group.items || [])) {
+        if (!item.navId) continue;
+        const el = document.getElementById(item.navId);
+        if (el && (!item.active || !group.active)) el.style.display = 'none';
+      }
+    }
+  } catch (e) { /* sessiz hata — sidebar hardcoded olarak kalır */ }
+})();
 </script>
 </body>
 </html>

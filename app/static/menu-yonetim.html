@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menü Yönetimi — Pimland</title>
+<script>(function(){var t=localStorage.getItem('pimland-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})()</script>
+<style>
+:root{
+  --bg:#13111e;--bg2:#1e1a2e;--bg3:#1a1728;--bg4:#22203a;
+  --border:#2e2945;--border2:#3a3550;
+  --t1:#efe8ff;--t2:#c0b4d8;--t3:#8877aa;--t4:#665e78;
+  --purple:#7c5cbf;--purple-dark:#5a3f8a;
+}
+[data-theme="light"]{
+  --bg:#f2f2f7;--bg2:#ffffff;--bg3:#f5f4ff;--bg4:#eaeaf5;
+  --border:#dcdce8;--border2:#c4c4d8;
+  --t1:#18102e;--t2:#4a3a6a;--t3:#7a6a9a;--t4:#a898c8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;font-size:13px}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+
+/* Header */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);padding:20px 32px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.hdr h1{font-size:20px;font-weight:700;color:var(--t1);letter-spacing:-0.3px}
+.hdr p{margin-top:3px;font-size:12px;color:var(--t3)}
+.hdr-actions{display:flex;gap:10px;align-items:center}
+.unsaved{font-size:12px;color:#f4a261;margin-right:4px}
+
+/* Content */
+.content{padding:24px 32px;max-width:900px;margin:0 auto}
+
+/* Stats */
+.stats{display:flex;gap:14px;margin-bottom:26px;flex-wrap:wrap}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 18px;flex:1 1 130px;min-width:130px}
+.stat-num{font-size:22px;font-weight:700;color:var(--t1)}
+.stat-lbl{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* Section */
+.section{background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.sec-hdr{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.sec-title{font-size:13px;font-weight:600;color:var(--t2);letter-spacing:0.5px}
+.sec-sub{font-size:12px;color:var(--t3)}
+
+/* Rows */
+.agent-row{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border);transition:opacity .2s}
+.agent-row.off{opacity:.45}
+.group-row{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--border);transition:background .15s;border-left:3px solid transparent;cursor:default}
+.group-row.drag-over{background:rgba(124,92,191,.12);border-left-color:var(--purple)}
+.group-row.dragging{opacity:.5}
+.item-row{display:flex;align-items:center;gap:9px;padding:9px 18px 9px 46px;border-bottom:1px solid var(--border);transition:all .2s;border-left:3px solid transparent;cursor:default}
+.item-row.drag-over{background:rgba(124,92,191,.08);border-left-color:rgba(124,92,191,.5)}
+.item-row.dragging{opacity:.5}
+.item-row.off{opacity:.42}
+
+/* Toggle */
+.toggle{position:relative;display:inline-flex;align-items:center;flex-shrink:0;border:none;outline:none;border-radius:99px;transition:background .25s,border-color .25s;cursor:pointer}
+.toggle.lg{width:44px;height:24px;border:1px solid var(--border2)}
+.toggle.sm{width:36px;height:20px;border:1px solid var(--border2)}
+.toggle.on{background:linear-gradient(135deg,#7c5cbf,#6a4fa0)!important;border-color:rgba(124,92,191,.5)!important}
+.toggle.off-state{background:var(--border2)}
+.toggle-dot{position:absolute;border-radius:50%;background:#999;transition:all .25s}
+.toggle.on .toggle-dot{background:#fff;box-shadow:0 1px 4px rgba(124,92,191,.5)}
+.toggle.lg .toggle-dot{width:18px;height:18px;top:2px}
+.toggle.lg.off-state .toggle-dot{left:3px}
+.toggle.lg.on .toggle-dot{left:23px}
+.toggle.sm .toggle-dot{width:14px;height:14px;top:2px}
+.toggle.sm.off-state .toggle-dot{left:3px}
+.toggle.sm.on .toggle-dot{left:19px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;border-radius:8px;font-weight:500;transition:all .2s;font-size:13px;padding:8px 13px;background:rgba(124,92,191,.1);color:var(--t2);border:1px solid var(--border2)}
+.btn:hover{background:rgba(124,92,191,.18)}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;border:none;padding:9px 20px;box-shadow:0 2px 10px rgba(124,92,191,.3)}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--t3);border:none;padding:5px 9px}
+.btn-ghost:hover{color:var(--t2)}
+.btn-sm{padding:4px 9px;font-size:12px}
+.btn-danger{background:rgba(239,83,80,.1);color:#ef5350;border:1px solid rgba(239,83,80,.2)}
+.btn-danger:hover{background:rgba(239,83,80,.18)}
+.mini{background:none;border:none;color:var(--t3);padding:3px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.mini:hover{color:var(--t2);background:rgba(124,92,191,.1)}
+.mini:disabled{opacity:.3;cursor:not-allowed}
+.mini.red{color:#a05050}
+.mini.red:hover{color:#ef5350;background:rgba(239,83,80,.1)}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:22px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.4px;padding:0 6px}
+
+/* Drag handle */
+.drag-hdl{cursor:grab;flex-shrink:0;opacity:.4}
+.drag-hdl:active{cursor:grabbing}
+
+/* Group label */
+.grp-lbl{flex:1;font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.7px;transition:color .2s}
+.grp-lbl.off{color:var(--t4)}
+.grp-lbl small{font-size:11px;font-weight:400;color:var(--t4);margin-left:7px}
+.item-lbl{flex:1;font-size:13px;color:var(--t2);transition:color .2s}
+.item-lbl.off{color:var(--t4)}
+
+/* Inline edit */
+.edit-row{display:flex;gap:6px;align-items:center;flex:1}
+.edit-input{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:6px 10px;color:var(--t1);font-size:13px;outline:none;flex:1;transition:border-color .2s}
+.edit-input:focus{border-color:var(--purple)}
+
+/* Icon group */
+.icon-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:17px;cursor:pointer;transition:all .15s;background:var(--bg4);border:1px solid var(--border2)}
+.icon-btn.active{background:rgba(124,92,191,.25);border:2px solid var(--purple)}
+
+/* Add item row */
+.add-item-row{padding:9px 18px 9px 46px}
+.add-item-form{padding:10px 18px 10px 46px;display:flex;gap:7px;align-items:center;border-bottom:1px solid var(--border)}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:26px 30px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:600;color:var(--t1)}
+.modal label{font-size:12px;color:var(--t3);margin-bottom:5px;display:block}
+.modal input,.modal select{background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:9px 12px;color:var(--t1);font-size:13px;outline:none;width:100%;transition:border-color .2s}
+.modal input:focus,.modal select:focus{border-color:var(--purple)}
+.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
+.move-btn{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;color:var(--t1);cursor:pointer;font-size:13px;text-align:left;transition:all .15s;width:100%}
+.move-btn:hover{background:rgba(124,92,191,.15);border-color:var(--purple)}
+.move-list{display:flex;flex-direction:column;gap:5px;max-height:280px;overflow-y:auto}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,var(--purple),var(--purple-dark));color:#fff;padding:11px 22px;border-radius:9px;font-size:13px;font-weight:500;opacity:0;transition:all .3s ease;pointer-events:none;box-shadow:0 8px 28px rgba(124,92,191,.4);z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Loading */
+.loading{text-align:center;padding:60px;color:var(--t3);font-size:14px}
+.error-banner{background:rgba(239,83,80,.1);border:1px solid rgba(239,83,80,.3);border-radius:10px;padding:14px 18px;color:#ef5350;font-size:13px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+
+<!-- New Group Modal -->
+<div class="modal-bg" id="newGroupModal" style="display:none" onclick="if(event.target===this)closeModal('newGroupModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span class="modal-title">Yeni Menü Grubu Oluştur</span>
+      <button class="mini" onclick="closeModal('newGroupModal')">${svgX()}</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <label>Grup Adı</label>
+      <input id="newGroupName" placeholder="Örn: PAZARLAMA" onkeydown="if(event.key==='Enter')addGroup()">
+    </div>
+    <div style="margin-bottom:4px"><label>İkon</label></div>
+    <div class="icon-row" id="newGroupIconPicker"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('newGroupModal')">İptal</button>
+      <button class="btn btn-primary" onclick="addGroup()" id="addGroupBtn">Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<!-- Move Item Modal -->
+<div class="modal-bg" id="moveModal" style="display:none" onclick="if(event.target===this)closeModal('moveModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span class="modal-title">Başka Gruba Taşı</span>
+      <button class="mini" onclick="closeModal('moveModal')">${svgX()}</button>
+    </div>
+    <p id="moveModalDesc" style="font-size:12px;color:var(--t3);margin-bottom:14px"></p>
+    <div class="move-list" id="moveGroupList"></div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let state = { agents: [], groups: [] };
+let expanded = {};
+let hasChanges = false;
+let editingId = null;
+let newItemGroupId = null;
+let newGroupIcon = "📁";
+let newItemIcon = "📄";
+let moveTarget = null; // {itemId, fromGroupId}
+let dragState = { type: null, id: null, groupId: null };
+let dropTarget = null;
+let saving = false;
+
+const ICONS = ["📁","📊","🛒","🏷️","🗂️","✨","📑","⚙️","🔧","📋","📈","🎯","📦","🌐","📰","📝","💡","🔔","📌","🏪","👥","📅","🔄","📚","🖼️","🔍","🌳","🔗","💰","📱"];
+
+// ── SVG helpers ───────────────────────────────────────────────────────────────
+function svgX(){return`<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`}
+function svgCheck(){return`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgEdit(){return`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10 2l2 2-7 7H3v-2l7-7z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgTrash(){return`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V2.5a.5.5 0 01.5-.5h3a.5.5 0 01.5.5V4m1.5 0l-.5 8a1 1 0 01-1 1h-5a1 1 0 01-1-1l-.5-8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`}
+function svgMove(){return`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10M4 4l-2 3 2 3M10 4l2 3-2 3M4 4L7 2l3 2M4 10l3 2 3-2" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgUp(){return`<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 10V2M3 5l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgDown(){return`<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M3 7l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgChevron(open){return`<svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="transition:transform .2s;transform:rotate(${open?90:0}deg)"><path d="M5 3l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function svgPlus(){return`<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`}
+function svgHandle(){return`<svg class="drag-hdl" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="3" r="1.5" fill="#aaa"/><circle cx="11" cy="3" r="1.5" fill="#aaa"/><circle cx="5" cy="8" r="1.5" fill="#aaa"/><circle cx="11" cy="8" r="1.5" fill="#aaa"/><circle cx="5" cy="13" r="1.5" fill="#aaa"/><circle cx="11" cy="13" r="1.5" fill="#aaa"/></svg>`}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let _toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+const API='/api/v1/menu';
+
+async function loadMenu(){
+  document.getElementById('root').innerHTML='<div class="loading">Yükleniyor…</div>';
+  try{
+    const r=await fetch(API);
+    if(!r.ok) throw new Error(await r.text());
+    state=await r.json();
+    if(!expanded['grp-1']) expanded['grp-1']=true;
+    hasChanges=false;
+    render();
+  }catch(e){
+    document.getElementById('root').innerHTML=`<div class="content"><div class="error-banner">⚠️ Menü yüklenemedi: ${e.message}</div></div>`;
+  }
+}
+
+async function saveMenu(){
+  if(saving) return;
+  saving=true;
+  const btn=document.getElementById('saveBtn');
+  if(btn){btn.disabled=true;btn.textContent='Kaydediliyor…';}
+  try{
+    const r=await fetch(API+'/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(state)
+    });
+    if(!r.ok) throw new Error(await r.text());
+    state=await r.json();
+    hasChanges=false;
+    render();
+    showToast('Menü ayarları kaydedildi ✓');
+  }catch(e){
+    showToast('Kayıt hatası: '+e.message);
+  }finally{
+    saving=false;
+    if(btn){btn.disabled=false;btn.innerHTML=svgCheck()+' Kaydet';}
+  }
+}
+
+// ── Mutations ─────────────────────────────────────────────────────────────────
+function mark(){ hasChanges=true; }
+
+function toggleAgent(id){
+  state.agents=state.agents.map(a=>a.id===id?{...a,active:!a.active}:a);
+  mark(); render();
+}
+function toggleGroup(id){
+  state.groups=state.groups.map(g=>g.id===id?{...g,active:!g.active}:g);
+  mark(); render();
+}
+function toggleItem(groupId,itemId){
+  state.groups=state.groups.map(g=>g.id===groupId
+    ?{...g,items:g.items.map(i=>i.id===itemId?{...i,active:!i.active}:i)}:g);
+  mark(); render();
+}
+
+function moveGroup(idx,dir){
+  const ni=idx+dir;
+  if(ni<0||ni>=state.groups.length) return;
+  const gs=[...state.groups];
+  [gs[idx],gs[ni]]=[gs[ni],gs[idx]];
+  state.groups=gs; mark(); render();
+}
+function moveItem(groupId,idx,dir){
+  state.groups=state.groups.map(g=>{
+    if(g.id!==groupId) return g;
+    const it=[...g.items]; const ni=idx+dir;
+    if(ni<0||ni>=it.length) return g;
+    [it[idx],it[ni]]=[it[ni],it[idx]];
+    return {...g,items:it};
+  });
+  mark(); render();
+}
+
+function deleteGroup(id){
+  const g=state.groups.find(g=>g.id===id);
+  if(g.items.length>0&&!confirm(`"${g.label}" grubunda ${g.items.length} öğe var. Silmek istediğinize emin misiniz?`)) return;
+  state.groups=state.groups.filter(g=>g.id!==id);
+  mark(); render(); showToast(`"${g.label}" grubu silindi`);
+}
+function deleteItem(groupId,itemId){
+  state.groups=state.groups.map(g=>g.id===groupId
+    ?{...g,items:g.items.filter(i=>i.id!==itemId)}:g);
+  mark(); render();
+}
+
+function addGroup(){
+  const nameEl=document.getElementById('newGroupName');
+  const name=(nameEl?.value||'').trim();
+  if(!name) return;
+  const newId='grp-'+Date.now();
+  state.groups.push({id:newId,label:name.toUpperCase(),icon:newGroupIcon,active:true,order:state.groups.length,items:[]});
+  nameEl.value=''; newGroupIcon='📁';
+  closeModal('newGroupModal');
+  mark(); render(); showToast(`"${name}" grubu eklendi`);
+}
+
+function addItem(){
+  const nameEl=document.getElementById('newItemName');
+  const name=(nameEl?.value||'').trim();
+  if(!name||!newItemGroupId) return;
+  const newId='itm-'+Date.now();
+  state.groups=state.groups.map(g=>g.id===newItemGroupId
+    ?{...g,items:[...g.items,{id:newId,label:name,icon:newItemIcon,active:true}]}:g);
+  nameEl.value=''; newItemIcon='📄'; newItemGroupId=null;
+  mark(); render(); showToast(`"${name}" eklendi`);
+}
+
+function moveItemToGroup(targetGroupId){
+  if(!moveTarget) return;
+  const {itemId,fromGroupId}=moveTarget;
+  if(targetGroupId===fromGroupId){closeModal('moveModal');return;}
+  let movedItem=null;
+  state.groups=state.groups.map(g=>{
+    if(g.id===fromGroupId){movedItem=g.items.find(i=>i.id===itemId);return{...g,items:g.items.filter(i=>i.id!==itemId)};}
+    if(g.id===targetGroupId) return{...g,items:[...g.items,movedItem]};
+    return g;
+  });
+  const tgt=state.groups.find(g=>g.id===targetGroupId);
+  closeModal('moveModal'); moveTarget=null;
+  mark(); render(); showToast(`"${tgt?.label}" grubuna taşındı`);
+}
+
+// ── Inline edit ───────────────────────────────────────────────────────────────
+function startEdit(id,label){
+  editingId=id;
+  render();
+  const inp=document.getElementById('edit-input-'+id);
+  if(inp){inp.focus();inp.select();}
+}
+
+function confirmEdit(id){
+  const inp=document.getElementById('edit-input-'+id);
+  const val=(inp?.value||'').trim();
+  if(!val){editingId=null;render();return;}
+  state.agents=state.agents.map(a=>a.id===id?{...a,label:val}:a);
+  state.groups=state.groups.map(g=>{
+    if(g.id===id) return{...g,label:val.toUpperCase()};
+    return{...g,items:g.items.map(i=>i.id===id?{...i,label:val}:i)};
+  });
+  editingId=null; mark(); render();
+}
+
+function cancelEdit(){editingId=null;render();}
+
+// ── Drag & Drop ───────────────────────────────────────────────────────────────
+function onGroupDragStart(e,id){ dragState={type:'group',id,groupId:null}; e.dataTransfer.effectAllowed='move';}
+function onGroupDragOver(e,id){ e.preventDefault(); if(dragState.type==='group'&&dragState.id!==id){dropTarget=id;renderDropHighlights();}}
+function onGroupDrop(e,targetId){
+  e.preventDefault();
+  if(dragState.type==='group'&&dragState.id!==targetId){
+    const gs=[...state.groups];
+    const fi=gs.findIndex(g=>g.id===dragState.id); const ti=gs.findIndex(g=>g.id===targetId);
+    const[m]=gs.splice(fi,1); gs.splice(ti,0,m);
+    state.groups=gs; mark();
+  }
+  dragState={type:null,id:null,groupId:null}; dropTarget=null; render();
+}
+function onItemDragStart(e,groupId,itemId){ dragState={type:'item',id:itemId,groupId}; e.dataTransfer.effectAllowed='move';}
+function onItemDragOver(e,itemId){ e.preventDefault(); if(dragState.type==='item'){dropTarget=itemId;renderDropHighlights();}}
+function onItemDrop(e,targetGroupId,targetItemId){
+  e.preventDefault();
+  if(dragState.type==='item'){
+    const gs=state.groups.map(g=>({...g,items:[...g.items]}));
+    const sg=gs.find(g=>g.id===dragState.groupId);
+    const si=sg.items.findIndex(i=>i.id===dragState.id);
+    const[m]=sg.items.splice(si,1);
+    const tg=gs.find(g=>g.id===targetGroupId);
+    const ti=tg.items.findIndex(i=>i.id===targetItemId);
+    tg.items.splice(ti,0,m);
+    state.groups=gs; mark();
+  }
+  dragState={type:null,id:null,groupId:null}; dropTarget=null; render();
+}
+function onDragEnd(){ dragState={type:null,id:null,groupId:null}; dropTarget=null; renderDropHighlights();}
+
+function renderDropHighlights(){
+  document.querySelectorAll('.group-row').forEach(el=>{
+    el.classList.toggle('drag-over',el.dataset.id===dropTarget&&dragState.type==='group');
+    el.classList.toggle('dragging',el.dataset.id===dragState.id&&dragState.type==='group');
+  });
+  document.querySelectorAll('.item-row').forEach(el=>{
+    el.classList.toggle('drag-over',el.dataset.id===dropTarget&&dragState.type==='item');
+    el.classList.toggle('dragging',el.dataset.id===dragState.id&&dragState.type==='item');
+  });
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function openNewGroup(){
+  newGroupIcon='📁'; buildIconPicker('newGroupIconPicker',v=>{newGroupIcon=v;});
+  document.getElementById('newGroupName').value='';
+  document.getElementById('newGroupModal').style.display='flex';
+  setTimeout(()=>document.getElementById('newGroupName').focus(),50);
+}
+function openMoveModal(itemId,fromGroupId){
+  moveTarget={itemId,fromGroupId};
+  const fromGrp=state.groups.find(g=>g.id===fromGroupId);
+  const item=fromGrp?.items.find(i=>i.id===itemId);
+  document.getElementById('moveModalDesc').textContent=`"${item?.label}" öğesini hangi gruba taşımak istiyorsunuz?`;
+  const list=document.getElementById('moveGroupList');
+  list.innerHTML=state.groups.filter(g=>g.id!==fromGroupId).map(g=>`
+    <button class="move-btn" onclick="moveItemToGroup('${g.id}')">
+      <span style="font-size:16px">${g.icon}</span>
+      <span style="font-weight:600">${g.label}</span>
+      <span style="font-size:11px;color:var(--t3);margin-left:auto">${g.items.length} öğe</span>
+    </button>`).join('');
+  document.getElementById('moveModal').style.display='flex';
+}
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+function buildIconPicker(containerId,onSelect){
+  const c=document.getElementById(containerId);
+  c.innerHTML=ICONS.slice(0,20).map(ic=>`
+    <button class="icon-btn${ic===newGroupIcon?' active':''}" onclick="selectIcon('${containerId}','${ic}')">${ic}</button>
+  `).join('');
+  c._onSelect=onSelect;
+}
+function selectIcon(containerId,ic){
+  newGroupIcon=ic;
+  document.querySelectorAll(`#${containerId} .icon-btn`).forEach(b=>{
+    b.classList.toggle('active',b.textContent===ic);
+  });
+  const c=document.getElementById(containerId);
+  if(c._onSelect) c._onSelect(ic);
+}
+
+function openNewItem(groupId){
+  newItemGroupId=groupId; newItemIcon='📄';
+  render();
+  setTimeout(()=>{const inp=document.getElementById('newItemName');if(inp){inp.focus();}},30);
+}
+function cancelNewItem(){ newItemGroupId=null; render(); }
+
+// ── Toggle helpers ─────────────────────────────────────────────────────────────
+function toggleHTML(checked,size){
+  const cls='toggle '+(size==='sm'?'sm':'lg')+' '+(checked?'on':'off-state');
+  return `<button class="${cls}" style="background:${checked?'':'#3a3550'}" onclick="event.stopPropagation();this._toggle&&this._toggle()"></button>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  const agents=state.agents||[]; const groups=state.groups||[];
+  const activeAgents=agents.filter(a=>a.active).length;
+  const activeGroups=groups.filter(g=>g.active).length;
+  const totalItems=groups.reduce((s,g)=>s+g.items.length,0);
+  const activeItems=groups.reduce((s,g)=>s+g.items.filter(i=>i.active).length,0);
+
+  const html=`
+  <div class="hdr">
+    <div>
+      <h1>Menü Yönetimi</h1>
+      <p>Ekranları aktif/pasif yapın, sıralayın ve gruplandırın</p>
+    </div>
+    <div class="hdr-actions">
+      ${hasChanges?'<span class="unsaved">● Kaydedilmemiş değişiklik</span>':''}
+      <button id="saveBtn" class="btn btn-primary" onclick="saveMenu()">${svgCheck()} Kaydet</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="stat" style="border-left:3px solid #7c5cbf">
+        <div class="stat-num">${activeAgents}/${agents.length}</div><div class="stat-lbl">Aktif Ajan</div>
+      </div>
+      <div class="stat" style="border-left:3px solid #4FC3F7">
+        <div class="stat-num">${activeGroups}/${groups.length}</div><div class="stat-lbl">Aktif Grup</div>
+      </div>
+      <div class="stat" style="border-left:3px solid #81C784">
+        <div class="stat-num">${activeItems}/${totalItems}</div><div class="stat-lbl">Aktif Ekran</div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-title">AI AJANLARI</span>
+        <span class="sec-sub">${activeAgents} aktif</span>
+      </div>
+      ${agents.map(a=>`
+        <div class="agent-row${a.active?'':' off'}">
+          <span style="font-size:20px">${a.icon}</span>
+          <div style="flex:1;min-width:0">
+            ${editingId===a.id?`
+              <div class="edit-row">
+                <input class="edit-input" id="edit-input-${a.id}" value="${escH(a.label)}"
+                  onkeydown="if(event.key==='Enter')confirmEdit('${a.id}');if(event.key==='Escape')cancelEdit()">
+                <button class="mini" onclick="confirmEdit('${a.id}')">${svgCheck()}</button>
+                <button class="mini" onclick="cancelEdit()">${svgX()}</button>
+              </div>
+            `:`
+              <div style="font-size:14px;font-weight:600;color:var(--t1)">${escH(a.label)}</div>
+              <div style="font-size:11px;color:var(--t3)">${escH(a.subtitle)}</div>
+            `}
+          </div>
+          <span class="badge" style="background:${a.badgeColor}22;color:${a.badgeColor}">${a.badge}</span>
+          ${editingId!==a.id?`<button class="mini" onclick="startEdit('${a.id}','${escH(a.label)}')" title="Yeniden adlandır">${svgEdit()}</button>`:''}
+          <button class="toggle lg ${a.active?'on':'off-state'}" style="background:${a.active?'':'var(--border2)'}"
+            onclick="toggleAgent('${a.id}')"><span class="toggle-dot"></span></button>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Groups -->
+    <div class="section">
+      <div class="sec-hdr">
+        <span class="sec-title">MENÜ GRUPLARI</span>
+        <button class="btn btn-sm" onclick="openNewGroup()">${svgPlus()} Yeni Grup</button>
+      </div>
+      ${groups.map((g,gi)=>`
+        <div>
+          <div class="group-row" data-id="${g.id}"
+            draggable="true"
+            ondragstart="onGroupDragStart(event,'${g.id}')"
+            ondragover="onGroupDragOver(event,'${g.id}')"
+            ondrop="onGroupDrop(event,'${g.id}')"
+            ondragend="onDragEnd()">
+            ${svgHandle()}
+            <button class="mini" onclick="expanded['${g.id}']=!expanded['${g.id}'];render()" style="padding:2px">${svgChevron(expanded[g.id])}</button>
+            <span style="font-size:17px">${g.icon}</span>
+            ${editingId===g.id?`
+              <div class="edit-row">
+                <input class="edit-input" id="edit-input-${g.id}" value="${escH(g.label)}"
+                  onkeydown="if(event.key==='Enter')confirmEdit('${g.id}');if(event.key==='Escape')cancelEdit()">
+                <button class="mini" onclick="confirmEdit('${g.id}')">${svgCheck()}</button>
+                <button class="mini" onclick="cancelEdit()">${svgX()}</button>
+              </div>
+            `:`
+              <span class="grp-lbl${g.active?'':' off'}">${escH(g.label)}<small>(${g.items.length} öğe)</small></span>
+            `}
+            <div style="display:flex;gap:2px;align-items:center">
+              <button class="mini" onclick="moveGroup(${gi},-1)" ${gi===0?'disabled':''} title="Yukarı">${svgUp()}</button>
+              <button class="mini" onclick="moveGroup(${gi},1)" ${gi===groups.length-1?'disabled':''} title="Aşağı">${svgDown()}</button>
+              ${editingId!==g.id?`<button class="mini" onclick="startEdit('${g.id}','${escH(g.label)}')" title="Yeniden adlandır">${svgEdit()}</button>`:''}
+              <button class="mini red" onclick="deleteGroup('${g.id}')" title="Grubu sil">${svgTrash()}</button>
+            </div>
+            <button class="toggle lg ${g.active?'on':'off-state'}" style="background:${g.active?'':'var(--border2)'}"
+              onclick="toggleGroup('${g.id}')"><span class="toggle-dot"></span></button>
+          </div>
+          ${expanded[g.id]?`
+            <div>
+              ${g.items.map((item,ii)=>`
+                <div class="item-row${item.active&&g.active?'':' off'}" data-id="${item.id}"
+                  draggable="true"
+                  ondragstart="onItemDragStart(event,'${g.id}','${item.id}')"
+                  ondragover="onItemDragOver(event,'${item.id}')"
+                  ondrop="onItemDrop(event,'${g.id}','${item.id}')"
+                  ondragend="onDragEnd()">
+                  ${svgHandle()}
+                  <span style="font-size:14px">${item.icon}</span>
+                  ${editingId===item.id?`
+                    <div class="edit-row">
+                      <input class="edit-input" id="edit-input-${item.id}" value="${escH(item.label)}"
+                        onkeydown="if(event.key==='Enter')confirmEdit('${item.id}');if(event.key==='Escape')cancelEdit()">
+                      <button class="mini" onclick="confirmEdit('${item.id}')">${svgCheck()}</button>
+                      <button class="mini" onclick="cancelEdit()">${svgX()}</button>
+                    </div>
+                  `:`
+                    <span class="item-lbl${item.active?'':' off'}">${escH(item.label)}</span>
+                  `}
+                  <div style="display:flex;gap:2px;align-items:center">
+                    <button class="mini" onclick="moveItem('${g.id}',${ii},-1)" ${ii===0?'disabled':''} title="Yukarı">${svgUp()}</button>
+                    <button class="mini" onclick="moveItem('${g.id}',${ii},1)" ${ii===g.items.length-1?'disabled':''} title="Aşağı">${svgDown()}</button>
+                    ${editingId!==item.id?`<button class="mini" onclick="startEdit('${item.id}','${escH(item.label)}')" title="Yeniden adlandır">${svgEdit()}</button>`:''}
+                    <button class="mini" onclick="openMoveModal('${item.id}','${g.id}')" title="Başka gruba taşı">${svgMove()}</button>
+                    <button class="mini red" onclick="deleteItem('${g.id}','${item.id}')" title="Öğeyi sil">${svgTrash()}</button>
+                  </div>
+                  <button class="toggle sm ${item.active?'on':'off-state'}" style="background:${item.active?'':'var(--border2)'}"
+                    onclick="toggleItem('${g.id}','${item.id}')"><span class="toggle-dot"></span></button>
+                </div>
+              `).join('')}
+              ${newItemGroupId===g.id?`
+                <div class="add-item-form">
+                  <select id="newItemIconSel" onchange="newItemIcon=this.value"
+                    style="width:50px;padding:6px 4px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--t1);font-size:15px;text-align:center">
+                    ${ICONS.map(ic=>`<option value="${ic}"${ic===newItemIcon?' selected':''}>${ic}</option>`).join('')}
+                  </select>
+                  <input id="newItemName" placeholder="Ekran adı…"
+                    style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:7px;padding:7px 11px;color:var(--t1);font-size:13px;outline:none"
+                    onkeydown="if(event.key==='Enter')addItem();if(event.key==='Escape')cancelNewItem()">
+                  <button class="btn btn-primary btn-sm" onclick="addItem()">Ekle</button>
+                  <button class="btn-ghost btn-sm" onclick="cancelNewItem()" style="padding:4px 8px;background:none;border:none;color:var(--t3);cursor:pointer">İptal</button>
+                </div>
+              `:`
+                <div class="add-item-row">
+                  <button class="btn-ghost btn-sm" style="padding:4px 8px;background:none;border:none;color:var(--t4);cursor:pointer;font-size:12px;display:inline-flex;gap:5px;align-items:center"
+                    onclick="openNewItem('${g.id}')">${svgPlus()} Ekran ekle</button>
+                </div>
+              `}
+            </div>
+          `:''}
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  document.getElementById('root').innerHTML=html;
+}
+
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadMenu();
+
+window.addEventListener('message', e => {
+  if (e.data?.type === 'theme')
+    document.documentElement.setAttribute('data-theme', e.data.value || 'dark');
+});
+</script>
+</body>
+</html>
