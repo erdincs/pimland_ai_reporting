@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{% include "brief/_ds_head.html" %}
+</head>
+<body class="{{ body_class }}">
+  <div class="adl-wrap">
+
+    <header class="adl-header">
+      <div>
+        <div class="adl-eyebrow">{{ eyebrow }}</div>
+        <div class="brand">adL</div>
+      </div>
+      <div class="meta">{{ tarih_str }}<br>{{ saat_str }} · Istanbul</div>
+    </header>
+
+    <section class="adl-hero">
+      <div class="adl-eyebrow">{{ hero_label }}</div>
+      <div class="figure gold">{{ hero_figure }}</div>
+      {% if hero_delta %}<div class="delta {{ hero_delta_cls }} tri {{ hero_delta_tri }}">{{ hero_delta }}</div>{% endif %}
+      {% if hero_caption %}<div class="caption">{{ hero_caption }}</div>{% endif %}
+    </section>
+
+    {% block sections %}{% endblock %}
+
+    <footer class="adl-footer">
+      <span>adL Premium Brief · v2</span>
+      <span class="src">Kaynak: Incorta · {{ tarih_str }} · {{ saat_str }}</span>
+    </footer>
+
+  </div>
+<script>
+/* CDN 404 fallback — mock gradient devreye girer */
+document.querySelectorAll('.p-thumb[data-cdnurl]').forEach(el => {
+  const url = el.dataset.cdnurl;
+  const img = new Image();
+  img.onload = () => { el.style.backgroundImage = 'url(' + url + ')'; };
+  img.src = url;
+});
+/* Portal tema mesajını dinle */
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'theme') {
+    document.documentElement.setAttribute('data-theme', e.data.value);
+  }
+});
+</script>
+</body>
+</html>

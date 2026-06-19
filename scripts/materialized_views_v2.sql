@@ -208,3 +208,50 @@ ORDER BY date DESC, marka;
 
 CREATE INDEX IF NOT EXISTS idx_mv_analytics_gunluk
   ON mv_analytics_gunluk (tarih, marka);
+
+-- ── View 8: mv_ecom_gunluk ───────────────────────────────────────────────────
+-- Kaynak: incorta_ecommerce_gunluk (~851K satır)
+-- Grain: gun × satis_kanali
+-- tarih kolonu TEXT 'YYYY-MM-DD HH:MM:SS' formatında — ::date cast gerekli
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_ecom_gunluk AS
+SELECT
+  tarih::date                                       AS gun,
+  satis_kanali,
+  COALESCE(SUM(satis_tutar),         0)             AS brut_ciro,
+  COALESCE(ABS(SUM(iade_tutar)),     0)             AS iade_ciro,
+  COALESCE(ABS(SUM(iptal_tutar)),    0)             AS iptal_ciro,
+  COALESCE(SUM(satis_adet),          0)             AS brut_adet
+FROM incorta_ecommerce_gunluk
+WHERE tarih IS NOT NULL
+  AND satis_kanali IS NOT NULL
+GROUP BY tarih::date, satis_kanali
+ORDER BY tarih::date DESC, satis_kanali;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uix_mv_ecom_gunluk
+  ON mv_ecom_gunluk (gun, satis_kanali);
+
+-- ── View 9: mv_ecom_haftalik ─────────────────────────────────────────────────
+-- Kaynak: incorta_ecommerce_gunluk (~851K satır)
+-- Grain: yil × hafta × satis_kanali (ISO week, Pazartesi başlangıç)
+CREATE MATERIALIZED VIEW IF NOT EXISTS mv_ecom_haftalik AS
+SELECT
+  EXTRACT(ISOYEAR  FROM tarih::date)::integer       AS yil,
+  EXTRACT(WEEK     FROM tarih::date)::integer       AS hafta,
+  DATE_TRUNC('week', tarih::date)::date             AS hafta_basi,
+  satis_kanali,
+  COALESCE(SUM(satis_tutar),         0)             AS brut_ciro,
+  COALESCE(ABS(SUM(iade_tutar)),     0)             AS iade_ciro,
+  COALESCE(ABS(SUM(iptal_tutar)),    0)             AS iptal_ciro,
+  COALESCE(SUM(satis_adet),          0)             AS brut_adet
+FROM incorta_ecommerce_gunluk
+WHERE tarih IS NOT NULL
+  AND satis_kanali IS NOT NULL
+GROUP BY
+  EXTRACT(ISOYEAR FROM tarih::date)::integer,
+  EXTRACT(WEEK    FROM tarih::date)::integer,
+  DATE_TRUNC('week', tarih::date)::date,
+  satis_kanali
+ORDER BY hafta_basi DESC, satis_kanali;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uix_mv_ecom_haftalik
+  ON mv_ecom_haftalik (yil, hafta, satis_kanali);

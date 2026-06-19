@@ -45,3 +45,15 @@ views:
     depends_on: [incorta_satis, pim_products]
     refresh_strategy: concurrent
     description: "Kategori bazlı satış — pim_products JOIN gerektirir"
+
+  - name: mv_ecom_gunluk
+    order: 8
+    depends_on: [incorta_ecommerce_gunluk]
+    refresh_strategy: concurrent
+    description: "E-ticaret günlük KPI — gun × satis_kanali (brut/iade/iptal/adet)"
+
+  - name: mv_ecom_haftalik
+    order: 9
+    depends_on: [incorta_ecommerce_gunluk]
+    refresh_strategy: concurrent
+    description: "E-ticaret haftalık trend — yil × hafta × satis_kanali (ISO week)"

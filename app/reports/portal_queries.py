@@ -6,6 +6,7 @@ Multi-value filters (ay, kanal) use PostgreSQL ANY(:arr) binding.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
@@ -1699,4 +1700,1196 @@ async def get_urun_satis_detail(
             "ort_fiyat":        ort_fiyat,
         })
 
-    return result
+
+# ── Günlük E-Ticaret Analizi (incorta_ecommerce_gunluk) ──────────────────────
+
+async def get_eticaret_gunluk(session: AsyncSession, gun_sayisi: int = 30) -> dict:
+    """Son N günlük e-ticaret satışları: trend + kanal + top ürünler + KPI özeti."""
+
+    max_gun = await session.execute(text(
+        "SELECT MAX(tarih::date) FROM incorta_ecommerce_gunluk"
+    ))
+    son_gun = max_gun.scalar()
+    bas_tarih   = (son_gun - timedelta(days=gun_sayisi - 1)) if son_gun else date.today()
+    bas_str     = str(bas_tarih)
+    son_str     = str(son_gun) if son_gun else date.today().isoformat()
+    dun_str     = str((son_gun - timedelta(days=1)) if son_gun else (date.today() - timedelta(days=1)))
+
+    trend_rows = await session.execute(text("""
+        SELECT
+            tarih::date                                          AS gun,
+            SUM(satis_tutar)                                     AS satis,
+            ABS(SUM(COALESCE(iade_tutar, 0)))                    AS iade,
+            ABS(SUM(COALESCE(iptal_tutar, 0)))                   AS iptal,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutar, 0))
+              + SUM(COALESCE(iptal_tutar, 0))                    AS net,
+            SUM(satis_adet)                                      AS brut_adet
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY tarih::date
+        ORDER BY tarih::date
+    """), {"bas": bas_str})
+    trend = [dict(r) for r in trend_rows.mappings()]
+
+    # Son günün kanal özeti (MAX tarih)
+    son_gun_next = str((son_gun + timedelta(days=1)) if son_gun else (date.today() + timedelta(days=1)))
+    kanal_rows = await session.execute(text("""
+        SELECT
+            satis_kanali,
+            SUM(satis_tutar)                                       AS satis,
+            ABS(SUM(COALESCE(iade_tutar, 0)))                      AS iade,
+            ABS(SUM(COALESCE(iptal_tutar, 0)))                     AS iptal,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutar, 0))
+              + SUM(COALESCE(iptal_tutar, 0))                      AS net,
+            SUM(satis_adet)                                        AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)    AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :gun AND tarih < :gun_next
+        GROUP BY satis_kanali
+        ORDER BY SUM(satis_tutar) DESC
+    """), {"gun": son_str, "gun_next": son_gun_next})
+    kanal = [dict(r) for r in kanal_rows.mappings()]
+
+    top_rows = await session.execute(text("""
+        SELECT
+            urun_kodu,
+            MAX(urun_adi)                                          AS urun_adi,
+            SUM(satis_tutar)                                       AS satis,
+            ABS(SUM(COALESCE(iade_tutar, 0)))                      AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutar, 0))
+              + SUM(COALESCE(iptal_tutar, 0))                      AS net,
+            SUM(satis_adet)                                        AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)    AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY urun_kodu
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"bas": bas_str})
+    top_urunler = [dict(r) for r in top_rows.mappings()]
+
+    # Bugün / dün / dönem KPI (text range comparisons — index-friendly)
+    kpi_rows = await session.execute(text("""
+        SELECT
+            CASE
+                WHEN tarih >= :bugun AND tarih < :bugun_next THEN 'bugun'
+                WHEN tarih >= :dun   AND tarih < :bugun     THEN 'dun'
+                ELSE 'hafta'
+            END                                                    AS donem,
+            SUM(satis_tutar)                                       AS satis,
+            ABS(SUM(COALESCE(iade_tutar, 0)))                      AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutar, 0))
+              + SUM(COALESCE(iptal_tutar, 0))                      AS net,
+            SUM(satis_adet)                                        AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)   AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :hafta_bas
+        GROUP BY donem
+    """), {
+        "bugun":      son_str,
+        "bugun_next": son_gun_next,
+        "dun":        dun_str,
+        "hafta_bas":  bas_str,
+    })
+    kpis: dict = {"bugun": {}, "dun": {}, "hafta": {}}
+    for r in kpi_rows.mappings():
+        d = r["donem"]
+        if d:
+            kpis[d] = {k: v for k, v in r.items() if k != "donem"}
+
+    return {
+        "son_gun":    str(son_gun) if son_gun else None,
+        "trend":      trend,
+        "kanal":      kanal,
+        "top_urunler": top_urunler,
+        "kpis":       kpis,
+    }
+
+
+# ── Günlük Mağaza Analizi (incorta_magaza_gunluk) ────────────────────────────
+
+async def get_magaza_gunluk(session: AsyncSession, gun_sayisi: int = 30) -> dict:
+    """Son N günlük mağaza satışları: trend + top mağazalar + top ürünler + KPI özeti."""
+    try:
+        await session.execute(text("SELECT 1 FROM incorta_magaza_gunluk LIMIT 1"))
+    except Exception:
+        await session.rollback()
+        return {"hata": "magaza_veri_yok", "trend": [], "kpis": {}, "top_magazalar": [], "top_urunler": []}
+
+    max_gun = await session.execute(text(
+        "SELECT MAX(tarih::date) FROM incorta_magaza_gunluk"
+    ))
+    son_gun = max_gun.scalar()
+    bas_tarih   = (son_gun - timedelta(days=gun_sayisi - 1)) if son_gun else date.today()
+    bas_str     = str(bas_tarih)
+    son_str     = str(son_gun) if son_gun else date.today().isoformat()
+    dun_str     = str((son_gun - timedelta(days=1)) if son_gun else (date.today() - timedelta(days=1)))
+    son_next    = str((son_gun + timedelta(days=1)) if son_gun else (date.today() + timedelta(days=1)))
+
+    trend_rows = await session.execute(text("""
+        SELECT
+            tarih::date                                          AS gun,
+            SUM(satis_tutar)                                     AS satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                   AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))    AS net,
+            SUM(satis_adet)                                      AS brut_adet
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas
+        GROUP BY tarih::date
+        ORDER BY tarih::date
+    """), {"bas": bas_str})
+    trend = [dict(r) for r in trend_rows.mappings()]
+
+    top_mag_rows = await session.execute(text("""
+        SELECT
+            magaza,
+            SUM(satis_tutar)                                         AS satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                       AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))        AS net,
+            SUM(satis_adet)                                          AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)      AS iade_pct
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+        GROUP BY magaza
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"bas": bas_str})
+    top_magazalar = [dict(r) for r in top_mag_rows.mappings()]
+
+    top_urun_rows = await session.execute(text("""
+        SELECT
+            urun_kodu,
+            MAX(urun_adi)                                            AS urun_adi,
+            SUM(satis_tutar)                                         AS satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                       AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))        AS net,
+            SUM(satis_adet)                                          AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)      AS iade_pct
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas
+        GROUP BY urun_kodu
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"bas": bas_str})
+    top_urunler = [dict(r) for r in top_urun_rows.mappings()]
+
+    # KPI: text range comparisons — index-friendly
+    kpi_rows = await session.execute(text("""
+        SELECT
+            CASE
+                WHEN tarih >= :son AND tarih < :son_next THEN 'bugun'
+                WHEN tarih >= :dun AND tarih < :son      THEN 'dun'
+                ELSE 'hafta'
+            END                                                      AS donem,
+            SUM(satis_tutar)                                         AS satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                       AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))        AS net,
+            SUM(satis_adet)                                          AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)     AS iade_pct
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :hafta_bas
+        GROUP BY donem
+    """), {
+        "son":      son_str,
+        "son_next": son_next,
+        "dun":      dun_str,
+        "hafta_bas": bas_str,
+    })
+    kpis: dict = {"bugun": {}, "dun": {}, "hafta": {}}
+    for r in kpi_rows.mappings():
+        d = r["donem"]
+        if d:
+            kpis[d] = {k: v for k, v in r.items() if k != "donem"}
+
+    return {
+        "son_gun":      str(son_gun) if son_gun else None,
+        "trend":        trend,
+        "top_magazalar": top_magazalar,
+        "top_urunler":  top_urunler,
+        "kpis":         kpis,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADL RAPORLAR — 5 Rapor Sistemi
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_KOMISYON = {
+    "ADL": 0.0, "ADL IOS APP": 0.0, "ADL ANDROID APP": 0.0,
+    "LOVEMYBODY": 0.0, "LMB IOS APP": 0.0, "LMB ANDROID APP": 0.0,
+    "TY ADL AZ": 0.18, "TY LMB AZ": 0.18,
+    "TRENDYOL": 0.18, "HEPSIBURADA": 0.15, "BOYNER": 0.15, "AMAZON": 0.15,
+}
+
+def _komisyon_sonrasi(net: float, kanal: str) -> float:
+    rate = _KOMISYON.get(kanal, 0.15)
+    return net * (1 - rate)
+
+def _min_yyay(ay_count: int) -> int:
+    today = date.today()
+    m = today.month - ay_count + 1
+    y = today.year
+    while m <= 0:
+        m += 12
+        y -= 1
+    return y * 100 + m
+
+
+async def get_adl_yonetici(session: AsyncSession, gun_sayisi: int = 7) -> dict:
+    """Yönetici Özeti: e-ticaret + mağaza birleşik günlük özet."""
+    # ── E-Ticaret son gün ──────────────────────────────────────────────────
+    eg_max = await session.execute(text(
+        "SELECT MAX(tarih::date) FROM incorta_ecommerce_gunluk"
+    ))
+    eg_son = eg_max.scalar()
+    if eg_son:
+        eg_bas = eg_son - timedelta(days=gun_sayisi - 1)
+        eg_bas_str  = str(eg_bas)
+        eg_son_str  = str(eg_son)
+        eg_dun_str  = str(eg_son - timedelta(days=1))
+        eg_next_str = str(eg_son + timedelta(days=1))
+    else:
+        eg_bas_str = eg_son_str = eg_dun_str = eg_next_str = str(date.today())
+
+    eg_kpi_rows = await session.execute(text("""
+        SELECT
+            CASE WHEN tarih >= :son AND tarih < :next THEN 'bugun'
+                 WHEN tarih >= :dun AND tarih < :son  THEN 'dun'
+                 ELSE 'hafta' END AS donem,
+            SUM(satis_tutar)                                                                    AS satis,
+            ABS(SUM(COALESCE(iade_tutar, 0)))                                                  AS iade,
+            ABS(SUM(COALESCE(iptal_tutar, 0)))                                                 AS iptal,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0))        AS net,
+            SUM(satis_adet)                                                                    AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY donem
+    """), {"bas": eg_bas_str, "son": eg_son_str, "next": eg_next_str, "dun": eg_dun_str})
+    eg_kpis: dict = {"bugun": {}, "dun": {}, "hafta": {}}
+    for r in eg_kpi_rows.mappings():
+        d = r["donem"]
+        if d:
+            eg_kpis[d] = {k: float(v) if v is not None else 0.0 for k, v in r.items() if k != "donem"}
+
+    # ── Kanal breakdown (son gün) ──────────────────────────────────────────
+    kanal_rows = await session.execute(text("""
+        SELECT satis_kanali,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :son AND tarih < :next
+        GROUP BY satis_kanali
+        ORDER BY net DESC
+        LIMIT 8
+    """), {"son": eg_son_str, "next": eg_next_str})
+    top_kanallar = [dict(r) for r in kanal_rows.mappings()]
+    for k in top_kanallar:
+        k["komisyon_net"] = round(_komisyon_sonrasi(float(k.get("net") or 0), k.get("satis_kanali", "")), 2)
+
+    # ── Mağaza son gün ────────────────────────────────────────────────────
+    mg_son = None
+    mg_kpis: dict = {"bugun": {}, "dun": {}, "hafta": {}}
+    mg_bas_str = mg_son_str = mg_dun_str = mg_next_str = str(date.today())
+    try:
+        mg_max = await session.execute(text(
+            "SELECT MAX(tarih::date) FROM incorta_magaza_gunluk"
+        ))
+        mg_son = mg_max.scalar()
+        if mg_son:
+            mg_bas = mg_son - timedelta(days=gun_sayisi - 1)
+            mg_bas_str  = str(mg_bas)
+            mg_son_str  = str(mg_son)
+            mg_dun_str  = str(mg_son - timedelta(days=1))
+            mg_next_str = str(mg_son + timedelta(days=1))
+        else:
+            mg_bas_str = mg_son_str = mg_dun_str = mg_next_str = str(date.today())
+
+        mg_kpi_rows = await session.execute(text("""
+            SELECT
+                CASE WHEN tarih >= :son AND tarih < :next THEN 'bugun'
+                     WHEN tarih >= :dun AND tarih < :son  THEN 'dun'
+                     ELSE 'hafta' END AS donem,
+                SUM(satis_tutar) AS satis,
+                ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+                SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+                SUM(satis_adet) AS adet,
+                ROUND((ABS(SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+            FROM incorta_magaza_gunluk
+            WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+            GROUP BY donem
+        """), {"bas": mg_bas_str, "son": mg_son_str, "next": mg_next_str, "dun": mg_dun_str})
+        for r in mg_kpi_rows.mappings():
+            d = r["donem"]
+            if d:
+                mg_kpis[d] = {k: float(v) if v is not None else 0.0 for k, v in r.items() if k != "donem"}
+    except Exception:
+        await session.rollback()
+        mg_son = None
+        mg_kpis = {"bugun": {}, "dun": {}, "hafta": {}}
+
+    # ── Risk uyarıları ────────────────────────────────────────────────────
+    risk_uyarilari = []
+    for k in top_kanallar:
+        ip = float(k.get("iade_pct") or 0)
+        if ip >= 30:
+            risk_uyarilari.append({"tip": "kritik", "mesaj": f"{k['satis_kanali']} — İade oranı %{ip:.1f} (kritik eşik: %30)", "kanal": k["satis_kanali"]})
+        elif ip >= 20:
+            risk_uyarilari.append({"tip": "uyari", "mesaj": f"{k['satis_kanali']} — İade oranı %{ip:.1f} (uyarı eşiği: %20)", "kanal": k["satis_kanali"]})
+
+    # ── WoW karşılaştırma (önceki aynı periyot) ──────────────────────────
+    eg_prev_bas = str(eg_son - timedelta(days=gun_sayisi * 2 - 1)) if eg_son else eg_bas_str
+    eg_prev_son = str(eg_son - timedelta(days=gun_sayisi)) if eg_son else eg_bas_str
+    mg_prev_bas = str(mg_son - timedelta(days=gun_sayisi * 2 - 1)) if mg_son else mg_bas_str
+    mg_prev_son = str(mg_son - timedelta(days=gun_sayisi)) if mg_son else mg_bas_str
+
+    eg_wow_rows = await session.execute(text("""
+        SELECT SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+               ABS(SUM(COALESCE(iade_tutar,0))) AS iade
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas AND tarih < :son
+    """), {"bas": eg_prev_bas, "son": eg_bas_str})
+    eg_prev = dict(eg_wow_rows.mappings().one_or_none() or {})
+
+    try:
+        mg_wow_rows = await session.execute(text("""
+            SELECT SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+                   ABS(SUM(COALESCE(iade_tutari,0))) AS iade
+            FROM incorta_magaza_gunluk
+            WHERE tarih >= :bas AND tarih < :son AND magaza IS NOT NULL AND magaza <> ''
+        """), {"bas": mg_prev_bas, "son": mg_bas_str})
+        mg_prev = dict(mg_wow_rows.mappings().one_or_none() or {})
+    except Exception:
+        await session.rollback()
+        mg_prev = {}
+
+    def _wow_pct(cur, prv):
+        c, p = float(cur or 0), float(prv or 0)
+        return round((c - p) / abs(p) * 100, 1) if p else None
+
+    donem_karsilastirma = {
+        "eg_net_simdi":   float(eg_kpis.get("hafta", {}).get("net") or 0),
+        "eg_net_onceki":  float(eg_prev.get("net") or 0),
+        "eg_wow_pct":     _wow_pct(eg_kpis.get("hafta", {}).get("net"), eg_prev.get("net")),
+        "eg_iade_simdi":  float(eg_kpis.get("hafta", {}).get("iade") or 0),
+        "eg_iade_onceki": float(eg_prev.get("iade") or 0),
+        "mg_net_simdi":   float(mg_kpis.get("hafta", {}).get("net") or 0),
+        "mg_net_onceki":  float(mg_prev.get("net") or 0),
+        "mg_wow_pct":     _wow_pct(mg_kpis.get("hafta", {}).get("net"), mg_prev.get("net")),
+        "toplam_simdi":   float(eg_kpis.get("hafta", {}).get("net") or 0) + float(mg_kpis.get("hafta", {}).get("net") or 0),
+        "toplam_onceki":  float(eg_prev.get("net") or 0) + float(mg_prev.get("net") or 0),
+    }
+    donem_karsilastirma["toplam_wow_pct"] = _wow_pct(
+        donem_karsilastirma["toplam_simdi"], donem_karsilastirma["toplam_onceki"]
+    )
+
+    # ── Top 5 / Bottom 5 SKU (e-ticaret, son periyot) ────────────────────
+    top_sku_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY urun_kodu
+        ORDER BY net DESC
+        LIMIT 5
+    """), {"bas": eg_bas_str})
+    top5_sku = [dict(r) for r in top_sku_rows.mappings()]
+
+    bot_sku_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas AND satis_adet > 0
+        GROUP BY urun_kodu
+        HAVING SUM(satis_tutar) > 0
+        ORDER BY net ASC
+        LIMIT 5
+    """), {"bas": eg_bas_str})
+    bottom5_sku = [dict(r) for r in bot_sku_rows.mappings()]
+
+    return {
+        "eg_son_gun":           str(eg_son) if eg_son else None,
+        "mg_son_gun":           str(mg_son) if mg_son else None,
+        "gun_sayisi":           gun_sayisi,
+        "eg_kpis":              eg_kpis,
+        "mg_kpis":              mg_kpis,
+        "top_kanallar":         top_kanallar,
+        "risk_uyarilari":       risk_uyarilari,
+        "donem_karsilastirma":  donem_karsilastirma,
+        "top5_sku":             top5_sku,
+        "bottom5_sku":          bottom5_sku,
+    }
+
+
+async def get_adl_eticaret(session: AsyncSession, gun_sayisi: int = 30) -> dict:
+    """E-Ticaret Raporu: kanal detayı, komisyon, iade matrisi."""
+    max_r = await session.execute(text("SELECT MAX(tarih::date) FROM incorta_ecommerce_gunluk"))
+    son_gun = max_r.scalar()
+    if son_gun:
+        bas_tarih = son_gun - timedelta(days=gun_sayisi - 1)
+        bas_str     = str(bas_tarih)
+        son_str     = str(son_gun)
+        dun_str     = str(son_gun - timedelta(days=1))
+        son_next    = str(son_gun + timedelta(days=1))
+    else:
+        bas_str = son_str = dun_str = son_next = str(date.today())
+
+    # KPI
+    kpi_rows = await session.execute(text("""
+        SELECT
+            CASE WHEN tarih >= :son AND tarih < :next THEN 'bugun'
+                 WHEN tarih >= :dun AND tarih < :son  THEN 'dun'
+                 ELSE 'donem' END AS donem,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            ABS(SUM(COALESCE(iptal_tutar,0))) AS iptal,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY donem
+    """), {"bas": bas_str, "son": son_str, "next": son_next, "dun": dun_str})
+    kpis: dict = {"bugun": {}, "dun": {}, "donem": {}}
+    for r in kpi_rows.mappings():
+        d = r["donem"]
+        if d:
+            kpis[d] = {k: float(v) if v is not None else 0.0 for k, v in r.items() if k != "donem"}
+
+    # Kanal performance (full period)
+    kanal_rows = await session.execute(text("""
+        SELECT satis_kanali,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            ABS(SUM(COALESCE(iptal_tutar,0))) AS iptal,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct,
+            ROUND((SUM(satis_tutar)/NULLIF(SUM(SUM(satis_tutar))OVER(),0)*100)::numeric,1) AS pazar_payi
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY satis_kanali
+        ORDER BY net DESC
+    """), {"bas": bas_str})
+    kanal_ozet = []
+    for r in kanal_rows.mappings():
+        row = dict(r)
+        net = float(row.get("net") or 0)
+        row["komisyon_net"] = round(_komisyon_sonrasi(net, row.get("satis_kanali", "")), 2)
+        row["komisyon_oran"] = round(_KOMISYON.get(row.get("satis_kanali", ""), 0.15) * 100, 0)
+        kanal_ozet.append(row)
+
+    # Günlük trend
+    trend_rows = await session.execute(text("""
+        SELECT tarih::date AS gun,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY tarih::date
+        ORDER BY tarih::date
+    """), {"bas": bas_str})
+    trend = [dict(r) for r in trend_rows.mappings()]
+
+    # Top ürünler (son gün)
+    top_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas
+        GROUP BY urun_kodu
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"bas": bas_str})
+    top_urunler = [dict(r) for r in top_rows.mappings()]
+
+    # İade matrisi: ürün × beden × renk (son ay, monthly data)
+    today = date.today()
+    cur_yyay = today.year * 100 + today.month
+    prev_m = today.month - 1 if today.month > 1 else 12
+    prev_y = today.year if today.month > 1 else today.year - 1
+    prev_yyay = prev_y * 100 + prev_m
+    iade_mat_rows = await session.execute(text("""
+        SELECT d.urun_kodu, MAX(d.urun_adi) AS urun_adi,
+            MAX(d.renk) AS renk, MAX(d.beden) AS beden,
+            ABS(SUM(d.tutar)) AS iade_tutar,
+            ABS(SUM(d.adet::int)) AS iade_adet,
+            ROUND((ABS(SUM(d.tutar)) / NULLIF(SUM(s.tutar), 0) * 100)::numeric, 1) AS iade_orani
+        FROM incorta_depo_iade d
+        LEFT JOIN incorta_satis s
+            ON d.urun_kodu=s.urun_kodu AND d.yil=s.yil AND d.ay=s.ay
+           AND d.satis_kanali=s.satis_kanali AND d.renk=s.renk AND d.beden=s.beden
+        WHERE (d.yil*100+d.ay) >= :min_yyay
+        GROUP BY d.urun_kodu, d.renk, d.beden
+        HAVING ABS(SUM(d.adet::int)) >= 3
+        ORDER BY iade_orani DESC NULLS LAST
+        LIMIT 10
+    """), {"min_yyay": prev_yyay})
+    iade_matrisi = [dict(r) for r in iade_mat_rows.mappings()]
+
+    # GA4 özet (incorta_analytics son hafta)
+    analytics_from = (date.today() - timedelta(days=gun_sayisi)).isoformat()
+    ga4_rows = await session.execute(text("""
+        SELECT
+            ROUND(AVG(conversion_rate)::numeric * 100, 2) AS conversion_pct,
+            ROUND(AVG(hemen_cikma_orani)::numeric * 100, 1) AS bounce_pct,
+            SUM(oturumlar) AS toplam_oturum,
+            SUM(kullanicilar) AS toplam_kullanici,
+            SUM(CASE WHEN oturum_kaynagi ILIKE '%organic%' THEN ciro ELSE 0 END) AS organik_ciro,
+            SUM(CASE WHEN oturum_kaynagi ILIKE '%cpc%' OR oturum_kaynagi ILIKE '%paid%' OR oturum_kaynagi ILIKE '%ads%' THEN ciro ELSE 0 END) AS ucretli_ciro
+        FROM incorta_analytics
+        WHERE date >= :analytics_from
+    """), {"analytics_from": analytics_from})
+    ga4_row = ga4_rows.mappings().one_or_none()
+    ga4_ozet = dict(ga4_row) if ga4_row else {}
+
+    # SKU çeşitliliği + ort. sepet (donem KPI'larına ekle)
+    sku_row = await session.execute(text("""
+        SELECT COUNT(DISTINCT urun_kodu) AS sku_cesitliligi
+        FROM incorta_ecommerce_gunluk WHERE tarih >= :bas
+    """), {"bas": bas_str})
+    kpis["donem"]["sku_cesitliligi"] = sku_row.scalar() or 0
+    _dn = kpis["donem"]
+    _dn["ort_sepet"] = round(float(_dn.get("net") or 0) / max(float(_dn.get("adet") or 1), 1), 2)
+
+    # Kanal önceki dönem (WoW)
+    onceki_bas = str(bas_tarih - timedelta(days=gun_sayisi)) if son_gun else bas_str
+    onceki_rows = await session.execute(text("""
+        SELECT satis_kanali,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net_onceki
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :onceki_bas AND tarih < :bas
+        GROUP BY satis_kanali
+    """), {"onceki_bas": onceki_bas, "bas": bas_str})
+    _wow_map = {r["satis_kanali"]: float(r["net_onceki"] or 0) for r in onceki_rows.mappings()}
+
+    # MoM: bir önceki ay aynı periyot
+    mom_bas = str(bas_tarih - timedelta(days=30)) if son_gun else bas_str
+    mom_son = str(bas_tarih - timedelta(days=1)) if son_gun else bas_str
+    mom_rows = await session.execute(text("""
+        SELECT satis_kanali,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net_mom
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :mom_bas AND tarih <= :mom_son
+        GROUP BY satis_kanali
+    """), {"mom_bas": mom_bas, "mom_son": mom_son})
+    _mom_map = {r["satis_kanali"]: float(r["net_mom"] or 0) for r in mom_rows.mappings()}
+
+    # Toplam WoW/MoM
+    onceki_toplam = await session.execute(text("""
+        SELECT SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :onceki_bas AND tarih < :bas
+    """), {"onceki_bas": onceki_bas, "bas": bas_str})
+    _prev_net = float((onceki_toplam.scalar()) or 0)
+    mom_toplam = await session.execute(text("""
+        SELECT SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :mom_bas AND tarih <= :mom_son
+    """), {"mom_bas": mom_bas, "mom_son": mom_son})
+    _mom_net = float((mom_toplam.scalar()) or 0)
+    _cur_net = float(kpis.get("donem", {}).get("net") or 0)
+
+    def _chg(cur, prv):
+        return round((cur - prv) / abs(prv) * 100, 1) if prv else None
+
+    kpis["donem"]["wow_pct"] = _chg(_cur_net, _prev_net)
+    kpis["donem"]["mom_pct"] = _chg(_cur_net, _mom_net)
+
+    for row in kanal_ozet:
+        k = row.get("satis_kanali", "")
+        net_now = float(row.get("net") or 0)
+        net_wow = _wow_map.get(k, 0)
+        net_mom = _mom_map.get(k, 0)
+        row["wow_pct"] = _chg(net_now, net_wow)
+        row["mom_pct"] = _chg(net_now, net_mom)
+
+    # Bottom 10 ürünler
+    bot_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutar,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutar,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_ecommerce_gunluk
+        WHERE tarih >= :bas AND satis_adet > 0
+        GROUP BY urun_kodu
+        HAVING SUM(satis_tutar) > 0
+        ORDER BY net ASC
+        LIMIT 10
+    """), {"bas": bas_str})
+    bottom_urunler = [dict(r) for r in bot_rows.mappings()]
+
+    return {
+        "son_gun": str(son_gun) if son_gun else None,
+        "gun_sayisi": gun_sayisi,
+        "kpis": kpis,
+        "kanal_ozet": kanal_ozet,
+        "trend": trend,
+        "top_urunler": top_urunler,
+        "bottom_urunler": bottom_urunler,
+        "iade_matrisi": iade_matrisi,
+        "ga4_ozet": ga4_ozet,
+    }
+
+
+async def get_adl_magaza(session: AsyncSession, gun_sayisi: int = 30) -> dict:
+    """Mağaza Raporu: mağaza detay, top/bottom, trend."""
+    try:
+        await session.execute(text("SELECT 1 FROM incorta_magaza_gunluk LIMIT 1"))
+    except Exception:
+        await session.rollback()
+        return {"hata": "magaza_veri_yok", "trend": [], "kpis": {}, "magaza_detay": [], "top_magaza": [], "bottom_magaza": []}
+    max_r = await session.execute(text("SELECT MAX(tarih::date) FROM incorta_magaza_gunluk"))
+    son_gun = max_r.scalar()
+    if son_gun:
+        bas_tarih = son_gun - timedelta(days=gun_sayisi - 1)
+        bas_str     = str(bas_tarih)
+        son_str     = str(son_gun)
+        dun_str     = str(son_gun - timedelta(days=1))
+        son_next    = str(son_gun + timedelta(days=1))
+    else:
+        bas_str = son_str = dun_str = son_next = str(date.today())
+
+    # KPI
+    kpi_rows = await session.execute(text("""
+        SELECT
+            CASE WHEN tarih >= :son AND tarih < :next THEN 'bugun'
+                 WHEN tarih >= :dun AND tarih < :son  THEN 'dun'
+                 ELSE 'donem' END AS donem,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct,
+            COUNT(DISTINCT magaza) FILTER (WHERE magaza IS NOT NULL AND magaza <> '') AS aktif_magaza
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas
+        GROUP BY donem
+    """), {"bas": bas_str, "son": son_str, "next": son_next, "dun": dun_str})
+    kpis: dict = {"bugun": {}, "dun": {}, "donem": {}}
+    for r in kpi_rows.mappings():
+        d = r["donem"]
+        if d:
+            kpis[d] = {k: float(v) if v is not None else 0.0 for k, v in r.items() if k != "donem"}
+
+    # Trend
+    trend_rows = await session.execute(text("""
+        SELECT tarih::date AS gun,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+            SUM(satis_adet) AS adet
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+        GROUP BY tarih::date
+        ORDER BY tarih::date
+    """), {"bas": bas_str})
+    trend = [dict(r) for r in trend_rows.mappings()]
+
+    # Tüm mağazalar (30 — net sıralı) — OBF proxy dahil
+    magaza_rows = await session.execute(text("""
+        SELECT magaza,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct,
+            ROUND((SUM(satis_tutar)/NULLIF(SUM(SUM(satis_tutar))OVER(),0)*100)::numeric,1) AS pazar_payi,
+            ROUND(((SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_adet),0))::numeric,0) AS net_obf
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+        GROUP BY magaza
+        ORDER BY net DESC
+        LIMIT 30
+    """), {"bas": bas_str})
+    magazalar = [dict(r) for r in magaza_rows.mappings()]
+
+    # Zincir geneli OBF + kritik sayım
+    zincir_obf = 0.0
+    if magazalar:
+        toplam_net  = sum(float(m.get("net") or 0) for m in magazalar)
+        toplam_adet = sum(float(m.get("adet") or 0) for m in magazalar)
+        zincir_obf  = round(toplam_net / max(toplam_adet, 1), 0)
+    kritik_mag_sayisi = sum(1 for m in magazalar if float(m.get("iade_pct") or 0) > 25)
+    kpis["donem"]["net_obf"]            = zincir_obf
+    kpis["donem"]["kritik_magaza_sayisi"] = kritik_mag_sayisi
+
+    # Top 5 ve Kritik 5 ayrı listeler
+    top5_magazalar    = magazalar[:5]
+    # Kritik = en yüksek iade oranına sahip 5 mağaza (minimum 5K ₺ net)
+    kritik5_magazalar = sorted(
+        [m for m in magazalar if float(m.get("net") or 0) > 5000],
+        key=lambda m: float(m.get("iade_pct") or 0),
+        reverse=True
+    )[:5]
+
+    # Top ürünler
+    urun_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas
+        GROUP BY urun_kodu
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"bas": bas_str})
+    top_urunler = [dict(r) for r in urun_rows.mappings()]
+
+    # Bottom mağazalar (en düşük net — kritik liste)
+    bottom_mag_rows = await session.execute(text("""
+        SELECT magaza,
+            SUM(satis_tutar) AS satis,
+            ABS(SUM(COALESCE(iade_tutari,0))) AS iade,
+            SUM(satis_tutar)+SUM(COALESCE(iade_tutari,0)) AS net,
+            SUM(satis_adet) AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari,0)))/NULLIF(SUM(satis_tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+        GROUP BY magaza
+        ORDER BY net ASC
+        LIMIT 10
+    """), {"bas": bas_str})
+    bottom_magazalar = [dict(r) for r in bottom_mag_rows.mappings()]
+
+    return {
+        "son_gun":            str(son_gun) if son_gun else None,
+        "gun_sayisi":         gun_sayisi,
+        "kpis":               kpis,
+        "trend":              trend,
+        "magazalar":          magazalar,
+        "top5_magazalar":     top5_magazalar,
+        "kritik5_magazalar":  kritik5_magazalar,
+        "bottom_magazalar":   bottom_magazalar,
+        "top_urunler":        top_urunler,
+        "zincir_obf":         zincir_obf,
+    }
+
+
+async def get_adl_premium(session: AsyncSession, ay_count: int = 3) -> dict:
+    """Premium Marka Sağlığı: aylık brand health, kategori mix, sezon."""
+    min_yyay = _min_yyay(ay_count)
+
+    # Marka bazlı aylık KPI (from incorta_satis + pim_products)
+    marka_rows = await session.execute(text("""
+        SELECT COALESCE(p.marka_adi, 'Diğer') AS marka,
+            s.yil, s.ay,
+            SUM(s.tutar)                                         AS satis,
+            ABS(COALESCE(SUM(d.tutar), 0))                       AS iade,
+            SUM(s.tutar) + COALESCE(SUM(d.tutar), 0)            AS net,
+            SUM(s.adet::int)                                     AS adet,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY marka, s.yil, s.ay
+        ORDER BY s.yil, s.ay, marka
+    """), {"min_yyay": min_yyay})
+    marka_trend = [dict(r) for r in marka_rows.mappings()]
+
+    # Kategori mix (urun_grubu_adi)
+    kat_rows = await session.execute(text("""
+        SELECT COALESCE(p.urun_grubu_adi, 'Diğer') AS kategori,
+            COALESCE(p.marka_adi, 'Diğer') AS marka,
+            SUM(s.tutar)                  AS satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS iade,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS net,
+            ROUND((SUM(s.tutar)/NULLIF(SUM(SUM(s.tutar))OVER(),0)*100)::numeric,1) AS pay
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY kategori, marka
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"min_yyay": min_yyay})
+    kategori_mix = [dict(r) for r in kat_rows.mappings()]
+
+    # Sezon dağılımı
+    sezon_rows = await session.execute(text("""
+        SELECT COALESCE(p.sezon_adi, 'Diğer') AS sezon,
+            SUM(s.tutar) AS satis,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS net,
+            ROUND((SUM(s.tutar)/NULLIF(SUM(SUM(s.tutar))OVER(),0)*100)::numeric,1) AS pay
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY sezon
+        ORDER BY net DESC
+        LIMIT 15
+    """), {"min_yyay": min_yyay})
+    sezon_dagili = [dict(r) for r in sezon_rows.mappings()]
+
+    # Özet KPIs (totals)
+    ozet_rows = await session.execute(text("""
+        SELECT
+            SUM(s.tutar) AS toplam_satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS toplam_iade,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS toplam_net,
+            SUM(s.adet::int) AS toplam_adet,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct,
+            COUNT(DISTINCT s.urun_kodu) AS urun_cesidi
+        FROM incorta_satis s
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+    """), {"min_yyay": min_yyay})
+    ozet = dict(ozet_rows.mappings().one_or_none() or {})
+
+    # Beden dağılımı
+    beden_rows = await session.execute(text("""
+        SELECT beden,
+            SUM(s.adet::int) AS satilan_adet,
+            ROUND((SUM(s.adet::int) / NULLIF(SUM(SUM(s.adet::int))OVER(), 0) * 100)::numeric, 1) AS pay_pct
+        FROM incorta_satis s
+        WHERE (s.yil*100+s.ay) >= :min_yyay AND s.adet > 0 AND s.beden IS NOT NULL AND s.beden <> ''
+        GROUP BY beden
+        ORDER BY satilan_adet DESC
+        LIMIT 12
+    """), {"min_yyay": min_yyay})
+    beden_dagilim = [dict(r) for r in beden_rows.mappings()]
+
+    # Fiyat segmenti (Entry/Core/Premium/Luxury — ortalama birim fiyat bazlı)
+    fiyat_seg_rows = await session.execute(text("""
+        SELECT
+            CASE
+                WHEN (s.tutar / NULLIF(s.adet, 0)) < 500   THEN 'Entry'
+                WHEN (s.tutar / NULLIF(s.adet, 0)) < 1500  THEN 'Core'
+                WHEN (s.tutar / NULLIF(s.adet, 0)) < 3500  THEN 'Premium'
+                ELSE 'Luxury'
+            END AS segment,
+            SUM(s.tutar) AS ciro,
+            SUM(s.adet::int) AS adet,
+            ROUND((SUM(s.tutar) / NULLIF(SUM(SUM(s.tutar)) OVER (), 0) * 100)::numeric, 1) AS ciro_pay
+        FROM incorta_satis s
+        WHERE (s.yil*100+s.ay) >= :min_yyay AND s.adet > 0 AND s.tutar > 0
+        GROUP BY 1
+        ORDER BY MIN(s.tutar / NULLIF(s.adet, 0))
+    """), {"min_yyay": min_yyay})
+    fiyat_segmenti = [dict(r) for r in fiyat_seg_rows.mappings()]
+
+    # TARGET_MIX karşılaştırması — kategori_mix'e hedef ve sapma ekle
+    _TARGET_MIX: dict = {
+        "ELB": 35.0, "TRK": 20.0, "DGI": 15.0,
+        "PNT": 10.0, "BLZ": 8.0, "AKS": 7.0,
+    }
+    _toplam_pay = sum(float(k.get("pay") or 0) for k in kategori_mix)
+    for k in kategori_mix:
+        kat_kod = (k.get("kategori") or "")[:3].upper()
+        hedef   = _TARGET_MIX.get(kat_kod, 5.0)
+        gercek  = float(k.get("pay") or 0)
+        k["hedef_pct"] = hedef
+        k["sapma"]     = round(gercek - hedef, 1)
+        k["sapma_alarm"] = abs(gercek - hedef) >= 10
+    ort_sapma = round(
+        sum(abs(k["sapma"]) for k in kategori_mix[:8]) / max(len(kategori_mix[:8]), 1), 1
+    )
+
+    # Brand health index (skill formülü — mv_tam_fiyat_orani olmadan kısmi)
+    iade_pct_val    = float(ozet.get("iade_pct") or 0)
+    # Markdown disiplini: iade oranı proxy, <10% → 100, >35% → 0
+    markdown_skoru  = max(0.0, 100.0 - max(0.0, iade_pct_val - 10.0) * 3.0)
+    # Kategori dengesi: TARGET_MIX sapmasına göre
+    kat_skoru       = max(0.0, 100.0 - ort_sapma * 5.0)
+    # Placeholders (veri bekliyor)
+    tam_fiyat_sk    = 65.0   # mv_tam_fiyat_orani gelmeyene kadar
+    sezon_skoru     = 65.0   # mv_sell_through gelmeyene kadar
+    marka_skoru     = 70.0   # Google Trends entegrasyonu bekliyor
+    brand_health_total = round(
+        tam_fiyat_sk * 0.30 + markdown_skoru * 0.20 +
+        sezon_skoru  * 0.20 + kat_skoru      * 0.15 +
+        marka_skoru  * 0.15, 1
+    )
+    brand_health = {
+        "total":                brand_health_total,
+        "tam_fiyat_skoru":      tam_fiyat_sk,
+        "markdown_disiplini":   round(markdown_skoru, 1),
+        "sezon_yenileme":       sezon_skoru,
+        "kategori_dengesi":     round(kat_skoru, 1),
+        "marka_sinyal":         marka_skoru,
+        "ort_kategori_sapma":   ort_sapma,
+        "rating": (
+            "Güçlü"        if brand_health_total >= 80
+            else "Sağlıklı" if brand_health_total >= 65
+            else "İzleme"   if brand_health_total >= 50
+            else "Risk Altında"
+        ),
+        "placeholder_not": "tam_fiyat ve sezon_skoru mv_tam_fiyat_orani / mv_sell_through bekleniyor",
+    }
+
+    # Premium + Luxury ciro payı (hedef >%50)
+    prem_lux_pay = sum(
+        float(s.get("ciro_pay") or 0)
+        for s in fiyat_segmenti
+        if s.get("segment") in ("Premium", "Luxury")
+    )
+
+    return {
+        "min_yyay":         min_yyay,
+        "ay_count":         ay_count,
+        "ozet":             ozet,
+        "marka_trend":      marka_trend,
+        "kategori_mix":     kategori_mix,
+        "sezon_dagili":     sezon_dagili,
+        "beden_dagilim":    beden_dagilim,
+        "fiyat_segmenti":   fiyat_segmenti,
+        "prem_lux_pay":     round(prem_lux_pay, 1),
+        "brand_health":     brand_health,
+    }
+
+
+async def get_adl_urun_stok(session: AsyncSession, ay_count: int = 3) -> dict:
+    """Ürün & Stok Stratejisi: top/bottom ürünler, risk matrisi, kategori."""
+    min_yyay = _min_yyay(ay_count)
+
+    # Özet KPIs
+    ozet_rows = await session.execute(text("""
+        SELECT
+            SUM(s.tutar) AS toplam_satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS toplam_iade,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS toplam_net,
+            SUM(s.adet::int) AS toplam_adet,
+            COUNT(DISTINCT s.urun_kodu) AS urun_cesidi,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_satis s
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+    """), {"min_yyay": min_yyay})
+    ozet = dict(ozet_rows.mappings().one_or_none() or {})
+
+    # Top 20 ürünler by net ciro
+    top_rows = await session.execute(text("""
+        SELECT s.urun_kodu, MAX(s.urun_adi) AS urun_adi,
+            COALESCE(MAX(p.urun_grubu_adi), 'Diğer') AS kategori,
+            COALESCE(MAX(p.marka_adi), 'Diğer') AS marka,
+            SUM(s.tutar) AS satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS iade,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS net,
+            SUM(s.adet::int) AS adet,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY s.urun_kodu
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"min_yyay": min_yyay})
+    top_urunler = [dict(r) for r in top_rows.mappings()]
+
+    # İade risk matrisi (iade_pct > 20%, min satış 5000 TL)
+    risk_rows = await session.execute(text("""
+        SELECT s.urun_kodu, MAX(s.urun_adi) AS urun_adi,
+            COALESCE(MAX(p.urun_grubu_adi), 'Diğer') AS kategori,
+            COALESCE(MAX(p.marka_adi), 'Diğer') AS marka,
+            SUM(s.tutar) AS satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS iade,
+            SUM(s.adet::int) AS brut_adet,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY s.urun_kodu
+        HAVING SUM(s.tutar) >= 5000
+           AND ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0) >= 0.20
+        ORDER BY iade_pct DESC
+        LIMIT 20
+    """), {"min_yyay": min_yyay})
+    risk_urunler = [dict(r) for r in risk_rows.mappings()]
+
+    # Kategori performansı
+    kat_rows = await session.execute(text("""
+        SELECT COALESCE(p.urun_grubu_adi, 'Diğer') AS kategori,
+            SUM(s.tutar) AS satis,
+            ABS(COALESCE(SUM(d.tutar),0)) AS iade,
+            SUM(s.tutar)+COALESCE(SUM(d.tutar),0) AS net,
+            SUM(s.adet::int) AS adet,
+            COUNT(DISTINCT s.urun_kodu) AS urun_sayisi,
+            ROUND((ABS(COALESCE(SUM(d.tutar),0))/NULLIF(SUM(s.tutar),0)*100)::numeric,1) AS iade_pct,
+            ROUND((SUM(s.tutar)/NULLIF(SUM(SUM(s.tutar))OVER(),0)*100)::numeric,1) AS pay
+        FROM incorta_satis s
+        LEFT JOIN pim_products p ON p.urun_kodu = s.urun_kodu
+        LEFT JOIN incorta_depo_iade d
+            ON s.urun_kodu=d.urun_kodu AND s.yil=d.yil AND s.ay=d.ay
+           AND s.satis_kanali=d.satis_kanali AND s.renk=d.renk AND s.beden=d.beden
+        WHERE (s.yil*100+s.ay) >= :min_yyay
+        GROUP BY kategori
+        ORDER BY net DESC
+        LIMIT 20
+    """), {"min_yyay": min_yyay})
+    kategori_perf = [dict(r) for r in kat_rows.mappings()]
+
+    # Risk count for KPI
+    risk_count = len(risk_urunler)
+
+    # Beden dağılımı (son N ay)
+    beden_rows = await session.execute(text("""
+        SELECT beden,
+            SUM(adet::int) AS satilan_adet,
+            ROUND((SUM(adet::int) / NULLIF(SUM(SUM(adet::int))OVER(), 0) * 100)::numeric, 1) AS pay_pct
+        FROM incorta_satis
+        WHERE (yil*100+ay) >= :min_yyay AND adet > 0 AND beden IS NOT NULL AND beden <> ''
+        GROUP BY beden
+        ORDER BY satilan_adet DESC
+        LIMIT 15
+    """), {"min_yyay": min_yyay})
+    beden_dagilim = [dict(r) for r in beden_rows.mappings()]
+
+    # Renk top 15
+    renk_rows = await session.execute(text("""
+        SELECT renk,
+            SUM(adet::int) AS satilan_adet,
+            SUM(tutar) AS ciro,
+            ROUND((SUM(adet::int) / NULLIF(SUM(SUM(adet::int))OVER(), 0) * 100)::numeric, 1) AS pay_pct
+        FROM incorta_satis
+        WHERE (yil*100+ay) >= :min_yyay AND adet > 0 AND renk IS NOT NULL AND renk <> ''
+        GROUP BY renk
+        ORDER BY satilan_adet DESC
+        LIMIT 15
+    """), {"min_yyay": min_yyay})
+    renk_top15 = [dict(r) for r in renk_rows.mappings()]
+
+    # Restock önerisi — son ay yüksek satış, 60 günlük öneri hesabı
+    # (incorta_satis aylık granülarite; min_yyay tek ay = son ay)
+    son_ay_yyay = _min_yyay(1)
+    restock_rows = await session.execute(text("""
+        SELECT s.urun_kodu, MAX(s.urun_adi) AS urun_adi,
+            SUM(s.adet::int)                            AS son_ay_satis,
+            ROUND(SUM(s.adet::int) / 30.0, 1)          AS gunluk_ort,
+            ROUND(SUM(s.adet::int) / 30.0 * 60)        AS onerilen_siparis,
+            SUM(s.tutar)                                AS ciro,
+            ROUND((s.tutar / NULLIF(s.adet, 0))::numeric, 0) AS birim_fiyat
+        FROM incorta_satis s
+        WHERE (s.yil*100+s.ay) >= :son_ay_yyay AND s.adet > 0
+        GROUP BY s.urun_kodu, s.tutar, s.adet
+        HAVING SUM(s.adet::int) > 20
+        ORDER BY SUM(s.adet::int) DESC
+        LIMIT 20
+    """), {"son_ay_yyay": son_ay_yyay})
+    restock_onerileri = [dict(r) for r in restock_rows.mappings()]
+
+    # Hızlı eriyen (dönem geneli — sezon hız sıralaması)
+    hizli_rows = await session.execute(text("""
+        SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+            SUM(adet::int) AS satilan_adet,
+            SUM(tutar) AS ciro
+        FROM incorta_satis
+        WHERE (yil*100+ay) >= :min_yyay AND adet > 0
+        GROUP BY urun_kodu
+        HAVING SUM(adet::int) > 20
+        ORDER BY SUM(adet::int) DESC
+        LIMIT 20
+    """), {"min_yyay": min_yyay})
+    hizli_eriyenler = [dict(r) for r in hizli_rows.mappings()]
+
+    # ── Ürün Başarı Tahmini (yeni ürünler — ilk satış son 60 gün) ────────
+    bas60_str = str(date.today() - timedelta(days=60))
+    bas45_str = str(date.today() - timedelta(days=45))
+    basari_rows = await session.execute(text("""
+        WITH ilk_satis AS (
+            SELECT urun_kodu, MAX(urun_adi) AS urun_adi,
+                MIN(tarih::date) AS ilk_tarih,
+                SUM(satis_adet) AS toplam_adet,
+                SUM(satis_tutar)+SUM(COALESCE(iade_tutar,0))+SUM(COALESCE(iptal_tutar,0)) AS net,
+                (CURRENT_DATE - MIN(tarih::date)) AS yasam_gunu
+            FROM incorta_ecommerce_gunluk
+            WHERE tarih >= :bas60
+            GROUP BY urun_kodu
+            HAVING MIN(tarih) >= :bas45
+        ),
+        ilk_hafta AS (
+            SELECT g.urun_kodu,
+                SUM(g.satis_adet) AS ilk_hafta_adet
+            FROM incorta_ecommerce_gunluk g
+            JOIN ilk_satis s ON g.urun_kodu = s.urun_kodu
+            WHERE g.tarih::date BETWEEN s.ilk_tarih AND (s.ilk_tarih + INTERVAL '6 days')::date
+            GROUP BY g.urun_kodu
+        )
+        SELECT i.urun_kodu, i.urun_adi, i.ilk_tarih, i.toplam_adet,
+               ROUND(i.net::numeric, 0) AS net,
+               i.yasam_gunu,
+               COALESCE(h.ilk_hafta_adet, 0) AS ilk_hafta_adet
+        FROM ilk_satis i
+        LEFT JOIN ilk_hafta h ON i.urun_kodu = h.urun_kodu
+        WHERE COALESCE(h.ilk_hafta_adet, 0) >= 3
+        ORDER BY i.toplam_adet DESC
+        LIMIT 15
+    """), {"bas60": bas60_str, "bas45": bas45_str})
+    basari_ham = [dict(r) for r in basari_rows.mappings()]
+
+    def _projeksiyon(ilk_hafta: int, yasam_gunu: int) -> dict:
+        sezon_hafta = max(0, int(yasam_gunu or 0) // 7)
+        if sezon_hafta <= 4:
+            faktor = 1.0
+        elif sezon_hafta <= 8:
+            faktor = 0.85
+        elif sezon_hafta <= 12:
+            faktor = 0.65
+        else:
+            faktor = 0.40
+        kalan = max(0, 13 - sezon_hafta)
+        return {
+            "sezon_hafta": sezon_hafta,
+            "faktor": faktor,
+            "kalan_hafta": kalan,
+            "projeksiyon_adet": round(ilk_hafta * kalan * faktor),
+        }
+
+    urun_basari_tahmini = []
+    for r in basari_ham:
+        proj = _projeksiyon(int(r.get("ilk_hafta_adet") or 0), int(r.get("yasam_gunu") or 0))
+        urun_basari_tahmini.append({**r, **proj})
+
+    return {
+        "min_yyay":             min_yyay,
+        "ay_count":             ay_count,
+        "ozet":                 {**ozet, "risk_urun_sayisi": risk_count},
+        "top_urunler":          top_urunler,
+        "risk_urunler":         risk_urunler,
+        "kategori_perf":        kategori_perf,
+        "beden_dagilim":        beden_dagilim,
+        "renk_top15":           renk_top15,
+        "hizli_eriyenler":      hizli_eriyenler,
+        "restock_onerileri":    restock_onerileri,
+        "urun_basari_tahmini":  urun_basari_tahmini,
+    }

@@ -1,4 +1,8 @@
-"""Eticaret KPI veri servisi — 5 SKL brief şablonu için canlı veri çeker."""
+"""Eticaret KPI veri servisi — 5 SKL brief şablonu için canlı veri çeker.
+
+Kaynak: incorta_ecommerce_gunluk (günlük kanal/SKU/tutar), incorta_analytics (GA4 trafik),
+        enrichment_quality (ürün kalite), sync_jobs (pipeline sağlık)
+"""
 from __future__ import annotations
 
 from datetime import date
@@ -6,6 +10,10 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 
 
 # ── Kanal gruplama ─────────────────────────────────────────────────────────────

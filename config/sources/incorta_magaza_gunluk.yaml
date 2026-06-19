@@ -2,11 +2,11 @@ source_id: incorta_magaza_gunluk
 enabled: true
 type: mcp
 target_table: incorta_magaza_gunluk
-description: "Incorta — adL Mağaza Günlük Performans (Tarih/Bölge/Mağaza/KPI)"
+description: "Incorta — adL Mağaza Günlük Satış (Tarih/Mağaza/SKU/Renk/Beden/Satış+İade)"
 
 connection:
   url: "https://agentup-mcp-test.pimland.com/30002"
-  timeout_seconds: 300    # İlk sync'te timeout yaşandı — yüksek timeout
+  timeout_seconds: 300
 
 auth:
   type: none
@@ -14,7 +14,28 @@ auth:
 tool:
   name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_9cb5630f
   args: {}
-  response_format: incorta   # data["data"].headers + data["data"].data (yeni envelope)
+  response_format: incorta
+  pagination_start_field: "pagination.startRow"
+  pagination_size_field: "pagination.pageSize"
+  pagination_page_size: 5000
+  total_rows_path: "content.data.headers.totalRows"
+  incremental:
+    date_field: tarih
+    incorta_date_field: "SALES.DateHoursDim.Date"
+    start_date: "2025-01-01"   # ilk sync başlangıç tarihi
+    batch_days: 30             # ilk yükleme: aylık parçalar (MCP 30s timeout için güvenli)
+
+field_map:
+  "tarih":       tarih
+  "magaza":      magaza
+  "urun_kodu":   urun_kodu
+  "urun_adi":    urun_adi
+  "renk":        renk
+  "beden":       beden
+  "satis_tutar": satis_tutar
+  "satis_adet":  satis_adet
+  "iade_tutari":  iade_tutari
+  "iade_adeti":   iade_adeti
 
 schedule:
   cron: "30 4 * * *"   # Her gece 04:30 — ecommerce_gunluk'tan sonra

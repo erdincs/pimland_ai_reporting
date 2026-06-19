@@ -1,0 +1,27 @@
+{#
+  Ürün kartı macro — adL Premium Brief
+  Parametreler:
+    urun_kodu   : str
+    urun_adi    : str
+    kategori    : str  (ELB, PNT, vs.)
+    renk        : str  (colorCode)
+    size        : "sm" | "lg"
+    delta_html  : str | None  (hazır <span class="up ..."> HTML)
+#}
+{% macro prod_card(urun_kodu, urun_adi, kategori, renk, size="lg", delta_html=None) %}
+{%- set thumb_url = thumb_url_fn(urun_kodu, renk) -%}
+{%- set prod_url  = prod_url_fn(kategori, urun_adi, urun_kodu, renk) -%}
+{%- set gradient  = gradient_fn(renk) -%}
+<a class="adl-prod" href="{{ prod_url }}" target="_blank" rel="noopener">
+  <span class="p-thumb {{ size }}"
+        style="background:{{ gradient }}"
+        data-cdnurl="{{ thumb_url }}">
+    <span class="dot"></span>
+  </span>
+  <span>
+    <span class="p-name">{{ urun_adi }}</span>
+    <span class="p-code">{{ kategori }} · {{ urun_kodu }}-{{ renk }}</span>
+    {% if delta_html %}<span style="display:block;margin-top:3px">{{ delta_html | safe }}</span>{% endif %}
+  </span>
+</a>
+{% endmacro %}

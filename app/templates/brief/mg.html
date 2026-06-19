@@ -1,0 +1,365 @@
+{% extends "brief/_base.html" %}
+{% block sections %}
+
+{# ── Bölüm 1 · MDO × OBF × Sepet Üçgeni ────────────────────────────────── #}
+<section class="adl-section">
+  <h2>MDO × OBF × Sepet</h2>
+  <div class="sub">Aylık MTD · {{ ozet.ay_doluluk | default('—') }}% hedef gerçekleşme</div>
+
+  {# Günlük net ciro — bölge tablosunun zaman penceresiyle farkı netleştirmek için #}
+  {% if ozet.gun_net is not none %}
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;
+              padding:10px 14px;border:1px solid var(--border);background:rgba(201,169,97,.04)">
+    <span style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)">Dünkü Günlük</span>
+    <span style="font-family:var(--font-mono);font-size:18px;color:var(--text)">{{ tl(ozet.gun_net) }}</span>
+    {% if ozet.gun_delta_pct is not none %}
+    <span class="{{ 'up' if ozet.gun_delta_pct > 0 else 'down' if ozet.gun_delta_pct < 0 else 'flat' }}
+                 tri {{ 'tri-up' if ozet.gun_delta_pct > 0 else 'tri-down' if ozet.gun_delta_pct < 0 else 'tri-flat' }}"
+          style="font-family:var(--font-mono);font-size:12px">
+      {{ ('%+.1f'|format(ozet.gun_delta_pct)).replace('.',',') }}%
+    </span>
+    {% endif %}
+    <span style="font-size:10px;color:var(--text-4);margin-left:auto">önceki gün vs</span>
+  </div>
+  {% endif %}
+
+  {% if ozet.ay_mevcut %}
+  <div class="adl-kpis">
+
+    <div class="adl-kpi">
+      <div class="k-label">MDO</div>
+      <div class="k-val">
+        {% if ozet.mdo is not none %}
+          {% if ozet.mdo >= 16 %}
+            <span class="up">{{ pct(ozet.mdo) }}</span>
+          {% elif ozet.mdo < 13 %}
+            <span class="down">{{ pct(ozet.mdo) }}</span>
+          {% else %}
+            {{ pct(ozet.mdo) }}
+          {% endif %}
+        {% else %}
+          <span style="color:var(--text-3)">—</span>
+        {% endif %}
+      </div>
+      <div class="k-delta" style="font-size:10px;color:var(--text-3)">norm %12–18</div>
+    </div>
+
+    <div class="adl-kpi">
+      <div class="k-label">OBF</div>
+      <div class="k-val">
+        {% if ozet.obf is not none %}
+          {{ tl(ozet.obf) }}
+        {% else %}
+          <span style="color:var(--text-3)">—</span>
+        {% endif %}
+      </div>
+      <div class="k-delta" style="font-size:10px;color:var(--text-3)">ortalama sepet değeri</div>
+    </div>
+
+    <div class="adl-kpi">
+      <div class="k-label">Sepet</div>
+      <div class="k-val">
+        {% if ozet.sepet is not none %}
+          {% if ozet.sepet >= 2.5 %}
+            <span class="up">{{ "%.2f"|format(ozet.sepet) }}</span>
+          {% elif ozet.sepet < 2.0 %}
+            <span class="down">{{ "%.2f"|format(ozet.sepet) }}</span>
+          {% else %}
+            {{ "%.2f"|format(ozet.sepet) }}
+          {% endif %}
+        {% else %}
+          <span style="color:var(--text-3)">—</span>
+        {% endif %}
+      </div>
+      <div class="k-delta" style="font-size:10px;color:var(--text-3)">norm 2,5–3,5</div>
+    </div>
+
+  </div>
+
+  {% if ozet.ziyaretci %}
+  <div style="margin-top:14px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);">
+    <span style="font-size:11px;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase">Ziyaretçi</span>
+    <span style="margin-left:12px;font-family:var(--font-mono);color:var(--text)">{{ num(ozet.ziyaretci) }}</span>
+    <span style="margin-left:6px;font-size:11px;color:var(--text-3)">bu ay</span>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="padding:16px 0;color:var(--text-3);font-size:13px">
+    Aylık KPI verisi kullanılamıyor.
+  </div>
+  {% endif %}
+
+  {% if kpi_yorum %}
+  <div class="adl-ai" style="margin-top:18px">{{ kpi_yorum }}</div>
+  {% endif %}
+</section>
+
+{# ── Bölüm 2 · Bölge Müdürü Tablosu ─────────────────────────────────────── #}
+<section class="adl-section">
+  <h2>Bölge Müdürü</h2>
+  <div class="sub">Aylık MTD · hedef gerçekleştirme</div>
+
+  {% if bolge_listesi %}
+  <table class="adl-table">
+    <thead>
+      <tr>
+        <th>Bölge Müdürü</th>
+        <th style="text-align:right">Mağaza</th>
+        <th style="text-align:right">Net Ciro</th>
+        <th style="text-align:right">Doluluk</th>
+        <th style="text-align:right">MDO</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bolge_listesi %}
+      <tr>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:10px">
+            <span style="width:28px;height:28px;border:1px solid var(--border);
+              display:inline-flex;align-items:center;justify-content:center;
+              font-family:var(--font-serif);font-size:12px;color:var(--gold)">
+              {{ (b.bolge_muduru or '?')[:2].upper() }}
+            </span>
+            <span style="color:var(--text)">{{ b.bolge_muduru }}</span>
+          </span>
+        </td>
+        <td class="num">{{ b.magaza_sayisi }}</td>
+        <td class="num">{{ tl(b.net_ciro) }}</td>
+        <td class="num">
+          {% if b.doluluk is not none %}
+            {% if b.doluluk >= 95 %}
+              <span class="up">{{ pct(b.doluluk) }}</span>
+            {% elif b.doluluk < 80 %}
+              <span class="down">{{ pct(b.doluluk) }}</span>
+            {% else %}
+              <span class="flat">{{ pct(b.doluluk) }}</span>
+            {% endif %}
+          {% else %}
+            <span style="color:var(--text-3)">—</span>
+          {% endif %}
+        </td>
+        <td class="num">
+          {% if b.mdo is not none %}
+            {% if b.mdo >= 13 %}
+              <span class="up">{{ pct(b.mdo) }}</span>
+            {% else %}
+              <span class="down">{{ pct(b.mdo) }}</span>
+            {% endif %}
+          {% else %}
+            <span style="color:var(--text-3)">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:16px 0;color:var(--text-3);font-size:13px">
+    Bölge müdürü verisi kullanılamıyor.
+  </div>
+  {% endif %}
+
+  {% if bolge_yorum %}
+  <div class="adl-ai" style="margin-top:18px">{{ bolge_yorum }}</div>
+  {% endif %}
+</section>
+
+{# ── Bölüm 3 · Top 5 / Bottom 5 Mağaza ──────────────────────────────────── #}
+<section class="adl-section">
+  <h2>Top 5 / Bottom 5 Mağaza</h2>
+  <div class="sub">Hedef gerçekleştirme sıralı · aylık MTD</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:4px">
+
+    <div>
+      <div class="adl-eyebrow" style="margin-bottom:12px;color:var(--pos)">En Yüksek</div>
+      <table class="adl-table">
+        <thead>
+          <tr>
+            <th>Mağaza</th>
+            <th style="text-align:right">Doluluk</th>
+            <th style="text-align:right">Net Ciro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in top5 %}
+          <tr>
+            <td>
+              <span style="color:var(--text);font-size:12px">{{ m.magaza }}</span><br>
+              <span style="font-size:10px;color:var(--text-3)">{{ m.bolge_muduru or '' }}</span>
+            </td>
+            <td class="num">
+              {% if m.doluluk is not none %}
+                <span class="up">{{ pct(m.doluluk) }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="num">{{ tl(m.net_ciro) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" style="color:var(--text-3);font-size:12px">Veri yok</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div class="adl-eyebrow" style="margin-bottom:12px;color:var(--neg)">En Düşük</div>
+      <table class="adl-table">
+        <thead>
+          <tr>
+            <th>Mağaza</th>
+            <th style="text-align:right">Doluluk</th>
+            <th style="text-align:right">Net Ciro</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in bot5 %}
+          <tr>
+            <td>
+              <span style="color:var(--text);font-size:12px">{{ m.magaza }}</span><br>
+              <span style="font-size:10px;color:var(--text-3)">{{ m.bolge_muduru or '' }}</span>
+            </td>
+            <td class="num">
+              {% if m.doluluk is not none %}
+                {% if m.doluluk < 80 %}
+                  <span class="down">{{ pct(m.doluluk) }}</span>
+                {% else %}
+                  <span class="flat">{{ pct(m.doluluk) }}</span>
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+            <td class="num">{{ tl(m.net_ciro) }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" style="color:var(--text-3);font-size:12px">Veri yok</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  {% if top_bottom_yorum %}
+  <div class="adl-ai" style="margin-top:18px">{{ top_bottom_yorum }}</div>
+  {% endif %}
+</section>
+
+{# ── Bölüm 4 · Mağaza İade Matrisi ───────────────────────────────────────── #}
+<section class="adl-section">
+  <h2>İade Matrisi</h2>
+  <div class="sub">Beden paterni · günlük</div>
+
+  {% if iade_matrisi %}
+  <table class="adl-table">
+    <thead>
+      <tr>
+        <th>Ürün</th>
+        <th>Beden</th>
+        <th style="text-align:right">İade</th>
+        <th style="text-align:right">Satış</th>
+        <th style="text-align:right">İade %</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in iade_matrisi %}
+      <tr>
+        <td>
+          <span>
+            <span class="p-name">{{ row.urun_adi }}</span>
+            <span class="p-code" style="display:block;font-size:10px;color:var(--text-3)">
+              {{ row.urun_kodu }}-{{ row.renk }}
+            </span>
+          </span>
+        </td>
+        <td style="color:var(--text)">{{ row.beden }}</td>
+        <td class="num">{{ num(row.iade_adet) }}</td>
+        <td class="num">{{ num(row.satis_adet) }}</td>
+        <td class="num">
+          {% set oran = row.iade_orani | float %}
+          {% if oran > 40 %}
+            <span class="down">{{ pct(oran) }}</span>
+          {% elif oran > 25 %}
+            <span class="flat">{{ pct(oran) }}</span>
+          {% else %}
+            {{ pct(oran) }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding:16px 0;color:var(--text-3);font-size:13px">
+    Bu gün için mağaza iade kaydı bulunamadı.
+  </div>
+  {% endif %}
+
+  {% if iade_yorum %}
+  <div class="adl-ai" style="margin-top:18px">{{ iade_yorum }}</div>
+  {% endif %}
+</section>
+
+{# ── Bölüm 5 · Same-Store Sales (LfL) ────────────────────────────────────── #}
+<section class="adl-section">
+  <h2>Same-Store Sales</h2>
+  <div class="sub">
+    YoY karşılaştırma · aynı mağaza seti ·
+    {% if lfl.ay is defined %}{{ lfl.ay }}/{{ lfl.yil }} vs {{ lfl.ay }}/{{ lfl.yil - 1 }}{% endif %}
+  </div>
+
+  {% if lfl.mevcut %}
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:4px">
+    <div class="adl-kpi">
+      <div class="k-label">Bu Yıl</div>
+      <div class="k-val" style="color:var(--gold)">{{ tl(lfl.bu_yil) }}</div>
+    </div>
+    <div class="adl-kpi">
+      <div class="k-label">Geçen Yıl</div>
+      <div class="k-val" style="color:var(--text-2)">{{ tl(lfl.gecen_yil) }}</div>
+    </div>
+    <div class="adl-kpi">
+      <div class="k-label">LfL Büyüme</div>
+      <div class="k-val">
+        {% if lfl.lfl_pct is not none %}
+          {{ delta_html(lfl.lfl_pct) | safe }}
+        {% else %}
+          <span style="color:var(--text-3)">—</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div style="padding:16px 0;color:var(--text-3);font-size:13px">
+    LfL verisi kullanılamıyor: geçen yıl aynı ay kaydı yok.
+  </div>
+  {% endif %}
+
+  {% if lfl_yorum %}
+  <div class="adl-ai" style="margin-top:18px">{{ lfl_yorum }}</div>
+  {% endif %}
+</section>
+
+{# ── Bölüm 6 · Öneriler ───────────────────────────────────────────────────── #}
+{% if oneriler %}
+<section class="adl-section" style="border-bottom:none">
+  <h2>Öneriler</h2>
+  <div class="sub">MDO · OBF · Sepet odaklı aksiyonlar</div>
+  {% for oneri in oneriler %}
+  <div class="adl-rec">
+    <div class="roman">{{ oneri.roman }}</div>
+    <div class="body">
+      <h3>{{ oneri.baslik }}</h3>
+      <p>{{ oneri.aciklama }}</p>
+      {% if oneri.etki and oneri.etki != '—' %}
+      <p style="margin-top:6px;font-size:11px;color:var(--gold)">
+        Tahmini etki: {{ oneri.etki }}
+      </p>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endblock %}

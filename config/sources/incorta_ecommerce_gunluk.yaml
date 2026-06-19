@@ -20,8 +20,8 @@ tool:
   pagination_page_size: 5000
   total_rows_path: "content.data.headers.totalRows"
   incremental:
-    date_field: tarih                                   # DB'deki tarih sütunu
-    incorta_date_field: "ETicaret.ETicaretDetaylari.Tarih"  # Incorta BETWEEN filtresi
+    date_field: tarih
+    incorta_date_field: "ETicaret.ETicaretDetaylari.Tarih"
 
 # Incorta label → DB sütun adı (normalise_column_name çıktısıyla eşleşir)
 field_map:

@@ -1,11 +1,18 @@
-"""Dönemsel Kıyaslama Agent — YoY/MoM/YTD karşılaştırma. [YAPRAK]"""
+"""Dönemsel Kıyaslama Agent — YoY/MoM/YTD karşılaştırma. [YAPRAK]
+
+Kaynak: incorta_magaza_performans (yil/ay/magaza/hedef/net_ciro/ziyaretci/mdo/obf)
+Fallback: tablo boşsa rows=[] ile devam, LLM "veri mevcut değil" yanıtı verir.
+"""
 from __future__ import annotations
 import decimal, json, time
 from typing import Any, Dict, List
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.llm_client import llm_client
+from app.core.logging import get_logger
 from app.services.reporting.utils.date_context import get_date_context
+
+log = get_logger(__name__)
 
 def _to_native(v: Any) -> Any:
     """Decimal → float, diğerleri olduğu gibi."""
@@ -72,7 +79,8 @@ async def run_kiyaslama_agent(session: AsyncSession, question: str,
             ORDER BY yil, ay
         """), params or None)
         rows = [{k: _to_native(v) for k, v in row.items()} for row in r.mappings().all()]
-    except Exception:
+    except Exception as exc:
+        log.error("kiyaslama_agent.query_failed", error=str(exc))
         rows = []
     ctx = {"aylik_trend_son_24_ay": rows[-24:]}
     system = get_date_context() + "\n\n" + KIYASLAMA_SYSTEM.format(veri=json.dumps(ctx, ensure_ascii=False, indent=2))

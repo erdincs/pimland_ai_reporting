@@ -20,6 +20,8 @@ _TABLOLAR = [
     "incorta_depo_iade",
     "incorta_iptal_siparis",
     "incorta_analytics",
+    "incorta_ecommerce_gunluk",
+    "incorta_magaza_performans",
     "pim_products",
 ]
 

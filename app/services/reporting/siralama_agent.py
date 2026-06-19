@@ -1,11 +1,17 @@
-"""Sıralama Agent — kategori sıralama skoru ve kural analizi. [ÇAĞIRAN]"""
+"""Sıralama Agent — kategori sıralama skoru ve kural analizi. [ÇAĞIRAN]
+
+Kaynak: siralama_gecmisi (son siralama kararları ve onay geçmişi)
+"""
 from __future__ import annotations
 import json, time
 from typing import Any, Dict, List
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.agent.llm_client import llm_client
+from app.core.logging import get_logger
 from app.services.reporting.utils.date_context import get_date_context
+
+log = get_logger(__name__)
 
 SIRALAMA_SYSTEM = """\
 Sen Pimland'ın kategori sıralama uzmanısın.
@@ -28,7 +34,8 @@ async def run_siralama_agent(session: AsyncSession, question: str,
         for row in rows:
             if row.get("created_at"):
                 row["created_at"] = row["created_at"].isoformat()
-    except Exception:
+    except Exception as exc:
+        log.error("siralama_agent.query_failed", error=str(exc))
         rows = []
     ctx = {"son_siralama_calismalari": rows}
     system = get_date_context() + "\n\n" + SIRALAMA_SYSTEM.format(veri=json.dumps(ctx, ensure_ascii=False, indent=2))

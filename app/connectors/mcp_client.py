@@ -155,11 +155,16 @@ class McpConnector(BaseConnector):
     async def fetch(
         self,
         extra_prompts: Optional[List[Dict[str, Any]]] = None,
+        flush_callback=None,
+        flush_pages: int = 20,
     ) -> List[Dict[str, Any]]:
         """Fetch records from the MCP tool.
 
-        extra_prompts: additional Incorta filter prompts injected at runtime
-        (used by the incremental sync pipeline to pass date range filters).
+        extra_prompts: additional Incorta filter prompts injected at runtime.
+        flush_callback: async callable(rows) called every flush_pages pages.
+            When provided, rows are flushed and cleared from memory — prevents OOM
+            on large tables. Returns [] in this case (caller uses the callback).
+        flush_pages: how many pages to accumulate before calling flush_callback.
         """
         conn = self.config.connection
         tool = self.config.tool
@@ -188,6 +193,8 @@ class McpConnector(BaseConnector):
                 all_rows: List[Dict[str, Any]] = []
                 page_size = tool.pagination_page_size
                 total: Optional[int] = None
+                page_count = 0
+                total_flushed = 0
 
                 # Detect mode: "pageNumber" = 1-based page, otherwise offset-based
                 is_page_based = "pageNumber" in tool.pagination_start_field
@@ -197,7 +204,20 @@ class McpConnector(BaseConnector):
                     body = dict(base_args)
                     self._set_nested(body, tool.pagination_start_field, cursor)
                     self._set_nested(body, tool.pagination_size_field, page_size)
-                    data = await self._execute_once(client, execute_url, headers, body)
+                    try:
+                        data = await self._execute_once(client, execute_url, headers, body)
+                    except Exception as page_exc:
+                        if all_rows or total_flushed:
+                            # Partial success — flush remaining rows and return.
+                            # The incremental sync will fill the gap on the next run.
+                            log.warning("mcp.paginate_partial",
+                                        source=self.source_id, cursor=cursor,
+                                        rows_so_far=len(all_rows) + total_flushed,
+                                        error=str(page_exc))
+                            if flush_callback and all_rows:
+                                await flush_callback(all_rows)
+                            break
+                        raise  # Failed on first page — propagate for @retry
 
                     if total is None and tool.total_rows_path:
                         total = self._dig(data, tool.total_rows_path)
@@ -208,10 +228,18 @@ class McpConnector(BaseConnector):
                     if not rows:
                         break
                     all_rows.extend(rows)
+                    page_count += 1
+
+                    # Streaming flush — write to DB and free memory every flush_pages
+                    if flush_callback and page_count % flush_pages == 0:
+                        await flush_callback(all_rows)
+                        total_flushed += len(all_rows)
+                        log.info("mcp.paginate_flush", source=self.source_id,
+                                 pages=page_count, flushed=total_flushed)
+                        all_rows = []
 
                     if is_page_based:
                         cursor += 1
-                        # total_rows_path gives totalPageCount for page-based
                         total_pages = self._dig(data,
                             "content.data.result.totalPageCount") if is_page_based else None
                         if total_pages and cursor > int(total_pages):
@@ -221,9 +249,16 @@ class McpConnector(BaseConnector):
                         if total is not None and cursor >= total:
                             break
 
+                # Final flush for remaining rows
+                if flush_callback and all_rows:
+                    await flush_callback(all_rows)
+                    total_flushed += len(all_rows)
+                    all_rows = []
+
+                total_count = total_flushed if flush_callback else len(all_rows)
                 log.info("mcp.fetched", source=self.source_id, tool=tool.name,
-                         count=len(all_rows))
-                return all_rows
+                         count=total_count)
+                return all_rows  # Empty list if flush_callback was used
 
             # ── Single-page fetch ────────────────────────────────────────────
             data = await self._execute_once(client, execute_url, headers, base_args)

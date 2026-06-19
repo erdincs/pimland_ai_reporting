@@ -104,6 +104,22 @@ async def _generate_due_briefs_job():
     log.info("scheduler.brief_generation_done", generated=generated)
 
 
+async def _premium_brief_job() -> None:
+    """Her gece 03:00 UTC — EC + MG Premium Brief v2 üretimi."""
+    log.info("scheduler.premium_brief_started")
+    try:
+        from handlers.brief_daily import run_brief_daily
+        result = await run_brief_daily()
+        log.info(
+            "scheduler.premium_brief_done",
+            ec_status=result.get("ec", {}).get("status"),
+            mg_status=result.get("mg", {}).get("status"),
+            elapsed_ms=result.get("elapsed_ms"),
+        )
+    except Exception as exc:
+        log.error("scheduler.premium_brief_failed", error=str(exc))
+
+
 def register_jobs() -> None:
     """Register a scheduler job for every source that has a schedule config."""
     # Arama index — nightly 04:00 (PLM sync 03:00'den sonra)
@@ -146,6 +162,16 @@ def register_jobs() -> None:
         misfire_grace_time=300,
     )
     log.info("scheduler.job_registered", source="brief_generation", trigger="CronTrigger")
+
+    # adL Premium Brief v2 — EC + MG günlük üretim (03:00 UTC = 06:00 İstanbul)
+    _scheduler.add_job(
+        _premium_brief_job,
+        CronTrigger.from_crontab("0 3 * * *"),
+        id="premium_brief_daily",
+        replace_existing=True,
+        misfire_grace_time=1800,   # 30dk pencere — gece sync gecikmelerine karşı
+    )
+    log.info("scheduler.job_registered", source="premium_brief_daily", trigger="CronTrigger")
 
     for source_id, cfg in registry.all_configs().items():
         if not cfg.schedule:

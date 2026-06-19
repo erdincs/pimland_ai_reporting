@@ -41,6 +41,9 @@ boto3~=1.35.0
 # --- Date utilities ---
 python-dateutil>=2.9.0             # relativedelta for date_context
 
+# --- Templating (adL Premium Brief HTML generation) ---
+jinja2~=3.1.0
+
 # --- SQL safety / parsing (read-only guard for generated SQL) ---
 sqlglot~=25.30.0                   # dialect-aware parse + validate generated SQL
 

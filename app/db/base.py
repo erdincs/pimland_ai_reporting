@@ -26,3 +26,4 @@ class TimestampMixin:
 
 # --- Model imports (extend as the schema grows) ----------------------------
 from app.db.models.sync_state import SyncJob  # noqa: E402,F401
+from app.db.models.menu import MenuAgent, MenuGroup, MenuItem  # noqa: E402,F401

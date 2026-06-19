@@ -68,6 +68,8 @@ class IncrementalConfig(BaseModel):
     date_field: str                  # DB sütun adı (örn: "tarih")
     incorta_date_field: str          # Incorta BETWEEN filtresi için field adı
     date_format: str = "%Y-%m-%d"   # last_date → string dönüşümü
+    start_date: Optional[str] = None  # İlk sync için başlangıç tarihi ("YYYY-MM-DD")
+    batch_days: Optional[int] = None  # İlk sync: bu kadar günlük parçalara böl
 
 
 class McpToolConfig(BaseModel):
