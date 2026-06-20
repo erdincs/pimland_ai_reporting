@@ -1974,16 +1974,23 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             "obf":          round(float(r["obf"]   or 0)),
         }
 
-    # ── Top 3 mağaza her gün için ─────────────────────────────────────────────
+    # ── Tüm mağazalar gün bazında (tam metrikler) ────────────────────────────
     mag_rows = await session.execute(text("""
         SELECT
-            tarih::date                                           AS gun,
+            tarih::date                                                       AS gun,
             magaza,
-            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))     AS net
+            SUM(satis_tutar)                                                  AS brut_satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                               AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))                 AS net_ciro,
+            SUM(satis_adet)                                                   AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)              AS iade_pct,
+            ROUND((SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_adet), 0))::numeric                         AS obf
         FROM incorta_magaza_gunluk
         WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
         GROUP BY tarih::date, magaza
-        ORDER BY tarih::date, net DESC
+        ORDER BY tarih::date, net_ciro DESC
     """), {"bas": bas_str})
 
     mag_by_day: dict = {}
@@ -1991,8 +1998,16 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
         g = str(r["gun"])
         if g not in mag_by_day:
             mag_by_day[g] = []
-        if len(mag_by_day[g]) < 3:
-            mag_by_day[g].append({"magaza": r["magaza"], "net": round(float(r["net"] or 0))})
+        mag_by_day[g].append({
+            "magaza":     r["magaza"],
+            "net":        round(float(r["net_ciro"] or 0)),
+            "brut_satis": round(float(r["brut_satis"] or 0)),
+            "iade":       round(float(r["iade"]       or 0)),
+            "net_ciro":   round(float(r["net_ciro"]   or 0)),
+            "adet":       int(r["adet"]               or 0),
+            "iade_pct":   float(r["iade_pct"]         or 0),
+            "obf":        round(float(r["obf"]        or 0)),
+        })
 
     # ── Gün bazlı liste ───────────────────────────────────────────────────────
     gunler = []
@@ -2029,7 +2044,8 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             "gecen_hafta_net":  round(prev7_net) if prev7_net else None,
             "hf_degisim_pct":   hf_degisim,
             "obf":              d.get("obf", 0),
-            "top_magazalar":    mag_by_day.get(ts, []),
+            "top_magazalar":    [{"magaza": m["magaza"], "net": m["net"]} for m in mag_by_day.get(ts, [])[:3]],
+            "magazalar":        mag_by_day.get(ts, []),
             "veri_var":         net > 0,
         })
         cur += timedelta(days=1)

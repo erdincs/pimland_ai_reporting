@@ -11162,6 +11162,15 @@ function adlusGenerateAI() {
 // ══════════════════════════════════════════════════════════════════════════════
 let _mgaPeriod = 15;
 
+function _toggleMgaDay(tarih) {
+  const row = document.getElementById('mga-day-' + tarih);
+  const arrow = document.getElementById('mga-arr-' + tarih);
+  if (!row) return;
+  const open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  if (arrow) arrow.textContent = open ? '▶' : '▼';
+}
+
 function mgaSetPeriod(n) {
   _mgaPeriod = n;
   [7,15,30].forEach(v => {
@@ -11325,10 +11334,52 @@ function renderMGA(d) {
     const netC = g.net_ciro >= ortNet ? 'var(--teal)' : 'var(--t1)';
     const veri = g.veri_var;
     const prevVeri = prev && prev.veri_var;
-    return `<tr style="border-bottom:1px solid var(--border);${hsBg}">
+    const magCount = (g.magazalar || []).length;
+
+    // ── Mağaza akordiyon satırı ─────────────────────────────────────────────
+    const magRows = (g.magazalar || []).map((m, mi) => {
+      const mNetC = m.net_ciro >= (oz.ortalama_gunluk / Math.max(magCount, 1)) ? 'var(--teal)' : 'var(--t1)';
+      const mIpct = m.iade_pct > 15 ? 'var(--red)' : m.iade_pct > 10 ? 'var(--yellow)' : 'var(--t3)';
+      const rowBg = mi % 2 === 0 ? 'var(--bg2)' : 'var(--bg3)';
+      return `<tr style="background:${rowBg}">
+        <td style="padding:5px 10px 5px 28px;font-size:10px;font-weight:600;color:var(--t1);white-space:nowrap">
+          <span style="font-size:9px;color:var(--t4);margin-right:5px">${mi+1}.</span>${m.magaza}
+        </td>
+        <td style="padding:5px 10px;text-align:right;font-size:10px;font-weight:700;color:${mNetC}">${_myFmt(m.net_ciro,'tl')}</td>
+        <td style="padding:5px 10px;text-align:right;font-size:10px;color:var(--t3)">${_myFmt(m.brut_satis,'tl')}</td>
+        <td style="padding:5px 10px;text-align:right;font-size:10px;color:var(--t2)">${(m.adet||0).toLocaleString('tr-TR')}</td>
+        <td style="padding:5px 10px;text-align:right;font-size:10px;font-weight:600;color:${mIpct}">%${m.iade_pct}</td>
+        <td style="padding:5px 10px;text-align:right;font-size:10px;color:var(--blue)">${m.obf ? '₺'+m.obf.toLocaleString('tr-TR') : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    const detailRow = `<tr id="mga-day-${g.tarih}" style="display:none">
+      <td colspan="7" style="padding:0;background:var(--bg1);border-bottom:2px solid var(--border)">
+        <div style="padding:6px 0">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr style="background:var(--bg3)">
+              <th style="padding:4px 10px 4px 28px;text-align:left;font-size:8px;color:var(--t4);letter-spacing:.4px">MAĞAZA</th>
+              <th style="padding:4px 10px;text-align:right;font-size:8px;color:var(--t4);letter-spacing:.4px">NET CİRO</th>
+              <th style="padding:4px 10px;text-align:right;font-size:8px;color:var(--t4);letter-spacing:.4px">BRÜT SATIŞ</th>
+              <th style="padding:4px 10px;text-align:right;font-size:8px;color:var(--t4);letter-spacing:.4px">ADET</th>
+              <th style="padding:4px 10px;text-align:right;font-size:8px;color:var(--t4);letter-spacing:.4px">İADE%</th>
+              <th style="padding:4px 10px;text-align:right;font-size:8px;color:var(--t4);letter-spacing:.4px">OBF</th>
+            </tr></thead>
+            <tbody>${magRows || '<tr><td colspan="6" style="padding:8px 28px;font-size:10px;color:var(--t4)">Mağaza verisi yok</td></tr>'}</tbody>
+          </table>
+        </div>
+      </td>
+    </tr>`;
+
+    return `<tr onclick="_toggleMgaDay('${g.tarih}')" style="border-bottom:1px solid var(--border);${hsBg}cursor:pointer;transition:background .1s" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='${g.haftasonu ? 'rgba(150,100,255,.05)' : ''}'">
       <td style="padding:7px 12px;white-space:nowrap">
-        <span style="font-size:11px;font-weight:700;color:var(--t1)">${g.tarih_label}</span>
-        <span style="font-size:9px;color:var(--t4);margin-left:4px">${g.gun_kisa}${g.haftasonu?' ★':''}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span id="mga-arr-${g.tarih}" style="font-size:8px;color:var(--t4)">▶</span>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--t1)">${g.tarih_label}</div>
+            <div style="font-size:9px;color:var(--t4)">${g.gun_kisa}${g.haftasonu?' ★':''}${magCount?' · '+magCount+' mağaza':''}</div>
+          </div>
+        </div>
       </td>
       <td style="padding:7px 12px;text-align:right">
         <div style="font-size:11px;color:var(--t2)">${veri ? _myFmt(g.brut_satis,'tl') : '—'}</div>
@@ -11353,7 +11404,7 @@ function renderMGA(d) {
         <div style="font-size:11px;color:var(--blue)">${veri && g.obf ? '₺'+g.obf.toLocaleString('tr-TR') : '—'}</div>
         ${veri && prevVeri ? _stk(g.obf, prev.obf) : ''}
       </td>
-    </tr>`;
+    </tr>${detailRow}`;
   }).join('');
 
   const ozTableHtml = `
