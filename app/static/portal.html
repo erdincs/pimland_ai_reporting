@@ -8567,7 +8567,6 @@ function _dpAllBolgeTable(bolgeler) {
 // ══════════════════════════════════════════════════════════════════════════════
 let _dkTab = 'aylik';
 let _dkData = null;
-let _dkAylikYil = '2026';
 
 function dkSetTab(tab) {
   _dkTab = tab;
@@ -8803,113 +8802,117 @@ function renderDK(d) {
   </div>`;
 
   // Render by tab
-  // ── Aylık Detay Tablosu (yıl seçici) ─────────────────────────────────────
-  const aylikDetayData = d.aylik_detay || {};
-  const mevcutYillar = Object.keys(aylikDetayData).filter(y => (aylikDetayData[y]||[]).length > 0).sort().reverse();
-  if (!mevcutYillar.includes(_dkAylikYil)) _dkAylikYil = mevcutYillar[0] || '2026';
+  // ── Aylara Göre Yıl Karşılaştırması (filtre yok, tüm aylar) ───────────────
+  const aylikKarsilastirma = d.aylik_karsilastirma || [];
+  const maxAyCiro = Math.max(...aylikKarsilastirma.flatMap(a =>
+    [a.y2024?.net_ciro||0, a.y2025?.net_ciro||0, a.y2026?.net_ciro||0]
+  ), 1);
 
-  function _dkRenderAylikDetay() {
-    const aylar = aylikDetayData[_dkAylikYil] || [];
-    if (!aylar.length) return '<div style="padding:16px;color:var(--t3);font-size:12px">Bu yıl için veri yok.</div>';
-    const maxCiro = Math.max(...aylar.map(a => a.net_ciro || 0), 1);
-    const ytd = aylar.reduce((acc, a) => ({
-      hedef: acc.hedef + (a.hedef||0),
-      net_ciro: acc.net_ciro + (a.net_ciro||0),
-      ziyaretci: acc.ziyaretci + (a.ziyaretci||0),
-      net_adet: acc.net_adet + (a.net_adet||0),
-    }), {hedef:0, net_ciro:0, ziyaretci:0, net_adet:0});
-    const ytdOran = ytd.hedef ? ytd.net_ciro / ytd.hedef * 100 : 0;
-    const rows = aylar.map(a => {
-      const oc = a.hedef_oran >= 90 ? 'var(--green)' : a.hedef_oran >= 80 ? 'var(--yellow)' : 'var(--red)';
-      const mc = a.mdo >= 16 ? 'var(--green)' : a.mdo >= 13 ? 'var(--teal)' : 'var(--orange)';
-      const cw = Math.round((a.net_ciro || 0) / maxCiro * 100);
-      const bw = Math.min(a.hedef_oran || 0, 100);
-      return `<tr style="border-bottom:1px solid rgba(42,42,58,.2)">
-        <td style="padding:8px 10px;font-weight:600;color:var(--t1)">${a.ay_adi}</td>
-        <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(a.hedef,'tl')}</td>
-        <td style="padding:8px 10px;min-width:150px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
-              <div style="width:${cw}%;height:100%;background:var(--teal);border-radius:3px"></div>
-            </div>
-            <span style="font-size:11px;font-weight:700;color:var(--teal);min-width:52px;text-align:right">${_myFmt(a.net_ciro,'tl')}</span>
-          </div>
-        </td>
-        <td style="padding:8px 10px;min-width:110px">
-          <div style="display:flex;align-items:center;gap:5px">
-            <div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden">
-              <div style="width:${bw}%;height:100%;background:${oc};border-radius:2px"></div>
-            </div>
-            <span style="font-size:11px;font-weight:700;color:${oc};min-width:40px;text-align:right">%${a.hedef_oran}</span>
-          </div>
-        </td>
-        <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(a.ziyaretci,'sayi')}</td>
-        <td style="padding:8px 10px;text-align:right;color:${mc}">%${(a.mdo||0).toFixed(1)}</td>
-        <td style="padding:8px 10px;text-align:right;color:var(--orange)">${_myFmt(a.obf,'tl')}</td>
-        <td style="padding:8px 10px;text-align:right;color:var(--t2)">${(a.net_adet||0).toLocaleString('tr-TR')}</td>
-      </tr>`;
-    }).join('');
-    return `<div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--bg3)">
-          <th style="padding:7px 10px;text-align:left;color:var(--t3);font-size:9px">AY</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
-          <th style="padding:7px 10px;color:var(--t3);font-size:9px">NET CİRO</th>
-          <th style="padding:7px 10px;color:var(--t3);font-size:9px">HEDEF ORANI</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">ZİYARETÇİ</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">MDO</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">OBF</th>
-          <th style="padding:7px 10px;text-align:right;color:var(--t3);font-size:9px">NET ADET</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr style="background:var(--bg3);font-weight:700">
-          <td style="padding:8px 10px;color:var(--t1)">TOPLAM</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(ytd.hedef,'tl')}</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--teal)">${_myFmt(ytd.net_ciro,'tl')}</td>
-          <td style="padding:8px 10px;text-align:right;color:${ytdOran>=90?'var(--green)':ytdOran>=80?'var(--yellow)':'var(--red)'}">%${ytdOran.toFixed(1)}</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--t2)">${_myFmt(ytd.ziyaretci,'sayi')}</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--t2)">—</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--t2)">—</td>
-          <td style="padding:8px 10px;text-align:right;color:var(--t2)">${ytd.net_adet.toLocaleString('tr-TR')}</td>
-        </tfoot>
-      </table>
-    </div>`;
+  function _dkAyKpiCell(k, alan) {
+    if (!k) return `<td style="padding:6px 10px;text-align:right;color:var(--t4);font-size:11px">—</td>`;
+    let val, color='var(--t2)';
+    if (alan==='net_ciro') { val=_myFmt(k.net_ciro,'tl'); color='var(--teal)'; }
+    else if (alan==='hedef_oran') {
+      val='%'+k.hedef_oran;
+      color=k.hedef_oran>=90?'var(--green)':k.hedef_oran>=80?'var(--yellow)':'var(--red)';
+    }
+    else if (alan==='ziyaretci') { val=_myFmt(k.ziyaretci,'sayi'); }
+    else if (alan==='mdo') {
+      val='%'+(k.mdo||0).toFixed(1);
+      color=k.mdo>=16?'var(--green)':k.mdo>=13?'var(--teal)':'var(--orange)';
+    }
+    else if (alan==='obf') { val=_myFmt(k.obf,'tl'); color='var(--orange)'; }
+    return `<td style="padding:6px 10px;text-align:right;font-size:11px;font-weight:600;color:${color}">${val}</td>`;
   }
 
-  const yilBtns = mevcutYillar.map(y => {
-    const a = y === _dkAylikYil;
-    return `<button onclick="(function(){_dkAylikYil='${y}';document.getElementById('dk-aylik-detay-body').innerHTML=_dkRenderAylikDetayFromCache();['${mevcutYillar.join("','")}'].forEach(function(yy){var b=document.getElementById('dk-yil-btn-'+yy);if(b){b.style.background=yy==='${y}'?'var(--orange)':'var(--bg3)';b.style.borderColor=yy==='${y}'?'var(--orange)':'var(--border)';b.style.color=yy==='${y}'?'#fff':'var(--t2)';b.style.fontWeight=yy==='${y}'?'700':'400';}})})()"
-      id="dk-yil-btn-${y}"
-      style="background:${a?'var(--orange)':'var(--bg3)'};border:1px solid ${a?'var(--orange)':'var(--border)'};color:${a?'#fff':'var(--t2)'};padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:${a?'700':'400'}">${y}</button>`;
+  const aylarRows = aylikKarsilastirma.map((a,i) => {
+    const bg = i%2===0?'':'background:rgba(255,255,255,.02)';
+    const k24=a.y2024, k25=a.y2025, k26=a.y2026;
+    // Net ciro bar (en yüksek yılı 100% kabul)
+    const maxRow = Math.max(k24?.net_ciro||0, k25?.net_ciro||0, k26?.net_ciro||0, 1);
+    function ciroBar(k, color) {
+      if (!k) return `<div style="flex:1;height:5px;background:var(--bg4);border-radius:2px"></div>`;
+      const w = Math.round(k.net_ciro/maxRow*100);
+      return `<div style="flex:1;height:5px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="width:${w}%;height:100%;background:${color};border-radius:2px"></div></div>`;
+    }
+    // YoY delta (2026 vs 2025, 2025 vs 2024)
+    function delta(n, o) {
+      if (!n || !o || !o.net_ciro) return '';
+      const p = (n.net_ciro - o.net_ciro) / o.net_ciro * 100;
+      const c = p >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<span style="font-size:9px;color:${c};font-weight:700">${p>=0?'↑':'↓'}%${Math.abs(p).toFixed(1)}</span>`;
+    }
+    return `<tr style="border-bottom:1px solid var(--border);${bg}">
+      <td style="padding:8px 10px;font-weight:700;color:var(--t1);white-space:nowrap;font-size:12px">${a.ay_adi}</td>
+      <td style="padding:6px 10px;min-width:180px">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:5px">${ciroBar(k24,'var(--t3)')}<span style="font-size:10px;color:var(--t3);min-width:52px;text-align:right">${k24?_myFmt(k24.net_ciro,'tl'):'—'}</span></div>
+          <div style="display:flex;align-items:center;gap:5px">${ciroBar(k25,'var(--blue)')}<span style="font-size:10px;color:var(--blue);min-width:52px;text-align:right">${k25?_myFmt(k25.net_ciro,'tl'):'—'}</span></div>
+          <div style="display:flex;align-items:center;gap:5px">${ciroBar(k26,'var(--teal)')}<span style="font-size:10px;color:var(--teal);min-width:52px;text-align:right">${k26?_myFmt(k26.net_ciro,'tl'):'—'}</span></div>
+        </div>
+      </td>
+      ${_dkAyKpiCell(k24,'hedef_oran')}${_dkAyKpiCell(k25,'hedef_oran')}${_dkAyKpiCell(k26,'hedef_oran')}
+      ${_dkAyKpiCell(k24,'ziyaretci')}${_dkAyKpiCell(k25,'ziyaretci')}${_dkAyKpiCell(k26,'ziyaretci')}
+      ${_dkAyKpiCell(k24,'mdo')}${_dkAyKpiCell(k25,'mdo')}${_dkAyKpiCell(k26,'mdo')}
+      <td style="padding:6px 10px;text-align:right;font-size:10px;white-space:nowrap">${delta(k25,k24)}</td>
+      <td style="padding:6px 10px;text-align:right;font-size:10px;white-space:nowrap">${delta(k26,k25)}</td>
+    </tr>`;
   }).join('');
 
-  // cache referansı için global fonksiyon
-  window._dkRenderAylikDetayFromCache = function() {
-    return _dkRenderAylikDetay();
-  };
-
-  const aylikDetayHtml = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">AYLIK DETAY KARŞILAŞTIRMA</span>
-      <div style="display:flex;gap:6px">${yilBtns}</div>
+  const aylikKarsilastirmaHtml = aylarRows ? `
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">AYLARA GÖRE KARŞILAŞTIRMA</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--t3);display:inline-block;border-radius:1px"></span><span style="font-size:10px;color:var(--t3)">2024</span></span>
+        <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--blue);display:inline-block;border-radius:1px"></span><span style="font-size:10px;color:var(--blue)">2025</span></span>
+        <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--teal);display:inline-block;border-radius:1px"></span><span style="font-size:10px;color:var(--teal)">2026</span></span>
+      </div>
     </div>
-    <div id="dk-aylik-detay-body">${_dkRenderAylikDetay()}</div>
-  </div>`;
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr style="background:var(--bg3)">
+            <th rowspan="2" style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;border-right:1px solid var(--border)">AY</th>
+            <th rowspan="2" style="padding:6px 10px;color:var(--t3);font-size:9px;min-width:180px;border-right:1px solid var(--border)">NET CİRO</th>
+            <th colspan="3" style="padding:5px 10px;text-align:center;color:var(--t3);font-size:9px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)">HEDEF ORANI</th>
+            <th colspan="3" style="padding:5px 10px;text-align:center;color:var(--t3);font-size:9px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)">ZİYARETÇİ</th>
+            <th colspan="3" style="padding:5px 10px;text-align:center;color:var(--t3);font-size:9px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)">MDO</th>
+            <th colspan="2" style="padding:5px 10px;text-align:center;color:var(--t3);font-size:9px;border-bottom:1px solid var(--border)">YoY%</th>
+          </tr>
+          <tr style="background:var(--bg3)">
+            <th style="padding:4px 8px;text-align:right;color:var(--t3);font-size:8px">2024</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--blue);font-size:8px">2025</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--teal);font-size:8px;border-right:1px solid var(--border)">2026</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--t3);font-size:8px">2024</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--blue);font-size:8px">2025</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--teal);font-size:8px;border-right:1px solid var(--border)">2026</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--t3);font-size:8px">2024</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--blue);font-size:8px">2025</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--teal);font-size:8px;border-right:1px solid var(--border)">2026</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--t3);font-size:8px">25/24</th>
+            <th style="padding:4px 8px;text-align:right;color:var(--teal);font-size:8px">26/25</th>
+          </tr>
+        </thead>
+        <tbody>${aylarRows}</tbody>
+      </table>
+    </div>
+  </div>` : '';
 
   if(_dkTab==='aylik') {
     content.innerHTML=`
       <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${aylikHtml}${yoyHtml}</div>
-      ${aylikDetayHtml}`;
+      ${aylikKarsilastirmaHtml}`;
   } else if(_dkTab==='ceyreklik') {
     content.innerHTML=`
       <div style="display:flex;gap:10px;flex-wrap:wrap">${kpiCards}</div>
       ${ceyrekHtml}
-      ${aylikDetayHtml}`;
+      ${aylikKarsilastirmaHtml}`;
   } else {
     content.innerHTML=`
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${yillikHtml}${buyumeHtml}</div>
-      ${aylikDetayHtml}`;
+      ${aylikKarsilastirmaHtml}`;
   }
 }
 

@@ -861,34 +861,38 @@ async def get_donemseel_karsilastirma() -> Dict[str, Any]:
     mdo_katki   = round((d26_full["mdo"] - d25_ytd["mdo"]) / 100 * d25_ytd["ziy"] * d25_ytd["obf"] / 1000) if d25_ytd["ziy"] else 0
     sepet_katki = round((d26_full["sepet"] - d25_ytd["sepet"]) * d25_ytd["ziy"] * d26_full["mdo"] / 100) if d25_ytd["ziy"] else 0
 
-    # Yıl bazlı tam aylık detay (yeni bölüm için)
-    def build_aylik_detay(yd):
-        result = []
-        for a in range(1, 13):
-            m = yd["monthly"].get(a)
-            if not m:
-                continue
-            ciro  = m.get("ciro", 0)
-            hedef = m.get("hedef", 0)
-            ziy   = m.get("ziy", 0)
-            adet  = m.get("adet", 0)
-            mdo   = m["mdo_w"] / ziy * 100  if ziy  else 0
-            obf   = m["obf_w"] / adet        if adet else 0
-            oran  = ciro / hedef * 100       if hedef else 0
-            if ciro == 0:
-                continue
-            result.append({
-                "ay": a,
-                "ay_adi": AY_ADLARI[a],
-                "hedef":      round(hedef),
-                "net_ciro":   round(ciro),
-                "hedef_oran": round(oran, 1),
-                "ziyaretci":  round(ziy),
-                "mdo":        round(mdo, 1),
-                "obf":        round(obf, 0),
-                "net_adet":   round(adet),
-            })
-        return result
+    # Aylara göre 3 yıl yan yana karşılaştırma (filtre yok, tüm aylar)
+    def month_kpis(yd, ay):
+        m = yd["monthly"].get(ay, {})
+        ciro  = m.get("ciro", 0)
+        hedef = m.get("hedef", 0)
+        ziy   = m.get("ziy", 0)
+        adet  = m.get("adet", 0)
+        if ciro == 0:
+            return None
+        return {
+            "net_ciro":   round(ciro),
+            "hedef":      round(hedef),
+            "hedef_oran": round(ciro / hedef * 100, 1) if hedef else 0,
+            "ziyaretci":  round(ziy),
+            "mdo":        round(m["mdo_w"] / ziy * 100, 1) if ziy else 0,
+            "obf":        round(m["obf_w"] / adet, 0) if adet else 0,
+            "net_adet":   round(adet),
+        }
+
+    aylik_karsilastirma = []
+    for a in range(1, 13):
+        k24 = month_kpis(d24, a)
+        k25 = month_kpis(d25, a)
+        k26 = month_kpis(d26_full, a)
+        if not any([k24, k25, k26]):
+            continue
+        aylik_karsilastirma.append({
+            "ay": a, "ay_adi": AY_ADLARI[a],
+            "y2024": k24,
+            "y2025": k25,
+            "y2026": k26,
+        })
 
     aylik_detay = {
         "2024": build_aylik_detay(d24),
@@ -908,7 +912,7 @@ async def get_donemseel_karsilastirma() -> Dict[str, Any]:
         "yoy":       yoy_data,
         "ceyreklik": ceyreklik,
         "aylik_trend": aylik_trend,
-        "aylik_detay": aylik_detay,
+        "aylik_karsilastirma": aylik_karsilastirma,
         "buyume_katkisi": {
             "baz_2025":  d25_ytd["ciro"],
             "proj_2026": proj_ciro,
