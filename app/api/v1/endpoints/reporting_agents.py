@@ -204,6 +204,14 @@ def _insight_question(report_ctx: str) -> str:
             "Anlık aksiyon gerektiren sinyalleri ve olağan dışı hareketleri öne çıkar. "
             f"7-8 bulgunu {JSON_FORMAT}"
         ),
+        "magaza-gunluk-analiz": (
+            f"{TONE} "
+            "Son 15 günlük mağaza satış koridorunu gün gün analiz et: "
+            "en güçlü/zayıf günler ve nedenleri, hafta içi/hafta sonu performans farkı, "
+            "gün-üstü-gün ivme değişimi, iade trendi, aktif mağaza sayısı dalgalanması. "
+            "Dikkat çeken anomalileri ve aksiyon gerektiren sinyalleri öne çıkar. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
         # ── E-Ticaret ─────────────────────────────────────────────────────────
         "exec": (
             f"{TONE} "

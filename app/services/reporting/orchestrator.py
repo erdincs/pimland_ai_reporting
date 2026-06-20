@@ -12,10 +12,11 @@ log = get_logger(__name__)
 # ── Routing tablosu ───────────────────────────────────────────────────────────
 ROUTING_MAP: Dict[str, str] = {
     # Satış Analiz → Mağaza
-    "magaza-yonetici":       "magaza",
-    "magaza-performans":     "magaza",
-    "magaza-donemseel":      "magaza",
-    "magaza-karsilastirma":  "magaza",
+    "magaza-yonetici":          "magaza",
+    "magaza-performans":        "magaza",
+    "magaza-donemseel":         "magaza",
+    "magaza-karsilastirma":     "magaza",
+    "magaza-gunluk-analiz":     "magaza",
     # Zenginleştirme
     "enrichment":            "enrichment",
     "enrichment-dashboard":  "enrichment",

@@ -643,6 +643,9 @@ body,
       <div class="nav-item nav-sub" onclick="showSection('magaza-gunluk')" id="nav-magaza-gunluk">
         <span class="nav-icon" style="font-size:12px">📅</span><span class="nav-text">Günlük Analiz</span>
       </div>
+      <div class="nav-item nav-sub" onclick="showSection('magaza-gunluk-analiz')" id="nav-magaza-gunluk-analiz">
+        <span class="nav-icon" style="font-size:12px">📊</span><span class="nav-text">15 Günlük Satış</span>
+      </div>
       <div class="nav-item nav-sub" onclick="showSection('magaza-yonetici')" id="nav-magaza-yonetici">
         <span class="nav-icon" style="font-size:12px">🏪</span><span class="nav-text">Yönetici Özeti</span>
       </div>
@@ -1587,6 +1590,27 @@ body,
         </div>
       </div>
     </div><!-- /section-magaza-gunluk -->
+
+    <!-- ── 15 GÜNLÜK SATIŞ ANALİZ ──────────────────────────────────────────── -->
+    <div class="section" id="section-magaza-gunluk-analiz" style="padding:0;flex-direction:column;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2);flex-wrap:wrap">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">📊 15 Günlük Satış Analizi</div>
+          <div style="font-size:10px;color:var(--t3)" id="mga-period-lbl">Son 15 günlük mağaza satış detayı</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px">
+          <button onclick="mgaSetPeriod(7)"  id="mga-btn-7"  style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">7 Gün</button>
+          <button onclick="mgaSetPeriod(15)" id="mga-btn-15" style="background:var(--orange);border:1px solid var(--orange);color:#fff;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">15 Gün</button>
+          <button onclick="mgaSetPeriod(30)" id="mga-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
+        </div>
+      </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-gunluk-analiz" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
+      <!-- İçerik -->
+      <div id="mga-content" style="padding:14px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
+      </div>
+    </div><!-- /section-magaza-gunluk-analiz -->
 
     <!-- ── MAĞAZA YÖNETİCİ ÖZETİ ──────────────────────────────────────────── -->
     <div class="section" id="section-magaza-yonetici" style="padding:0;flex-direction:column;overflow-y:auto">
@@ -3138,6 +3162,7 @@ function loadSection(id){
   else if(id==='siralama')initSiralama();
   else if(id==='eticaret-gunluk')loadEticaretGunluk();
   else if(id==='magaza-gunluk')loadMagazaGunluk();
+  else if(id==='magaza-gunluk-analiz')loadMGA();
   else if(id==='adl-yonetici')loadAdlYonetici();
   else if(id==='adl-eticaret')loadAdlEticaret();
   else if(id==='adl-magaza')loadAdlMagaza();
@@ -6047,6 +6072,7 @@ const _SECTION_GROUP = {
   'urun-yonetimi':'urunmgmt','urun-satis':'urunmgmt',
   siralama:'ekat',
   'magaza-gunluk':'satis',
+  'magaza-gunluk-analiz':'satis',
   'magaza-yonetici':'satis',
   'magaza-performans':'satis',
   'magaza-donemseel':'satis',
@@ -9127,7 +9153,7 @@ function _dpRenderBolge(bolgeler) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const RP_SUPPORTED = new Set([
-  'magaza-yonetici','magaza-performans','magaza-donemseel','magaza-karsilastirma',
+  'magaza-yonetici','magaza-performans','magaza-donemseel','magaza-karsilastirma','magaza-gunluk-analiz',
   'enrichment','enrichment-dashboard','enrichment-scorelist','enrichment-products',
   'siralama','exec','kpi','overview','kategori','urunler','iade','colors',
   'urun-yonetimi','plm-katalog','products','urun-satis',
@@ -9138,6 +9164,7 @@ const RP_LABELS = {
   'magaza-performans':   'Mağaza Performans',
   'magaza-donemseel':    'Dönemsel Performans',
   'magaza-karsilastirma':'Dönemsel Karşılaştırma',
+  'magaza-gunluk-analiz':'15 Günlük Satış Analizi',
   'enrichment':          'Ürün Zenginleştirme',
   'siralama':            'Sıralama Yönetimi',
   'exec':                'E-Ticaret Executive',
@@ -9158,6 +9185,7 @@ const RP_CHIPS = {
   'magaza-performans':   ['Hedefi aşan mağazalar?','En düşük OBF nerede?','Aksiyon gereken liste?'],
   'magaza-donemseel':    ['En iyi ay hangisi?','Büyüme ivmesi nasıl?','Sezonluk dip ne zaman?'],
   'magaza-karsilastirma':['2026 vs 2025 büyüme?','Hangi çeyrek zayıf?','Yıl sonu projeksiyonu?'],
+  'magaza-gunluk-analiz':['En iyi gün hangisi?','Hafta sonu vs hafta içi farkı?','İade trendi nasıl?','Dünkü anomali var mıydı?'],
   'enrichment':          ['Genel kalite durumu nedir?','Kalite satışı etkiliyor mu?','En büyük eksik alanlar?','Önce hangi ürünler düzeltilmeli?'],
   'enrichment-dashboard':['Bu sezon kaç ürün yayına hazır?','Ortalama puan nedir?','Top sorunlar neler?'],
   'enrichment-scorelist': ['Grade D/F ürünler hangileri?','Satışı yüksek kötü puanlı ürünler?','Hangi alan en çok eksik?'],
@@ -9197,6 +9225,7 @@ const RP_AGENT_KEY = {
   'magaza-performans':   'magaza',
   'magaza-donemseel':    'magaza',
   'magaza-karsilastirma':'magaza',
+  'magaza-gunluk-analiz':'magaza',
   'enrichment':          'enrichment',
   'enrichment-dashboard':'enrichment',
   'enrichment-scorelist':'enrichment',
@@ -11127,6 +11156,160 @@ function adlusGenerateAI() {
     }
   } catch (e) { /* sessiz hata — sidebar hardcoded olarak kalır */ }
 })();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 15 GÜNLÜK SATIŞ ANALİZ
+// ══════════════════════════════════════════════════════════════════════════════
+let _mgaPeriod = 15;
+
+function mgaSetPeriod(n) {
+  _mgaPeriod = n;
+  [7,15,30].forEach(v => {
+    const b = document.getElementById('mga-btn-'+v);
+    if (!b) return;
+    const a = v === n;
+    b.style.background   = a ? 'var(--orange)' : 'var(--bg3)';
+    b.style.borderColor  = a ? 'var(--orange)' : 'var(--border)';
+    b.style.color        = a ? '#fff' : 'var(--t2)';
+    b.style.fontWeight   = a ? '600' : '400';
+  });
+  loadMGA();
+}
+
+async function loadMGA() {
+  _satisAiLoad('magaza-gunluk-analiz', 'magaza-gunluk-analiz', {gun_sayisi: _mgaPeriod});
+  const content = document.getElementById('mga-content');
+  content.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>';
+  try {
+    const d = await fetch(`${API}/portal/gunluk-satis-analiz?gun_sayisi=${_mgaPeriod}`).then(r => r.json());
+    if (d.hata) { content.innerHTML = `<div style="padding:20px;color:var(--red)">Veri bulunamadı: ${d.hata}</div>`; return; }
+    const lbl = document.getElementById('mga-period-lbl');
+    if (lbl && d.son_gun) {
+      const s = new Date(d.bas_tarih).toLocaleDateString('tr-TR',{day:'numeric',month:'long'});
+      const e = new Date(d.son_gun).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+      lbl.textContent = `${s} – ${e} · ${d.ozet.veri_gun_sayisi||0} gün veri`;
+    }
+    renderMGA(d);
+  } catch(e) {
+    content.innerHTML = `<div style="padding:20px;color:var(--red)">Hata: ${e.message}</div>`;
+  }
+}
+
+function renderMGA(d) {
+  const content = document.getElementById('mga-content');
+  const oz = d.ozet || {};
+  const gunler = d.gunler || [];
+  const maxNet = Math.max(...gunler.map(g => g.net_ciro), 1);
+  const ortNet = oz.ortalama_gunluk || 0;
+
+  // ── Özet KPI Kartları ─────────────────────────────────────────────────────
+  const kpiData = [
+    {label:'TOPLAM NET CİRO',   val:_myFmt(oz.toplam_net,'tl'),   color:'var(--teal)',  icon:'∑'},
+    {label:'GÜNLÜK ORTALAMA',   val:_myFmt(oz.ortalama_gunluk,'tl'), color:'var(--blue)',  icon:'≈'},
+    {label:'EN İYİ GÜN',
+     val: oz.en_iyi_gun ? `${oz.en_iyi_gun.tarih_label} ${oz.en_iyi_gun.gun_adi}` : '—',
+     sub: oz.en_iyi_gun ? _myFmt(oz.en_iyi_gun.net,'tl') : '',
+     color:'var(--green)', icon:'↑'},
+    {label:'EN ZAYIF GÜN',
+     val: oz.en_kotu_gun ? `${oz.en_kotu_gun.tarih_label} ${oz.en_kotu_gun.gun_adi}` : '—',
+     sub: oz.en_kotu_gun ? _myFmt(oz.en_kotu_gun.net,'tl') : '',
+     color:'var(--red)', icon:'↓'},
+    {label:'HAFTA İÇİ ORT.',   val:_myFmt(oz.haftaici_ort,'tl'),  color:'var(--t1)',    icon:'〒'},
+    {label:'HAFTA SONU ORT.',  val:_myFmt(oz.haftasonu_ort,'tl'), color:'var(--purple)', icon:'☀'},
+  ];
+  const kpiHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">` +
+    kpiData.map(k => `
+    <div style="background:var(--bg2);padding:12px 14px">
+      <div style="font-size:9px;color:var(--t3);letter-spacing:.5px;margin-bottom:5px">${k.icon} ${k.label}</div>
+      <div style="font-size:13px;font-weight:700;color:${k.color}">${k.val}</div>
+      ${k.sub ? `<div style="font-size:10px;color:var(--t3);margin-top:2px">${k.sub}</div>` : ''}
+    </div>`).join('') + `</div>`;
+
+  // ── Günlük Tablo ──────────────────────────────────────────────────────────
+  const GUN_COLOR = {
+    'Pazartesi':'var(--blue)','Salı':'var(--teal)','Çarşamba':'var(--blue)',
+    'Perşembe':'var(--teal)','Cuma':'var(--orange)',
+    'Cumartesi':'var(--purple)','Pazar':'var(--purple)'
+  };
+
+  function deltaChip(pct, label) {
+    if (pct === null || pct === undefined) return '<span style="color:var(--t4);font-size:10px">—</span>';
+    const up = pct >= 0;
+    const c = up ? 'var(--green)' : 'var(--red)';
+    return `<span style="font-size:10px;font-weight:700;color:${c}">${up?'↑':'↓'}%${Math.abs(pct)}</span><span style="font-size:9px;color:var(--t4);margin-left:2px">${label}</span>`;
+  }
+
+  const rows = gunler.map(g => {
+    if (!g.veri_var) {
+      return `<tr style="opacity:.35;border-bottom:1px solid var(--border)">
+        <td style="padding:8px 10px;white-space:nowrap">
+          <span style="font-size:10px;font-weight:700;color:var(--t3)">${g.tarih_label}</span>
+          <span style="font-size:9px;color:var(--t4);margin-left:4px">${g.gun_kisa}</span>
+        </td>
+        <td colspan="6" style="padding:8px 10px;font-size:10px;color:var(--t4)">Veri yok</td>
+      </tr>`;
+    }
+
+    const bw = Math.round(g.net_ciro / maxNet * 100);
+    const aboveAvg = g.net_ciro >= ortNet;
+    const barColor = aboveAvg ? 'var(--teal)' : 'var(--orange)';
+    const gunColor = GUN_COLOR[g.gun_adi] || 'var(--t2)';
+    const iadeColor = g.iade_pct > 15 ? 'var(--red)' : g.iade_pct > 10 ? 'var(--yellow)' : 'var(--green)';
+    const hsBg = g.haftasonu ? 'rgba(150,100,255,.06)' : '';
+
+    const topMag = g.top_magazalar.length ? g.top_magazalar.map(m =>
+      `<span style="font-size:9px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--t2);white-space:nowrap">${m.magaza}</span>`
+    ).join(' ') : '';
+
+    return `<tr style="border-bottom:1px solid var(--border);${hsBg ? 'background:'+hsBg : ''}">
+      <td style="padding:8px 10px;white-space:nowrap">
+        <div style="font-size:11px;font-weight:700;color:${gunColor}">${g.tarih_label}</div>
+        <div style="font-size:9px;color:var(--t4)">${g.gun_adi}${g.haftasonu?' ★':''}</div>
+      </td>
+      <td style="padding:6px 10px;min-width:160px">
+        <div style="display:flex;align-items:center;gap:5px">
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+            <div style="width:${bw}%;height:100%;background:${barColor};border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${barColor};min-width:56px;text-align:right">${_myFmt(g.net_ciro,'tl')}</span>
+        </div>
+        ${topMag ? `<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap">${topMag}</div>` : ''}
+      </td>
+      <td style="padding:6px 10px;text-align:right;white-space:nowrap">
+        <div style="font-size:10px;color:${iadeColor};font-weight:600">%${g.iade_pct}</div>
+        <div style="font-size:9px;color:var(--t4)">${_myFmt(g.iade,'tl')}</div>
+      </td>
+      <td style="padding:6px 10px;text-align:right;font-size:10px;color:var(--t2)">${(g.adet||0).toLocaleString('tr-TR')}</td>
+      <td style="padding:6px 10px;text-align:right;font-size:10px;color:var(--t3)">${g.aktif_magaza}</td>
+      <td style="padding:6px 10px;text-align:right;white-space:nowrap">${deltaChip(g.gun_degisim_pct,'D-1')}</td>
+      <td style="padding:6px 10px;text-align:right;white-space:nowrap">${deltaChip(g.hf_degisim_pct,'H-1')}</td>
+    </tr>`;
+  }).reverse().join('');  // en yeni gün üstte
+
+  const tableHtml = `
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">GÜNLÜK SATIŞLAR</span>
+      <span style="font-size:9px;color:var(--t4)">En yeni üstte · Turuncu = ortalamanın altı · Mor = hafta sonu</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:var(--bg3)">
+          <th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;white-space:nowrap">TARİH</th>
+          <th style="padding:6px 10px;color:var(--t3);font-size:9px;min-width:160px">NET CİRO</th>
+          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">İADE%</th>
+          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">ADET</th>
+          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">MAĞAZA</th>
+          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">DÜN</th>
+          <th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px">GEÇEN HAFTA</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  content.innerHTML = kpiHtml + tableHtml;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SATIŞ ANALİZ — YAPAY ZEKA ÖZET PANELİ (collapsible, inline)

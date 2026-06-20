@@ -269,6 +269,15 @@ async def magaza_gunluk(
     return await q.get_magaza_gunluk(session, gun_sayisi=gun_sayisi)
 
 
+@router.get("/gunluk-satis-analiz")
+async def gunluk_satis_analiz(
+    session: Annotated[AsyncSession, Depends(get_readonly_session)],
+    gun_sayisi: int = Query(default=15, ge=7, le=30),
+) -> dict:
+    """15 günlük mağaza satış detay analizi — gün bazında kırılım."""
+    return await q.get_gunluk_satis_analiz(session, gun_sayisi=gun_sayisi)
+
+
 # ── ADL RAPORLAR ──────────────────────────────────────────────────────────────
 
 @router.get("/adl/yonetici")

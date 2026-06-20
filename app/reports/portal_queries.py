@@ -1917,6 +1917,152 @@ async def get_magaza_gunluk(session: AsyncSession, gun_sayisi: int = 30) -> dict
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# GÜNLÜK SATIŞ ANALİZ — 15 Günlük Detay
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_GUN_ADI  = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"]
+_GUN_KISA = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"]
+
+
+async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -> dict:
+    """Son N günlük mağaza satış detay analizi — gün bazında kırılım + karşılaştırma."""
+    try:
+        await session.execute(text("SELECT 1 FROM incorta_magaza_gunluk LIMIT 1"))
+    except Exception:
+        await session.rollback()
+        return {"hata": "veri_yok", "gunler": [], "ozet": {}, "son_gun": None}
+
+    max_row = await session.execute(text("SELECT MAX(tarih::date) FROM incorta_magaza_gunluk"))
+    son_gun = max_row.scalar()
+    if not son_gun:
+        return {"hata": "veri_yok", "gunler": [], "ozet": {}, "son_gun": None}
+
+    bas_tarih     = son_gun - timedelta(days=gun_sayisi - 1)
+    kar_bas       = bas_tarih - timedelta(days=7)   # 7 gün öncesi karşılaştırma için
+    bas_str       = str(bas_tarih)
+    kar_bas_str   = str(kar_bas)
+
+    # ── Günlük toplamlar (ana 15 gün + 7 gün öncesi) ─────────────────────────
+    rows = await session.execute(text("""
+        SELECT
+            tarih::date                                           AS gun,
+            SUM(satis_tutar)                                      AS brut_satis,
+            ABS(SUM(COALESCE(iade_tutari, 0)))                    AS iade,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))     AS net_ciro,
+            SUM(satis_adet)                                       AS adet,
+            ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)  AS iade_pct,
+            COUNT(DISTINCT CASE WHEN magaza IS NOT NULL AND magaza <> '' THEN magaza END)
+                                                                  AS aktif_magaza
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas
+        GROUP BY tarih::date
+        ORDER BY tarih::date
+    """), {"bas": kar_bas_str})
+
+    gunluk_map: dict = {}
+    for r in rows.mappings():
+        gunluk_map[str(r["gun"])] = {
+            "brut_satis":   float(r["brut_satis"]  or 0),
+            "iade":         float(r["iade"]        or 0),
+            "net_ciro":     float(r["net_ciro"]    or 0),
+            "adet":         int(r["adet"]          or 0),
+            "iade_pct":     float(r["iade_pct"]    or 0),
+            "aktif_magaza": int(r["aktif_magaza"]  or 0),
+        }
+
+    # ── Top 3 mağaza her gün için ─────────────────────────────────────────────
+    mag_rows = await session.execute(text("""
+        SELECT
+            tarih::date                                           AS gun,
+            magaza,
+            SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0))     AS net
+        FROM incorta_magaza_gunluk
+        WHERE tarih >= :bas AND magaza IS NOT NULL AND magaza <> ''
+        GROUP BY tarih::date, magaza
+        ORDER BY tarih::date, net DESC
+    """), {"bas": bas_str})
+
+    mag_by_day: dict = {}
+    for r in mag_rows.mappings():
+        g = str(r["gun"])
+        if g not in mag_by_day:
+            mag_by_day[g] = []
+        if len(mag_by_day[g]) < 3:
+            mag_by_day[g].append({"magaza": r["magaza"], "net": round(float(r["net"] or 0))})
+
+    # ── Gün bazlı liste ───────────────────────────────────────────────────────
+    gunler = []
+    cur = bas_tarih
+    while cur <= son_gun:
+        ts = str(cur)
+        dow = cur.weekday()
+        d = gunluk_map.get(ts, {})
+        net = d.get("net_ciro", 0)
+
+        prev1_net  = gunluk_map.get(str(cur - timedelta(days=1)), {}).get("net_ciro", 0)
+        prev7_net  = gunluk_map.get(str(cur - timedelta(days=7)), {}).get("net_ciro", 0)
+        g_degisim  = round((net - prev1_net) / prev1_net * 100, 1) if prev1_net else None
+        hf_degisim = round((net - prev7_net) / prev7_net * 100, 1) if prev7_net else None
+
+        # Türkçe tarih etiketi
+        ay_kisaltma = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"]
+        tarih_label = f"{cur.day} {ay_kisaltma[cur.month-1]}"
+
+        gunler.append({
+            "tarih":            ts,
+            "tarih_label":      tarih_label,
+            "gun_adi":          _GUN_ADI[dow],
+            "gun_kisa":         _GUN_KISA[dow],
+            "haftasonu":        dow >= 5,
+            "brut_satis":       round(d.get("brut_satis", 0)),
+            "iade":             round(d.get("iade", 0)),
+            "net_ciro":         round(net),
+            "adet":             d.get("adet", 0),
+            "iade_pct":         d.get("iade_pct", 0),
+            "aktif_magaza":     d.get("aktif_magaza", 0),
+            "onceki_gun_net":   round(prev1_net) if prev1_net else None,
+            "gun_degisim_pct":  g_degisim,
+            "gecen_hafta_net":  round(prev7_net) if prev7_net else None,
+            "hf_degisim_pct":   hf_degisim,
+            "top_magazalar":    mag_by_day.get(ts, []),
+            "veri_var":         net > 0,
+        })
+        cur += timedelta(days=1)
+
+    # ── Özet istatistikler ────────────────────────────────────────────────────
+    veri = [g for g in gunler if g["net_ciro"] > 0]
+    if veri:
+        nets    = [g["net_ciro"] for g in veri]
+        ort     = sum(nets) / len(nets)
+        en_iyi  = max(veri, key=lambda g: g["net_ciro"])
+        en_kotu = min(veri, key=lambda g: g["net_ciro"])
+        hici    = [g for g in veri if not g["haftasonu"]]
+        hson    = [g for g in veri if g["haftasonu"]]
+        ozet = {
+            "toplam_net":      round(sum(nets)),
+            "ortalama_gunluk": round(ort),
+            "en_iyi_gun":      {"tarih": en_iyi["tarih"], "tarih_label": en_iyi["tarih_label"],
+                                 "gun_adi": en_iyi["gun_adi"], "net": en_iyi["net_ciro"]},
+            "en_kotu_gun":     {"tarih": en_kotu["tarih"], "tarih_label": en_kotu["tarih_label"],
+                                 "gun_adi": en_kotu["gun_adi"], "net": en_kotu["net_ciro"]},
+            "haftaici_ort":    round(sum(g["net_ciro"] for g in hici) / len(hici)) if hici else 0,
+            "haftasonu_ort":   round(sum(g["net_ciro"] for g in hson) / len(hson)) if hson else 0,
+            "veri_gun_sayisi": len(veri),
+        }
+    else:
+        ozet = {}
+
+    return {
+        "son_gun":   str(son_gun),
+        "bas_tarih": str(bas_tarih),
+        "gun_sayisi": gun_sayisi,
+        "gunler":    gunler,
+        "ozet":      ozet,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # ADL RAPORLAR — 5 Rapor Sistemi
 # ═══════════════════════════════════════════════════════════════════════════════
 
