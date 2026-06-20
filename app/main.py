@@ -80,6 +80,25 @@ async def lifespan(app: FastAPI):
     await _ddl("CREATE INDEX IF NOT EXISTS idx_imp_bolge   ON incorta_magaza_performans(bolge_muduru)")
     await _ddl("CREATE UNIQUE INDEX IF NOT EXISTS idx_imp_uniq ON incorta_magaza_performans(yil, ay, bolge_muduru, magaza)")
     await _ddl("""
+        CREATE TABLE IF NOT EXISTS incorta_magaza_gunluk (
+            id          SERIAL PRIMARY KEY,
+            tarih       TEXT NOT NULL,
+            magaza      TEXT,
+            urun_kodu   TEXT,
+            urun_adi    TEXT,
+            renk        TEXT,
+            beden       TEXT,
+            satis_tutar DOUBLE PRECISION DEFAULT 0,
+            satis_adet  DOUBLE PRECISION DEFAULT 0,
+            iade_tutari DOUBLE PRECISION DEFAULT 0,
+            iade_adeti  DOUBLE PRECISION DEFAULT 0,
+            sync_updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_img_tarih    ON incorta_magaza_gunluk(tarih)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_img_magaza   ON incorta_magaza_gunluk(magaza)")
+    await _ddl("CREATE INDEX IF NOT EXISTS idx_img_tarih_mag ON incorta_magaza_gunluk(tarih, magaza)")
+    await _ddl("""
         CREATE MATERIALIZED VIEW IF NOT EXISTS mv_magaza_satis_ozet AS
         SELECT
             yil::integer AS yil,
