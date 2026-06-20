@@ -364,10 +364,10 @@ async def _fetch_kategori(session: AsyncSession, yil: int,
 
 async def _fetch_analytics(session: AsyncSession, yil: int, ay: Optional[int]) -> Dict[str, Any]:
     """Web analytics özeti: oturum, conversion, en iyi kaynak."""
-    where_parts = ["EXTRACT(YEAR FROM date) = :yil"]
+    where_parts = ["EXTRACT(YEAR FROM date::date) = :yil"]
     params: Dict[str, Any] = {"yil": yil}
     if ay:
-        where_parts.append("EXTRACT(MONTH FROM date) = :ay"); params["ay"] = ay
+        where_parts.append("EXTRACT(MONTH FROM date::date) = :ay"); params["ay"] = ay
     where = "WHERE " + " AND ".join(where_parts)
 
     try:
