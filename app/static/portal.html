@@ -8851,9 +8851,67 @@ function _dpRenderBolge(bolgeler) {
     const bw2=Math.min(b.hedef_oran||0,100);
     const cw=Math.round((b.net_ciro||0)/maxCiro*100);
     const rb=i===0?'var(--orange)':i===1?'var(--teal)':i===2?'var(--blue)':'var(--t4)';
-    return `<tr style="border-bottom:1px solid rgba(42,42,58,.2)">
+    const hasMagaza=(b.magaza_detay||[]).length>0;
+    const magaza_maxCiro=Math.max(...(b.magaza_detay||[]).map(m=>m.net_ciro||0),1);
+    const detayRows=(b.magaza_detay||[]).map(m=>{
+      const moc=m.hedef_oran>=90?'var(--green)':m.hedef_oran>=80?'var(--yellow)':'var(--red)';
+      const mmc=m.mdo>=16?'var(--green)':m.mdo>=13?'var(--teal)':'var(--orange)';
+      const mcw=Math.round((m.net_ciro||0)/magaza_maxCiro*100);
+      const mbw=Math.min(m.hedef_oran||0,100);
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 8px;color:var(--t4);font-size:10px;padding-left:20px">◦</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--t2);white-space:nowrap">${m.magaza}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:10px;color:var(--t3)">${_myFmt(m.hedef||0,'tl')}</td>
+        <td style="padding:6px 10px;min-width:130px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <div style="flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden">
+              <div style="width:${mcw}%;height:100%;background:var(--teal);border-radius:2px"></div>
+            </div>
+            <span style="font-size:10px;font-weight:600;color:var(--teal);min-width:48px;text-align:right">${_myFmt(m.net_ciro||0,'tl')}</span>
+          </div>
+        </td>
+        <td style="padding:6px 10px;min-width:100px">
+          <div style="display:flex;align-items:center;gap:4px">
+            <div style="flex:1;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden">
+              <div style="width:${mbw}%;height:100%;background:${moc};border-radius:2px"></div>
+            </div>
+            <span style="font-size:10px;font-weight:700;color:${moc};min-width:38px;text-align:right">%${m.hedef_oran||0}</span>
+          </div>
+        </td>
+        <td style="padding:6px 8px;text-align:right;font-size:10px;color:var(--t2)">${_myFmt(m.ziyaretci||0,'sayi')}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:10px;color:${mmc}">%${(m.mdo||0).toFixed(1)}</td>
+      </tr>`;
+    }).join('');
+    const detailRow=hasMagaza?`
+    <tr id="dpb-detail-${i}" style="display:none;background:var(--bg3)">
+      <td colspan="8" style="padding:0">
+        <div style="border-top:1px solid var(--border2);overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr style="background:var(--bg4)">
+              <th style="padding:5px 8px;width:30px"></th>
+              <th style="padding:5px 8px;text-align:left;color:var(--t3);font-size:9px;padding-left:20px">MAĞAZA</th>
+              <th style="padding:5px 8px;text-align:right;color:var(--t3);font-size:9px">HEDEF</th>
+              <th style="padding:5px 8px;color:var(--t3);font-size:9px">NET CİRO</th>
+              <th style="padding:5px 8px;color:var(--t3);font-size:9px">HEDEF ORANI</th>
+              <th style="padding:5px 8px;text-align:right;color:var(--t3);font-size:9px">ZİYARETÇİ</th>
+              <th style="padding:5px 8px;text-align:right;color:var(--t3);font-size:9px">MDO</th>
+            </tr></thead>
+            <tbody>${detayRows}</tbody>
+          </table>
+        </div>
+      </td>
+    </tr>`:'';
+    return `<tr id="dpb-row-${i}" style="border-bottom:1px solid rgba(42,42,58,.2);cursor:${hasMagaza?'pointer':''};transition:background .15s"
+        ${hasMagaza?`onclick="(function(){var d=document.getElementById('dpb-detail-${i}'),a=document.getElementById('dpb-arrow-${i}'),r=document.getElementById('dpb-row-${i}');var o=d.style.display==='none';d.style.display=o?'table-row':'none';if(a)a.style.transform=o?'rotate(90deg)':'rotate(0deg)';if(r)r.style.background=o?'var(--bg3)':'';})()"` :''}
+        onmouseenter="if(!document.getElementById('dpb-detail-${i}')||document.getElementById('dpb-detail-${i}').style.display==='none')this.style.background='var(--bg3)'"
+        onmouseleave="if(!document.getElementById('dpb-detail-${i}')||document.getElementById('dpb-detail-${i}').style.display==='none')this.style.background=''">
       <td style="padding:8px 10px"><div style="width:22px;height:22px;border-radius:50%;background:${rb}22;color:${rb};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</div></td>
-      <td style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--t1)">${b.bolge_muduru}</td>
+      <td style="padding:8px 10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          ${hasMagaza?`<span id="dpb-arrow-${i}" style="font-size:9px;color:var(--t3);transition:transform .2s;display:inline-block">▶</span>`:''}
+          <span style="font-size:12px;font-weight:600;color:var(--t1)">${b.bolge_muduru}</span>
+        </div>
+      </td>
       <td style="padding:8px 10px;text-align:center;font-size:10px;color:var(--t3)">${b.magaza_sayisi} mğz</td>
       <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.hedef||0,'tl')}</td>
       <td style="padding:8px 10px;min-width:140px">
@@ -8870,12 +8928,15 @@ function _dpRenderBolge(bolgeler) {
       </td>
       <td style="padding:8px 10px;text-align:right;font-size:11px;color:var(--t2)">${_myFmt(b.ziyaretci||0,'sayi')}</td>
       <td style="padding:8px 10px;text-align:right;font-size:11px;color:${mc}">%${(b.mdo||0).toFixed(1)}</td>
-    </tr>`;
+    </tr>${detailRow}`;
   }).join('');
 
   wrap.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">BÖLGE MÜDÜRÜ PERFORMANSI</span>
+      <div>
+        <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">BÖLGE MÜDÜRÜ PERFORMANSI</span>
+        <span style="font-size:10px;color:var(--t4);margin-left:8px">· satıra tıkla → mağaza detayları</span>
+      </div>
       <div style="display:flex;align-items:center;gap:6px">
         <span style="font-size:10px;color:var(--t3)">Sırala:</span>
         <div style="display:flex;gap:4px">${sortBtns}</div>
