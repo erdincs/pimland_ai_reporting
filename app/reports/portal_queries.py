@@ -1953,7 +1953,9 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             ROUND((ABS(SUM(COALESCE(iade_tutari, 0)))
               / NULLIF(SUM(satis_tutar), 0) * 100)::numeric, 1)  AS iade_pct,
             COUNT(DISTINCT CASE WHEN magaza IS NOT NULL AND magaza <> '' THEN magaza END)
-                                                                  AS aktif_magaza
+                                                                  AS aktif_magaza,
+            ROUND((SUM(satis_tutar) + SUM(COALESCE(iade_tutari, 0)))
+              / NULLIF(SUM(satis_adet), 0))::numeric              AS obf
         FROM incorta_magaza_gunluk
         WHERE tarih >= :bas
         GROUP BY tarih::date
@@ -1969,6 +1971,7 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             "adet":         int(r["adet"]          or 0),
             "iade_pct":     float(r["iade_pct"]    or 0),
             "aktif_magaza": int(r["aktif_magaza"]  or 0),
+            "obf":          round(float(r["obf"]   or 0)),
         }
 
     # ── Top 3 mağaza her gün için ─────────────────────────────────────────────
@@ -2025,6 +2028,7 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             "gun_degisim_pct":  g_degisim,
             "gecen_hafta_net":  round(prev7_net) if prev7_net else None,
             "hf_degisim_pct":   hf_degisim,
+            "obf":              d.get("obf", 0),
             "top_magazalar":    mag_by_day.get(ts, []),
             "veri_var":         net > 0,
         })
@@ -2033,12 +2037,13 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
     # ── Özet istatistikler ────────────────────────────────────────────────────
     veri = [g for g in gunler if g["net_ciro"] > 0]
     if veri:
-        nets    = [g["net_ciro"] for g in veri]
-        ort     = sum(nets) / len(nets)
-        en_iyi  = max(veri, key=lambda g: g["net_ciro"])
-        en_kotu = min(veri, key=lambda g: g["net_ciro"])
-        hici    = [g for g in veri if not g["haftasonu"]]
-        hson    = [g for g in veri if g["haftasonu"]]
+        nets         = [g["net_ciro"] for g in veri]
+        total_adet_v = sum(g["adet"] for g in veri)
+        ort          = sum(nets) / len(nets)
+        en_iyi       = max(veri, key=lambda g: g["net_ciro"])
+        en_kotu      = min(veri, key=lambda g: g["net_ciro"])
+        hici         = [g for g in veri if not g["haftasonu"]]
+        hson         = [g for g in veri if g["haftasonu"]]
         ozet = {
             "toplam_net":      round(sum(nets)),
             "ortalama_gunluk": round(ort),
@@ -2049,16 +2054,47 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             "haftaici_ort":    round(sum(g["net_ciro"] for g in hici) / len(hici)) if hici else 0,
             "haftasonu_ort":   round(sum(g["net_ciro"] for g in hson) / len(hson)) if hson else 0,
             "veri_gun_sayisi": len(veri),
+            "obf_donem":       round(sum(nets) / total_adet_v) if total_adet_v > 0 else 0,
         }
     else:
         ozet = {}
 
+    # ── Aylık KPI'lar: hedef, ziyaretçi, MDO, sepet, OBF (incorta_magaza_performans) ──
+    aylik_kpi: dict = {"hedef": None, "ziyaretci": None, "mdo": None, "sepet": None, "obf_perf": None}
+    try:
+        pr = await session.execute(text("""
+            SELECT SUM(hedef)      AS hedef,
+                   SUM(ziyaretci) AS ziyaretci,
+                   AVG(mdo)       AS mdo,
+                   AVG(sepet)     AS sepet,
+                   AVG(obf)       AS obf
+            FROM incorta_magaza_performans
+            WHERE (bolge_muduru IS NULL OR bolge_muduru = '')
+              AND (magaza IS NULL OR magaza = '')
+              AND (yil * 100 + ay) BETWEEN :bas_myy AND :son_myy
+        """), {
+            "bas_myy": int(f"{bas_tarih.year}{bas_tarih.month:02d}"),
+            "son_myy": int(f"{son_gun.year}{son_gun.month:02d}"),
+        })
+        p = pr.mappings().one_or_none()
+        if p and p["hedef"] is not None:
+            aylik_kpi = {
+                "hedef":    round(float(p["hedef"]    or 0)),
+                "ziyaretci": round(float(p["ziyaretci"] or 0)),
+                "mdo":       round(float(p["mdo"]      or 0), 1),
+                "sepet":     round(float(p["sepet"]    or 0)),
+                "obf_perf":  round(float(p["obf"]      or 0)),
+            }
+    except Exception:
+        await session.rollback()
+
     return {
-        "son_gun":   str(son_gun),
-        "bas_tarih": str(bas_tarih),
+        "son_gun":    str(son_gun),
+        "bas_tarih":  str(bas_tarih),
         "gun_sayisi": gun_sayisi,
-        "gunler":    gunler,
-        "ozet":      ozet,
+        "gunler":     gunler,
+        "ozet":       ozet,
+        "aylik_kpi":  aylik_kpi,
     }
 
 
