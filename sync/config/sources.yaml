@@ -69,7 +69,7 @@ incorta:
         - {source: "Kullanıcılar",          target: kullanicilar,           type: bigint}
         - {source: "Oturumlar",             target: oturumlar,              type: bigint}
         - {source: "Ciro",                  target: ciro,                   type: numeric}
-        - {source: "İşlem Sayısı",          target: i_slem_sayisi,          type: bigint}
+        - {source: "İşlem Sayısı",          target: islem_sayisi,           type: bigint}
         - {source: "Conversion Rate",       target: conversion_rate,        type: numeric}
         - {source: "Hemen Çıkma Oranı",    target: hemen_cikma_orani,      type: numeric}
         - {source: "Ortalama Oturum Süresi", target: ortalama_oturum_suresi, type: numeric}
