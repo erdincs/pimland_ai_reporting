@@ -894,12 +894,6 @@ async def get_donemseel_karsilastirma() -> Dict[str, Any]:
             "y2026": k26,
         })
 
-    aylik_detay = {
-        "2024": build_aylik_detay(d24),
-        "2025": build_aylik_detay(d25),
-        "2026": build_aylik_detay(d26_full),
-    }
-
     return {
         "y2024":     d24,
         "y2025":     d25,
