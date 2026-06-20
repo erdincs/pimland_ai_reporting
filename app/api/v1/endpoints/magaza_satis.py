@@ -667,6 +667,7 @@ async def get_donemseel_performans(
 
     # ── Bölge kartları (top 3 by ciro) ────────────────────────────────────────
     bolge_map2: Dict[str, Dict] = {}
+    bolge_mag_map2: Dict[str, Dict] = {}
     for r in rows:
         b = str(r[2] or "").strip()
         if not b:
@@ -674,15 +675,36 @@ async def get_donemseel_performans(
         if b not in bolge_map2:
             bolge_map2[b] = {"bolge_muduru": b, "hedef": 0.0, "ciro": 0.0,
                              "ziy": 0.0, "mdo_w": 0.0, "mag_set": set()}
+            bolge_mag_map2[b] = {}
         d3 = bolge_map2[b]
         d3["hedef"] += _fv(r[4]); d3["ciro"] += _fv(r[5])
         d3["ziy"]   += _fv(r[7]); d3["mdo_w"] += _fv(r[8]) * _fv(r[7])
-        d3["mag_set"].add(str(r[3] or ""))
+        mag = str(r[3] or "").strip()
+        if mag:
+            d3["mag_set"].add(mag)
+            if mag not in bolge_mag_map2[b]:
+                bolge_mag_map2[b][mag] = {"magaza": mag, "hedef": 0.0, "net_ciro": 0.0,
+                                          "ziyaretci": 0.0, "mdo_w": 0.0}
+            md = bolge_mag_map2[b][mag]
+            md["hedef"]     += _fv(r[4]); md["net_ciro"]  += _fv(r[5])
+            md["ziyaretci"] += _fv(r[7]); md["mdo_w"]     += _fv(r[8]) * _fv(r[7])
 
     bolgeler = []
     for b, d3 in bolge_map2.items():
         oran = d3["ciro"] / d3["hedef"] * 100 if d3["hedef"] else 0
         mdo  = d3["mdo_w"] / d3["ziy"] * 100   if d3["ziy"]  else 0
+        magaza_detay = []
+        for md in sorted(bolge_mag_map2[b].values(), key=lambda x: -x["net_ciro"]):
+            m_oran = md["net_ciro"] / md["hedef"] * 100 if md["hedef"] else 0
+            m_mdo  = md["mdo_w"] / md["ziyaretci"] * 100 if md["ziyaretci"] else 0
+            magaza_detay.append({
+                "magaza":     md["magaza"],
+                "hedef":      round(md["hedef"]),
+                "net_ciro":   round(md["net_ciro"]),
+                "hedef_oran": round(m_oran, 1),
+                "ziyaretci":  round(md["ziyaretci"]),
+                "mdo":        round(m_mdo, 1),
+            })
         bolgeler.append({
             "bolge_muduru":  b,
             "magaza_sayisi": len(d3["mag_set"]),
@@ -691,6 +713,7 @@ async def get_donemseel_performans(
             "hedef_oran":    round(oran, 1),
             "ziyaretci":     round(d3["ziy"]),
             "mdo":           round(mdo, 1),
+            "magaza_detay":  magaza_detay,
         })
     bolgeler.sort(key=lambda x: -x["net_ciro"])
 
