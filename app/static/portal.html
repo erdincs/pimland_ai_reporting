@@ -1489,6 +1489,8 @@ body,
           <span id="mp-status" style="font-size:11px;color:var(--t3)"></span>
         </div>
       </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-performans" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
       <!-- İçerik -->
       <div id="mp-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
@@ -1516,6 +1518,8 @@ body,
           <span id="dp-status" style="font-size:11px;color:var(--t3)"></span>
         </div>
       </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-donemseel" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
       <div id="dp-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
       </div>
@@ -1535,6 +1539,8 @@ body,
           <button onclick="dkSetTab('yillik')" id="dk-tab-yillik" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:6px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">Yıllık</button>
         </div>
       </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-karsilastirma" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
       <div id="dk-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>
       </div>
@@ -1553,6 +1559,8 @@ body,
           <button onclick="mgSetPeriod(30)" id="mg-btn-30" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);padding:5px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px">30 Gün</button>
         </div>
       </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-gunluk" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
       <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
         <!-- KPI strip -->
         <div id="mg-kpi-strip" style="display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">
@@ -1602,6 +1610,8 @@ body,
           <span id="my-status" style="font-size:11px;color:var(--t3)"></span>
         </div>
       </div>
+      <!-- AI Özet -->
+      <div id="sai-magaza-yonetici" style="flex-shrink:0;padding:10px 18px 0 18px"></div>
       <!-- Ana içerik -->
       <div id="my-content" style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
         <div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t4);font-size:12px">
@@ -7558,6 +7568,7 @@ function _myYoy(v, ters=false) {
 async function loadMagaza() {
   const yil = document.getElementById('my-yil')?.value || '2026';
   const ay  = document.getElementById('my-ay')?.value  || '';
+  _satisAiLoad('magaza-yonetici', 'magaza-yonetici', {yil, ay});
   const status = document.getElementById('my-status');
   if(status) status.textContent = '⏳ Yükleniyor...';
   const content = document.getElementById('my-content');
@@ -7891,6 +7902,7 @@ async function loadMagazaPerformans() {
   const yil   = document.getElementById('mp-yil')?.value   || '2026';
   const bolge = '';
   const ay    = document.getElementById('mp-ay')?.value    || '';
+  _satisAiLoad('magaza-performans', 'magaza-performans', {yil, ay});
   const st    = document.getElementById('mp-status');
   const content = document.getElementById('mp-content');
   if(st) st.textContent = '⏳ Yükleniyor...';
@@ -8199,6 +8211,7 @@ async function loadDonemseel() {
   const yil   = document.getElementById('dp-yil')?.value   || '2026';
   const bolge = '';
   const ay    = document.getElementById('dp-ay')?.value    || '';
+  _satisAiLoad('magaza-donemseel', 'magaza-donemseel', {yil, ay});
   const st    = document.getElementById('dp-status');
   const content = document.getElementById('dp-content');
   if(st) st.textContent = '⏳ Yükleniyor...';
@@ -8583,6 +8596,7 @@ function dkSetTab(tab) {
 }
 
 async function loadDKarsilastirma() {
+  _satisAiLoad('magaza-karsilastirma', 'magaza-karsilastirma', {});
   const content=document.getElementById('dk-content');
   content.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px"><div class="spinner"></div></div>';
   try {
@@ -9725,6 +9739,7 @@ function mgSetPeriod(n) {
 }
 
 async function loadMagazaGunluk() {
+  _satisAiLoad('magaza-gunluk', 'magaza-gunluk', {gun_sayisi: _mgPeriod});
   const kpiEl  = document.getElementById('mg-kpi-strip');
   const trendEl= document.getElementById('mg-trend-chart');
   const magEl  = document.getElementById('mg-top-magazalar');
@@ -11112,6 +11127,89 @@ function adlusGenerateAI() {
     }
   } catch (e) { /* sessiz hata — sidebar hardcoded olarak kalır */ }
 })();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SATIŞ ANALİZ — YAPAY ZEKA ÖZET PANELİ (collapsible, inline)
+// ══════════════════════════════════════════════════════════════════════════════
+const _saiState = {}; // secId → {open, fkey}
+const _SAI_TUR_COLOR = {basari:'var(--green)',risk:'var(--red)',trend:'var(--teal)',firsat:'var(--orange)',dikkat:'var(--yellow)',bilgi:'var(--t2)'};
+const _SAI_TUR_ICON  = {basari:'✓',risk:'⚠',trend:'↑',firsat:'↗',dikkat:'△',bilgi:'•'};
+
+function _satisAiLoad(secId, ctx, filters) {
+  const el = document.getElementById('sai-' + secId);
+  if (!el) return;
+
+  // İlk render — panel HTML oluştur
+  if (!_saiState[secId]) {
+    _saiState[secId] = {open: false, fkey: null};
+    el.innerHTML = `
+    <div style="background:linear-gradient(135deg,rgba(255,160,0,.07),rgba(0,200,180,.04));border:1px solid rgba(255,160,0,.22);border-radius:10px;overflow:hidden">
+      <div onclick="_satisAiToggle('${secId}')"
+           style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;user-select:none">
+        <span style="font-size:13px">🤖</span>
+        <span style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.6px">YAPAY ZEKA YORUMU</span>
+        <span style="font-size:10px;color:var(--t3);font-style:italic">— AI destekli içgörüler</span>
+        <span id="sai-arrow-${secId}"
+              style="font-size:9px;color:var(--t4);margin-left:auto;display:inline-block;transition:transform .2s">▼</span>
+      </div>
+      <div id="sai-body-${secId}" style="display:none;padding:0 12px 12px 12px">
+        <div id="sai-cards-${secId}">
+          <div style="color:var(--t3);font-size:11px;padding:4px 0">Yükleniyor...</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Filtreler değiştiyse yeniden çek
+  const fkey = JSON.stringify(filters);
+  if (_saiState[secId].fkey !== fkey) {
+    _saiState[secId].fkey = fkey;
+    const cards = document.getElementById('sai-cards-' + secId);
+    if (cards) cards.innerHTML = '<div style="color:var(--t3);font-size:11px;padding:4px 0">Yükleniyor...</div>';
+    _satisAiFetch(secId, ctx, filters);
+  }
+}
+
+function _satisAiToggle(secId) {
+  const body  = document.getElementById('sai-body-'  + secId);
+  const arrow = document.getElementById('sai-arrow-' + secId);
+  if (!body) return;
+  const nowOpen = body.style.display !== 'none';
+  body.style.display = nowOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = nowOpen ? '' : 'rotate(180deg)';
+  if (_saiState[secId]) _saiState[secId].open = !nowOpen;
+}
+
+async function _satisAiFetch(secId, ctx, filters) {
+  try {
+    const res = await fetch(`${API}/agents/reporting/insights`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({report_ctx: ctx, filters: filters, use_cache: true})
+    });
+    const d = await res.json();
+    const cards = d.insights || [];
+    const el = document.getElementById('sai-cards-' + secId);
+    if (!el) return;
+    if (!cards.length) {
+      el.innerHTML = '<div style="color:var(--t3);font-size:11px;padding:4px 0">Şu an için içgörü bulunmuyor.</div>';
+      return;
+    }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;padding-top:4px">` +
+      cards.map(c => {
+        const col = _SAI_TUR_COLOR[c.tur] || 'var(--t2)';
+        const ic  = _SAI_TUR_ICON[c.tur]  || '•';
+        return `<div style="background:${col}18;border-left:3px solid ${col};border-radius:0 7px 7px 0;padding:8px 10px">
+          <div style="font-size:9px;font-weight:700;color:${col};margin-bottom:3px;letter-spacing:.4px">${ic} ${(c.tur||'').toUpperCase()}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--t1);margin-bottom:3px;line-height:1.3">${c.baslik||''}</div>
+          <div style="font-size:10px;color:var(--t2);line-height:1.45">${c.aciklama||''}</div>
+        </div>`;
+      }).join('') + `</div>`;
+  } catch(e) {
+    const el = document.getElementById('sai-cards-' + secId);
+    if (el) el.innerHTML = '<div style="color:var(--t3);font-size:11px;padding:4px 0">İçgörüler yüklenemedi.</div>';
+  }
+}
 </script>
 </body>
 </html>
