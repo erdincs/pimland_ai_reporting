@@ -11218,7 +11218,7 @@ function renderMGA(d) {
      color:'var(--red)', icon:'↓'},
     {label:'HAFTA İÇİ ORT.',    val:_myFmt(oz.haftaici_ort,'tl'),   color:'var(--t1)',     icon:'〒'},
     {label:'HAFTA SONU ORT.',   val:_myFmt(oz.haftasonu_ort,'tl'),  color:'var(--purple)', icon:'☀'},
-    {label:'OBF',               val: oz.obf_donem ? _myFmt(oz.obf_donem,'tl') : '—',
+    {label:'OBF',               val: oz.obf_donem ? '₺'+oz.obf_donem.toLocaleString('tr-TR') : '—',
      sub:'Ort. Birim Fiyatı',   color:'var(--blue)',   icon:'₺'},
     {label:'HEDEF',             val: akpi.hedef ? _myFmt(akpi.hedef,'tl') : '—',
      sub: hedefPct ? `%${hedefPct} gerçekleşme` : 'Veri bekleniyor',
@@ -11323,7 +11323,7 @@ function renderMGA(d) {
       <td style="padding:7px 12px;text-align:right;font-size:12px;font-weight:700;color:${veri?netC:'var(--t4)'}">${veri ? _myFmt(g.net_ciro,'tl') : '—'}</td>
       <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--t2)">${veri ? (g.adet||0).toLocaleString('tr-TR') : '—'}</td>
       <td style="padding:7px 12px;text-align:right;font-size:11px;font-weight:600;color:${veri?ipct:'var(--t4)'}">${veri ? '%'+g.iade_pct : '—'}</td>
-      <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--blue)">${veri && g.obf ? _myFmt(g.obf,'tl') : '—'}</td>
+      <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--blue)">${veri && g.obf ? '₺'+g.obf.toLocaleString('tr-TR') : '—'}</td>
     </tr>`;
   }).join('');
 
@@ -11352,7 +11352,7 @@ function renderMGA(d) {
           <td style="padding:8px 12px;text-align:right;font-size:12px;font-weight:700;color:var(--teal)">${_myFmt(totNet,'tl')}</td>
           <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--t2)">${totAdet.toLocaleString('tr-TR')}</td>
           <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--t2)">%${totIadePct}</td>
-          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--blue)">${totObf ? _myFmt(totObf,'tl') : '—'}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--blue)">${totObf ? '₺'+totObf.toLocaleString('tr-TR') : '—'}</td>
         </tr></tfoot>
       </table>
     </div>
