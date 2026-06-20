@@ -205,6 +205,7 @@ async def get_yonetici_ozeti(
 
     # ── Bölge müdürü performansı ──────────────────────────────────────────────
     bolge_map: Dict[str, Dict] = {}
+    bolge_magaza_map: Dict[str, Dict] = {}  # bolge -> magaza -> stats
     for r in rows:
         b = str(r[2]).strip() if r[2] and str(r[2]).strip() else None
         if not b:
@@ -213,6 +214,7 @@ async def get_yonetici_ozeti(
             bolge_map[b] = {"bolge_muduru": b, "hedef": 0.0, "net_ciro": 0.0,
                             "ziyaretci": 0.0, "mdo_w": 0.0, "adet": 0.0,
                             "magaza_sayisi": 0}
+            bolge_magaza_map[b] = {}
         d = bolge_map[b]
         d["hedef"]     += _fv(r[4])
         d["net_ciro"]  += _fv(r[5])
@@ -220,15 +222,37 @@ async def get_yonetici_ozeti(
         d["mdo_w"]     += _fv(r[8]) * _fv(r[7])
         d["adet"]      += _fv(r[11])
         d["magaza_sayisi"] += 1
+        m = str(r[3]).strip() if r[3] else "?"
+        if m not in bolge_magaza_map[b]:
+            bolge_magaza_map[b][m] = {"magaza": m, "hedef": 0.0, "net_ciro": 0.0,
+                                      "ziyaretci": 0.0, "mdo_w": 0.0}
+        md = bolge_magaza_map[b][m]
+        md["hedef"]     += _fv(r[4])
+        md["net_ciro"]  += _fv(r[5])
+        md["ziyaretci"] += _fv(r[7])
+        md["mdo_w"]     += _fv(r[8]) * _fv(r[7])
 
     bolgeler = []
     for b, d in bolge_map.items():
         oran = d["net_ciro"] / d["hedef"] * 100 if d["hedef"] else 0
         mdo  = d["mdo_w"] / d["ziyaretci"] * 100 if d["ziyaretci"] else 0
+        magaza_detay = []
+        for md in sorted(bolge_magaza_map[b].values(), key=lambda x: -x["net_ciro"]):
+            m_oran = md["net_ciro"] / md["hedef"] * 100 if md["hedef"] else 0
+            m_mdo  = md["mdo_w"] / md["ziyaretci"] * 100 if md["ziyaretci"] else 0
+            magaza_detay.append({
+                "magaza":      md["magaza"],
+                "hedef":       round(md["hedef"]),
+                "net_ciro":    round(md["net_ciro"]),
+                "hedef_oran":  round(m_oran, 1),
+                "ziyaretci":   round(md["ziyaretci"]),
+                "mdo":         round(m_mdo, 1),
+            })
         bolgeler.append({
             **d,
-            "hedef_oran": round(oran, 1),
-            "ort_mdo": round(mdo, 1),
+            "hedef_oran":  round(oran, 1),
+            "ort_mdo":     round(mdo, 1),
+            "magaza_detay": magaza_detay,
         })
     bolgeler.sort(key=lambda x: -x["net_ciro"])
 
