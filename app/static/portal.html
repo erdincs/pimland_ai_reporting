@@ -11286,11 +11286,66 @@ function renderMGA(d) {
     </tr>`;
   }).reverse().join('');  // en yeni gün üstte
 
+  // ── Günlük Toplam Tablosu ─────────────────────────────────────────────────
+  const veriGunler = [...gunler].reverse(); // en yeni üstte
+  const totBrut = gunler.reduce((s,g) => s + (g.brut_satis||0), 0);
+  const totIade = gunler.reduce((s,g) => s + (g.iade||0), 0);
+  const totNet  = gunler.reduce((s,g) => s + (g.net_ciro||0), 0);
+  const totAdet = gunler.reduce((s,g) => s + (g.adet||0), 0);
+  const totIadePct = totBrut ? Math.round(totIade / totBrut * 1000) / 10 : 0;
+
+  const ozRows = veriGunler.map(g => {
+    const hsBg = g.haftasonu ? 'background:rgba(150,100,255,.05)' : '';
+    const ipct = g.iade_pct > 15 ? 'var(--red)' : g.iade_pct > 10 ? 'var(--yellow)' : 'var(--t2)';
+    const netC = g.net_ciro >= ortNet ? 'var(--teal)' : 'var(--t1)';
+    const veri = g.veri_var;
+    return `<tr style="border-bottom:1px solid var(--border);${hsBg}">
+      <td style="padding:7px 12px;white-space:nowrap">
+        <span style="font-size:11px;font-weight:700;color:var(--t1)">${g.tarih_label}</span>
+        <span style="font-size:9px;color:var(--t4);margin-left:4px">${g.gun_kisa}${g.haftasonu?' ★':''}</span>
+      </td>
+      <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--t2)">${veri ? _myFmt(g.brut_satis,'tl') : '—'}</td>
+      <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--red)">${veri ? _myFmt(g.iade,'tl') : '—'}</td>
+      <td style="padding:7px 12px;text-align:right;font-size:12px;font-weight:700;color:${veri?netC:'var(--t4)'}">${veri ? _myFmt(g.net_ciro,'tl') : '—'}</td>
+      <td style="padding:7px 12px;text-align:right;font-size:11px;color:var(--t2)">${veri ? (g.adet||0).toLocaleString('tr-TR') : '—'}</td>
+      <td style="padding:7px 12px;text-align:right;font-size:11px;font-weight:600;color:${veri?ipct:'var(--t4)'}">${veri ? '%'+g.iade_pct : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const ozTableHtml = `
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">GÜNLÜK TOPLAM</span>
+      <span style="font-size:9px;color:var(--t4)">★ = hafta sonu · Teal = ortalamanın üstü</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:var(--bg3)">
+          <th style="padding:6px 12px;text-align:left;color:var(--t3);font-size:9px;letter-spacing:.4px">TARİH</th>
+          <th style="padding:6px 12px;text-align:right;color:var(--t3);font-size:9px;letter-spacing:.4px">BRÜT SATIŞ</th>
+          <th style="padding:6px 12px;text-align:right;color:var(--t3);font-size:9px;letter-spacing:.4px">İADE</th>
+          <th style="padding:6px 12px;text-align:right;color:var(--t3);font-size:9px;letter-spacing:.4px">NET CİRO</th>
+          <th style="padding:6px 12px;text-align:right;color:var(--t3);font-size:9px;letter-spacing:.4px">NET ADET</th>
+          <th style="padding:6px 12px;text-align:right;color:var(--t3);font-size:9px;letter-spacing:.4px">İADE %</th>
+        </tr></thead>
+        <tbody>${ozRows}</tbody>
+        <tfoot><tr style="background:var(--bg3);border-top:2px solid var(--border)">
+          <td style="padding:8px 12px;font-size:10px;font-weight:700;color:var(--t2)">TOPLAM</td>
+          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--t2)">${_myFmt(totBrut,'tl')}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--red)">${_myFmt(totIade,'tl')}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:12px;font-weight:700;color:var(--teal)">${_myFmt(totNet,'tl')}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--t2)">${totAdet.toLocaleString('tr-TR')}</td>
+          <td style="padding:8px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--t2)">%${totIadePct}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>`;
+
   const tableHtml = `
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
     <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
-      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">GÜNLÜK SATIŞLAR</span>
-      <span style="font-size:9px;color:var(--t4)">En yeni üstte · Turuncu = ortalamanın altı · Mor = hafta sonu</span>
+      <span style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.5px">GÜNLÜK DETAY</span>
+      <span style="font-size:9px;color:var(--t4)">Bar = net ciro oranı · Turuncu = ortalamanın altı · Mor = hafta sonu</span>
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
@@ -11308,7 +11363,7 @@ function renderMGA(d) {
     </div>
   </div>`;
 
-  content.innerHTML = kpiHtml + tableHtml;
+  content.innerHTML = kpiHtml + ozTableHtml + tableHtml;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
