@@ -861,6 +861,41 @@ async def get_donemseel_karsilastirma() -> Dict[str, Any]:
     mdo_katki   = round((d26_full["mdo"] - d25_ytd["mdo"]) / 100 * d25_ytd["ziy"] * d25_ytd["obf"] / 1000) if d25_ytd["ziy"] else 0
     sepet_katki = round((d26_full["sepet"] - d25_ytd["sepet"]) * d25_ytd["ziy"] * d26_full["mdo"] / 100) if d25_ytd["ziy"] else 0
 
+    # Yıl bazlı tam aylık detay (yeni bölüm için)
+    def build_aylik_detay(yd):
+        result = []
+        for a in range(1, 13):
+            m = yd["monthly"].get(a)
+            if not m:
+                continue
+            ciro  = m.get("ciro", 0)
+            hedef = m.get("hedef", 0)
+            ziy   = m.get("ziy", 0)
+            adet  = m.get("adet", 0)
+            mdo   = m["mdo_w"] / ziy * 100  if ziy  else 0
+            obf   = m["obf_w"] / adet        if adet else 0
+            oran  = ciro / hedef * 100       if hedef else 0
+            if ciro == 0:
+                continue
+            result.append({
+                "ay": a,
+                "ay_adi": AY_ADLARI[a],
+                "hedef":      round(hedef),
+                "net_ciro":   round(ciro),
+                "hedef_oran": round(oran, 1),
+                "ziyaretci":  round(ziy),
+                "mdo":        round(mdo, 1),
+                "obf":        round(obf, 0),
+                "net_adet":   round(adet),
+            })
+        return result
+
+    aylik_detay = {
+        "2024": build_aylik_detay(d24),
+        "2025": build_aylik_detay(d25),
+        "2026": build_aylik_detay(d26_full),
+    }
+
     return {
         "y2024":     d24,
         "y2025":     d25,
@@ -873,6 +908,7 @@ async def get_donemseel_karsilastirma() -> Dict[str, Any]:
         "yoy":       yoy_data,
         "ceyreklik": ceyreklik,
         "aylik_trend": aylik_trend,
+        "aylik_detay": aylik_detay,
         "buyume_katkisi": {
             "baz_2025":  d25_ytd["ciro"],
             "proj_2026": proj_ciro,
