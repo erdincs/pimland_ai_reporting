@@ -2097,8 +2097,8 @@ async def get_gunluk_satis_analiz(session: AsyncSession, gun_sayisi: int = 15) -
             aylik_kpi = {
                 "hedef":    round(float(p["hedef"]    or 0)),
                 "ziyaretci": round(float(p["ziyaretci"] or 0)),
-                "mdo":       round(float(p["mdo"]      or 0), 1),
-                "sepet":     round(float(p["sepet"]    or 0)),
+                "mdo":       round(float(p["mdo"]      or 0) * 100, 1),
+                "sepet":     round(float(p["sepet"]    or 0), 2),
                 "obf_perf":  round(float(p["obf"]      or 0)),
             }
     except Exception:

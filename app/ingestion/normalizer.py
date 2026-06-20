@@ -51,9 +51,20 @@ def apply_field_map(
     record: Dict[str, Any],
     field_map: Optional[Dict[str, str]],
 ) -> Dict[str, Any]:
-    """Rename keys according to field_map, then normalise remaining names."""
+    """Rename keys according to field_map, then normalise remaining names.
+
+    Lookup tries exact match first, then normalised-key fallback so YAML keys
+    with Turkish characters match regardless of Unicode encoding differences.
+    """
     if field_map:
-        record = {field_map.get(k, k): v for k, v in record.items()}
+        norm_field_map = {normalise_column_name(fk): tv for fk, tv in field_map.items()}
+
+        def _map(k: str) -> str:
+            if k in field_map:
+                return field_map[k]
+            return norm_field_map.get(normalise_column_name(k), k)
+
+        record = {_map(k): v for k, v in record.items()}
     return {normalise_column_name(k): v for k, v in record.items()}
 
 

@@ -11236,8 +11236,8 @@ function renderMGA(d) {
     {label:'ZİYARETÇİ',        val: akpi.ziyaretci ? akpi.ziyaretci.toLocaleString('tr-TR') : '—',
      sub: akpi.mdo ? `MDO %${akpi.mdo}` : 'Toplam Ziyaretçi',
      color:'var(--teal)',  icon:'⊛'},
-    {label:'SEPET',             val: akpi.sepet ? _myFmt(akpi.sepet,'tl') : '—',
-     sub:'Ort. Sepet Değeri',   color:'var(--purple)', icon:'⊕'},
+    {label:'SEPET',             val: akpi.sepet ? akpi.sepet.toLocaleString('tr-TR')+' ürün' : '—',
+     sub:'Ort. ürün/sepet',     color:'var(--purple)', icon:'⊕'},
   ];
   const kpiHtml = `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden">` +
     kpiData.map(k => `

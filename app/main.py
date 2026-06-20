@@ -61,10 +61,10 @@ async def lifespan(app: FastAPI):
     await _ddl("""
         CREATE TABLE IF NOT EXISTS incorta_magaza_performans (
             id          SERIAL PRIMARY KEY,
-            yil         INTEGER NOT NULL,
-            ay          INTEGER NOT NULL,
+            yil         INTEGER,
+            ay          INTEGER,
             bolge_muduru TEXT,
-            magaza      TEXT NOT NULL,
+            magaza      TEXT,
             hedef       DOUBLE PRECISION DEFAULT 0,
             net_ciro    DOUBLE PRECISION DEFAULT 0,
             hedef_orani DOUBLE PRECISION DEFAULT 0,
