@@ -11141,7 +11141,7 @@ function _satisAiLoad(secId, ctx, filters) {
 
   // İlk render — panel HTML oluştur
   if (!_saiState[secId]) {
-    _saiState[secId] = {open: false, fkey: null};
+    _saiState[secId] = {open: true, fkey: null};
     el.innerHTML = `
     <div style="background:linear-gradient(135deg,rgba(255,160,0,.07),rgba(0,200,180,.04));border:1px solid rgba(255,160,0,.22);border-radius:10px;overflow:hidden">
       <div onclick="_satisAiToggle('${secId}')"
@@ -11150,9 +11150,9 @@ function _satisAiLoad(secId, ctx, filters) {
         <span style="font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.6px">YAPAY ZEKA YORUMU</span>
         <span style="font-size:10px;color:var(--t3);font-style:italic">— AI destekli içgörüler</span>
         <span id="sai-arrow-${secId}"
-              style="font-size:9px;color:var(--t4);margin-left:auto;display:inline-block;transition:transform .2s">▼</span>
+              style="font-size:9px;color:var(--t4);margin-left:auto;display:inline-block;transition:transform .2s;transform:rotate(180deg)">▼</span>
       </div>
-      <div id="sai-body-${secId}" style="display:none;padding:0 12px 12px 12px">
+      <div id="sai-body-${secId}" style="display:block;padding:0 12px 12px 12px">
         <div id="sai-cards-${secId}">
           <div style="color:var(--t3);font-size:11px;padding:4px 0">Yükleniyor...</div>
         </div>

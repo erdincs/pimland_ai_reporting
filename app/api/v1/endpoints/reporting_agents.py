@@ -151,36 +151,128 @@ async def reporting_insights(
 # ── Yardımcı fonksiyonlar ─────────────────────────────────────────────────────
 
 def _insight_question(report_ctx: str) -> str:
-    """Her bölüme özel insight sorusu — daha odaklı ve hızlı yanıt üretir."""
+    """Her bölüme özel insight sorusu — kıdemli finans analist tonu, 7-8 kart."""
+    TONE = (
+        "Sen kıdemli bir perakende finans direktörüsün; kurumsal müşterilere brifing yapıyor gibi "
+        "net, otoriter ve aksiyon odaklı yaz. Veri varsa somut rakam belirt, "
+        "önceki dönemle kıyasla, portföy riski ve fırsat penceresi kavramlarını kullan. "
+        "Başlık kısa ve güçlü olsun (eylem fiili ile başla). "
+        "Açıklama spesifik, bağlam içersin — genel laflardan kaçın."
+    )
     JSON_FORMAT = (
-        'JSON array döndür, başka metin yazma. Format: '
-        '[{"tur":"basari|risk|trend|firsat|dikkat","baslik":"max 8 kelime","aciklama":"max 20 kelime"}]'
+        'Sadece JSON array döndür, başka hiçbir metin ekleme. Format: '
+        '[{"tur":"basari|risk|trend|firsat|dikkat|bilgi","baslik":"max 10 kelime","aciklama":"1-2 cümle, spesifik veri ve aksiyon önerisi"}]'
     )
     ctx_map = {
-        # Satış / Mağaza
-        "magaza-yonetici":      f"Mağaza ağının hedef gerçekleşme, MDO ve OBF durumunu analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "magaza-performans":    f"Mağaza performans segmentasyonu ve aksiyon gereken mağazaları analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "magaza-donemseel":     f"Aylık ciro/hedef trend, büyüme ivmesi ve sezonsal anomalileri analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "magaza-karsilastirma": f"Dönemsel karşılaştırma: çeyrek/YoY büyüme ve zayıf dönemleri analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
-        # E-Ticaret
-        "exec":                 f"Net ciro, iade oranı ve kanal büyümesine göre executive 4-5 kritik bulguyu {JSON_FORMAT}",
-        "kpi":                  f"KPI dashboard: net ciro, iade, iptal, OBF anomalilerini analiz et. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "overview":             f"Kanal bazlı satış dağılımı, iade oranları ve aylık trend. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "kategori":             f"Ürün grubu bazında net ciro, pay ve iade oranı anomalileri. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "urunler":              f"Top ürünler ve yüksek iade riskli SKUlar. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "iade":                 f"İade analizi: kanal, ürün ve oran anomalileri. 4-5 kritik bulguyu {JSON_FORMAT}",
-        # Ürün Yönetimi
-        "urun-yonetimi":        f"PLM portföy durumu: marka/sezon/tema dağılımı ve blokaj/internet aktivasyon. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "plm-katalog":          f"Katalog sağlığı: SKU dağılımı, sezon derinliği ve tema konsantrasyonu. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "urun-satis":           f"PLM ürünlerin satış performansı, tema bazlı iade oranları. 4-5 kritik bulguyu {JSON_FORMAT}",
-        # Enrichment
-        "enrichment":           f"Ürün kalite puanı: grade dağılımı, en kritik eksik alanlar, acil düzeltilecekler. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "enrichment-dashboard": f"Sezon kalite özeti: ortalama puan, yayına hazır oran ve top sorunlar. 4-5 kritik bulguyu {JSON_FORMAT}",
-        "enrichment-scorelist": f"Grade D/F ürünler: satış hacmine göre önceliklendirme. 4-5 kritik bulguyu {JSON_FORMAT}",
+        # ── Satış / Mağaza ────────────────────────────────────────────────────
+        "magaza-yonetici": (
+            f"{TONE} "
+            "Mağaza ağının hedef gerçekleşme oranı, MDO performansı, OBF trendi, "
+            "bölgesel sapma ve ziyaretçi dönüşüm dinamiklerini derinlemesine analiz et. "
+            "Kritik aksiyon gerektiren mağaza segmentlerini, hedef aşan bölgeleri ve "
+            "büyüme momentum'unu değerlendir. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "magaza-performans": (
+            f"{TONE} "
+            "Mağaza performans segmentasyonunu analiz et: hedef üstü/altı mağazalar, "
+            "MDO ve OBF'teki portföy dağılımı, ziyaretçi trafiği kalitesi, "
+            "iade oranı sapmaları ve bölgesel konsantrasyon riski. "
+            "Yatırım önceliği ve kapat/geliştir kararına girdi sağlayacak bulgular üret. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "magaza-donemseel": (
+            f"{TONE} "
+            "Aylık ciro/hedef trend çizgisini, büyüme ivmesini (acceleration/deceleration), "
+            "sezonsal anomalileri, MDO bandı kaymasını ve çeyreklik momentum'u analiz et. "
+            "Düşük performanslı aylardaki yapısal nedenleri ve yıl sonu projeksiyon riskini "
+            "değerlendir. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "magaza-karsilastirma": (
+            f"{TONE} "
+            "2024→2025→2026 yıllık büyüme dinamiklerini analiz et: YoY ciro büyüme oranı, "
+            "hedef gerçekleşme eğrisi, çeyreklik performans farkları, MDO ve OBF'teki "
+            "çok yıllı trendler. Büyüme ivmesi kazanan/kaybeden dönemleri ve yapısal "
+            "dönüşüm sinyallerini belgele. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "magaza-gunluk": (
+            f"{TONE} "
+            "Son dönem günlük satış koridoru, dünkü sapma, haftalık birikim trendi, "
+            "top mağazalardaki performans değişimi ve ürün bazlı momentum'u analiz et. "
+            "Anlık aksiyon gerektiren sinyalleri ve olağan dışı hareketleri öne çıkar. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        # ── E-Ticaret ─────────────────────────────────────────────────────────
+        "exec": (
+            f"{TONE} "
+            "Net ciro, brüt marj etkisi, iade-iptal yükü, kanal büyüme dağılımı ve "
+            "OBF sağlığını executive perspektiften analiz et. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "kpi": (
+            f"{TONE} "
+            "KPI dashboard anomalilerini analiz et: net ciro sapması, iade artış sinyalleri, "
+            "iptal trendi ve OBF erozyon riski. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "overview": (
+            f"{TONE} "
+            "Kanal bazlı satış dağılımı, iade oranları ve aylık trend kırılımlarını analiz et. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "kategori": (
+            f"{TONE} "
+            "Ürün grubu bazında net ciro payı, büyüme marjı ve iade oranı anomalilerini analiz et. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "urunler": (
+            f"{TONE} "
+            "Top ürünlerdeki yoğunlaşma riski, yüksek iade riskli SKUlar ve hız kazanan yeni girişler. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "iade": (
+            f"{TONE} "
+            "İade dinamikleri: kanal, ürün grubu ve zaman bazlı anomaliler ile finansal etki. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        # ── Ürün Yönetimi ─────────────────────────────────────────────────────
+        "urun-yonetimi": (
+            f"{TONE} "
+            "PLM portföy durumu: marka/sezon/tema dağılımı, blokaj oranı ve internet aktivasyon sağlığı. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "plm-katalog": (
+            f"{TONE} "
+            "Katalog sağlığı: SKU derinliği, sezon kapsaması ve tema konsantrasyon riski. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "urun-satis": (
+            f"{TONE} "
+            "PLM ürünlerin satış verimliliği, tema bazlı iade oranları ve portföy optimizasyon fırsatları. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        # ── Enrichment ────────────────────────────────────────────────────────
+        "enrichment": (
+            f"{TONE} "
+            "Ürün kalite puanı: grade dağılımı, kritik eksik alanlar ve gelir kaybı riski. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "enrichment-dashboard": (
+            f"{TONE} "
+            "Sezon kalite özeti: ortalama puan, yayına hazır oran ve top sorunlu alanlar. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
+        "enrichment-scorelist": (
+            f"{TONE} "
+            "Grade D/F ürünler: satış hacmine göre öncelik sıralaması ve acil aksiyon planı. "
+            f"7-8 bulgunu {JSON_FORMAT}"
+        ),
     }
     return ctx_map.get(
         report_ctx,
-        f"Bu rapor için en kritik 4-5 bulguyu {JSON_FORMAT}"
+        f"{TONE} Bu rapor için en kritik 7-8 bulguyu {JSON_FORMAT}"
     )
 
 
@@ -203,12 +295,12 @@ def _parse_insight_json(raw: str) -> List[InsightCard]:
     try:
         data = json.loads(m.group())
         cards = []
-        for item in data[:5]:
+        for item in data[:8]:
             if isinstance(item, dict):
                 cards.append(InsightCard(
                     tur=item.get("tur", "bilgi"),
-                    baslik=item.get("baslik", "")[:60],
-                    aciklama=item.get("aciklama", "")[:120],
+                    baslik=item.get("baslik", "")[:80],
+                    aciklama=item.get("aciklama", "")[:250],
                 ))
         return cards if cards else [InsightCard(tur="bilgi", baslik="Veri yüklendi",
                                                 aciklama="Soru sorun, analiz başlasın.")]
