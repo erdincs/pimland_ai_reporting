@@ -13,7 +13,8 @@ auth:
 
 tool:
   name: post_api_v2_adl_dashboards_17589647_e5d1_40f7_81ce_a6ec_9cb5630f
-  args: {}
+  args:
+    Authorization: "__env:INCORTA_TOKEN"
   response_format: incorta
   pagination_start_field: "pagination.startRow"
   pagination_size_field: "pagination.pageSize"
